@@ -22,6 +22,8 @@
  * .werkbank/REVIEW/07-laravel.md (F-LAR-001), .werkbank/ADR/0013.
  */
 
+use App\Models\Chapter;
+use App\Models\Entry;
 use App\Models\Project;
 use App\Models\User;
 use Spatie\Permission\Models\Permission;
@@ -54,6 +56,28 @@ function makeProject(User $owner, array $overrides = []): Project
         'terms' => 'Original AGB',
         'status' => 'draft',
         'description' => 'Original Beschreibung',
+    ], $overrides));
+}
+
+function makeChapter(Project $project, array $overrides = []): Chapter
+{
+    return Chapter::create(array_merge([
+        'project_id' => $project->id,
+        'name' => 'Original Kapitel-Titel',
+        'subtitle' => 'Original Untertitel',
+        'description' => 'Original Beschreibung',
+        'position' => 0,
+    ], $overrides));
+}
+
+function makeEntry(Chapter $chapter, array $overrides = []): Entry
+{
+    return Entry::create(array_merge([
+        'chapter_id' => $chapter->id,
+        'name' => 'Original Entry-Titel',
+        'subtitle' => 'Original Untertitel',
+        'description' => 'Original Beschreibung',
+        'position' => 0,
     ], $overrides));
 }
 
@@ -153,4 +177,162 @@ test('Owner darf sein eigenes Project löschen', function () {
 
     $response->assertRedirect();
     expect(Project::query()->withTrashed()->find($project->id)?->trashed())->toBeTrue();
+});
+
+// ----------------------------------------------------------------------
+// Chapter-Suite — Owner-Logik transitiv über Project.
+// ----------------------------------------------------------------------
+
+test('Owner darf eigenes Chapter ändern', function () {
+    $owner = User::factory()->create();
+    $chapter = makeChapter(makeProject($owner));
+
+    $response = $this->actingAs($owner)->put(
+        route('chapters.update', $chapter),
+        [
+            'chapterId' => $chapter->id,
+            'chapterTitle' => 'Vom Owner geändert',
+            'chapterSubtitle' => 'Untertitel',
+            'chapterDescription' => 'Beschreibung',
+        ]
+    );
+
+    $response->assertSuccessful();
+    expect($chapter->fresh()->name)->toBe('Vom Owner geändert');
+});
+
+test('Admin darf jedes Chapter ändern', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('Admin');
+
+    $owner = User::factory()->create();
+    $chapter = makeChapter(makeProject($owner));
+
+    $response = $this->actingAs($admin)->put(
+        route('chapters.update', $chapter),
+        [
+            'chapterId' => $chapter->id,
+            'chapterTitle' => 'Vom Admin geändert',
+            'chapterSubtitle' => 'Untertitel',
+            'chapterDescription' => 'Beschreibung',
+        ]
+    );
+
+    $response->assertSuccessful();
+    expect($chapter->fresh()->name)->toBe('Vom Admin geändert');
+});
+
+test('Intruder darf fremdes Chapter NICHT ändern (B-3a)', function () {
+    $owner = User::factory()->create();
+    $chapter = makeChapter(makeProject($owner));
+
+    $intruder = User::factory()->create();
+
+    $response = $this->actingAs($intruder)->put(
+        route('chapters.update', $chapter),
+        [
+            'chapterId' => $chapter->id,
+            'chapterTitle' => 'HACKED',
+            'chapterSubtitle' => 'HACKED',
+            'chapterDescription' => 'HACKED',
+        ]
+    );
+
+    $response->assertForbidden();
+    expect($chapter->fresh()->name)->toBe('Original Kapitel-Titel');
+});
+
+test('Intruder darf fremdes Chapter NICHT löschen (B-4a)', function () {
+    $owner = User::factory()->create();
+    $project = makeProject($owner);
+    $chapter = makeChapter($project);
+
+    $intruder = User::factory()->create();
+
+    $response = $this->actingAs($intruder)->delete(
+        route('chapters.destroy', $chapter),
+        ['project' => $project->id]
+    );
+
+    $response->assertForbidden();
+    expect(Chapter::query()->find($chapter->id))->not->toBeNull();
+});
+
+// ----------------------------------------------------------------------
+// Entry-Suite — Owner-Logik über Chapter → Project.
+// ----------------------------------------------------------------------
+
+test('Owner darf eigenen Entry ändern', function () {
+    $owner = User::factory()->create();
+    $entry = makeEntry(makeChapter(makeProject($owner)));
+
+    $response = $this->actingAs($owner)->put(
+        route('entries.update', $entry),
+        [
+            'entryId' => $entry->id,
+            'entryTitle' => 'Vom Owner geändert',
+            'entrySubtitle' => 'Untertitel',
+            'entryDescription' => 'Beschreibung',
+        ]
+    );
+
+    $response->assertSuccessful();
+    expect($entry->fresh()->name)->toBe('Vom Owner geändert');
+});
+
+test('Admin darf jeden Entry ändern', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('Admin');
+
+    $owner = User::factory()->create();
+    $entry = makeEntry(makeChapter(makeProject($owner)));
+
+    $response = $this->actingAs($admin)->put(
+        route('entries.update', $entry),
+        [
+            'entryId' => $entry->id,
+            'entryTitle' => 'Vom Admin geändert',
+            'entrySubtitle' => 'Untertitel',
+            'entryDescription' => 'Beschreibung',
+        ]
+    );
+
+    $response->assertSuccessful();
+    expect($entry->fresh()->name)->toBe('Vom Admin geändert');
+});
+
+test('Intruder darf fremden Entry NICHT ändern (B-3b)', function () {
+    $owner = User::factory()->create();
+    $entry = makeEntry(makeChapter(makeProject($owner)));
+
+    $intruder = User::factory()->create();
+
+    $response = $this->actingAs($intruder)->put(
+        route('entries.update', $entry),
+        [
+            'entryId' => $entry->id,
+            'entryTitle' => 'HACKED',
+            'entrySubtitle' => 'HACKED',
+            'entryDescription' => 'HACKED',
+        ]
+    );
+
+    $response->assertForbidden();
+    expect($entry->fresh()->name)->toBe('Original Entry-Titel');
+});
+
+test('Intruder darf fremden Entry NICHT löschen (B-4b)', function () {
+    $owner = User::factory()->create();
+    $project = makeProject($owner);
+    $entry = makeEntry(makeChapter($project));
+
+    $intruder = User::factory()->create();
+
+    $response = $this->actingAs($intruder)->delete(
+        route('entries.destroy', $entry),
+        ['project' => $project->id]
+    );
+
+    $response->assertForbidden();
+    expect(Entry::query()->find($entry->id))->not->toBeNull();
 });
