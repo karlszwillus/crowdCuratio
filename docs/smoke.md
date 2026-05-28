@@ -29,10 +29,10 @@ Mailpit, Meilisearch.
 | 4   | Entry im Chapter anlegen                   | grün        | —             |
 | 5   | Text-Block zum Entry hinzufügen            | grün*       | UX-Glitches   |
 | 6   | Image-Block (Foto-Upload + Anzeige)        | **grün**    | **AM-B-1 BEHOBEN** ✓ |
-| 7   | Überschriften-Darstellung in der UI        | offen       | **AM-B-2**    |
-| 8   | PDF-Export / Preview-Download              | offen       | **AM-B-3**    |
-| 9   | Kommentar zu einem Element                 | offen       | —             |
-| 10  | Invitation-Flow (User einladen)            | offen       | —             |
+| 7   | Überschriften-Darstellung in der UI        | kaputt      | **AM-B-2**    |
+| 8   | PDF-Export / Preview-Download              | kaputt      | **AM-B-3**    |
+| 9   | Kommentar zu einem Element                 | kaputt      | AM-D-2 (Save schlägt still fehl) |
+| 10  | Invitation-Flow (User einladen)            | **grün**    | (war broken, gefixt mit F.5 + Mail-Defaults) |
 
 \* funktional, aber mit kleinen Auffälligkeiten im UX (siehe Pfad-Details).
 
@@ -312,23 +312,24 @@ Beobachtung:
 - **Welcome-Mail in Mailpit nicht prüfbar**, weil Submit nie
   durchläuft.
 
-Status: **kaputt** (Workflow im Default-Setup nicht abschließbar)
-Wurzeln:
-- Fehlt: Seeder für Standard-Rollen (Editor, Reviewer, etc.) oder
-  klares Onboarding-Pfad für initiale Rollen-Anlage.
-- Validation berücksichtigt nicht, dass Admin-Recht ein Rollen-Bedarf
-  ersetzen kann.
-- Übersetzungs-Schlüssel `roles ist erforderlich` (englisch in
-  deutscher Oberfläche).
+Status: **grün** (nach Phase-1 F.5 + Mail-Defaults).
+Workflow zum Schluss verifiziert:
+- Default-Rollen (Editor, Reviewer, Reader) werden seit F.5 vom
+  Standard-Seeder angelegt.
+- `MAIL_FROM_ADDRESS` ist mit dem `.env`-Fix nicht mehr `null` —
+  Swift_Mailer akzeptiert den Absender.
+- `MAIL_HOST=mailpit` (statt des alten `mailhog` aus dem Default).
+- Welcome-Mail an die neue Adresse landet in Mailpit, Welcome-Link
+  führt zur Passwort-Vergabe-Page.
 
-Befunde für Phase 4 / Phase 7:
-- **Rollen-Seeder ergänzen.** Ein `RoleTableSeeder` mit den im
-  PermissionTableSeeder definierten Standardrechten als Rollen-Defaults
-  („Editor", „Reviewer", „Reader" etc.).
-- **Form-Logik** im `Auth/RegisterController` reparieren — wenn
-  `is_admin=on`, soll `roles` nicht required sein.
-- **Übersetzungs-Lücke** in `resources/lang/de/validation.php`
-  (`roles` → „Rolle").
+Verbleibende Beobachtungen (nicht-blockierend, in Phase 6/Frontend):
+- Form-Logik im `Auth/RegisterController`: Validation fordert auch
+  bei „hat Admin-Recht"-Haken weiter eine `roles`-Auswahl. Ohne
+  Default-Rolle nicht abschließbar, mit Admin-Haken aber semantisch
+  überflüssig.
+- Übersetzungs-Lücke `roles ist erforderlich` → „Rolle ist
+  erforderlich".
+- UX-Falle: Erlaubnis-Checkbox wird bei jedem Validation-Fail geleert.
 
 ---
 
@@ -336,8 +337,8 @@ Befunde für Phase 4 / Phase 7:
 
 | Status     | Anzahl Pfade |
 |------------|-------------:|
-| grün       | 6 (1, 2, 3, 4, 5, **6 nach F.3-Fix**) |
-| kaputt     | 3 (7 = AM-B-2, 8 = AM-B-3, 9 = Kommentar-Save, 10 = Invitation) |
+| grün       | 7 (1, 2, 3, 4, 5, **6 nach F.3-Fix**, **10 nach F.5 + Mail-Defaults**) |
+| kaputt     | 3 (7 = AM-B-2, 8 = AM-B-3, 9 = AM-D-2 Kommentar-Save) |
 | teilweise  | 0            |
 | blockiert  | 0            |
 | **Summe**  | **10**       |
