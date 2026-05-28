@@ -32,13 +32,18 @@
     "laravel/sail": "^1.4",
     "mockery/mockery": "^1.4.2",
     "nunomaduro/collision": "^5.0",
+    "pestphp/pest": "^1.23",
+    "pestphp/pest-plugin-laravel": "^1.4",
     "phpunit/phpunit": "^9.3.3"
   },
   "config": {
     "optimize-autoloader": true,
     "preferred-install": "dist",
     "sort-packages": true,
-    "platform-check": false
+    "platform-check": false,
+    "allow-plugins": {
+      "pestphp/pest-plugin": true
+    }
   },
   "extra": {
     "laravel": {
