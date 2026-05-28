@@ -33,9 +33,11 @@ class AuthServiceProvider extends ServiceProvider
      */
     protected $policies = [
         \App\Models\Project::class => \App\Policies\ProjectPolicy::class,
-        // Weitere Policies folgen — Chapter, Entry, Text, Image,
-        // Gallery, Comment — in einem Folge-Commit (siehe
-        // .werkbank/ADR/0013-authorization-strategie.md).
+        \App\Models\Chapter::class => \App\Policies\ChapterPolicy::class,
+        \App\Models\Entry::class   => \App\Policies\EntryPolicy::class,
+        // Text, Image, Gallery, Comment kommen in Phase 4 zusammen mit
+        // ADR-0012 (media_content vs. direct entry binding) und der
+        // CommentTrait-Auflösung (F-ARCH-002).
     ];
 
     /**

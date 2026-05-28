@@ -197,7 +197,7 @@ test('Owner darf eigenes Chapter ändern', function () {
         ]
     );
 
-    $response->assertSuccessful();
+    $response->assertRedirect();
     expect($chapter->fresh()->name)->toBe('Vom Owner geändert');
 });
 
@@ -218,7 +218,7 @@ test('Admin darf jedes Chapter ändern', function () {
         ]
     );
 
-    $response->assertSuccessful();
+    $response->assertRedirect();
     expect($chapter->fresh()->name)->toBe('Vom Admin geändert');
 });
 
@@ -276,7 +276,7 @@ test('Owner darf eigenen Entry ändern', function () {
         ]
     );
 
-    $response->assertSuccessful();
+    $response->assertRedirect();
     expect($entry->fresh()->name)->toBe('Vom Owner geändert');
 });
 
@@ -297,7 +297,7 @@ test('Admin darf jeden Entry ändern', function () {
         ]
     );
 
-    $response->assertSuccessful();
+    $response->assertRedirect();
     expect($entry->fresh()->name)->toBe('Vom Admin geändert');
 });
 

@@ -109,8 +109,9 @@ class ChapterController extends Controller
      */
     public function update(Request $request)
     {
-
         $chapter = Chapter::findorFail($request['chapterId']);
+
+        $this->authorize('update', $chapter);
 
         if (isset($request['translationChapter'])){
             $chapter->setTranslation('name', 'en', $request['chapterTitle']);
@@ -126,7 +127,12 @@ class ChapterController extends Controller
 
         $chapter->save();
 
-        return $this;
+        // Vorher: return $this; — gibt den Controller selbst zurück
+        // und bricht jede assertOk-Verifikation mit TypeError, weil
+        // Symfony's Response::setContent() einen String erwartet. Im
+        // Frontend ignoriert das JS den Body, deshalb fiel es bisher
+        // nicht auf. back() ist semantisch das, was im Browser passiert.
+        return back();
     }
 
     /**
@@ -151,7 +157,10 @@ class ChapterController extends Controller
      */
     public function destroy(Request $request,$id)
     {
-        $chapter = Chapter::find($id);
+        $chapter = Chapter::findOrFail($id);
+
+        $this->authorize('delete', $chapter);
+
         $chapter->delete();
 
         return redirect('projects/'.$request->project.'/edit')->with('success', __("message_delete_chapter_success"));

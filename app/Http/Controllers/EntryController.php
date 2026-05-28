@@ -96,7 +96,9 @@ class EntryController extends Controller
      */
     public function update(Request $request)
     {
-        $entry = Entry::find($request['entryId']);
+        $entry = Entry::findOrFail($request['entryId']);
+
+        $this->authorize('update', $entry);
 
         if (isset($request['translationEntry'])){
             $entry->setTranslation('name', 'en', $request['entryTitle']);
@@ -112,7 +114,8 @@ class EntryController extends Controller
 
         $entry->save();
 
-        return $this;
+        // Vorher: return $this; — siehe Begründung im ChapterController.
+        return back();
     }
 
     /**
@@ -148,7 +151,10 @@ class EntryController extends Controller
      */
     public function destroy(Request $request,$id)
     {
-        $entry = Entry::find($id);
+        $entry = Entry::findOrFail($id);
+
+        $this->authorize('delete', $entry);
+
         $entry->delete();
 
         return redirect('projects/'.$request->project.'/edit')->with('success', __("message_delete_entry_success"));
