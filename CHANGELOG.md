@@ -10,22 +10,106 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+Stand nach Phase 1 (Stabilisierung + Sofortmaßnahmen). 36 Commits auf
+`phase-1/setup-reset`, alle vier in Phase 0 identifizierten Blocker
+geschlossen.
+
 ### Hinzugefügt
 
-- `CHANGELOG.md` (diese Datei) als verbindliche Änderungsspur ab sofort.
+- `CHANGELOG.md` als verbindliche Änderungsspur.
+- `composer.lock` wird ab sofort committet (Reproduzierbarkeit,
+  `composer audit`-Baseline möglich).
+- Pest als Test-Framework, Authorization-Bypass-Suite mit 13
+  reproduzierbaren Szenarien für Project, Chapter und Entry.
+- `app/Policies/ProjectPolicy.php`, `ChapterPolicy.php`,
+  `EntryPolicy.php` — saubere Laravel-Policy-Schicht für
+  besitzer-/admin-basierte Authorization.
+- `database/seeders/RoleTableSeeder.php` legt drei Default-Rollen an
+  (Editor, Reviewer, Reader) — User-Invitation im Standard-Setup wieder
+  durchführbar.
+- `docs/smoke.md` als belastbares Baseline-Inventar (10 Smoke-Pfade).
 
 ### Geändert
 
-- `.gitignore`: Werkbank-Verzeichnis `.werkbank/` wird nicht eingecheckt.
+- `.gitignore`: `.werkbank/` lokal, `composer.lock` jetzt eingecheckt,
+  `.DS_Store` und Smoke-Artefakte ignoriert.
+- `docker-compose.yml`: Image-Tags gepinnt (`mysql:8.0`,
+  `redis:7-alpine`, `getmeili/meilisearch:v1.6`, `phpmyadmin:5.2`),
+  `mailhog → axllent/mailpit:v1.20`, `selenium` entfernt (Phase 2
+  bei Bedarf mit `seleniarm`), `phpmyadmin` und Mailpit-Dashboard
+  nur auf Loopback, `depends_on` mit `service_healthy`.
+- `docker/8.0` → `docker/8.1` (PHP 8.1), Ubuntu 20.04 → 22.04
+  (`jammy`), `ondrej/php`-PPA auf jammy-Arm64, Node 15 → Node 20 LTS.
+- `config/database.php`: `charset = utf8mb4`, `collation =
+  utf8mb4_unicode_ci`, `strict = true`.
+- `dompdf/dompdf ^1.2` → `^2.0` (8 Security-Advisories in 1.2.x).
+- `.env.example`: Sail-taugliche Defaults (`DB_HOST=mysql`,
+  `REDIS_HOST=redis`, `MAIL_HOST=mailpit`, `MAIL_FROM_ADDRESS`
+  vorbelegt, `ADMIN_*`-Variablen dokumentiert,
+  `APP_DEBUG`-Warnkommentar).
+- `CreateAdminUserSeeder`: liest `ADMIN_EMAIL` / `ADMIN_PASSWORD` /
+  `ADMIN_NAME` / `ADMIN_LAST_NAME` aus dem Environment, bricht beim
+  Fehlen mit `RuntimeException` ab. Idempotent.
+- `DatabaseSeeder` ruft jetzt `PermissionTableSeeder` →
+  `RoleTableSeeder` → `CreateAdminUserSeeder`. `PreviewSeeder` bleibt
+  manuell.
+- `ProjectController::update/destroy`, `ChapterController` und
+  `EntryController` rufen `$this->authorize(...)` auf. Views nutzen
+  `Auth::user()->can('update', $project)` statt der alten
+  Eigenbau-Gates.
+
+### Behoben
+
+- **Foto-Upload-Anzeige (Stakeholder-Bug AM-B-1):** die
+  `image`/`audio`-Routen liefen gegen die Default-Disk `local`, während
+  Uploads auf der Disk `public` landen. Wechsel auf
+  `Storage::disk('public')->response(…)` rendert hochgeladene Bilder
+  wieder (incl. Project-Logo).
+- **User-Invitation-Workflow (Stakeholder-Bug AM-D-3):** Default-Rollen
+  fehlten, MAIL-Defaults waren leer. Mit dem Role-Seeder und
+  vernünftigen `MAIL_*`-Defaults läuft der Einladungs-Flow inkl.
+  Welcome-Mail wieder durch.
+- `drop_foreign_key_table`-Migration läuft auf frischer DB nicht mehr
+  in 1091, weil sie Spalten droppt, die `create_texts_table` /
+  `create_image_table` nie angelegt haben — jetzt mit
+  `Schema::hasColumn`-Guard.
+- `ChapterController::update` und `EntryController::update` gaben
+  bisher `return $this;` zurück — der Controller-Instance-Return wäre
+  beim Versuch, das Response zu serialisieren, mit `TypeError`
+  hochgegangen. Korrigiert zu `return back();`.
+- DB-Defaults für `users.is_admin`, `users.create_project` und
+  `users.last_name`, plus explizite `position`-Werte im
+  `PermissionTableSeeder` — alles latente Schema-Lücken, die `strict =
+  true` jetzt sichtbar gemacht hat.
+
+### Entfernt
+
+- Spurloses `selenium`-Image aus dem Compose-Stack (kein arm64).
+- Stock-Breeze-Tests, die das Self-Service-Signup-Modell testen, das
+  crowdCuratio nicht hat (`tests/Feature/RegistrationTest`, drei
+  `ExampleTest`-Stubs).
 
 ### Sicherheit
 
-- Tiefenanalyse Phase 0 hat vier Blocker-Risiken identifiziert
-  (Details intern in `.werkbank/REVIEW/00-summary.md`): MyISAM-Engine
-  auf `texts`-Tabelle (Datenintegrität), `facade/ignition`-RCE-Risiko
-  bei `APP_DEBUG=true`, Authorization-Bypass über direkte HTTP-Aufrufe,
-  Spatie-Permission-Middleware auf destruktiven Actions auskommentiert.
-  Behebung in der bevorstehenden Phase 1 (Stabilisierung).
+- **Authorization-Bypass über direkte HTTP-Aufrufe** geschlossen
+  (Stakeholder-Risiko Phase-0 B-3 / F-SEC-007 + B-4 / F-LAR-001).
+  Project / Chapter / Entry-Mutationen prüfen ab sofort sowohl in der
+  Controller-Action als auch in der View, ob der eingeloggte User
+  Eigentümer oder Admin ist. Belegt durch Pest-Suite
+  `tests/Feature/AuthorizationTest.php`.
+- **`facade/ignition`-RCE (CVE-2021-3129)** entschärft: durch
+  `composer install` mit Lock zieht der Build die geprüfte Version
+  2.17.7 ein, nicht die anfälligen 2.5.0/.1.
+- **MyISAM-Datenintegritäts-Bug** in der `texts`-Tabelle behoben:
+  Engine-Konvertierung auf InnoDB plus Reinstall der
+  Source-Foreign-Keys, die unter MyISAM still verworfen wurden.
+- **Charset auf `utf8mb4`** (vorher `utf8mb3`): 4-Byte-Glyphen werden
+  ab sofort gespeichert statt gestrippt.
+- **MySQL `strict`-Mode** ist an: zero-dates, GROUP-BY-Verstöße,
+  Inserts ohne Required-Felder werfen ab sofort hörbar Fehler statt
+  still durchzulaufen.
+- File-Upload-`public`-Disk und Mailpit-/phpMyAdmin-Loopback-Binding
+  reduzieren die Lateral-Movement-Fläche im lokalen Dev-Netz.
 
 ---
 
