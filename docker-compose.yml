@@ -18,9 +18,12 @@ services:
     networks:
       - sail
     depends_on:
-      - mysql
-      - redis
-      - selenium
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      selenium:
+        condition: service_started
   mysql:
     image: 'mysql:8.0'
     ports:
@@ -30,7 +33,6 @@ services:
       MYSQL_DATABASE: '${DB_DATABASE}'
       MYSQL_USER: '${DB_USERNAME}'
       MYSQL_PASSWORD: '${DB_PASSWORD}'
-      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
     volumes:
       - 'sailmysql:/var/lib/mysql'
     networks:
@@ -42,7 +44,7 @@ services:
       - sail
     image: phpmyadmin/phpmyadmin
     ports:
-      - 8080:80
+      - '127.0.0.1:8080:80'
     environment:
       MYSQL_USERNAME: "${DB_USERNAME}"
       MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
