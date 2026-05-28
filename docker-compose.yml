@@ -8,11 +8,11 @@ services:
     # (F-DOCK-001 / ADR-0009).
     platform: linux/amd64
     build:
-      context: ./docker/8.0
+      context: ./docker/8.1
       dockerfile: Dockerfile
       args:
         WWWGROUP: '${WWWGROUP:-1000}'
-    image: sail-8.0/app
+    image: sail-8.1/app
     ports:
       - '${APP_PORT:-8084}:80'
     environment:
