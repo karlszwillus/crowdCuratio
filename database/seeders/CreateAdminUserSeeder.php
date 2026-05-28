@@ -59,6 +59,7 @@ class CreateAdminUserSeeder extends Seeder
             ['email' => $email],
             [
                 'name' => env('ADMIN_NAME', 'Admin'),
+                'last_name' => env('ADMIN_LAST_NAME', ''),
                 'password' => Hash::make($password),
                 'email_verified_at' => now(),
             ]
