@@ -70,9 +70,13 @@ class ProjectController extends Controller
         $this->middleware('auth');
         $this->middleware('permission:add', ['only' => ['create', 'store']]);
         $this->middleware('permission:view', ['only' => ['index']]);
-        //$this->middleware('permission:preview', ['only' => ['index']]);
-        //$this->middleware('permission:edit', ['only' => ['edit', 'update']]);
-        //$this->middleware('permission:delete', ['only' => ['destroy']]);
+        // Hinweis: die Permission-Middleware auf 'edit', 'update',
+        // 'destroy' bleibt bewusst aus — sie würde sonst auch den
+        // Project-Owner blocken, weil der heute keine globale
+        // 'edit'/'delete'-Permission besitzt. Die Authorization für
+        // diese Actions läuft über ProjectPolicy mit
+        // $this->authorize(...) (siehe update/destroy unten und
+        // .werkbank/ADR/0013-authorization-strategie.md).
         $this->middleware('permission:comment', ['only' => ['commentProject', 'getProjectComment']]);
     }
 
@@ -382,6 +386,8 @@ class ProjectController extends Controller
      */
     public function update(Request $request, Project $project)
     {
+        $this->authorize('update', $project);
+
         $request->validate(
             [
                 'name' => 'required',
@@ -417,6 +423,8 @@ class ProjectController extends Controller
      */
     public function destroy(Project $project)
     {
+        $this->authorize('delete', $project);
+
         $project->delete();
 
         return redirect()->route('projects.index')

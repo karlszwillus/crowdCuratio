@@ -32,7 +32,10 @@ class AuthServiceProvider extends ServiceProvider
      * @var array
      */
     protected $policies = [
-        // 'App\Models\Model' => 'App\Policies\ModelPolicy',
+        \App\Models\Project::class => \App\Policies\ProjectPolicy::class,
+        // Weitere Policies folgen — Chapter, Entry, Text, Image,
+        // Gallery, Comment — in einem Folge-Commit (siehe
+        // .werkbank/ADR/0013-authorization-strategie.md).
     ];
 
     /**
