@@ -74,14 +74,14 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                     title="{{__('edit_project')}}"><i
                                             class="bi bi-pencil-fill m-2"></i></a></span>
                             @csrf
-                            @if(Auth::user()->can('edit-project', $value->user_id) ||  Auth::user()->can('edit'))
+                            @if(Auth::user()->can('update', $value) ||  Auth::user()->can('edit'))
                                 @method('DELETE')
                                 <button data-toggle="tooltip" data-placement="top" title="{{__('delete_project')}}"
                                         type="submit" onclick="return confirm('{{__('message_delete_confirm')}}')">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             @endif
-                            @if(Auth::user()->can('publish-project', $value->user_id) ||  Auth::user()->can('preview'))
+                            @if(Auth::user()->can('publish', $value) ||  Auth::user()->can('preview'))
                                 <a href="#" data-placement="top" data-project="{{$value->id}}" class="preview m-4" data-toggle="modal" data-target="#previewModal" target="_blank" title="{{__('preview')}}"><i class="bi bi-globe"></i>
                                 </a>
                             @endif

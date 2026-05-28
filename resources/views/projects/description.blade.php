@@ -26,7 +26,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
             @foreach($comments['comment'] as $key => $comment)
                 <div class="row mb-4 mt-4">
                     <div class="form-group col-sm-8">
-                        @if(in_array('edit', $listPermissions) || Auth::user()->can('edit-project', $project->user_id))
+                        @if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
                             <label class="col-xs-6 control-label">{{$comment['user']}}</label>
                             <select id="items_{{$comment['id']}}" class="update-status" name="status" data-id="{{$comment['id']}}" data-model="{{strtolower($comment['commentable_type'])}}" class="form-control" style="width:auto;">
                                 @foreach($comment['status'] as $k => $v)
@@ -41,7 +41,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                         {{$comment['created']}}
                     </div>
                     <div class="col-sm-12">
-                        @if(in_array('edit', $listPermissions) || Auth::user()->can('edit-project', $project->user_id))
+                        @if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
                             <a href="#" id="comment_{{$comment['id']}}" data-type="text" data-pk="{{$comment['id']}}" data-button="btn_submit" data-name="edit" data-url="{{route('comment.save', $comment['id'])}}" data-original-title="Comment" class="comment-edit">{{$comment['comment']}}</a>
                         @else
                             {{$comment['comment']}}
@@ -58,7 +58,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                 {{$reply['created']}}
                             </div>
                             <div class="col-sm-12">
-                                @if(in_array('edit', $listPermissions) || Auth::user()->can('edit-project', $project->user_id))
+                                @if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
                                     <a href="#" data-type="text" data-pk="{{$reply['id']}}" data-button="btn_submit" data-name="edit" data-url="{{route('comment.save', $reply['id'])}}" data-original-title="Comment" class="comment-edit">{{$reply['comment']}}</a>
                                 @else
                                     {{$reply['comment']}}
@@ -66,7 +66,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                             </div>
                         </div>
                     @endforeach
-                    @if(in_array('comment', $listPermissions) || Auth::user()->can('edit-project', $project->user_id))
+                    @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                         <div class="row mr-3 mt-2 mb-4 ml-auto w-11/12">
                             <a href="#reply_{{$comment['id']}}" class="enable-reply text-primary" id="{{$comment['id']}}">{{__('reply')}}</a>
                             <form action="{{route($comment['path'], $comment['id'])}}" method="post" class="reply reply_{{$comment['id']}}" data-id="reply_{{$comment['id']}}">
@@ -85,7 +85,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                         </div>
                     @endif
                 @else
-                    @if(in_array('edit', $listPermissions) || Auth::user()->can('edit-project', $project->user_id))
+                    @if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
                         <div class="row mr-3 mt-2 mb-4 ml-auto w-11/12">
                             <a href="#reply_{{$comment['id']}}" class="enable-reply text-primary" id="{{$comment['id']}}">{{__('reply')}}</a>
                             <form id="frmComment" action="{{route($comment['path'], $comment['id'])}}" method="post" class="reply reply_{{$comment['id']}}" data-id="reply_{{$comment['id']}}">
@@ -106,7 +106,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                 @endif
 
             @endforeach
-            @if(in_array('edit', $listPermissions) || Auth::user()->can('edit-project', $project->user_id))
+            @if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
                 <div class="comment">
                     <form id="frmComment" action="{{route($comments['pathComment'])}}" method="post">
                         @csrf
@@ -124,7 +124,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                 </div>
             @endif
         @else
-            @if(in_array('edit', $listPermissions) || Auth::user()->can('edit-project', $project->user_id))
+            @if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
                 <div class="comment">
                     <form id="frmComment" action="{{route($comments['pathComment'])}}" method="post">
                         @csrf

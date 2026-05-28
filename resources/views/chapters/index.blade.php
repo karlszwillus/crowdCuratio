@@ -50,7 +50,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
             @csrf
             @method('DELETE')
             <div class="col-sm-3">
-                @if(Auth::user()->can('edit-project', $project->user_id) || Auth::user()->can('delete'))
+                @if(Auth::user()->can('update', $project) || Auth::user()->can('delete'))
                     <button class="btn btn-secondary btn-block text-left mt-1 mb-2" type="submit"
                             onclick="return confirm('{{__('message_delete_confirm')}}')">
                         <i class="bi bi-trash m-2"></i> {{__('delete_project')}}
@@ -108,12 +108,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                     <i class="bi bi-chat-dots-fill m-2"></i> @else <i class="bi bi-chat m-2"></i>@endif
 											</a></span>
                                     @endif
-									@if(in_array('delete', $listPermissions) || Auth::user()->can('delete-project', $project->user_id))
+									@if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
                                         <button type="submit" onclick="return confirm('{{__('message_delete_confirm')}}')"
                                                 data-toggle="tooltip" data-placement="top" title="{{__('delete_chapter')}}">
 											<i class="bi-x-circle-fill m-2"></i></button>
 									@endif
-									@if(in_array('edit', $listPermissions) || Auth::user()->can('edit-project', $project->user_id))
+									@if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
 									<span data-toggle="tooltip" data-placement="top" title="{{__('edit_entry')}}"><a href="" data-id="{{$chapter->id}}"
                                                                               data-toggle="modal"
                                                                               data-target="#myModal"
@@ -161,7 +161,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
 																			</a></span>
                                                                     @endif
 
- 																	@if(in_array('edit', $listPermissions) || Auth::user()->can('delete-project', $project->user_id))
+ 																	@if(in_array('edit', $listPermissions) || Auth::user()->can('delete', $project))
                                                                         <button type="submit"
                                                                                 onclick="return confirm('{{__('message_delete_confirm')}}')"
                                                                                 data-toggle="tooltip" data-placement="top"
@@ -170,7 +170,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
 																	</button>
                                                                     @endif
 
-                                                                    @if(in_array('edit', $listPermissions) || Auth::user()->can('edit-project', $project->user_id))
+                                                                    @if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
                                                                         <span data-toggle="tooltip"
                                                                               data-placement="top" title="{{__('edit_entry')}}"><a
                                                                                     href=""
@@ -224,7 +224,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
 																									</a></span>
 																							@endif
 
- 																								@if(in_array('delete', $listPermissions) || Auth::user()->can('delete-project', $project->user_id))
+ 																								@if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
                                                                                                 <button type="submit"
                                                                                                         onclick="return confirm('{{__('message_delete_confirm')}}')">
                                                                                                     <i class="bi-x-circle-fill m-2"
@@ -234,7 +234,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                 </button>
                                                                                             @endif
 
-                                                                                            @if(in_array('edit', $listPermissions) || Auth::user()->can('edit-project', $project->user_id))
+                                                                                            @if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
 
                                                                                                 <span data-toggle="tooltip"
                                                                                                       data-placement="top"
@@ -291,7 +291,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                                     class="bi bi-chat m-2"></i> @endif </a></span>
                                                                                             @endif
 
- 																							@if(in_array('delete', $listPermissions) || Auth::user()->can('delete-project', $project->user_id))
+ 																							@if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
                                                                                                 <button type="submit"
                                                                                                         onclick="return confirm('{{__('message_delete_confirm')}}')">
                                                                                                     <i class="bi-x-circle-fill m-2"
@@ -301,7 +301,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                 </button>
                                                                                             @endif
 
-                                                                                            @if(in_array('edit', $listPermissions) || Auth::user()->can('edit-project', $project->user_id))
+                                                                                            @if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
 
                                                                                                 <span data-toggle="tooltip"
                                                                                                       data-placement="top"
@@ -377,7 +377,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                                 data-target="#imageModal"> <i
                                                                                                                     class="bi bi-plus-circle m-2"></i> </a></span>
                                                                                                 @endif
-                                                                                                @if(in_array('delete', $listPermissions) || Auth::user()->can('delete-project', $project->user_id))
+                                                                                                @if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
                                                                                                     <button type="submit"
                                                                                                             onclick="return confirm('{{__('message_delete_confirm')}}')">
                                                                                                         <i class="bi-x-circle-fill m-2"
@@ -386,7 +386,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                            title="{{__('delete_image')}}"></i>
                                                                                                     </button>
                                                                                                 @endif
-                                                                                                @if(in_array('edit', $listPermissions) || Auth::user()->can('edit-project', $project->user_id))
+                                                                                                @if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
 
                                                                                                     <span data-toggle="tooltip"
                                                                                                           data-placement="top"
@@ -430,7 +430,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                                     <i class="bi bi-chat m-2"></i> @endif </a></span>
                                                                                                     @endif
 
-                                                                                                    @if(in_array('delete', $listPermissions) || Auth::user()->can('delete-project', $project->user_id))
+                                                                                                    @if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
                                                                                                         <button type="submit"
                                                                                                                 onclick="return confirm('{{__('message_delete_confirm')}}')">
                                                                                                             <i class="bi-x-circle-fill m-2"
@@ -440,7 +440,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                         </button>
                                                                                                     @endif
 
-                                                                                                    @if(in_array('edit', $listPermissions) || Auth::user()->can('edit-project', $project->user_id))
+                                                                                                    @if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
 
                                                                                                         <span data-toggle="tooltip"
                                                                                                               data-placement="top"
@@ -664,7 +664,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
     @include('contents.audiovisual')
 @endsection
 @section('footer')
-    @if(Auth::user()->can('publish-project', $project->user_id) || Auth::user()->can('preview'))
+    @if(Auth::user()->can('publish', $project) || Auth::user()->can('preview'))
         <div class="footer-background p-3 my-3 border">
             <a href="#" class="m-4" data-toggle="modal" data-target="#previewModal" target="_blank" >{{__('pdf')}} <i class="bi bi-file-earmark-pdf-fill"></i>
             </a>
