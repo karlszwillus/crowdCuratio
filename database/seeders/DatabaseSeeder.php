@@ -27,10 +27,22 @@ class DatabaseSeeder extends Seeder
     /**
      * Seed the application's database.
      *
+     * Reihenfolge ist wichtig: erst Permissions anlegen, dann den
+     * Admin, damit das `assignRole`/`syncPermissions` im
+     * CreateAdminUserSeeder eine gefüllte Permission-Tabelle vorfindet.
+     *
+     * PreviewSeeder ist bewusst NICHT Teil des Default-Runs — er
+     * erzeugt Demo-Inhalte und ist nur über expliziten Aufruf
+     * gewünscht:
+     *   php artisan db:seed --class=Database\\Seeders\\PreviewSeeder
+     *
      * @return void
      */
     public function run()
     {
-        // \App\Models\User::factory(10)->create();
+        $this->call([
+            PermissionTableSeeder::class,
+            CreateAdminUserSeeder::class,
+        ]);
     }
 }
