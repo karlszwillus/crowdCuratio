@@ -1,12 +1,6 @@
 # For more information: https://laravel.com/docs/sail
 services:
   laravel.test:
-    # Quick-Fix für Apple Silicon: ondrej/php-PPA hat keinen
-    # arm64-Build für focal (Ubuntu 20.04), also bauen wir das Image
-    # via Rosetta-Emulation als amd64. Native Lösung kommt in Phase 3
-    # mit dem Wechsel auf ein offizielles PHP-Multi-Arch-Base-Image
-    # (F-DOCK-001 / ADR-0009).
-    platform: linux/amd64
     build:
       context: ./docker/8.1
       dockerfile: Dockerfile
