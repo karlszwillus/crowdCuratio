@@ -13,3 +13,9 @@ npm-debug.log
 yarn-error.log
 composer.phar
 composer.lock
+
+# Werkbank (lokale Notizen, ADRs, TODOs für die Modernisierungsarbeit)
+.werkbank/
+
+# macOS Finder-Artefakte
+.DS_Store
