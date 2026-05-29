@@ -1050,7 +1050,14 @@ class ProjectController extends Controller
             $parameters['pdf'] = 1;
         }
         $parameters['id'] = $request['project'];
-        $project = Project::findOrFail($request['project']);
+        // Eager-Loading-Baum für preview/index.blade.php — rendert
+        // chapters.entries.mediaContent mit text/gallery.images/audiovisual.
+        // Keine Source-Relations und keine Comments in preview-Views.
+        $project = Project::with([
+            'chapters.entries.mediaContent.text',
+            'chapters.entries.mediaContent.gallery.images',
+            'chapters.entries.mediaContent.audiovisual',
+        ])->findOrFail($request['project']);
 
         return \view('preview.index', compact('project', 'parameters'));
     }
@@ -1077,7 +1084,13 @@ class ProjectController extends Controller
             $parameters['pdf'] = 1;
         }
 
-        $project = Project::findOrFail($request->id);
+        // Selber Baum wie previewProject — preview/pdf.blade.php rendert
+        // identische Hierarchie für den PDF-Export.
+        $project = Project::with([
+            'chapters.entries.mediaContent.text',
+            'chapters.entries.mediaContent.gallery.images',
+            'chapters.entries.mediaContent.audiovisual',
+        ])->findOrFail($request->id);
         $html = View('preview.pdf', compact('project', 'parameters'))->render();
 
         $options = new Options;
@@ -1099,7 +1112,9 @@ class ProjectController extends Controller
         $parameters = $request['parameters'];
 
         if (isset($parameters['id'])) {
-            $project = Project::findOrFail($parameters['id']);
+            // preview/copyright.blade.php rendert nur $project->chapters
+            // mit ->name — flacher Baum als preview/index.
+            $project = Project::with('chapters')->findOrFail($parameters['id']);
             if ($request->type == 'copyright') {
                 $content = $project->terms;
                 $type = 'copyright';
