@@ -67,6 +67,18 @@ für alle Tabellen), ADR-0011 (utf8mb4-Konvertierung), ADR-0013
   - `swiftmailer/swiftmailer` ist abandoned. Geht mit dem
     Laravel-9-Upgrade in Phase 3 automatisch raus — Symfony Mailer
     ersetzt Swift. Kein eigenständiger Schritt nötig.
+  - **CVE-2025-27515 — Laravel File Validation Bypass** (Severity
+    moderate, 6.9/10). Betroffen: `laravel/framework < 10.48.29`.
+    Wir sind auf 8.12, also formal in der Range. Konkret nicht
+    ausnutzbar in crowdCuratio: der Angriffspfad braucht eine
+    Wildcard-Validation der Form `files.*|image|mimes:…` — ein
+    Pattern, das im Code aktuell nirgends auftaucht (grep über
+    `app/` ohne Treffer). Phase 2 / Block D wird File-Uploads über
+    FormRequests neu schneiden; dabei wird das `files.*`-Pattern
+    bewusst nicht eingeführt. Endgültig zu mit Laravel ≥ 10.48.29
+    in Phase 3. Hintergrund: Laravel 8 ist seit 2023 EOL, kein
+    Backport für 8.x verfügbar — Phase 3 ist die einzige
+    realistische Patch-Schiene.
 
 ### Geändert
 
