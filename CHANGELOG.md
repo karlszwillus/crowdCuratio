@@ -11,9 +11,12 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 ## [Unreleased]
 
 Stand nach Phase 1 (Stabilisierung + Sofortmaßnahmen) inkl. Reviewer-
-Nachschlag (Phase 1.5). 40+ Commits auf `phase-1/setup-reset`,
-alle vier in Phase 0 identifizierten Blocker geschlossen, dazu vier
-neue Findings aus der Post-Phase-1-Review behoben.
+Nachschlag (Phase 1.5) und Phase-2-Block-B (CI-Skeleton). 50+ Commits
+verteilt auf `phase-1/setup-reset` (gemerged) und
+`phase-2/ci-skeleton`. Alle vier in Phase 0 identifizierten Blocker
+geschlossen, vier Phase-1-Reviewer-Findings behoben, CI mit Pest,
+Larastan, Pint, Dependency-Audits und CHANGELOG-Diff-Check spannt
+ab Phase 2 das Sicherheitsnetz.
 
 ADR-Grundlagen für diese Welle: ADR-0001 (Ziel-Stack PHP 8.4 /
 Laravel 12), ADR-0002 (composer.lock eingecheckt), ADR-0010 (InnoDB
@@ -34,6 +37,26 @@ für alle Tabellen), ADR-0011 (utf8mb4-Konvertierung), ADR-0013
   (Editor, Reviewer, Reader) — User-Invitation im Standard-Setup wieder
   durchführbar.
 - `docs/smoke.md` als belastbares Baseline-Inventar (10 Smoke-Pfade).
+- **Phase 2 / Block B — Sicherheitsnetz im CI.**
+  - `.github/workflows/ci.yml` — GitHub-Actions-Workflow mit fünf
+    parallelen Jobs auf jedem PR und Push nach `main`: Pest gegen
+    SQLite-in-memory, `composer audit`, `npm audit`, Larastan,
+    Pint. Sechster Job `changelog-check` läuft nur auf
+    Pull-Requests und prüft, dass `CHANGELOG.md` berührt wurde
+    (Ausnahme: PR-Label `skip-changelog`).
+  - `nunomaduro/larastan ^1.0` (Laravel-8-Linie, Phase-3-Upgrade auf
+    v2/v3 vorgemerkt) mit `phpstan.neon` auf Level 5 und einer
+    Baseline (`phpstan-baseline.neon`) von 198 Bestandsbefunden.
+    Neue Verstöße brechen den Build (NF-SEC-006, NF-CODE-005).
+  - `laravel/pint ^1.13` mit `pint.json` (Laravel-Preset). Voller
+    Baseline-Sweep über die Codebasis als isolierter
+    `style(pint): apply laravel preset`-Commit; SHA in
+    `.git-blame-ignore-revs`, damit `git blame` über den Style-
+    Commit hinwegspringt.
+  - `.github/dependabot.yml` — wöchentliche Scans für composer,
+    npm und github-actions. Major-Bumps für Laravel, Spatie-Pakete,
+    axios, alpine, tailwind und Mix sind ignoriert (gehören in
+    den koordinierten Phase-3/5-Upgrade-Sweep). F-SEC-015 zu.
 
 ### Geändert
 
@@ -63,6 +86,11 @@ für alle Tabellen), ADR-0011 (utf8mb4-Konvertierung), ADR-0013
   `EntryController` rufen `$this->authorize(...)` auf. Views nutzen
   `Auth::user()->can('update', $project)` statt der alten
   Eigenbau-Gates.
+- **Phase 2 / Block B**: gesamte Codebasis einmal durch
+  `pint --preset=laravel` gezogen (isolierter
+  `style(pint): apply laravel preset to entire codebase`-Commit).
+  Reine Whitespace-/Brace-/Import-Reorder-Änderung, Pest-Suite vor
+  und nach dem Sweep identisch grün.
 
 ### Behoben
 
@@ -105,6 +133,21 @@ für alle Tabellen), ADR-0011 (utf8mb4-Konvertierung), ADR-0013
   (`$user->id === $project`). View-Aufrufe in
   `chapters/index.blade.php` (10 Stellen) jetzt auf die Project-Policy
   umgehängt.
+- **Phase 2 / Block B**: sechs tote Legacy-Auth-Controller
+  (`LoginController`, `RegisterController`, `ConfirmPasswordController`,
+  `ForgotPasswordController`, `ResetPasswordController`,
+  `VerificationController`). Sie referenzierten
+  `Illuminate\Foundation\Auth\*`-Traits, die in Laravel 8+ nicht mehr
+  existieren, und waren seit dem Breeze-Umzug ohne Caller. Auth läuft
+  über die Breeze-Klassen.
+- **Phase 2 / Block B**: `app/Traits/SourceTrait.php` plus seine zwei
+  Referenzen in `ContentController`. Der Trait hatte genau eine
+  Methode (`checkMeta`), die nirgends aufgerufen wurde; ihre
+  Signature (required-Parameter nach optional) war seit PHP 8.0
+  deprecated und ab 8.4 fatal.
+- **Phase 2 / Block B**: `.idea/`-Tracking. PHPStorm-Workspace-State
+  bleibt lokal, wandert nicht mehr ins Repo (`.gitignore` ergänzt,
+  zwei zuvor getrackte Files aus dem Index entfernt).
 
 ### Sicherheit
 
