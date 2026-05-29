@@ -1,13 +1,646 @@
-# PHPStan / Larastan Baseline für crowdCuratio
-#
-# Diese Datei wird einmal lokal mit
-#   ./vendor/bin/sail phpstan analyse --generate-baseline
-# befüllt und dann committet. Ab dann gelten alle hier eingefrorenen
-# Befunde als "bestehend, in Phase 3/4 aufzuräumen", und neue Verstöße
-# brechen den CI-Lauf.
-#
-# Aktuell leer — Karl füllt sie im Follow-Up-Commit, sobald
-# `composer install` den nunomaduro/larastan-Stack gezogen hat.
-
 parameters:
-    ignoreErrors: []
+	ignoreErrors:
+		-
+			message: "#^PHPDoc type array of property App\\\\Exceptions\\\\Handler\\:\\:\\$dontFlash is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Foundation\\\\Exceptions\\\\Handler\\:\\:\\$dontFlash\\.$#"
+			count: 1
+			path: app/Exceptions/Handler.php
+
+		-
+			message: "#^PHPDoc type array of property App\\\\Exceptions\\\\Handler\\:\\:\\$dontReport is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Foundation\\\\Exceptions\\\\Handler\\:\\:\\$dontReport\\.$#"
+			count: 1
+			path: app/Exceptions/Handler.php
+
+		-
+			message: "#^Variable \\$audio might not be defined\\.$#"
+			count: 2
+			path: app/Http/Controllers/AudiovisualController.php
+
+		-
+			message: "#^Variable \\$name might not be defined\\.$#"
+			count: 2
+			path: app/Http/Controllers/AudiovisualController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\Auth\\\\EmailVerificationNotificationController\\:\\:store\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
+			count: 2
+			path: app/Http/Controllers/Auth/EmailVerificationNotificationController.php
+
+		-
+			message: "#^Property App\\\\Http\\\\Controllers\\\\Auth\\\\MyCustomWelcomeNotification\\:\\:\\$firstName is never read, only written\\.$#"
+			count: 1
+			path: app/Http/Controllers/Auth/MyCustomWelcomeNotification.php
+
+		-
+			message: "#^Property Spatie\\\\WelcomeNotification\\\\WelcomeNotification\\:\\:\\$validUntil \\(Carbon\\\\Carbon\\) does not accept Carbon\\\\CarbonInterface\\.$#"
+			count: 1
+			path: app/Http/Controllers/Auth/MyCustomWelcomeNotification.php
+
+		-
+			message: "#^Method Carbon\\\\Carbon\\:\\:addDay\\(\\) invoked with 1 parameter, 0 required\\.$#"
+			count: 1
+			path: app/Http/Controllers/Auth/RegisteredUserController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\ChapterController\\:\\:destroy\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
+			count: 1
+			path: app/Http/Controllers/ChapterController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\ChapterController\\:\\:getChapterComment\\(\\) should return Illuminate\\\\Http\\\\JsonResponse but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
+			count: 1
+			path: app/Http/Controllers/ChapterController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\ChapterController\\:\\:saveComment\\(\\) should return Illuminate\\\\Http\\\\RedirectResponse but return statement is missing\\.$#"
+			count: 1
+			path: app/Http/Controllers/ChapterController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\ChapterController\\:\\:update\\(\\) should return \\$this\\(App\\\\Http\\\\Controllers\\\\ChapterController\\) but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
+			count: 1
+			path: app/Http/Controllers/ChapterController.php
+
+		-
+			message: "#^Called 'first' on Laravel collection, but could have been retrieved as a query\\.$#"
+			count: 1
+			path: app/Http/Controllers/ContentController.php
+
+		-
+			message: "#^If condition is always true\\.$#"
+			count: 1
+			path: app/Http/Controllers/ContentController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\ContentController\\:\\:saveCommentImage\\(\\) should return Illuminate\\\\Http\\\\RedirectResponse but return statement is missing\\.$#"
+			count: 1
+			path: app/Http/Controllers/ContentController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\ContentController\\:\\:saveCommentText\\(\\) should return Illuminate\\\\Http\\\\RedirectResponse but return statement is missing\\.$#"
+			count: 1
+			path: app/Http/Controllers/ContentController.php
+
+		-
+			message: "#^Unreachable statement \\- code above always terminates\\.$#"
+			count: 1
+			path: app/Http/Controllers/ContentController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\EntryController\\:\\:create\\(\\) should return Illuminate\\\\Http\\\\Response but return statement is missing\\.$#"
+			count: 1
+			path: app/Http/Controllers/EntryController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\EntryController\\:\\:destroy\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
+			count: 1
+			path: app/Http/Controllers/EntryController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\EntryController\\:\\:edit\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\JsonResponse\\.$#"
+			count: 1
+			path: app/Http/Controllers/EntryController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\EntryController\\:\\:index\\(\\) should return Illuminate\\\\Http\\\\Response but return statement is missing\\.$#"
+			count: 1
+			path: app/Http/Controllers/EntryController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\EntryController\\:\\:saveCommentEntry\\(\\) should return Illuminate\\\\Http\\\\RedirectResponse but return statement is missing\\.$#"
+			count: 1
+			path: app/Http/Controllers/EntryController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\EntryController\\:\\:show\\(\\) should return Illuminate\\\\Http\\\\Response but return statement is missing\\.$#"
+			count: 1
+			path: app/Http/Controllers/EntryController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\EntryController\\:\\:store\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
+			count: 2
+			path: app/Http/Controllers/EntryController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\EntryController\\:\\:update\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
+			count: 1
+			path: app/Http/Controllers/EntryController.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Models\\\\Audiovisual\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<App\\\\Models\\\\Audiovisual\\>\\:\\:\\$media_id\\.$#"
+			count: 1
+			path: app/Http/Controllers/ProjectController.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Models\\\\Gallery\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<App\\\\Models\\\\Gallery\\>\\:\\:\\$image_list\\.$#"
+			count: 1
+			path: app/Http/Controllers/ProjectController.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Models\\\\Gallery\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<App\\\\Models\\\\Gallery\\>\\:\\:\\$media_id\\.$#"
+			count: 1
+			path: app/Http/Controllers/ProjectController.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Models\\\\Project\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<App\\\\Models\\\\Project\\>\\:\\:\\$chapters\\.$#"
+			count: 1
+			path: app/Http/Controllers/ProjectController.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Models\\\\Text\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<App\\\\Models\\\\Text\\>\\:\\:\\$media_id\\.$#"
+			count: 1
+			path: app/Http/Controllers/ProjectController.php
+
+		-
+			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$subject_id\\.$#"
+			count: 1
+			path: app/Http/Controllers/ProjectController.php
+
+		-
+			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$subject_type\\.$#"
+			count: 1
+			path: app/Http/Controllers/ProjectController.php
+
+		-
+			message: "#^Call to function compact\\(\\) contains possibly undefined variable \\$content\\.$#"
+			count: 1
+			path: app/Http/Controllers/ProjectController.php
+
+		-
+			message: "#^Call to function compact\\(\\) contains possibly undefined variable \\$project\\.$#"
+			count: 1
+			path: app/Http/Controllers/ProjectController.php
+
+		-
+			message: "#^Call to function compact\\(\\) contains possibly undefined variable \\$type\\.$#"
+			count: 1
+			path: app/Http/Controllers/ProjectController.php
+
+		-
+			message: "#^Class App\\\\Services\\\\LogService constructor invoked with 0 parameters, 1 required\\.$#"
+			count: 1
+			path: app/Http/Controllers/ProjectController.php
+
+		-
+			message: "#^If condition is always true\\.$#"
+			count: 1
+			path: app/Http/Controllers/ProjectController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\ProjectController\\:\\:create\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\View\\\\View\\.$#"
+			count: 1
+			path: app/Http/Controllers/ProjectController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\ProjectController\\:\\:destroy\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
+			count: 1
+			path: app/Http/Controllers/ProjectController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\ProjectController\\:\\:edit\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\View\\\\View\\.$#"
+			count: 1
+			path: app/Http/Controllers/ProjectController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\ProjectController\\:\\:element\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\View\\\\View\\.$#"
+			count: 1
+			path: app/Http/Controllers/ProjectController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\ProjectController\\:\\:getParentText\\(\\) should return Illuminate\\\\Support\\\\Collection but return statement is missing\\.$#"
+			count: 1
+			path: app/Http/Controllers/ProjectController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\ProjectController\\:\\:getUsersForThisProject\\(\\) should return bool but returns array\\<int\\|string, array\\<string, array\\|string\\>\\>\\.$#"
+			count: 1
+			path: app/Http/Controllers/ProjectController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\ProjectController\\:\\:index\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\View\\\\View\\.$#"
+			count: 1
+			path: app/Http/Controllers/ProjectController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\ProjectController\\:\\:saveCommentProject\\(\\) should return Illuminate\\\\Http\\\\RedirectResponse but return statement is missing\\.$#"
+			count: 1
+			path: app/Http/Controllers/ProjectController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\ProjectController\\:\\:setImage\\(\\) should return \\$this\\(App\\\\Http\\\\Controllers\\\\ProjectController\\) but returns string\\.$#"
+			count: 1
+			path: app/Http/Controllers/ProjectController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\ProjectController\\:\\:show\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\View\\\\View\\.$#"
+			count: 1
+			path: app/Http/Controllers/ProjectController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\ProjectController\\:\\:store\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
+			count: 1
+			path: app/Http/Controllers/ProjectController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\ProjectController\\:\\:update\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
+			count: 1
+			path: app/Http/Controllers/ProjectController.php
+
+		-
+			message: "#^Parameter \\#1 \\$array of function asort expects array, bool given\\.$#"
+			count: 1
+			path: app/Http/Controllers/ProjectController.php
+
+		-
+			message: "#^Parameter \\#1 \\$string of function strspn expects string, int given\\.$#"
+			count: 1
+			path: app/Http/Controllers/ProjectController.php
+
+		-
+			message: "#^Parameter \\#1 \\$view of function view expects view\\-string\\|null, string given\\.$#"
+			count: 1
+			path: app/Http/Controllers/ProjectController.php
+
+		-
+			message: "#^Unreachable statement \\- code above always terminates\\.$#"
+			count: 1
+			path: app/Http/Controllers/ProjectController.php
+
+		-
+			message: "#^Access to an undefined property Spatie\\\\Permission\\\\Models\\\\Role\\:\\:\\$name\\.$#"
+			count: 1
+			path: app/Http/Controllers/RoleController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\RoleController\\:\\:create\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\View\\\\View\\.$#"
+			count: 1
+			path: app/Http/Controllers/RoleController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\RoleController\\:\\:destroy\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
+			count: 1
+			path: app/Http/Controllers/RoleController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\RoleController\\:\\:edit\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\View\\\\View\\.$#"
+			count: 1
+			path: app/Http/Controllers/RoleController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\RoleController\\:\\:index\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\View\\\\View\\.$#"
+			count: 1
+			path: app/Http/Controllers/RoleController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\RoleController\\:\\:show\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\View\\\\View\\.$#"
+			count: 1
+			path: app/Http/Controllers/RoleController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\RoleController\\:\\:store\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
+			count: 1
+			path: app/Http/Controllers/RoleController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\RoleController\\:\\:update\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
+			count: 1
+			path: app/Http/Controllers/RoleController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\SettingController\\:\\:store\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
+			count: 5
+			path: app/Http/Controllers/SettingController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\UserController\\:\\:create\\(\\) should return Illuminate\\\\Http\\\\Response but return statement is missing\\.$#"
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\UserController\\:\\:edit\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\View\\\\View\\.$#"
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\UserController\\:\\:index\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\View\\\\View\\.$#"
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\UserController\\:\\:resendInvitation\\(\\) should return \\$this\\(App\\\\Http\\\\Controllers\\\\UserController\\) but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\UserController\\:\\:show\\(\\) should return Illuminate\\\\Http\\\\Response but return statement is missing\\.$#"
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: "#^Method App\\\\Http\\\\Controllers\\\\UserController\\:\\:store\\(\\) should return Illuminate\\\\Http\\\\Response but return statement is missing\\.$#"
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: "#^Method Carbon\\\\Carbon\\:\\:addDay\\(\\) invoked with 1 parameter, 0 required\\.$#"
+			count: 1
+			path: app/Http/Controllers/UserController.php
+
+		-
+			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$properties\\.$#"
+			count: 2
+			path: app/Models/Audiovisual.php
+
+		-
+			message: "#^PHPDoc type array of property App\\\\Models\\\\Audiovisual\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
+			count: 1
+			path: app/Models/Audiovisual.php
+
+		-
+			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$properties\\.$#"
+			count: 2
+			path: app/Models/Chapter.php
+
+		-
+			message: "#^PHPDoc type array of property App\\\\Models\\\\Chapter\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
+			count: 1
+			path: app/Models/Chapter.php
+
+		-
+			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$properties\\.$#"
+			count: 2
+			path: app/Models/Comment.php
+
+		-
+			message: "#^PHPDoc type array of property App\\\\Models\\\\Comment\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
+			count: 1
+			path: app/Models/Comment.php
+
+		-
+			message: "#^Parameter \\#8 \\$inverse of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:morphToMany\\(\\) expects bool, string given\\.$#"
+			count: 1
+			path: app/Models/Comment.php
+
+		-
+			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$properties\\.$#"
+			count: 2
+			path: app/Models/Entry.php
+
+		-
+			message: "#^Argument of an invalid type Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasMany\\<App\\\\Models\\\\MediaContent\\> supplied for foreach, only iterables are supported\\.$#"
+			count: 1
+			path: app/Models/Entry.php
+
+		-
+			message: "#^PHPDoc type array of property App\\\\Models\\\\Entry\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
+			count: 1
+			path: app/Models/Entry.php
+
+		-
+			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$properties\\.$#"
+			count: 2
+			path: app/Models/Gallery.php
+
+		-
+			message: "#^PHPDoc type array of property App\\\\Models\\\\Gallery\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
+			count: 1
+			path: app/Models/Gallery.php
+
+		-
+			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$properties\\.$#"
+			count: 2
+			path: app/Models/Image.php
+
+		-
+			message: "#^PHPDoc type array of property App\\\\Models\\\\Image\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
+			count: 1
+			path: app/Models/Image.php
+
+		-
+			message: "#^PHPDoc type array of property App\\\\Models\\\\Invitation\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
+			count: 1
+			path: app/Models/Invitation.php
+
+		-
+			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$properties\\.$#"
+			count: 2
+			path: app/Models/MediaContent.php
+
+		-
+			message: "#^Method App\\\\Models\\\\MediaContent\\:\\:audiovisual\\(\\) should return Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\MorphToMany but returns Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo\\<App\\\\Models\\\\Audiovisual\\>\\.$#"
+			count: 1
+			path: app/Models/MediaContent.php
+
+		-
+			message: "#^Method App\\\\Models\\\\MediaContent\\:\\:image\\(\\) should return Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\MorphToMany but returns Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo\\<App\\\\Models\\\\Image\\>\\.$#"
+			count: 1
+			path: app/Models/MediaContent.php
+
+		-
+			message: "#^Method App\\\\Models\\\\MediaContent\\:\\:text\\(\\) should return Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\MorphToMany but returns Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo\\<App\\\\Models\\\\Text\\>\\.$#"
+			count: 1
+			path: app/Models/MediaContent.php
+
+		-
+			message: "#^PHPDoc type array of property App\\\\Models\\\\MediaContent\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
+			count: 1
+			path: app/Models/MediaContent.php
+
+		-
+			message: "#^PHPDoc type array of property App\\\\Models\\\\ModelHasPermission\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
+			count: 1
+			path: app/Models/ModelHasPermission.php
+
+		-
+			message: "#^PHPDoc type array of property App\\\\Models\\\\ModelHasRole\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
+			count: 1
+			path: app/Models/ModelHasRole.php
+
+		-
+			message: "#^PHPDoc type array of property App\\\\Models\\\\Permission\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
+			count: 1
+			path: app/Models/Permission.php
+
+		-
+			message: "#^PHPDoc type array of property App\\\\Models\\\\PermissionDescription\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
+			count: 1
+			path: app/Models/PermissionDescription.php
+
+		-
+			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$properties\\.$#"
+			count: 2
+			path: app/Models/Project.php
+
+		-
+			message: "#^PHPDoc type array of property App\\\\Models\\\\Project\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
+			count: 1
+			path: app/Models/Project.php
+
+		-
+			message: "#^PHPDoc type array of property App\\\\Models\\\\Role\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
+			count: 1
+			path: app/Models/Role.php
+
+		-
+			message: "#^PHPDoc type array of property App\\\\Models\\\\Source\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
+			count: 1
+			path: app/Models/Source.php
+
+		-
+			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$properties\\.$#"
+			count: 2
+			path: app/Models/Text.php
+
+		-
+			message: "#^PHPDoc type array of property App\\\\Models\\\\Text\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
+			count: 1
+			path: app/Models/Text.php
+
+		-
+			message: "#^PHPDoc type array of property App\\\\Models\\\\User\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
+			count: 1
+			path: app/Models/User.php
+
+		-
+			message: "#^PHPDoc type array of property App\\\\Models\\\\UserHasPermission\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
+			count: 1
+			path: app/Models/UserHasPermission.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Models\\\\Chapter\\:\\:\\$project\\.$#"
+			count: 3
+			path: app/Policies/ChapterPolicy.php
+
+		-
+			message: "#^Access to an undefined property App\\\\Models\\\\Chapter\\:\\:\\$project\\.$#"
+			count: 4
+			path: app/Policies/EntryPolicy.php
+
+		-
+			message: "#^PHPDoc tag @var above a method has no effect\\.$#"
+			count: 1
+			path: app/Providers/RouteServiceProvider.php
+
+		-
+			message: "#^PHPDoc tag @var does not specify variable name\\.$#"
+			count: 1
+			path: app/Providers/RouteServiceProvider.php
+
+		-
+			message: "#^Method App\\\\Services\\\\CommentRetrieve\\:\\:getComments\\(\\) should return Illuminate\\\\Http\\\\JsonResponse but returns array\\<string, mixed\\>\\.$#"
+			count: 1
+			path: app/Services/CommentRetrieve.php
+
+		-
+			message: "#^Variable \\$pathReply might not be defined\\.$#"
+			count: 1
+			path: app/Services/CommentRetrieve.php
+
+		-
+			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$chapter_name\\.$#"
+			count: 1
+			path: app/Services/LogService.php
+
+		-
+			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$created_at\\.$#"
+			count: 1
+			path: app/Services/LogService.php
+
+		-
+			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$entry_name\\.$#"
+			count: 1
+			path: app/Services/LogService.php
+
+		-
+			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$highlight\\.$#"
+			count: 1
+			path: app/Services/LogService.php
+
+		-
+			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$old\\.$#"
+			count: 1
+			path: app/Services/LogService.php
+
+		-
+			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$properties\\.$#"
+			count: 2
+			path: app/Services/LogService.php
+
+		-
+			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$subject_id\\.$#"
+			count: 1
+			path: app/Services/LogService.php
+
+		-
+			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$userName\\.$#"
+			count: 1
+			path: app/Services/LogService.php
+
+		-
+			message: "#^Method App\\\\Services\\\\LogService\\:\\:getParentText\\(\\) should return Illuminate\\\\Support\\\\Collection but return statement is missing\\.$#"
+			count: 1
+			path: app/Services/LogService.php
+
+		-
+			message: "#^Parameter \\#1 \\$string of function strspn expects string, int given\\.$#"
+			count: 1
+			path: app/Services/LogService.php
+
+		-
+			message: "#^Undefined variable\\: \\$this$#"
+			count: 1
+			path: routes/console.php
+
+		-
+			message: "#^Access to an undefined property Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\|Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$email\\.$#"
+			count: 2
+			path: tests/Feature/AuthenticationTest.php
+
+		-
+			message: "#^Call to an undefined method Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\|Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:assignRole\\(\\)\\.$#"
+			count: 5
+			path: tests/Feature/AuthorizationTest.php
+
+		-
+			message: "#^Parameter \\#1 \\$owner of function makeProject expects App\\\\Models\\\\User, Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\|Illuminate\\\\Database\\\\Eloquent\\\\Model given\\.$#"
+			count: 17
+			path: tests/Feature/AuthorizationTest.php
+
+		-
+			message: "#^Undefined variable\\: \\$this$#"
+			count: 17
+			path: tests/Feature/AuthorizationTest.php
+
+		-
+			message: "#^Access to an undefined property Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\|Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$email\\.$#"
+			count: 1
+			path: tests/Feature/EmailVerificationTest.php
+
+		-
+			message: "#^Access to an undefined property Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\|Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$id\\.$#"
+			count: 2
+			path: tests/Feature/EmailVerificationTest.php
+
+		-
+			message: "#^Call to an undefined method Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\|Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:hasVerifiedEmail\\(\\)\\.$#"
+			count: 2
+			path: tests/Feature/EmailVerificationTest.php
+
+		-
+			message: "#^Parameter \\#1 \\$user of method Illuminate\\\\Foundation\\\\Testing\\\\TestCase\\:\\:actingAs\\(\\) expects Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable, Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\|Illuminate\\\\Database\\\\Eloquent\\\\Model given\\.$#"
+			count: 3
+			path: tests/Feature/EmailVerificationTest.php
+
+		-
+			message: "#^Parameter \\#1 \\$user of method Illuminate\\\\Foundation\\\\Testing\\\\TestCase\\:\\:actingAs\\(\\) expects Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable, Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\|Illuminate\\\\Database\\\\Eloquent\\\\Model given\\.$#"
+			count: 3
+			path: tests/Feature/PasswordConfirmationTest.php
+
+		-
+			message: "#^Access to an undefined property Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\|Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$email\\.$#"
+			count: 4
+			path: tests/Feature/PasswordResetTest.php
+
+		-
+			message: "#^Undefined variable\\: \\$this$#"
+			count: 1
+			path: tests/Pest.php
