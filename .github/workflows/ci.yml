@@ -108,3 +108,44 @@ jobs:
 
       - name: npm audit (production deps, high+ severity)
         run: npm audit --omit=dev --audit-level=high
+
+  larastan:
+    name: Larastan (Level 5)
+    runs-on: ubuntu-22.04
+    # Soft-Fail bis Karl die Baseline einmal lokal generiert
+    # (`./vendor/bin/sail phpstan analyse --generate-baseline`). Ab
+    # dann zählt nur das Delta — und Larastan kann auf Hard-Fail
+    # umgestellt werden.
+    continue-on-error: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.1
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: mbstring, dom, fileinfo, intl, zip, bcmath, gd
+          coverage: none
+          tools: composer:v2
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php-8.1-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-8.1-composer-
+
+      - name: Install composer dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Run Larastan
+        # --memory-limit=2G ist für Laravel-Projekte mit vielen Traits
+        # eine empfohlene Schmerz­grenze (Larastan-Doku).
+        run: ./vendor/bin/phpstan analyse --memory-limit=2G --no-progress

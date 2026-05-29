@@ -1,0 +1,13 @@
+# PHPStan / Larastan Baseline für crowdCuratio
+#
+# Diese Datei wird einmal lokal mit
+#   ./vendor/bin/sail phpstan analyse --generate-baseline
+# befüllt und dann committet. Ab dann gelten alle hier eingefrorenen
+# Befunde als "bestehend, in Phase 3/4 aufzuräumen", und neue Verstöße
+# brechen den CI-Lauf.
+#
+# Aktuell leer — Karl füllt sie im Follow-Up-Commit, sobald
+# `composer install` den nunomaduro/larastan-Stack gezogen hat.
+
+parameters:
+    ignoreErrors: []
