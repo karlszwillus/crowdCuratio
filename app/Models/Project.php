@@ -2,7 +2,7 @@
 
 /**
 crowdCuratio - Curating together virtually
-Copyright (C)2022 - berlinHistory e.V.
+Copyright (C)2022, 2026 - berlinHistory e.V.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -117,5 +117,64 @@ class Project extends Model
         $activity->properties = $activity->properties->merge([
             'language' => Lang::getLocale(),
         ]);
+    }
+
+    /**
+     * Eager-Loading-Baum für die projects/edit-Hierarchie.
+     *
+     * Inkludiert Chapter/Entry/MediaContent inkl. Source-Relations
+     * (copyright/origin auf Text und Image) und Comments auf jeder
+     * Ebene. Wird in ProjectController::edit und in
+     * ChapterController::index genutzt; ohne den Baum wirft
+     * Model::preventLazyLoading (Phase 2 / C.1) Exceptions auf den
+     * tiefen Property-Zugriffen in chapters/index.blade.php.
+     *
+     * Phase-4-Migration: sobald ein ProjectService existiert, kann
+     * dieser Scope nach dort wandern.
+     */
+    public function scopeWithEditTree($query)
+    {
+        return $query->with([
+            'chapters.comments',
+            'chapters.entries.comments',
+            'chapters.entries.mediaContent.comments',
+            'chapters.entries.mediaContent.text.comments',
+            'chapters.entries.mediaContent.text.copyrightText',
+            'chapters.entries.mediaContent.text.originText',
+            'chapters.entries.mediaContent.audiovisual.comments',
+            'chapters.entries.mediaContent.gallery.comments',
+            'chapters.entries.mediaContent.gallery.images.comments',
+            'chapters.entries.mediaContent.gallery.images.copyrightImage',
+            'chapters.entries.mediaContent.gallery.images.originImage',
+        ]);
+    }
+
+    /**
+     * Eager-Loading-Baum für die preview-Hierarchie (HTML und PDF).
+     *
+     * Schmaler als withEditTree — die Preview-Views rendern weder
+     * Source-Relations noch Comments, sondern nur die Inhalts-
+     * Hierarchie. Wird in ProjectController::previewProject und
+     * ::downloadPreview genutzt.
+     */
+    public function scopeWithPreviewTree($query)
+    {
+        return $query->with([
+            'chapters.entries.mediaContent.text',
+            'chapters.entries.mediaContent.gallery.images',
+            'chapters.entries.mediaContent.audiovisual',
+        ]);
+    }
+
+    /**
+     * Eager-Loading-Baum für die copyright-/Impressums-View.
+     *
+     * Flach — preview/copyright.blade.php rendert nur eine
+     * Kapitelliste mit Namen. Wird in
+     * ProjectController::projectMetadata genutzt.
+     */
+    public function scopeWithCopyrightTree($query)
+    {
+        return $query->with('chapters');
     }
 }

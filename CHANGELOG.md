@@ -68,7 +68,12 @@ Laravel-Policies + Spatie-Permission).
   - `Model::preventLazyLoading(! app()->isProduction())` im
     `AppServiceProvider::boot`. Wirft `LazyLoadingViolationException`
     bei N+1-Pattern aus eager-geladenen Collections in non-production
-    (Dev, Tests, CI). F-LAR-013 zu.
+    (Dev, Tests, CI). F-LAR-013 zu. Folge-Anpassungen: fünf
+    Controller-Pfade lädt `Project` jetzt mit explizitem
+    `with(...)`-Baum (Project::edit, Chapter::index, previewProject,
+    downloadPreview, projectMetadata) — sonst rendern die Hierarchie-
+    Views eine Lazy-Loading-Exception. Den Eager-Loading-Baum als
+    Local Scope auf das Project-Model zu ziehen, ist Phase-4-TODO.
   - Explizite `$casts` auf `Chapter`, `Entry`, `User`: `is_translated`
     als boolean, `User::welcome_valid_until` als datetime,
     `User::is_admin` / `create_project` als boolean (NF-LAR-005,

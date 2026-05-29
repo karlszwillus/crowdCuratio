@@ -63,9 +63,10 @@ class ChapterController extends Controller
             'publish' => [],
             'comment' => [],
         ];
-        // SoftDeletes-Scope auf Project schließt trashed schon implizit
-        // aus — kein whereNull('deleted_at') nötig (F-DB-014).
-        $project = Project::findOrFail($request['id']);
+        // SoftDeletes-Scope schließt trashed implizit aus (F-DB-014).
+        // withEditTree() lädt die volle Hierarchie für chapters/index
+        // eager — sonst beißt preventLazyLoading (Phase 2 / C.1).
+        $project = Project::withEditTree()->findOrFail($request['id']);
         $permissions = Permission::all();
         // F-DB-013: vorher Role::where('id', 'not like', '1') —
         // LIKE-Vergleich auf INT-Spalte mit hartkodierter ID.

@@ -257,7 +257,9 @@ class ProjectController extends Controller
         $allPermissions = Permission::pluck('name', 'id');
         $currentUserPermissions = $this->getCurrentUsersPermissions(Auth::user()->id);
 
-        $data = Project::findOrFail($project->id);
+        // withEditTree() lädt die volle Hierarchie für die in
+        // projects/edit eingeschlossene View chapters/index eager.
+        $data = Project::withEditTree()->findOrFail($project->id);
         $listGrantedUsers = $this->getUsersForThisProject($project->id);
 
         $links = session()->has('links') ? session('links') : [];
@@ -1033,7 +1035,7 @@ class ProjectController extends Controller
             $parameters['pdf'] = 1;
         }
         $parameters['id'] = $request['project'];
-        $project = Project::findOrFail($request['project']);
+        $project = Project::withPreviewTree()->findOrFail($request['project']);
 
         return \view('preview.index', compact('project', 'parameters'));
     }
@@ -1060,7 +1062,7 @@ class ProjectController extends Controller
             $parameters['pdf'] = 1;
         }
 
-        $project = Project::findOrFail($request->id);
+        $project = Project::withPreviewTree()->findOrFail($request->id);
         $html = View('preview.pdf', compact('project', 'parameters'))->render();
 
         $options = new Options;
@@ -1082,7 +1084,7 @@ class ProjectController extends Controller
         $parameters = $request['parameters'];
 
         if (isset($parameters['id'])) {
-            $project = Project::findOrFail($parameters['id']);
+            $project = Project::withCopyrightTree()->findOrFail($parameters['id']);
             if ($request->type == 'copyright') {
                 $content = $project->terms;
                 $type = 'copyright';
