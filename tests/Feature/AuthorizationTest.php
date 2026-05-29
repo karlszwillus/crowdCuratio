@@ -571,13 +571,19 @@ test('Owner darf Entry via PATCH ändern (D.13)', function () {
 test('StoreProjectRequest: name ist Pflicht', function () {
     $owner = User::factory()->create();
 
-    $response = $this->actingAs($owner)->post(
-        route('projects.store'),
-        [
-            // name absichtlich weggelassen
-            'imprint' => 'Pflicht-Impressum',
-        ]
-    );
+    // from(...) setzt den HTTP_REFERER, damit der Validation-Failure-
+    // Redirect die errors-Bag auf den richtigen Path schreibt (siehe
+    // Laravel-FormRequest-Doc: "If a previous URL is not available,
+    // an HTTP 500 response will be generated").
+    $response = $this->actingAs($owner)
+        ->from(route('projects.create'))
+        ->post(
+            route('projects.store'),
+            [
+                // name absichtlich weggelassen
+                'imprint' => 'Pflicht-Impressum',
+            ]
+        );
 
     $response->assertInvalid(['name']);
     expect(Project::count())->toBe(0);
@@ -587,13 +593,15 @@ test('UpdateProjectRequest: name ist Pflicht', function () {
     $owner = User::factory()->create();
     $project = makeProject($owner);
 
-    $response = $this->actingAs($owner)->put(
-        route('projects.update', $project),
-        [
-            // name absichtlich weggelassen
-            'imprint' => 'Geänderter Imprint',
-        ]
-    );
+    $response = $this->actingAs($owner)
+        ->from(route('projects.edit', $project))
+        ->put(
+            route('projects.update', $project),
+            [
+                // name absichtlich weggelassen
+                'imprint' => 'Geänderter Imprint',
+            ]
+        );
 
     $response->assertInvalid(['name']);
     expect($project->fresh()->name)->toBe('Original Name');
@@ -603,14 +611,16 @@ test('UpdateProjectRequest: project_image akzeptiert nur Bild-MIME-Typen (NF-SEC
     $owner = User::factory()->create();
     $project = makeProject($owner);
 
-    $response = $this->actingAs($owner)->put(
-        route('projects.update', $project),
-        [
-            'name' => 'Trotzdem geänderter Name',
-            'imprint' => 'Imprint',
-            'project_image' => UploadedFile::fake()->create('exploit.php', 50, 'application/x-php'),
-        ]
-    );
+    $response = $this->actingAs($owner)
+        ->from(route('projects.edit', $project))
+        ->put(
+            route('projects.update', $project),
+            [
+                'name' => 'Trotzdem geänderter Name',
+                'imprint' => 'Imprint',
+                'project_image' => UploadedFile::fake()->create('exploit.php', 50, 'application/x-php'),
+            ]
+        );
 
     $response->assertInvalid(['project_image']);
     expect($project->fresh()->name)->toBe('Original Name');
@@ -626,7 +636,7 @@ test('UpdateProjectRequest: project_image akzeptiert nur Bild-MIME-Typen (NF-SEC
 // ----------------------------------------------------------------------
 
 test('RegisterRequest: firstName ist Pflicht (Gast-Pfad)', function () {
-    $response = $this->post(
+    $response = $this->from(route('register'))->post(
         route('register'),
         [
             // firstName absichtlich weggelassen
