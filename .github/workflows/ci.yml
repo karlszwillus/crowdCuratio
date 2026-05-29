@@ -112,11 +112,7 @@ jobs:
   larastan:
     name: Larastan (Level 5)
     runs-on: ubuntu-22.04
-    # Soft-Fail bis Karl die Baseline einmal lokal generiert
-    # (`./vendor/bin/sail phpstan analyse --generate-baseline`). Ab
-    # dann zählt nur das Delta — und Larastan kann auf Hard-Fail
-    # umgestellt werden.
-    continue-on-error: true
+    continue-on-error: false
 
     steps:
       - name: Checkout
