@@ -268,10 +268,12 @@ class ProjectController extends Controller
             'chapters.entries.mediaContent.comments',
             'chapters.entries.mediaContent.text.comments',
             'chapters.entries.mediaContent.text.copyrightText',
+            'chapters.entries.mediaContent.text.originText',
             'chapters.entries.mediaContent.audiovisual.comments',
             'chapters.entries.mediaContent.gallery.comments',
             'chapters.entries.mediaContent.gallery.images.comments',
             'chapters.entries.mediaContent.gallery.images.copyrightImage',
+            'chapters.entries.mediaContent.gallery.images.originImage',
         ])->findOrFail($project->id);
         $listGrantedUsers = $this->getUsersForThisProject($project->id);
 
