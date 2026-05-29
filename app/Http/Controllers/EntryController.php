@@ -22,10 +22,12 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Http\Controllers;
 
-use App\Models\Chapter;
+use App\Http\Requests\StoreEntryRequest;
+use App\Http\Requests\UpdateEntryRequest;
 use App\Models\Entry;
 use App\Services\CommentRetrieve;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class EntryController extends Controller
@@ -59,72 +61,55 @@ class EntryController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created entry (POST /entries).
      *
-     * @return \Illuminate\Http\Response
+     * Authorization + Validation kommen aus StoreEntryRequest.
+     * Update läuft jetzt über PATCH /entries/{entry} (Phase 2 / D.5).
      */
-    public function store(Request $request)
+    public function store(StoreEntryRequest $request): RedirectResponse
     {
-        if (isset($request['entryId']) && $request['entryId'] != '') {
-            $this->update($request);
+        $data = $request->validated();
 
-            return redirect()->back()->with('success', __('message_edit_entry_success'));
-        } else {
-            // NF-LAR-003: Owner-Check vor dem Anlegen, transitiv über
-            // chapter->project. Permission 'add' allein reicht nicht,
-            // weil sie projekt­übergreifend gilt.
-            $chapter = Chapter::findOrFail($request['chapterId']);
-            $this->authorize('createIn', [Entry::class, $chapter]);
+        $pos = Entry::where('chapter_id', $data['chapterId'])
+            ->orderBy('position', 'desc')
+            ->first();
 
-            $pos = Entry::where('chapter_id', $chapter->id)->orderBy('position', 'desc')->first();
-            $position = 0;
-            if (! empty($pos->position)) {
-                $position = $pos->position;
-            }
+        Entry::create([
+            'chapter_id' => $data['chapterId'],
+            'name' => $data['entryTitle'],
+            'subtitle' => $data['entrySubtitle'] ?? null,
+            'description' => $data['entryDescription'] ?? null,
+            'position' => ($pos->position ?? 0) + 1,
+        ]);
 
-            Entry::create(
-                [
-                    'chapter_id' => $chapter->id,
-                    'name' => $request['entryTitle'],
-                    'subtitle' => $request['entrySubtitle'],
-                    'description' => $request['entryDescription'],
-                    'position' => $position + 1,
-
-                ]
-            );
-
-            return redirect()->back()->with('success', __('message_add_entry_success'));
-        }
+        return redirect()->back()->with('success', __('message_add_entry_success'));
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update an existing entry (PATCH /entries/{entry}).
      *
-     * @return \Illuminate\Http\Response
+     * Route-Model-Binding über $entry. Phase 2 / D.5, ADR-0017.
      */
-    public function update(Request $request)
+    public function update(UpdateEntryRequest $request, Entry $entry): RedirectResponse
     {
-        $entry = Entry::findOrFail($request['entryId']);
+        $data = $request->validated();
 
-        $this->authorize('update', $entry);
-
-        if (isset($request['translationEntry'])) {
-            $entry->setTranslation('name', 'en', $request['entryTitle']);
-            $entry->setTranslation('subtitle', 'en', $request['entrySubtitle']);
-            if ($request['entryDescription'] != 'undefined') {
-                $entry->setTranslation('description', 'en', $request['entryDescription']);
+        if ($request->boolean('translationEntry')) {
+            $entry->setTranslation('name', 'en', $data['entryTitle']);
+            $entry->setTranslation('subtitle', 'en', $data['entrySubtitle'] ?? '');
+            if (($data['entryDescription'] ?? '') !== 'undefined') {
+                $entry->setTranslation('description', 'en', $data['entryDescription'] ?? '');
             }
         } else {
-            $entry->name = $request['entryTitle'];
-            $entry->subtitle = $request['entrySubtitle'];
-            $entry->description = $request['entryDescription'];
+            $entry->name = $data['entryTitle'];
+            $entry->subtitle = $data['entrySubtitle'] ?? null;
+            $entry->description = $data['entryDescription'] ?? null;
         }
 
-        $entry->is_translated = isset($request['isTranslated']) ? 1 : 0;
+        $entry->is_translated = $request->boolean('isTranslated');
 
         $entry->save();
 
-        // Vorher: return $this; — siehe Begründung im ChapterController.
         return back();
     }
 
