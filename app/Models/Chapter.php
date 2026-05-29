@@ -2,7 +2,7 @@
 
 /**
 crowdCuratio - Curating together virtually
-Copyright (C)2022 - berlinHistory e.V.
+Copyright (C)2022, 2026 - berlinHistory e.V.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -50,6 +50,18 @@ class Chapter extends Model
      * @var array
      */
     protected $fillable = ['project_id', 'name', 'subtitle', 'description', 'is_translated', 'position'];
+
+    /**
+     * Attribute-Casts.
+     *
+     * NF-LAR-005 (Phase-1-Reviewer): `is_translated` ist in der DB
+     * ein TINYINT(1), das Eloquent ohne Cast als string/int liefert.
+     * Damit `$chapter->is_translated === true|false` zuverlässig
+     * funktioniert, casten wir auf boolean.
+     */
+    protected $casts = [
+        'is_translated' => 'boolean',
+    ];
 
     protected $dates = ['deleted_at'];
 

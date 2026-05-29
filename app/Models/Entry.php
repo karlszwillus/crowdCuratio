@@ -2,7 +2,7 @@
 
 /**
 crowdCuratio - Curating together virtually
-Copyright (C)2022 - berlinHistory e.V.
+Copyright (C)2022, 2026 - berlinHistory e.V.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -49,6 +49,18 @@ class Entry extends Model
      * @var array
      */
     protected $fillable = ['chapter_id', 'name', 'subtitle', 'description', 'position'];
+
+    /**
+     * Attribute-Casts.
+     *
+     * NF-LAR-005 (Phase-1-Reviewer): wie bei Chapter — `is_translated`
+     * ist TINYINT(1), wird vom EntryController per direktem
+     * Property-Assignment gesetzt. Boolean-Cast macht die Lese-Seite
+     * typsicher.
+     */
+    protected $casts = [
+        'is_translated' => 'boolean',
+    ];
 
     protected $dates = ['deleted_at'];
 
