@@ -371,12 +371,12 @@ Route::group(
             'preview'
         );
 
-        Route::get(
-            '/image/{file}/preview',
-            function ($file) {
-                return \Storage::response('img/' . $file);
-            }
-        )->name('image.preview');
+        // NF-CODE-006: tote Route `image.preview` (Default-Disk `local`,
+        // Pfad `img/`) entfernt. Phase-0-Grep über resources/ und app/
+        // zeigt keine Caller — weder im Blade noch im Controller. Wenn
+        // sich später ein externer Direktlink zeigt, ist das image-Pattern
+        // /image/{file} (disk `public`, /uploads/images/) der saubere
+        // Ersatz, nicht eine Wiederauferstehung dieser Route.
 
         Route::get('/preview/download', [\App\Http\Controllers\ProjectController::class, 'downloadPreview'])->name(
             'download'
