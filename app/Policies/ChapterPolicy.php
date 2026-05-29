@@ -25,6 +25,7 @@ namespace App\Policies;
 use App\Models\Chapter;
 use App\Models\Project;
 use App\Models\User;
+use App\Support\PermissionName;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 /**
@@ -52,7 +53,7 @@ class ChapterPolicy
 
     public function create(User $user): bool
     {
-        return $user->can('add');
+        return $user->can(PermissionName::ADD);
     }
 
     /**

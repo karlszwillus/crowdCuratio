@@ -25,6 +25,7 @@ namespace App\Policies;
 use App\Models\Chapter;
 use App\Models\Entry;
 use App\Models\User;
+use App\Support\PermissionName;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 /**
@@ -50,7 +51,7 @@ class EntryPolicy
 
     public function create(User $user): bool
     {
-        return $user->can('add');
+        return $user->can(PermissionName::ADD);
     }
 
     /**

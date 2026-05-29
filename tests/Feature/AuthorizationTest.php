@@ -47,6 +47,7 @@ use App\Models\Chapter;
 use App\Models\Entry;
 use App\Models\Project;
 use App\Models\User;
+use App\Support\PermissionName;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -56,7 +57,7 @@ use Spatie\Permission\Models\Role;
  * ohne den Admin-User selbst zu erzeugen.
  */
 beforeEach(function () {
-    foreach (['view', 'add', 'edit', 'delete', 'publish', 'comment', 'invite'] as $name) {
+    foreach (PermissionName::all() as $name) {
         Permission::firstOrCreate(['name' => $name, 'guard_name' => 'web']);
     }
 

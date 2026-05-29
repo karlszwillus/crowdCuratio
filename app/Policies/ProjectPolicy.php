@@ -24,6 +24,7 @@ namespace App\Policies;
 
 use App\Models\Project;
 use App\Models\User;
+use App\Support\PermissionName;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 /**
@@ -79,7 +80,7 @@ class ProjectPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('add');
+        return $user->can(PermissionName::ADD);
     }
 
     /**

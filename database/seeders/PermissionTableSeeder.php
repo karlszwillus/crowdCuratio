@@ -23,6 +23,7 @@ If not, see <https://www.gnu.org/licenses/>.
 namespace Database\Seeders;
 
 use App\Models\PermissionDescription;
+use App\Support\PermissionName;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Permission;
 
@@ -35,30 +36,31 @@ class PermissionTableSeeder extends Seeder
      */
     public function run()
     {
-        $permissions = [
-            'view' => ['de' => '<strong>Lesen</strong>, Rollen mit diesem Recht dürfen den Inhalt des zugewiesenen Projekts sehen.', 'en' => '<strong>view</strong>, Roles with this right are allowed to see the content of assigned project.'],
-            'add' => ['de' => '<strong>Hinzufügen/ Eigenes bearbeiten</strong>,  Rollen mit diesem Recht benötigen "Lese"-Rechte & dürfen Inhalte zum zugewiesenen Projekt hinzufügen und eigenen Content editieren, aber keine Inhalte Anderer bearbeiten.', 'en' => '<strong>add / edit own</strong>, Roles with this right need "view" rights & are allowed to add content to assigned project and adjust own content.'],
-            'edit' => ['de' => '<strong>Alles bearbeiten</strong>, Rollen mit diesem Recht benötigen "Lese" und "Hinzufügen/ Eigenes bearbeiten"-Rechte & dürfen den gesamten Inhalt des zugewiesenen Projekts bearbeiten.', 'en' => '<strong>edit all</strong>, Roles with this right need "view" and "add" rights & are allowed to edit whole content of assigned project.'],
-            'delete' => ['de' => '<strong>Löschen</strong>,  Rollen mit diesem Recht benötigen "Lese" & "Bearbeiten"-Rechte & dürfen den Inhalt des zugewiesenen Projekts löschen.', 'en' => '<strong>delete</strong>, Roles with this right need "view", "add" and "edit" rights & are allowed to delete content of assigned project.'],
-            'publish' => ['de' => '<strong>Publizieren</strong>, Rollen mit diesem Recht benötigen "Lese" und "Bearbeiten"-Rechte & dürfen Inhalte des zugewiesenen Projekts veröffentlichen.', 'en' => '<strong>publish</strong>, Roles with this right need "view", "add" and "edit" rights & are allowed to publish content of assigned project.'],
-            'comment' => ['de' => '<strong>Kommentieren</strong>, Rollen mit diesem Recht benötigen "Lese"-Rechte & dürfen den Inhalt des zugewiesenen Projekts sehen und kommentieren.', 'en' => '<strong>comment</strong>, Roles with this right need "view" rights & are allowed to see and comment the content of assigned project.'],
-            'invite' => ['de' => '<strong>Nutzer einladen</strong>, Rollen mit diesem Recht dürfen neue Benutzer zu ihren Projekten einladen.', 'en' => '<strong>invite user</strong>, Roles with this right will be allowed to invite new user to their projects.'],
+        // Beschreibungen pro Permission. Reihenfolge des Iterierens kommt
+        // aus PermissionName::all() — dort liegt die kanonische
+        // Definition. NF-CODE-003.
+        $descriptions = [
+            PermissionName::VIEW => ['de' => '<strong>Lesen</strong>, Rollen mit diesem Recht dürfen den Inhalt des zugewiesenen Projekts sehen.', 'en' => '<strong>view</strong>, Roles with this right are allowed to see the content of assigned project.'],
+            PermissionName::ADD => ['de' => '<strong>Hinzufügen/ Eigenes bearbeiten</strong>,  Rollen mit diesem Recht benötigen "Lese"-Rechte & dürfen Inhalte zum zugewiesenen Projekt hinzufügen und eigenen Content editieren, aber keine Inhalte Anderer bearbeiten.', 'en' => '<strong>add / edit own</strong>, Roles with this right need "view" rights & are allowed to add content to assigned project and adjust own content.'],
+            PermissionName::EDIT => ['de' => '<strong>Alles bearbeiten</strong>, Rollen mit diesem Recht benötigen "Lese" und "Hinzufügen/ Eigenes bearbeiten"-Rechte & dürfen den gesamten Inhalt des zugewiesenen Projekts bearbeiten.', 'en' => '<strong>edit all</strong>, Roles with this right need "view" and "add" rights & are allowed to edit whole content of assigned project.'],
+            PermissionName::DELETE => ['de' => '<strong>Löschen</strong>,  Rollen mit diesem Recht benötigen "Lese" & "Bearbeiten"-Rechte & dürfen den Inhalt des zugewiesenen Projekts löschen.', 'en' => '<strong>delete</strong>, Roles with this right need "view", "add" and "edit" rights & are allowed to delete content of assigned project.'],
+            PermissionName::PUBLISH => ['de' => '<strong>Publizieren</strong>, Rollen mit diesem Recht benötigen "Lese" und "Bearbeiten"-Rechte & dürfen Inhalte des zugewiesenen Projekts veröffentlichen.', 'en' => '<strong>publish</strong>, Roles with this right need "view", "add" and "edit" rights & are allowed to publish content of assigned project.'],
+            PermissionName::COMMENT => ['de' => '<strong>Kommentieren</strong>, Rollen mit diesem Recht benötigen "Lese"-Rechte & dürfen den Inhalt des zugewiesenen Projekts sehen und kommentieren.', 'en' => '<strong>comment</strong>, Roles with this right need "view" rights & are allowed to see and comment the content of assigned project.'],
+            PermissionName::INVITE => ['de' => '<strong>Nutzer einladen</strong>, Rollen mit diesem Recht dürfen neue Benutzer zu ihren Projekten einladen.', 'en' => '<strong>invite user</strong>, Roles with this right will be allowed to invite new user to their projects.'],
         ];
 
-        $position = 0;
-        foreach ($permissions as $key => $value) {
-            $permission = Permission::updateOrCreate(['name' => $key]);
+        foreach (PermissionName::all() as $position => $name) {
+            $permission = Permission::updateOrCreate(['name' => $name]);
             PermissionDescription::updateOrCreate(
                 ['permission_id' => $permission->id],
                 [
-                    'description' => $value,
+                    'description' => $descriptions[$name],
                     // permission_descriptions.position ist NOT NULL ohne
                     // Default — vor strict=true (ADR-0011) hat MySQL still
                     // 0 eingetragen, jetzt bricht der Insert sonst ab.
                     'position' => $position,
                 ]
             );
-            $position++;
         }
     }
 }
