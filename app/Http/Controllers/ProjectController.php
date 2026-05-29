@@ -257,7 +257,20 @@ class ProjectController extends Controller
         $allPermissions = Permission::pluck('name', 'id');
         $currentUserPermissions = $this->getCurrentUsersPermissions(Auth::user()->id);
 
-        $data = Project::findOrFail($project->id);
+        // Eager-Loading-Baum für die in projects/edit eingeschlossene
+        // View chapters/index.blade.php — sie rendert die komplette
+        // Hierarchie inkl. Kommentaren auf jeder Ebene. Ohne with(...)
+        // wirft preventLazyLoading (Phase 2 / C.1) Exceptions auf
+        // entry->comments, item->text->comments etc.
+        $data = Project::with([
+            'chapters.comments',
+            'chapters.entries.comments',
+            'chapters.entries.mediaContent.comments',
+            'chapters.entries.mediaContent.text.comments',
+            'chapters.entries.mediaContent.audiovisual.comments',
+            'chapters.entries.mediaContent.gallery.comments',
+            'chapters.entries.mediaContent.gallery.images.comments',
+        ])->findOrFail($project->id);
         $listGrantedUsers = $this->getUsersForThisProject($project->id);
 
         $links = session()->has('links') ? session('links') : [];
