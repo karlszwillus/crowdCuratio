@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -34,7 +35,7 @@ class CreateTextsTable extends Migration
         Schema::create(
             'texts',
             function (Blueprint $table) {
-            $table->engine = 'MyISAM';
+                $table->engine = 'MyISAM';
                 $table->id();
                 $table->text('text');
                 $table->foreignId('origin')->constrained('sources');

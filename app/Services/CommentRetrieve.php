@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,20 +19,16 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Services;
 
-
-use App\Models\Image;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 
 class CommentRetrieve
 {
     /**
      * Retrieve comments
      *
-     * @param $class
-     * @param $id
      * @return \Illuminate\Http\JsonResponse
      */
     public function getComments($class, $id)
@@ -41,7 +38,7 @@ class CommentRetrieve
         $status = [];
         $data['pathComment'] = '';
 
-        switch ($class){
+        switch ($class) {
             case 'App\Models\Project':
                 $pathReply = 'comment.project.save';
                 $data['id'] = $id;
@@ -97,11 +94,11 @@ class CommentRetrieve
                         'user' => $name,
                         'comment' => $v->comment,
                         'ownerReply' => $ownerReply,
-                        'created' => date('d.m.Y', strtotime($v->created_at))
+                        'created' => date('d.m.Y', strtotime($v->created_at)),
                     ];
                 }
             }
-            $userName = isset($value->user->name) || isset($value->user->last_name) ? $value->user->name . ' ' . $value->user->last_name : 'gelöschte Benutzer';
+            $userName = isset($value->user->name) || isset($value->user->last_name) ? $value->user->name.' '.$value->user->last_name : 'gelöschte Benutzer';
             $owner = (Auth::user()->id == $value->user_id);
             $data['comment'][] = [
                 'id' => $value->id,

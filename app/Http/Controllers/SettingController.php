@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,6 +19,7 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Http\Controllers;
 
 use App\Models\Imprint;
@@ -39,83 +41,81 @@ class SettingController extends Controller
      */
     public function index()
     {
-        $terms = !empty(TermsConditions::first()) ? TermsConditions::first() : null ;
-        $privacy = !empty(PrivacyPolicy::first()) ? PrivacyPolicy::first() : null;
-        $imprint = !empty(Imprint::first()) ? Imprint::first() : null;
-        $mail = !empty(MailSetting::first()) ? MailSetting::first() : null;
+        $terms = ! empty(TermsConditions::first()) ? TermsConditions::first() : null;
+        $privacy = ! empty(PrivacyPolicy::first()) ? PrivacyPolicy::first() : null;
+        $imprint = ! empty(Imprint::first()) ? Imprint::first() : null;
+        $mail = ! empty(MailSetting::first()) ? MailSetting::first() : null;
 
-        return view('settings.index', compact('terms', 'privacy', 'mail','imprint'));
+        return view('settings.index', compact('terms', 'privacy', 'mail', 'imprint'));
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param Request $request
      * @return Response
      */
     public function store(Request $request)
     {
-        //Store terms and conditions
-        if (isset($request->termsConditions)){
+        // Store terms and conditions
+        if (isset($request->termsConditions)) {
 
-            if(isset($request->idTerms)){
+            if (isset($request->idTerms)) {
                 $model = TermsConditions::findOrFail($request->idTerms);
                 $model->setTranslation('terms_conditions', app()->getLocale(), $request->termsConditions);
                 $model->save();
-            }else{
+            } else {
                 $model = new TermsConditions;
                 $model->setTranslation('terms_conditions', app()->getLocale(), $request->termsConditions);
                 $model->save();
             }
 
-            return redirect()->back()->with('success', __("message_add_terms_success"));
+            return redirect()->back()->with('success', __('message_add_terms_success'));
         }
 
-        //Store privacy policy
-        if (isset($request->privacyPolicy) && !is_null($request->privacyPolicy)){
+        // Store privacy policy
+        if (isset($request->privacyPolicy) && ! is_null($request->privacyPolicy)) {
 
-            if(isset($request->idPrivacy)){
+            if (isset($request->idPrivacy)) {
                 $model = PrivacyPolicy::findOrFail($request->idPrivacy);
                 $model->setTranslation('privacy_policy', app()->getLocale(), $request->privacyPolicy);
                 $model->save();
-            }else{
+            } else {
                 $model = new PrivacyPolicy;
                 $model->setTranslation('privacy_policy', app()->getLocale(), $request->privacyPolicy);
                 $model->save();
             }
 
-            return redirect()->back()->with('success', __("message_add_privacy_success"));
+            return redirect()->back()->with('success', __('message_add_privacy_success'));
         }
 
-        //Store imprint
-        if (isset($request->firstname) && !is_null($request->firstname)){
+        // Store imprint
+        if (isset($request->firstname) && ! is_null($request->firstname)) {
 
-            Imprint::updateOrCreate(['id' => $request->IdImprint],[
+            Imprint::updateOrCreate(['id' => $request->IdImprint], [
                 'name' => ['firstname' => $request->firstname, 'lastname' => $request->lastname],
                 'address' => ['address' => $request->address, 'postcode' => $request->postcode],
-                'contact' => ['phone' => $request->phone, 'fax' => $request->fax, 'email' => $request->email]
+                'contact' => ['phone' => $request->phone, 'fax' => $request->fax, 'email' => $request->email],
             ]);
 
-            return redirect()->back()->with('success', __("message_add_imprint_success"));
+            return redirect()->back()->with('success', __('message_add_imprint_success'));
         }
 
-        //Store invitation email
-        if (isset($request->invitation) && !is_null($request->invitation)){
+        // Store invitation email
+        if (isset($request->invitation) && ! is_null($request->invitation)) {
 
-            if(isset($request->IdEmail)){
+            if (isset($request->IdEmail)) {
                 $model = MailSetting::findOrFail($request->IdEmail);
                 $model->setTranslation('invitation', app()->getLocale(), $request->invitation);
                 $model->save();
-            }else{
-                $model = new MailSetting();
+            } else {
+                $model = new MailSetting;
                 $model->setTranslation('invitation', app()->getLocale(), $request->invitation);
                 $model->save();
             }
 
-            return redirect()->back()->with('success', __("message_add_invitation_success"));
+            return redirect()->back()->with('success', __('message_add_invitation_success'));
         }
 
         return redirect()->back();
     }
-
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -36,7 +37,7 @@ class CreateUsersTable extends Migration
             function (Blueprint $table) {
                 $table->id();
                 $table->string('name');
-                $table->string('email',128)->unique();
+                $table->string('email', 128)->unique();
                 $table->timestamp('email_verified_at')->nullable();
                 $table->string('password');
                 $table->rememberToken();

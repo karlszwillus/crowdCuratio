@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,6 +19,7 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
@@ -29,7 +31,6 @@ class EmailVerificationPromptController extends Controller
     /**
      * Display the email verification prompt.
      *
-     * @param \Illuminate\Http\Request $request
      * @return mixed
      */
     public function __invoke(Request $request)

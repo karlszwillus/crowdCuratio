@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -22,7 +23,7 @@ If not, see <https://www.gnu.org/licenses/>.
 return [
 
     'status' => [
-        'default' => 'Draft'
+        'default' => 'Draft',
     ],
 
     'comment' => [
@@ -30,10 +31,10 @@ return [
         '2' => 'accepted',
         '3' => 'decline',
         '4' => 'cancel',
-        '5' => 'done'
+        '5' => 'done',
     ],
 
     'mail' => [
-        'default' => 'Du erhältst diese Email, da für Dich soeben ein Account erstellt worden ist, mit dem Du Zugang zum CMS hast.'
-    ]
+        'default' => 'Du erhältst diese Email, da für Dich soeben ein Account erstellt worden ist, mit dem Du Zugang zum CMS hast.',
+    ],
 ];

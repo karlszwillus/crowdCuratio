@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,6 +19,7 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Models;
 
 use App\Traits\CommentTrait;
@@ -31,11 +33,14 @@ use Spatie\Translatable\HasTranslations;
 
 class Entry extends Model
 {
-    use HasFactory, SoftDeletes, LogsActivity, CommentTrait, HasTranslations;
+    use CommentTrait, HasFactory, HasTranslations, LogsActivity, SoftDeletes;
 
     protected static $logName = 'Entry';
+
     protected static $logFillable = true;
+
     protected static $logOnlyDirty = true;
+
     protected static $submitEmptyLogs = false;
 
     /**
@@ -44,9 +49,10 @@ class Entry extends Model
      * @var array
      */
     protected $fillable = ['chapter_id', 'name', 'subtitle', 'description', 'position'];
-    protected $dates = ['deleted_at'];
-    public $translatable = ['name', 'subtitle', 'description'];
 
+    protected $dates = ['deleted_at'];
+
+    public $translatable = ['name', 'subtitle', 'description'];
 
     /**
      * Override parent boot and Call deleting event
@@ -134,19 +140,17 @@ class Entry extends Model
         foreach ($this->mediaContent() as $media) {
             $data[] = $media;
         }
+
         return $this->mediaContent();
     }
 
     /**
      * Add language to log
-     *
-     * @param Activity $activity
      */
     public function tapActivity(Activity $activity)
     {
         $activity->properties = $activity->properties->merge([
-                                                                 'language' => Lang::getLocale(),
-                                                             ]);
+            'language' => Lang::getLocale(),
+        ]);
     }
-
 }

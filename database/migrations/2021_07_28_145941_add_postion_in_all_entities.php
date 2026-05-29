@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -31,12 +32,12 @@ class AddPostionInAllEntities extends Migration
      */
     public function up()
     {
-        //Add position into chapters table
+        // Add position into chapters table
         Schema::table('chapters', function (Blueprint $table) {
             $table->integer('position')->default(0)->after('description');
         });
 
-        //Add position into entries table
+        // Add position into entries table
         Schema::table('entries', function (Blueprint $table) {
             $table->integer('position')->default(0)->after('description');
         });

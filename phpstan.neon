@@ -1,0 +1,39 @@
+includes:
+    # nunomaduro/larastan v1.x — Laravel-8-kompatible Linie. Larastan v2+
+    # verlangt Laravel 9+ und wandert mit dem Framework-Upgrade in Phase 3
+    # auf seinen aktuellen Stand. Extension-Pfad ist in v1 und v2 gleich.
+    - ./vendor/nunomaduro/larastan/extension.neon
+    # Baseline für gewachsenen Bestandscode. Wird einmalig mit
+    # `./vendor/bin/sail phpstan analyse --generate-baseline` erzeugt
+    # und mit committet. Neue Verstöße erscheinen ab dann im Report,
+    # gealterte bleiben ohne Lärm im Backlog.
+    - phpstan-baseline.neon
+
+parameters:
+    level: 5
+
+    paths:
+        - app/
+        - database/seeders/
+        - database/migrations/
+        - routes/
+        - tests/
+
+    # Migration-Closures haben für Larastan keinen Mehrwert (Schema-Builder
+    # ist dynamisch). Auch das `bootstrap`-Verzeichnis bleibt außen vor —
+    # da liegt Laravel-Boilerplate.
+    excludePaths:
+        - bootstrap/cache/
+        - storage/
+
+    # Eloquent-Modelle in crowdCuratio nutzen Traits ohne strikte PHPDoc-
+    # Annotationen. Auf Level 5 hilft dieser Schalter, Eloquent-typische
+    # `unknown method`-Fehlalarme zu unterdrücken. Phase-3-Ziel: Level 6
+    # mit annotierten Modellen.
+    checkModelProperties: false
+    checkPhpDocMissingReturn: false
+
+    # Eager-Loading-Verstöße werden in Block C über
+    # `Model::shouldBeStrict()` als Test-Fail sichtbar. Larastan muss
+    # sie hier nicht zusätzlich melden.
+    reportUnmatchedIgnoredErrors: false

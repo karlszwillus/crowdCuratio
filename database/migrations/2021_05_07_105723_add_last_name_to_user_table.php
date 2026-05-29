@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -44,7 +45,7 @@ class AddLastNameToUserTable extends Migration
     public function down()
     {
         Schema::table('users', function (Blueprint $table) {
-           $table->dropColumn('last_name');
+            $table->dropColumn('last_name');
         });
     }
 }

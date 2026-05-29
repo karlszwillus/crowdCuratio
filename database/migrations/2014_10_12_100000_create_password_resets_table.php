@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -34,7 +35,7 @@ class CreatePasswordResetsTable extends Migration
         Schema::create(
             'password_resets',
             function (Blueprint $table) {
-                $table->string('email',128)->index();
+                $table->string('email', 128)->index();
                 $table->string('token');
                 $table->timestamp('created_at')->nullable();
             }

@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,6 +19,7 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -34,7 +36,9 @@ class PermissionDescription extends Model
      * @var array
      */
     protected $fillable = ['description'];
+
     public $translatable = ['description'];
+
     protected $table = 'permission_descriptions';
 
     /**
@@ -42,7 +46,8 @@ class PermissionDescription extends Model
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function permission(){
+    public function permission()
+    {
         return $this->belongsTo(Permission::class);
     }
 

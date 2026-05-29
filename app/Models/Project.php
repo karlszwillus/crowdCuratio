@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,6 +19,7 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Models;
 
 use App\Traits\CommentTrait;
@@ -28,17 +30,20 @@ use Illuminate\Support\Facades\Lang;
 use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Permission\Traits\HasPermissions;
-use Spatie\Permission\Traits\HasRoles;
 use Spatie\Translatable\HasTranslations;
 
 class Project extends Model
 {
-    use HasFactory, SoftDeletes, LogsActivity, CommentTrait,HasPermissions, HasTranslations;
+    use CommentTrait, HasFactory, HasPermissions, HasTranslations,LogsActivity, SoftDeletes;
 
     protected static $logName = 'Project';
+
     protected static $logFillable = true;
+
     protected static $logOnlyDirty = true;
+
     protected $guard_name = 'web';
+
     protected static $submitEmptyLogs = false;
 
     /**
@@ -46,12 +51,12 @@ class Project extends Model
      *
      * @var array
      */
-    protected $fillable = ['name', 'user_id', 'logo', 'imprint', 'terms', 'status','description'];
-    public $translatable = ['name','imprint','terms','description'];
+    protected $fillable = ['name', 'user_id', 'logo', 'imprint', 'terms', 'status', 'description'];
+
+    public $translatable = ['name', 'imprint', 'terms', 'description'];
     /*
      * Get all of the chapters for the project
      */
-
 
     public function chapters()
     {
@@ -89,8 +94,9 @@ class Project extends Model
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
-    public function permittedUsers(){
-        return $this->hasMany(ModelHasPermission::class,'project_id');
+    public function permittedUsers()
+    {
+        return $this->hasMany(ModelHasPermission::class, 'project_id');
     }
 
     /**
@@ -98,19 +104,18 @@ class Project extends Model
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
-    public function grantUserRights(){
+    public function grantUserRights()
+    {
         return $this->hasMany(UserHasPermission::class);
     }
 
     /**
      * Add language to log
-     *
-     * @param Activity $activity
      */
     public function tapActivity(Activity $activity)
     {
         $activity->properties = $activity->properties->merge([
-                                                                 'language' => Lang::getLocale(),
-                                                             ]);
+            'language' => Lang::getLocale(),
+        ]);
     }
 }

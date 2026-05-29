@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,6 +19,7 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Traits;
 
 use Illuminate\Http\UploadedFile;
@@ -27,7 +29,7 @@ trait UploadTrait
 {
     public function uploadOne(UploadedFile $uploadedFile, $folder = null, $disk = 'public', $filename = null)
     {
-        $name = !is_null($filename) ? $filename : Str::random(25);
+        $name = ! is_null($filename) ? $filename : Str::random(25);
 
         $file = $uploadedFile->storeAs($folder, $name, $disk);
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022, 2026 - berlinHistory e.V.
@@ -18,6 +19,7 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Providers;
 
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
@@ -32,7 +34,7 @@ class AuthServiceProvider extends ServiceProvider
     protected $policies = [
         \App\Models\Project::class => \App\Policies\ProjectPolicy::class,
         \App\Models\Chapter::class => \App\Policies\ChapterPolicy::class,
-        \App\Models\Entry::class   => \App\Policies\EntryPolicy::class,
+        \App\Models\Entry::class => \App\Policies\EntryPolicy::class,
         // Text, Image, Gallery, Comment kommen in Phase 4 zusammen mit
         // ADR-0012 (media_content vs. direct entry binding) und der
         // CommentTrait-Auflösung (F-ARCH-002).

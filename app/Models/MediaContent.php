@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,6 +19,7 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Models;
 
 use App\Traits\CommentTrait;
@@ -30,12 +32,16 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class MediaContent extends Model
 {
-    use HasFactory, SoftDeletes,CommentTrait,LogsActivity;
+    use CommentTrait, HasFactory,LogsActivity,SoftDeletes;
 
     protected static $logName = 'MediaContent';
+
     protected static $logFillable = true;
+
     protected static $logOnlyDirty = true;
+
     public $timestamps = false;
+
     protected $table = 'media_content';
 
     /**
@@ -43,7 +49,7 @@ class MediaContent extends Model
      *
      * @var array
      */
-    protected $fillable = ['media_content_id', 'media_contentable_id', 'media_contentable_type','position'];
+    protected $fillable = ['media_content_id', 'media_contentable_id', 'media_contentable_type', 'position'];
 
     /**
      * Override parent boot and Call deleting event
@@ -86,8 +92,9 @@ class MediaContent extends Model
      *
      * @return \Illuminate\Database\Eloquent\Relations\MorphToMany
      */
-    public function image(){
-        return $this->belongsTo(Image::class, 'media_content_id','id');
+    public function image()
+    {
+        return $this->belongsTo(Image::class, 'media_content_id', 'id');
     }
 
     /**
@@ -95,8 +102,9 @@ class MediaContent extends Model
      *
      * @return \Illuminate\Database\Eloquent\Relations\MorphToMany
      */
-    public function text(){
-        return $this->belongsTo(Text::class, 'media_content_id','id');
+    public function text()
+    {
+        return $this->belongsTo(Text::class, 'media_content_id', 'id');
     }
 
     /**
@@ -104,7 +112,8 @@ class MediaContent extends Model
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
-    public function entry(){
+    public function entry()
+    {
         return $this->belongsToMany(Entry::class, 'media_content', 'id', 'media_contentable_id');
     }
 
@@ -123,8 +132,9 @@ class MediaContent extends Model
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function gallery(){
-        return $this->belongsTo(Gallery::class,'media_content_id', 'id');
+    public function gallery()
+    {
+        return $this->belongsTo(Gallery::class, 'media_content_id', 'id');
     }
 
     /**
@@ -132,19 +142,18 @@ class MediaContent extends Model
      *
      * @return \Illuminate\Database\Eloquent\Relations\MorphToMany
      */
-    public function audiovisual(){
-        return $this->belongsTo(Audiovisual::class, 'media_content_id','id');
+    public function audiovisual()
+    {
+        return $this->belongsTo(Audiovisual::class, 'media_content_id', 'id');
     }
 
     /**
      * Add language to log
-     *
-     * @param Activity $activity
      */
     public function tapActivity(Activity $activity)
     {
         $activity->properties = $activity->properties->merge([
-                                                                 'language' => Lang::getLocale(),
-                                                             ]);
+            'language' => Lang::getLocale(),
+        ]);
     }
 }

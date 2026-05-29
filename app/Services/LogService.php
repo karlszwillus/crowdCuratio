@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,8 +19,8 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
-namespace App\Services;
 
+namespace App\Services;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -27,12 +28,13 @@ use Spatie\Activitylog\Models\Activity;
 
 class LogService
 {
-
     protected $model;
+
     protected $table;
+
     protected $property;
 
-    function __construct($model)
+    public function __construct($model)
     {
         switch ($model) {
             case 'text':
@@ -64,7 +66,6 @@ class LogService
     }
 
     /**
-     * @param $id
      * @return array
      */
     public function history($id)
@@ -83,8 +84,8 @@ class LogService
                 $lastName = isset($value->causer->last_name) ? $value->causer->last_name : null;
                 $logs[] = [
                     'id' => $value->id,
-                    'userName' => $firstName . ' ' . $lastName,
-                    'created_at' => isset($value->created_at) ? $value->created_at : null
+                    'userName' => $firstName.' '.$lastName,
+                    'created_at' => isset($value->created_at) ? $value->created_at : null,
                 ];
             }
         }
@@ -95,7 +96,6 @@ class LogService
     /**
      * Get logs text
      *
-     * @param $id
      * @return mixed
      */
     public function textLog($id)
@@ -117,10 +117,10 @@ class LogService
 
                     $firstName = isset($value->causer->name) ? $value->causer->name : null;
                     $lastName = isset($value->causer->last_name) ? $value->causer->last_name : null;
-                    $value->userName = $firstName . ' ' . $lastName;
+                    $value->userName = $firstName.' '.$lastName;
                     $value->highlight = $highlight['new'];
                     $value->old = $highlight['old'];
-                    $changes[]['userName'] = $firstName . ' ' . $lastName;
+                    $changes[]['userName'] = $firstName.' '.$lastName;
                     $changes[]['highlight'] = $highlight['new'];
                     $changes[]['old'] = $highlight['old'];
                     $changes[]['subjectId'] = $value->subject_id;
@@ -137,9 +137,6 @@ class LogService
     /**
      * Difference between text
      *
-     * @param $old
-     * @param $old
-     * @param $new
      * @return string[]
      */
     public function HighlightTextDifference($old, $new)
@@ -157,13 +154,13 @@ class LogService
 
         $new = "$start<span style='background-color:#ccffcc'>$new_diff</span>$end";
         $old = "$start<del style='background-color:#ffcccc'>$old_diff</del>$end";
-        return array("old" => $old, "new" => $new);
+
+        return ['old' => $old, 'new' => $new];
     }
 
     /**
      * Get parent text
      *
-     * @param $id
      * @return Collection
      */
     public function getParentText($id)
@@ -173,16 +170,16 @@ class LogService
                 return DB::table($this->table)
                     ->join('chapters', 'chapters.id', '=', 'entries.chapter_id')
                     ->select('chapters.name as chapter_name', 'entries.name as entry_name')
-                    ->where($this->table . '.id', '=', $id)
+                    ->where($this->table.'.id', '=', $id)
                     ->get();
             case 'images':
             case 'texts':
                 return DB::table($this->table)
-                    ->join('media_content', $this->table . '.id', '=', 'media_content.media_content_id')
+                    ->join('media_content', $this->table.'.id', '=', 'media_content.media_content_id')
                     ->join('entries', 'entries.id', '=', 'media_content.media_contentable_id')
                     ->join('chapters', 'chapters.id', '=', 'entries.chapter_id')
                     ->select('chapters.name as chapter_name', 'entries.name as entry_name')
-                    ->where($this->table . '.id', '=', $id)
+                    ->where($this->table.'.id', '=', $id)
                     ->where('media_content.media_contentable_type', '=', $this->model)
                     ->get();
         }

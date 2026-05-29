@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,6 +19,7 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Http\Controllers\Auth;
 
 use Spatie\WelcomeNotification\WelcomeController as BaseWelcomeController;
@@ -26,7 +28,6 @@ use Symfony\Component\HttpFoundation\Response;
 class MyWelcomeController extends BaseWelcomeController
 {
     public function sendPasswordSavedResponse(): Response
-
     {
         return redirect()->route('dashboard');
     }
@@ -38,5 +39,4 @@ class MyWelcomeController extends BaseWelcomeController
             'policy' => 'required',
         ];
     }
-
 }

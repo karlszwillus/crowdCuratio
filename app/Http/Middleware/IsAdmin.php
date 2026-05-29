@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,6 +19,7 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Http\Middleware;
 
 use Closure;
@@ -28,8 +30,7 @@ class IsAdmin
     /**
      * Handle an incoming request.
      *
-     * @param Request $request
-     * @param Closure $next
+     * @param  Request  $request
      * @return mixed
      */
     public function handle($request, Closure $next)
@@ -39,6 +40,7 @@ class IsAdmin
         if ($user && $user->isAdmin()) {
             return $next($request);
         }
+
         return redirect()->route('dashboard');
     }
 }

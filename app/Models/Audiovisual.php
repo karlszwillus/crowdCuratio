@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,6 +19,7 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Models;
 
 use App\Traits\CommentTrait;
@@ -32,10 +34,12 @@ use Spatie\Translatable\HasTranslations;
 
 class Audiovisual extends Model
 {
-    use HasFactory, SoftDeletes, LogsActivity, CommentTrait, HasTranslations;
+    use CommentTrait, HasFactory, HasTranslations, LogsActivity, SoftDeletes;
 
     protected static $logName = 'MediaContent';
+
     protected static $logFillable = true;
+
     protected static $logOnlyDirty = true;
 
     /**
@@ -43,7 +47,7 @@ class Audiovisual extends Model
      *
      * @var array
      */
-    protected $fillable = ['link', 'source', 'copyright','type','is_translated'];
+    protected $fillable = ['link', 'source', 'copyright', 'type', 'is_translated'];
 
     public $translatable = ['link', 'source', 'copyright'];
 
@@ -59,13 +63,11 @@ class Audiovisual extends Model
 
     /**
      * Add language to log
-     *
-     * @param Activity $activity
      */
     public function tapActivity(Activity $activity)
     {
         $activity->properties = $activity->properties->merge([
-                                                                 'language' => Lang::getLocale(),
-                                                             ]);
+            'language' => Lang::getLocale(),
+        ]);
     }
 }

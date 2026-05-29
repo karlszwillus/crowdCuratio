@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2026 - berlinHistory e.V.
@@ -47,8 +48,8 @@ class DefaultForUsersLastName extends Migration
         }
 
         DB::statement(
-            "ALTER TABLE `users` "
-            . "MODIFY COLUMN `last_name` VARCHAR(255) NOT NULL DEFAULT ''"
+            'ALTER TABLE `users` '
+            ."MODIFY COLUMN `last_name` VARCHAR(255) NOT NULL DEFAULT ''"
         );
     }
 
@@ -60,7 +61,7 @@ class DefaultForUsersLastName extends Migration
 
         DB::statement(
             'ALTER TABLE `users` '
-            . 'MODIFY COLUMN `last_name` VARCHAR(255) NOT NULL'
+            .'MODIFY COLUMN `last_name` VARCHAR(255) NOT NULL'
         );
     }
 }

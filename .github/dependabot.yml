@@ -1,0 +1,87 @@
+# Dependabot-Konfiguration für crowdCuratio.
+#
+# Wöchentliche Scans über alle drei Ökosysteme — composer, npm und
+# GitHub Actions. Updates landen als PRs mit Label dependencies; der
+# CI-Workflow (.github/workflows/ci.yml) läuft auf jedem dieser PRs
+# automatisch.
+#
+# Strategie:
+# - Major-Bumps werden ignoriert, bis Phase 3 (Framework-Upgrade)
+#   bewusst durchläuft. Sonst zerlegt Dependabot uns das Lock-File
+#   für Spatie/Laravel-Pakete, bevor wir bereit sind.
+# - Minor/Patch laufen automatisch durch.
+# - GitHub Actions-Versionen bleiben gepinnt (Best Practice für Security).
+
+version: 2
+
+updates:
+  - package-ecosystem: "composer"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "07:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "composer"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    ignore:
+      - dependency-name: "laravel/framework"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "spatie/laravel-permission"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "spatie/laravel-activitylog"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "spatie/laravel-translatable"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "spatie/laravel-welcome-notification"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "laravelcollective/html"
+        # collective wird in Phase 3 abgelöst — keine Bumps hier.
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "07:00"
+      timezone: "Europe/Berlin"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "javascript"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    ignore:
+      - dependency-name: "alpinejs"
+        # alpine 2 → 3 ist Template-Refactor (Phase 5).
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "axios"
+        # axios 0.x → 1.x ist Frontend-Refactor (Phase 5).
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "tailwindcss"
+        # Tailwind 2 → 3 läuft mit Mix → Vite (Phase 5).
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "laravel-mix"
+        # Mix wird in Phase 5 durch Vite abgelöst — keine Bumps.
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "07:00"
+      timezone: "Europe/Berlin"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore(ci)"
+      include: "scope"

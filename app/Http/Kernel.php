@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,6 +19,7 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Http;
 
 use App\Http\Middleware\IsAdmin;
@@ -84,7 +86,7 @@ class Kernel extends HttpKernel
         'role' => \Spatie\Permission\Middlewares\RoleMiddleware::class,
         'permission' => \Spatie\Permission\Middlewares\PermissionMiddleware::class,
         'role_or_permission' => \Spatie\Permission\Middlewares\RoleOrPermissionMiddleware::class,
-        //'register' => \App\Http\Controllers\Auth\RegisteredUserController::class,
+        // 'register' => \App\Http\Controllers\Auth\RegisteredUserController::class,
         'admin' => IsAdmin::class,
     ];
 }

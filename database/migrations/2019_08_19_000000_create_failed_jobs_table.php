@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -35,7 +36,7 @@ class CreateFailedJobsTable extends Migration
             'failed_jobs',
             function (Blueprint $table) {
                 $table->id();
-                $table->string('uuid',128)->unique();
+                $table->string('uuid', 128)->unique();
                 $table->text('connection');
                 $table->text('queue');
                 $table->longText('payload');

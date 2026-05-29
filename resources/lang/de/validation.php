@@ -151,7 +151,7 @@ return [
 
     'attributes' => [
         'name' => 'Titel',
-        'imprint' => 'Impressum'
+        'imprint' => 'Impressum',
     ],
 
 ];

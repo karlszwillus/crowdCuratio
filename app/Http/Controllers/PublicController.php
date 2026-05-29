@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,22 +19,21 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Http\Controllers;
 
 use App\Models\PrivacyPolicy;
 use App\Models\TermsConditions;
-use Illuminate\Http\Request;
 
 class PublicController extends Controller
 {
-
     /**
-     *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function projectPolicy(){
+    public function projectPolicy()
+    {
 
-        $privacy = PrivacyPolicy::where('active',1)->first();
+        $privacy = PrivacyPolicy::where('active', 1)->first();
         $data = $privacy->privacy_policy;
 
         return response()->json($data);
@@ -42,10 +42,11 @@ class PublicController extends Controller
     /**
      * @return \Illuminate\Http\JsonResponse
      */
-    public function projectTerms(){
-        $terms = TermsConditions::where('active',1)->first();
+    public function projectTerms()
+    {
+        $terms = TermsConditions::where('active', 1)->first();
         $data = $terms->terms_conditions;
 
-        return  response()->json($data);
+        return response()->json($data);
     }
 }

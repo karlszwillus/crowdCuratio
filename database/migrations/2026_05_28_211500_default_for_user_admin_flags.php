@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2026 - berlinHistory e.V.
@@ -51,8 +52,8 @@ class DefaultForUserAdminFlags extends Migration
 
         DB::statement(
             'ALTER TABLE `users` '
-            . 'MODIFY COLUMN `is_admin` TINYINT(1) NOT NULL DEFAULT 0, '
-            . 'MODIFY COLUMN `create_project` TINYINT(1) NOT NULL DEFAULT 0'
+            .'MODIFY COLUMN `is_admin` TINYINT(1) NOT NULL DEFAULT 0, '
+            .'MODIFY COLUMN `create_project` TINYINT(1) NOT NULL DEFAULT 0'
         );
     }
 
@@ -67,8 +68,8 @@ class DefaultForUserAdminFlags extends Migration
         // strict-incompatible war.
         DB::statement(
             'ALTER TABLE `users` '
-            . 'MODIFY COLUMN `is_admin` TINYINT(1) NOT NULL, '
-            . 'MODIFY COLUMN `create_project` TINYINT(1) NOT NULL'
+            .'MODIFY COLUMN `is_admin` TINYINT(1) NOT NULL, '
+            .'MODIFY COLUMN `create_project` TINYINT(1) NOT NULL'
         );
     }
 }

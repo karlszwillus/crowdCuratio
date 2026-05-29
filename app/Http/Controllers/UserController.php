@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,6 +19,7 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Http\Controllers;
 
 use App\Models\MailSetting;
@@ -34,7 +36,6 @@ use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
-
     public function __construct()
     {
         $this->middleware('auth');
@@ -71,7 +72,6 @@ class UserController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param Request $request
      * @return Response
      */
     public function store(Request $request)
@@ -82,7 +82,7 @@ class UserController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param int $id
+     * @param  int  $id
      * @return Response
      */
     public function show($id)
@@ -93,7 +93,7 @@ class UserController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param int $id
+     * @param  int  $id
      * @return Response
      */
     public function edit($id)
@@ -107,8 +107,6 @@ class UserController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param Request $request
-     * @param User $user
      * @return RedirectResponse
      */
     public function update(Request $request, User $user)
@@ -120,10 +118,10 @@ class UserController extends Controller
                         'required',
 
                         function ($attribute, $value, $fail) use ($user) {
-                            if (!Hash::check($value, $user->password)) {
+                            if (! Hash::check($value, $user->password)) {
                                 $fail('__("message_old_password_incorrect")');
                             }
-                        }
+                        },
                     ],
                     'new_password' => 'required|min:8',
                     'confirm_password' => 'required|same:new_password',
@@ -146,7 +144,7 @@ class UserController extends Controller
                 $user->syncRoles($request->input('roles'));
             }
 
-            return redirect()->back()->with('success', __("message_edit_profile_success"));
+            return redirect()->back()->with('success', __('message_edit_profile_success'));
         } else {
             $request->validate(
                 [
@@ -166,14 +164,13 @@ class UserController extends Controller
                 $user->syncRoles($request->input('roles'));
             }
 
-            return redirect()->back()->with('success', __("message_edit_user_success"));
+            return redirect()->back()->with('success', __('message_edit_user_success'));
         }
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param User $user
      * @return RedirectResponse
      */
     public function destroy(User $user)
@@ -181,7 +178,7 @@ class UserController extends Controller
         $user->delete();
 
         return redirect()->route('users.index')
-            ->with('success', __("message_delete_user_success"));
+            ->with('success', __('message_delete_user_success'));
     }
 
     /**
@@ -199,26 +196,25 @@ class UserController extends Controller
     /**
      * Resend invitation
      *
-     * @param $id
      * @return $this
      */
-    public function resendInvitation($id){
+    public function resendInvitation($id)
+    {
 
-        $mail = !empty(MailSetting::first()) ? MailSetting::first() : null;
+        $mail = ! empty(MailSetting::first()) ? MailSetting::first() : null;
 
         $expiresAt = now()->addDay(3);
-        $invitation = (isset($mail['invitation']) && !empty(strip_tags($mail['invitation']))) ? strip_tags(
+        $invitation = (isset($mail['invitation']) && ! empty(strip_tags($mail['invitation']))) ? strip_tags(
             $mail['invitation']
         ) : config('project.mail.default');
 
-         User::where('id',$id)
-        ->update(['welcome_valid_until' => $expiresAt,
-                     'updated_at' => now()]);
+        User::where('id', $id)
+            ->update(['welcome_valid_until' => $expiresAt,
+                'updated_at' => now()]);
 
         $user = User::findOrFail($id);
         $user->sendWelcomeNotification($expiresAt, $user->last_name, $invitation);
 
-        return redirect()->back()->with('success', __("invitation_resent"));
+        return redirect()->back()->with('success', __('invitation_resent'));
     }
-
 }

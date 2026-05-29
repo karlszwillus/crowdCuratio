@@ -1,0 +1,228 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# Cancelt einen laufenden Workflow, wenn ein neuer Push auf den
+# gleichen Branch kommt. Spart Runner-Zeit auf aktiven Feature-Branches.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Pest (PHP 8.1, SQLite)
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.1
+        uses: shivammathur/setup-php@v2
+        with:
+          # 8.1 entspricht dem Container-PHP aus docker/8.1/Dockerfile
+          # (Phase 1, Commit adcb538). 8.4 ist Phase-3-Ziel — bis dahin
+          # spiegelt CI die Produktiv-Version.
+          php-version: '8.1'
+          extensions: mbstring, dom, fileinfo, sqlite, pdo_sqlite, intl, zip, bcmath, gd
+          coverage: none
+          tools: composer:v2
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php-8.1-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-8.1-composer-
+
+      - name: Install composer dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Run Pest
+        # SQLite-In-Memory wird hier zur Laufzeit gesetzt, nicht in
+        # phpunit.xml — so bleibt Karls lokaler Pest-Lauf (gegen die
+        # Sail-MySQL) unverändert. NF-DB-103 (drei MySQL-only-Migrations)
+        # ist hier abgedeckt: die Migrations prüfen selbst auf den
+        # Driver und werden auf SQLite zum No-Op.
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+        run: ./vendor/bin/pest --colors=always
+
+  composer-audit:
+    name: composer audit
+    runs-on: ubuntu-22.04
+    # Phase-2-Strategie: Audit läuft, soll aber den Build (noch) nicht
+    # brechen. Ergebnisse fließen in audit-baseline.txt, harter Fail
+    # wird in Block G aktiviert. Die meisten heutigen CVEs sind aus
+    # dem Laravel-8-Umfeld und gehen mit dem Upgrade in Phase 3 weg.
+    continue-on-error: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.1
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          tools: composer:v2
+          coverage: none
+
+      - name: Composer audit (production deps only)
+        # || true: erzwingt Exit-Code 0, damit der Job in der UI grün
+        # bleibt. continue-on-error würde den Job weiterhin als "failed"
+        # markieren, nur das Gesamt-Workflow-Ergebnis grün lassen — UI-
+        # Verwirrung. Findings stehen weiter sichtbar im Step-Log.
+        run: composer audit --no-dev --locked --format=plain || true
+
+  npm-audit:
+    name: npm audit
+    runs-on: ubuntu-22.04
+    # Gleiche Soft-Fail-Strategie wie composer-audit. Hinweis: bei
+    # crowdCuratio liegen axios und alpinejs in devDependencies, weil
+    # Laravel-Mix sie zur Buildzeit konsumiert — `--omit=dev` blendet
+    # die also aus. Das volle CVE-Bild kommt mit Phase 5 (Mix → Vite,
+    # axios/alpine-Upgrade).
+    continue-on-error: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: npm audit (production deps, high+ severity)
+        # || true: gleiche Strategie wie composer-audit. Findings im Log,
+        # Job-Indikator grün, Workflow-Gesamtergebnis nicht belastet.
+        run: npm audit --omit=dev --audit-level=high || true
+
+  larastan:
+    name: Larastan (Level 5)
+    runs-on: ubuntu-22.04
+    continue-on-error: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.1
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          extensions: mbstring, dom, fileinfo, intl, zip, bcmath, gd
+          coverage: none
+          tools: composer:v2
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php-8.1-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-8.1-composer-
+
+      - name: Install composer dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Run Larastan
+        # --memory-limit=2G ist für Laravel-Projekte mit vielen Traits
+        # eine empfohlene Schmerz­grenze (Larastan-Doku).
+        run: ./vendor/bin/phpstan analyse --memory-limit=2G --no-progress
+
+  pint:
+    name: Pint (Laravel preset)
+    runs-on: ubuntu-22.04
+    continue-on-error: false
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.1
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          coverage: none
+          tools: composer:v2
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php-8.1-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-8.1-composer-
+
+      - name: Install composer dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Run Pint (check mode, diff)
+        # --test bricht bei Verstößen ab, statt zu fixen.
+        # --diff zeigt im CI-Log konkret, was geändert würde.
+        run: ./vendor/bin/pint --test
+
+  changelog-check:
+    name: CHANGELOG diff
+    runs-on: ubuntu-22.04
+    # Läuft nur auf PRs (push auf main hat keine PR-Labels und
+    # ist eh Merge-Resultat). Aktive PRs sollen CHANGELOG.md
+    # mit-berühren; Ausnahmen über Label `skip-changelog`
+    # (Dependabot-PRs oder reine CI/Pint-Sweeps).
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout (with merge base)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Skip if label 'skip-changelog' is set
+        id: skip
+        run: |
+          labels='${{ toJson(github.event.pull_request.labels) }}'
+          if echo "$labels" | grep -q '"skip-changelog"'; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "PR has skip-changelog label — CHANGELOG check übersprungen."
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Verify CHANGELOG.md was touched
+        if: steps.skip.outputs.skip == 'false'
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+
+          if git diff --name-only "$BASE_SHA" "$HEAD_SHA" | grep -qx 'CHANGELOG.md'; then
+            echo "CHANGELOG.md im PR-Diff — OK."
+          else
+            echo "::error::PR berührt CHANGELOG.md nicht. Trage die Änderung in [Unreleased] ein oder setze das Label 'skip-changelog'."
+            exit 1
+          fi

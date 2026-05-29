@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,6 +19,7 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Http\Middleware;
 
 use Closure;
@@ -29,13 +31,12 @@ class Language
 {
     public function handle($request, Closure $next)
     {
-        if (Session::has('applocale') AND array_key_exists(Session::get('applocale'), Config::get('languages'))) {
+        if (Session::has('applocale') and array_key_exists(Session::get('applocale'), Config::get('languages'))) {
             App::setLocale(Session::get('applocale'));
-        }
-        else { // This is optional as Laravel will automatically set the fallback language if there is none specified
+        } else { // This is optional as Laravel will automatically set the fallback language if there is none specified
             App::setLocale(Config::get('app.fallback_locale'));
         }
+
         return $next($request);
     }
-
 }

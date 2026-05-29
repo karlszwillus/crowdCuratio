@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,11 +19,11 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Http\Controllers;
+
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Session;
-
-use Illuminate\Http\Request;
 
 class LanguageController extends Controller
 {
@@ -31,6 +32,7 @@ class LanguageController extends Controller
         if (array_key_exists($lang, config('languages'))) {
             Session::put('applocale', $lang);
         }
+
         return Redirect::back();
     }
 }

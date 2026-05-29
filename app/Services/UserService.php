@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,20 +19,17 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Services;
 
-
-use App\Models\Permission;
 use App\Models\UserHasPermission;
 use Illuminate\Support\Facades\Auth;
 
 class UserService
 {
-
     /**
      * Granted user's permissions list
      *
-     * @param $id
      * @return array[]
      */
     public function getAllUsers($id)
@@ -43,17 +41,16 @@ class UserService
          * 4 = delete
          * 5 = publish
          * 6 = comment
-         *
          */
         $userDefaultPermissions = Auth::user()->getAllPermissions()->pluck('name')->toArray();
 
         $userCurrentPermissions = UserHasPermission::where('project_id', $id)
-            ->join('permissions','permissions.id','=','user_has_permissions.permission_id')
+            ->join('permissions', 'permissions.id', '=', 'user_has_permissions.permission_id')
             ->where('user_id', Auth::user()->id)->pluck('permissions.name')->toArray();
 
-        if(count($userCurrentPermissions) > 0){
+        if (count($userCurrentPermissions) > 0) {
             return $userCurrentPermissions;
-        }else{
+        } else {
             return $userDefaultPermissions;
         }
 

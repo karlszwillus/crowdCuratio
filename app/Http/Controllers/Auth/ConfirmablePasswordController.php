@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,6 +19,7 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
@@ -31,7 +33,6 @@ class ConfirmablePasswordController extends Controller
     /**
      * Show the confirm password view.
      *
-     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\View\View
      */
     public function show(Request $request)
@@ -42,12 +43,11 @@ class ConfirmablePasswordController extends Controller
     /**
      * Confirm the user's password.
      *
-     * @param \Illuminate\Http\Request $request
      * @return mixed
      */
     public function store(Request $request)
     {
-        if (!Auth::guard('web')->validate(
+        if (! Auth::guard('web')->validate(
             [
                 'email' => $request->user()->email,
                 'password' => $request->password,

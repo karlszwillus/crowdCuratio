@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,11 +19,11 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 class UserHasPermission extends Model
@@ -30,8 +31,11 @@ class UserHasPermission extends Model
     use HasFactory,LogsActivity;
 
     protected static $logName = 'project_permission';
+
     protected static $logFillable = true;
+
     protected static $logOnlyDirty = true;
+
     protected static $submitEmptyLogs = false;
 
     /**

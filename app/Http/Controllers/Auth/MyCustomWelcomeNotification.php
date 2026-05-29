@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,6 +19,7 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Http\Controllers\Auth;
 
 use Carbon\CarbonInterface;
@@ -27,7 +29,6 @@ use Spatie\WelcomeNotification\WelcomeNotification;
 
 class MyCustomWelcomeNotification extends WelcomeNotification
 {
-
     /**
      * @var string
      */
@@ -48,12 +49,11 @@ class MyCustomWelcomeNotification extends WelcomeNotification
 
     public function buildWelcomeNotificationMessage(): MailMessage
     {
-        if($this->settingsContent == '')
-        {
+        if ($this->settingsContent == '') {
             $this->settingsContent = config('project.mail.default');
         }
 
-        return (new MailMessage())
+        return (new MailMessage)
             ->subject('Willkommen im Crowd Curatio')
             ->line($this->settingsContent)
             ->action(Lang::get('Set initial password'), $this->showWelcomeFormUrl)

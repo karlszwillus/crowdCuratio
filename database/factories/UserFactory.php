@@ -1,7 +1,8 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
-Copyright (C)2022 - berlinHistory e.V.
+Copyright (C)2022, 2026 - berlinHistory e.V.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -41,12 +42,22 @@ class UserFactory extends Factory
      */
     public function definition()
     {
+        // Die NOT-NULL-Felder last_name / is_admin / create_project
+        // bekommen ihre Defaults auf MySQL über die Phase-1-Migrations
+        // (default_for_users_last_name, default_for_user_admin_flags).
+        // Auf SQLite (CI-Pest-Pfad) sind diese Migrations No-Op
+        // (NF-DB-103), deshalb müssen die Werte hier explizit gesetzt
+        // werden — sonst bricht jedes User::factory()->create()
+        // mit einer NOT NULL constraint violation.
         return [
             'name' => $this->faker->name,
+            'last_name' => $this->faker->lastName,
             'email' => $this->faker->unique()->safeEmail,
             'email_verified_at' => now(),
             'password' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
             'remember_token' => Str::random(10),
+            'is_admin' => 0,
+            'create_project' => 0,
         ];
     }
 

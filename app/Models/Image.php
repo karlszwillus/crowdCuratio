@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,6 +19,7 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Models;
 
 use App\Traits\CommentTrait;
@@ -31,11 +33,14 @@ use Spatie\Translatable\HasTranslations;
 
 class Image extends Model
 {
-    use HasFactory, SoftDeletes, LogsActivity, CommentTrait, HasTranslations;
+    use CommentTrait, HasFactory, HasTranslations, LogsActivity, SoftDeletes;
 
     protected static $logName = 'Image';
+
     protected static $logFillable = true;
+
     protected static $logOnlyDirty = true;
+
     protected static $submitEmptyLogs = false;
 
     /**
@@ -44,8 +49,8 @@ class Image extends Model
      * @var array
      */
     protected $fillable = ['gallery_id', 'image', 'origin', 'copyright', 'url', 'alt', 'position'];
-    public $translatable = ['alt'];
 
+    public $translatable = ['alt'];
 
     /**
      * Get image origin
@@ -87,11 +92,13 @@ class Image extends Model
         return $this->morphMany(MediaContent::class, 'media');
     }
 
-    public function entry(){
-        return $this->belongsTo(Entry::class, 'media_contentable_id','id');
+    public function entry()
+    {
+        return $this->belongsTo(Entry::class, 'media_contentable_id', 'id');
     }
 
-    public function parentEntry(){
+    public function parentEntry()
+    {
         return $this->hasManyThrough(
             MediaContent::class,
             Comment::class,
@@ -104,13 +111,11 @@ class Image extends Model
 
     /**
      * Add language to log
-     *
-     * @param Activity $activity
      */
     public function tapActivity(Activity $activity)
     {
         $activity->properties = $activity->properties->merge([
-                                                                 'language' => Lang::getLocale(),
-                                                             ]);
+            'language' => Lang::getLocale(),
+        ]);
     }
 }
