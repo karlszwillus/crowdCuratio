@@ -250,13 +250,18 @@ Route::group(
         Route::get(
             '/image/{file}',
             function ($file) {
-                return \Storage::response('uploads/images/' . $file);
+                // Uploads landen via UploadTrait::uploadOne in disk='public'
+                // (storage/app/public/uploads/images/). Ohne ->disk('public')
+                // sucht Storage::response auf der Default-Disk ('local',
+                // storage/app/) und liefert nichts — siehe Finding F-LAR-010
+                // bzw. AM-B-1.
+                return \Storage::disk('public')->response('uploads/images/' . $file);
             }
         )->name('image');
         Route::get(
             '/audio/{file}',
             function ($file) {
-                return \Storage::response('uploads/audio/' . $file);
+                return \Storage::disk('public')->response('uploads/audio/' . $file);
             }
         )->name('audio');
 
@@ -366,12 +371,12 @@ Route::group(
             'preview'
         );
 
-        Route::get(
-            '/image/{file}/preview',
-            function ($file) {
-                return \Storage::response('img/' . $file);
-            }
-        )->name('image.preview');
+        // NF-CODE-006: tote Route `image.preview` (Default-Disk `local`,
+        // Pfad `img/`) entfernt. Phase-0-Grep über resources/ und app/
+        // zeigt keine Caller — weder im Blade noch im Controller. Wenn
+        // sich später ein externer Direktlink zeigt, ist das image-Pattern
+        // /image/{file} (disk `public`, /uploads/images/) der saubere
+        // Ersatz, nicht eine Wiederauferstehung dieser Route.
 
         Route::get('/preview/download', [\App\Http\Controllers\ProjectController::class, 'downloadPreview'])->name(
             'download'

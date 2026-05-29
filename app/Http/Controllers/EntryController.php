@@ -1,7 +1,7 @@
 <?php
 /**
 crowdCuratio - Curating together virtually
-Copyright (C)2022 - berlinHistory e.V.
+Copyright (C)2022, 2026 - berlinHistory e.V.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@ If not, see <https://www.gnu.org/licenses/>.
  */
 namespace App\Http\Controllers;
 
+use App\Models\Chapter;
 use App\Models\Entry;
 use App\Services\CommentRetrieve;
 use Illuminate\Http\JsonResponse;
@@ -68,14 +69,19 @@ class EntryController extends Controller
 
             return redirect()->back()->with('success', __("message_edit_entry_success"));
         } else {
+            // NF-LAR-003: Owner-Check vor dem Anlegen, transitiv über
+            // chapter->project. Permission 'add' allein reicht nicht,
+            // weil sie projekt­übergreifend gilt.
+            $chapter = Chapter::findOrFail($request['chapterId']);
+            $this->authorize('createIn', [Entry::class, $chapter]);
 
-            $pos = Entry::where('chapter_id', $request['chapterId'])->orderBy('position', 'desc')->first();
+            $pos = Entry::where('chapter_id', $chapter->id)->orderBy('position', 'desc')->first();
             $position = 0;
             if(!empty($pos->position)) $position = $pos->position;
 
             Entry::create(
                 [
-                    'chapter_id' => $request['chapterId'],
+                    'chapter_id' => $chapter->id,
                     'name' => $request['entryTitle'],
                     'subtitle' => $request['entrySubtitle'],
                     'description' => $request['entryDescription'],
@@ -96,7 +102,9 @@ class EntryController extends Controller
      */
     public function update(Request $request)
     {
-        $entry = Entry::find($request['entryId']);
+        $entry = Entry::findOrFail($request['entryId']);
+
+        $this->authorize('update', $entry);
 
         if (isset($request['translationEntry'])){
             $entry->setTranslation('name', 'en', $request['entryTitle']);
@@ -112,7 +120,8 @@ class EntryController extends Controller
 
         $entry->save();
 
-        return $this;
+        // Vorher: return $this; — siehe Begründung im ChapterController.
+        return back();
     }
 
     /**
@@ -148,7 +157,10 @@ class EntryController extends Controller
      */
     public function destroy(Request $request,$id)
     {
-        $entry = Entry::find($id);
+        $entry = Entry::findOrFail($id);
+
+        $this->authorize('delete', $entry);
+
         $entry->delete();
 
         return redirect('projects/'.$request->project.'/edit')->with('success', __("message_delete_entry_success"));

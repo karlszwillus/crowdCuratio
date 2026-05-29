@@ -208,7 +208,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
     </div>
 </footer>
 @section('footer')
-    @if(Auth::user()->can('publish-project', $project->user_id) || Auth::user()->can('preview'))
+    @if(Auth::user()->can('publish', $project) || Auth::user()->can('preview'))
         <div class="footer-background p-3 my-3 border">
             <a href="#" class="m-4" data-toggle="modal" data-target="#previewModal" target="_blank" >{{__('pdf')}} <i class="bi bi-file-earmark-pdf-fill"></i>
             </a>

@@ -1,26 +1,26 @@
 # For more information: https://laravel.com/docs/sail
-version: '3'
 services:
   laravel.test:
     build:
-      context: ./docker/8.0
+      context: ./docker/8.1
       dockerfile: Dockerfile
       args:
-        WWWGROUP: '${WWWGROUP}'
-    image: sail-8.0/app
+        WWWGROUP: '${WWWGROUP:-1000}'
+    image: sail-8.1/app
     ports:
       - '${APP_PORT:-8084}:80'
     environment:
-      WWWUSER: '${WWWUSER}'
+      WWWUSER: '${WWWUSER:-1000}'
       LARAVEL_SAIL: 1
     volumes:
       - '.:/var/www/html'
     networks:
       - sail
     depends_on:
-      - mysql
-      - redis
-      - selenium
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
   mysql:
     image: 'mysql:8.0'
     ports:
@@ -30,7 +30,6 @@ services:
       MYSQL_DATABASE: '${DB_DATABASE}'
       MYSQL_USER: '${DB_USERNAME}'
       MYSQL_PASSWORD: '${DB_PASSWORD}'
-      MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
     volumes:
       - 'sailmysql:/var/lib/mysql'
     networks:
@@ -40,15 +39,15 @@ services:
   phpmyadmin:
     networks:
       - sail
-    image: phpmyadmin/phpmyadmin
+    image: 'phpmyadmin:5.2'
     ports:
-      - 8080:80
+      - '127.0.0.1:8080:80'
     environment:
       MYSQL_USERNAME: "${DB_USERNAME}"
       MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
       PMA_HOST: mysql
   redis:
-    image: 'redis:alpine'
+    image: 'redis:7-alpine'
     ports:
       - '${FORWARD_REDIS_PORT:-6379}:6379'
     volumes:
@@ -58,24 +57,18 @@ services:
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
   meilisearch:
-    image: 'getmeili/meilisearch:latest'
+    image: 'getmeili/meilisearch:v1.6'
     ports:
       - '${FORWARD_MEILISEARCH_PORT:-7700}:7700'
     volumes:
       - 'sailmeilisearch:/data.ms'
     networks:
       - sail
-  mailhog:
-    image: 'mailhog/mailhog:latest'
+  mailpit:
+    image: 'axllent/mailpit:v1.20'
     ports:
-      - '${FORWARD_MAILHOG_PORT:-1025}:1025'
-      - '${FORWARD_MAILHOG_DASHBOARD_PORT:-8025}:8025'
-    networks:
-      - sail
-  selenium:
-    image: 'selenium/standalone-chrome'
-    volumes:
-      - '/dev/shm:/dev/shm'
+      - '${FORWARD_MAILPIT_PORT:-1025}:1025'
+      - '127.0.0.1:${FORWARD_MAILPIT_DASHBOARD_PORT:-8025}:8025'
     networks:
       - sail
 networks:

@@ -1,7 +1,7 @@
 <?php
 /**
 crowdCuratio - Curating together virtually
-Copyright (C)2022 - berlinHistory e.V.
+Copyright (C)2022, 2026 - berlinHistory e.V.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -83,12 +83,17 @@ class ChapterController extends Controller
             $this->update($request);
             return redirect()->back()->with('success', __("message_edit_chapter_success"));
         } else {
-            $pos = Chapter::where('project_id', $request['projectId'])->orderBy('position', 'desc')->first();
+            // NF-LAR-003: Owner-Check vor dem Anlegen — Permission 'add'
+            // allein reicht nicht, weil sie projekt­übergreifend gilt.
+            $project = Project::findOrFail($request['projectId']);
+            $this->authorize('createIn', [Chapter::class, $project]);
+
+            $pos = Chapter::where('project_id', $project->id)->orderBy('position', 'desc')->first();
             $position = 0;
             if(!empty($pos->position)) $position = $pos->position;
             Chapter::create(
                 [
-                    'project_id' => $request['projectId'],
+                    'project_id' => $project->id,
                     'name' => $request['chapterTitle'],
                     'subtitle' => $request['chapterSubtitle'],
                     'description' => $request['chapterDescription'],
@@ -96,7 +101,7 @@ class ChapterController extends Controller
                 ]
             );
 
-            return redirect()->route('projects.edit', [$request['projectId']])->with('success', __("message_add_chapter_success"));
+            return redirect()->route('projects.edit', [$project->id])->with('success', __("message_add_chapter_success"));
 
         }
     }
@@ -109,8 +114,9 @@ class ChapterController extends Controller
      */
     public function update(Request $request)
     {
-
         $chapter = Chapter::findorFail($request['chapterId']);
+
+        $this->authorize('update', $chapter);
 
         if (isset($request['translationChapter'])){
             $chapter->setTranslation('name', 'en', $request['chapterTitle']);
@@ -126,7 +132,12 @@ class ChapterController extends Controller
 
         $chapter->save();
 
-        return $this;
+        // Vorher: return $this; — gibt den Controller selbst zurück
+        // und bricht jede assertOk-Verifikation mit TypeError, weil
+        // Symfony's Response::setContent() einen String erwartet. Im
+        // Frontend ignoriert das JS den Body, deshalb fiel es bisher
+        // nicht auf. back() ist semantisch das, was im Browser passiert.
+        return back();
     }
 
     /**
@@ -151,7 +162,10 @@ class ChapterController extends Controller
      */
     public function destroy(Request $request,$id)
     {
-        $chapter = Chapter::find($id);
+        $chapter = Chapter::findOrFail($id);
+
+        $this->authorize('delete', $chapter);
+
         $chapter->delete();
 
         return redirect('projects/'.$request->project.'/edit')->with('success', __("message_delete_chapter_success"));

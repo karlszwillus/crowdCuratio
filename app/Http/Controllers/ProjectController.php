@@ -1,7 +1,7 @@
 <?php
 /**
 crowdCuratio - Curating together virtually
-Copyright (C)2022 - berlinHistory e.V.
+Copyright (C)2022, 2026 - berlinHistory e.V.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -70,9 +70,13 @@ class ProjectController extends Controller
         $this->middleware('auth');
         $this->middleware('permission:add', ['only' => ['create', 'store']]);
         $this->middleware('permission:view', ['only' => ['index']]);
-        //$this->middleware('permission:preview', ['only' => ['index']]);
-        //$this->middleware('permission:edit', ['only' => ['edit', 'update']]);
-        //$this->middleware('permission:delete', ['only' => ['destroy']]);
+        // Hinweis: die Permission-Middleware auf 'edit', 'update',
+        // 'destroy' bleibt bewusst aus — sie würde sonst auch den
+        // Project-Owner blocken, weil der heute keine globale
+        // 'edit'/'delete'-Permission besitzt. Die Authorization für
+        // diese Actions läuft über ProjectPolicy mit
+        // $this->authorize(...) (siehe update/destroy unten und
+        // .werkbank/ADR/0013-authorization-strategie.md).
         $this->middleware('permission:comment', ['only' => ['commentProject', 'getProjectComment']]);
     }
 
@@ -382,16 +386,18 @@ class ProjectController extends Controller
      */
     public function update(Request $request, Project $project)
     {
+        $this->authorize('update', $project);
+
         $request->validate(
             [
                 'name' => 'required',
-                'imprint' => 'required'
+                'imprint' => 'required',
+                // NF-SEC-007: project_image darf nur als Upload mit
+                // gängigen Bildformaten reinkommen, nicht als beliebiger
+                // String. mime-Validation, max 4 MB.
+                'project_image' => 'sometimes|nullable|file|mimes:jpeg,jpg,png,gif,webp|max:4096',
             ]
         );
-
-        if($request->has('project_image')){
-            $this->setImage($request);
-        }
 
         $project->update(
             [
@@ -402,8 +408,16 @@ class ProjectController extends Controller
             ]
         );
 
-        if (isset($request['logo']) && !is_null($request['logo'])) {
-            $project->update(['logo' => $request['logo']]);
+        // NF-SEC-007: vorher las der Controller `$request['logo']` blind
+        // und schrieb es in die DB — Path-Traversal-Vektor, weil ein
+        // Client `logo=../../etc/...` mitsenden konnte. Logo-Filename
+        // kommt jetzt ausschließlich aus setImage(), das einen
+        // datums­basierten Namen vergibt.
+        if ($request->has('project_image')) {
+            $logo = $this->setImage($request);
+            if ($logo !== '') {
+                $project->update(['logo' => $logo]);
+            }
         }
 
         return redirect()->back()->with('success', __("message_edit_project_success"));
@@ -417,6 +431,8 @@ class ProjectController extends Controller
      */
     public function destroy(Project $project)
     {
+        $this->authorize('delete', $project);
+
         $project->delete();
 
         return redirect()->route('projects.index')

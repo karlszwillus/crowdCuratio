@@ -1,7 +1,7 @@
 <?php
 /**
 crowdCuratio - Curating together virtually
-Copyright (C)2022 - berlinHistory e.V.
+Copyright (C)2022, 2026 - berlinHistory e.V.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -43,9 +43,20 @@ class PermissionTableSeeder extends Seeder
             'invite' => ['de' => '<strong>Nutzer einladen</strong>, Rollen mit diesem Recht dürfen neue Benutzer zu ihren Projekten einladen.', 'en' => '<strong>invite user</strong>, Roles with this right will be allowed to invite new user to their projects.'],
         ];
 
+        $position = 0;
         foreach ($permissions as $key => $value) {
             $permission = Permission::updateOrCreate(['name' => $key]);
-            PermissionDescription::updateOrCreate(['permission_id' => $permission->id], ['description' => $value]);
+            PermissionDescription::updateOrCreate(
+                ['permission_id' => $permission->id],
+                [
+                    'description' => $value,
+                    // permission_descriptions.position ist NOT NULL ohne
+                    // Default — vor strict=true (ADR-0011) hat MySQL still
+                    // 0 eingetragen, jetzt bricht der Insert sonst ab.
+                    'position' => $position,
+                ]
+            );
+            $position++;
         }
     }
 }

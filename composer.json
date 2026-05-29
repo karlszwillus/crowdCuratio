@@ -13,7 +13,7 @@
   "license": "GPL-3.0-or-later",
   "require": {
     "php": "^7.3|^8.0",
-    "dompdf/dompdf": "^1.2",
+    "dompdf/dompdf": "^2.0",
     "fideloper/proxy": "^4.4",
     "guzzlehttp/guzzle": "^7.0.1",
     "laravel/framework": "^8.12",
@@ -32,13 +32,18 @@
     "laravel/sail": "^1.4",
     "mockery/mockery": "^1.4.2",
     "nunomaduro/collision": "^5.0",
+    "pestphp/pest": "^1.23",
+    "pestphp/pest-plugin-laravel": "^1.4",
     "phpunit/phpunit": "^9.3.3"
   },
   "config": {
     "optimize-autoloader": true,
     "preferred-install": "dist",
     "sort-packages": true,
-    "platform-check": false
+    "platform-check": false,
+    "allow-plugins": {
+      "pestphp/pest-plugin": true
+    }
   },
   "extra": {
     "laravel": {
