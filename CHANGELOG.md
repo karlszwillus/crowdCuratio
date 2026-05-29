@@ -57,6 +57,16 @@ für alle Tabellen), ADR-0011 (utf8mb4-Konvertierung), ADR-0013
     npm und github-actions. Major-Bumps für Laravel, Spatie-Pakete,
     axios, alpine, tailwind und Mix sind ignoriert (gehören in
     den koordinierten Phase-3/5-Upgrade-Sweep). F-SEC-015 zu.
+  - `doctrine/dbal ^3.0` als require. `migrate` über SQLite
+    (CI-Pfad) und production-side schema patches mit `dropColumn`
+    laufen über den Doctrine-Schema-Manager.
+
+  Bekannte composer-audit-Soft-Befunde nach Block B:
+  - `laravelcollective/html` ist abandoned. Ersatz in Phase 3
+    (F-LAR-019, `spatie/laravel-html` oder native Blade-Forms).
+  - `swiftmailer/swiftmailer` ist abandoned. Geht mit dem
+    Laravel-9-Upgrade in Phase 3 automatisch raus — Symfony Mailer
+    ersetzt Swift. Kein eigenständiger Schritt nötig.
 
 ### Geändert
 
