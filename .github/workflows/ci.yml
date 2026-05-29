@@ -149,3 +149,43 @@ jobs:
         # --memory-limit=2G ist für Laravel-Projekte mit vielen Traits
         # eine empfohlene Schmerz­grenze (Larastan-Doku).
         run: ./vendor/bin/phpstan analyse --memory-limit=2G --no-progress
+
+  pint:
+    name: Pint (Laravel preset)
+    runs-on: ubuntu-22.04
+    # Soft-Fail bis Block B.10 (Pint-Baseline-Sweep) gelaufen ist —
+    # vorher ist der Bestandscode noch nicht konform. Sobald der
+    # Sweep-Commit drin ist, wird hier auf Hard-Fail umgestellt (im
+    # selben Commit).
+    continue-on-error: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.1
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          coverage: none
+          tools: composer:v2
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php-8.1-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-8.1-composer-
+
+      - name: Install composer dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Run Pint (check mode, diff)
+        # --test bricht bei Verstößen ab, statt zu fixen.
+        # --diff zeigt im CI-Log konkret, was geändert würde.
+        run: ./vendor/bin/pint --test
