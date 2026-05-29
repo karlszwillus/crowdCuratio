@@ -1,7 +1,7 @@
 <?php
 /**
 crowdCuratio - Curating together virtually
-Copyright (C)2022 - berlinHistory e.V.
+Copyright (C)2026 - berlinHistory e.V.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
