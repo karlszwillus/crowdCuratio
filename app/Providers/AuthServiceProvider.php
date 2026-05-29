@@ -20,9 +20,7 @@ If not, see <https://www.gnu.org/licenses/>.
  */
 namespace App\Providers;
 
-use App\Models\User;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
-use Illuminate\Support\Facades\Gate;
 
 class AuthServiceProvider extends ServiceProvider
 {
@@ -49,59 +47,13 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        //User edit
-        Gate::define(
-            'edit-project',
-            function (User $user, $project) {
-                if ($user->roles->first()->name == 'Admin') {
-                    return true;
-                }
-                return $user->id === $project;
-            }
-        );
-
-        //User add
-        Gate::define(
-            'add-project',
-            function (User $user, $project) {
-                if ($user->roles->first()->name == 'Admin') {
-                    return true;
-                }
-                return $user->id === $project;
-            }
-        );
-
-        //User delete
-        Gate::define(
-            'delete-project',
-            function (User $user, $project) {
-                if ($user->roles->first()->name == 'Admin') {
-                    return true;
-                }
-                return $user->id === $project;
-            }
-        );
-
-        //User publish
-        Gate::define(
-            'publish-project',
-            function (User $user, $project) {
-                if ($user->roles->first()->name == 'Admin') {
-                    return true;
-                }
-                return $user->id === $project;
-            }
-        );
-
-        //User comment
-        Gate::define(
-            'comment-project',
-            function (User $user, $project) {
-                if ($user->roles->first()->name == 'Admin') {
-                    return true;
-                }
-                return $user->id === $project;
-            }
-        );
+        // Die vorherigen Gate-Closures (edit-project, add-project,
+        // delete-project, publish-project, comment-project) sind im
+        // Cleanup-Schritt nach Phase 1 entfernt. Sie liefen schon
+        // semantisch schief — verglichen $user->id === $project gegen
+        // einen User-Id-Wert, der je nach Caller mal das Project-Modell,
+        // mal eine User-Id war — und wurden nach D.9 nur noch vom
+        // chapters/index.blade.php konsumiert. Authorization läuft jetzt
+        // ausschließlich über die Policies oben.
     }
 }

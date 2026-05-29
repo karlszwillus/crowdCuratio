@@ -102,7 +102,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                     class="text-log"><i
                                                         class="bi bi-clock-history m-2"></i></a></span>
 
-                                    @if(in_array('comment', $listPermissions) || Auth::user()->can('comment-project', $project->user_id))
+                                    @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                         <span data-toggle="tooltip" data-placement="top"
                                               title="{{__('add_comment')}}"><a href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Chapter', 'comment' => $chapter->id])}}" class="addComment"> @if(isset($chapter->comments) && count($chapter->comments) > 0)
                                                     <i class="bi bi-chat-dots-fill m-2"></i> @else <i class="bi bi-chat m-2"></i>@endif
@@ -153,7 +153,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                     class="text-log"><i
                                                                                         class="bi bi-clock-history m-2"></i></a></span>
 
-                                                                    @if(in_array('comment', $listPermissions) || Auth::user()->can('comment-project', $project->user_id))
+                                                                    @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                                         <span data-toggle="tooltip" data-placement="top"
                                                                               title="{{__('add_comment')}}"><a href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Entry', 'comment' => $entry->id])}}"> @if(isset($entry->comments) && count($entry->comments) > 0)
                                                                                     <i class="bi bi-chat-dots-fill m-2"></i>@else
@@ -214,7 +214,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                             href="{{route('projects.edit',['project'=> $project, 'log'=> $item->text->id, 'model' => 'Text'])}}"
                                                                                                             class="text-log"><i
                                                                                                                 class="bi bi-clock-history m-2"></i></a></span>
-                                                                                            @if(in_array('comment', $listPermissions) || Auth::user()->can('comment-project', $project->user_id))
+                                                                                            @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                                                                 <span data-toggle="tooltip"
                                                                                                       data-placement="top"
                                                                                                       title="{{__('add_comment')}}"><a
@@ -281,7 +281,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                             class="text-log"><i
                                                                                                                 class="bi bi-clock-history m-2"></i></a></span>
 
-                                                                                            @if(in_array('comment', $listPermissions) || Auth::user()->can('comment-project', $project->user_id))
+                                                                                            @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                                                                 <span data-toggle="tooltip"
                                                                                                       data-placement="top"
                                                                                                       title="{{__('add_comment')}}"><a
@@ -353,7 +353,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                                 class="text-log"><i
                                                                                                                     class="bi bi-clock-history m-2"></i></a></span>
 
-                                                                                                @if(in_array('comment', $listPermissions) || Auth::user()->can('comment-project', $project->user_id))
+                                                                                                @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                                                                     <span data-toggle="tooltip"
                                                                                                           data-placement="top"
                                                                                                           title="{{__('add_comment')}}"><a
@@ -363,7 +363,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                                         class="bi bi-chat m-2"></i> @endif </a></span>
                                                                                                 @endif
 
- 																								@if(in_array('add', $listPermissions) || Auth::user()->can('add-project', $project->user_id))
+ 																								@if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
                                                                                                     <span data-toggle="tooltip"
                                                                                                           data-placement="top"
                                                                                                           title="{{__('add_content')}}"> <a
@@ -421,7 +421,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                                     class="text-log"><i
                                                                                                                         class="bi bi-clock-history m-2"></i></a></span>
 
-                                                                                                    @if(in_array('comment', $listPermissions) || Auth::user()->can('comment-project', $project->user_id))
+                                                                                                    @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                                                                         <span data-toggle="tooltip"
                                                                                                               data-placement="top"
                                                                                                               title="{{__('add_comment')}}"><a
@@ -477,7 +477,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                 </ul>
                                             @endif
                                             <div class="mb-4">
-                                                @if(in_array('add', $listPermissions) || Auth::user()->can('add-project', $project->user_id))
+                                                @if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
                                                     <span data-toggle="tooltip"
                                                           data-placement="top"
                                                           title="{{__('add_content')}}"> <a
@@ -500,7 +500,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                             @endif
                         </div>
                     </div>
-                    @if(in_array('add', $listPermissions) || Auth::user()->can('add-project', $project->user_id))
+                    @if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
                         <div class="mb-4">
                         <span data-toggle="tooltip" data-placement="top" title="{{__('add_entry')}}"><a href=""
                                                                                                         class="addEntry btn btn-secondary add_entry"
@@ -515,7 +515,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
         </ul>
     @endif
 
-    @if(in_array('add', $listPermissions) || Auth::user()->can('add-project', $project->user_id))
+    @if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
         <a class="btn btn-secondary btn-lg add_chapter" data-toggle="modal" data-target="#myModal">
 
             {{__('new_chapter')}} <i class="bi bi-plus-circle-fill m-2"></i>
