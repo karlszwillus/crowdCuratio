@@ -44,15 +44,21 @@ ADMIN_PASSWORD=einStarkesPasswort
 MAIL_FROM_ADDRESS=noreply@example.com
 ```
 
-Dann den Stack hochziehen:
+Dann den Stack hochziehen. Beim ersten Mal braucht es `docker compose
+run`, weil `./vendor/bin/sail` nach dem ersten `composer install`
+existiert:
 
 ```bash
 docker compose up -d --build
 docker compose run --rm laravel.test composer install
-docker compose run --rm laravel.test php artisan key:generate
-docker compose run --rm laravel.test php artisan migrate
-docker compose run --rm laravel.test php artisan db:seed
+./vendor/bin/sail artisan key:generate
+./vendor/bin/sail artisan migrate
+./vendor/bin/sail artisan db:seed
 ```
+
+Wer den Sail-Wrapper nicht mag, kann jeden Befehl mit
+`docker compose run --rm laravel.test …` ersetzen — Sail ist
+Komfort, keine Voraussetzung.
 
 Der Standard-`db:seed` legt sieben Permissions, drei Rollen
 (Editor, Reviewer, Reader) und einen Admin-User mit den
@@ -68,12 +74,12 @@ phpMyAdmin: <http://localhost:8080> (nur Loopback)
 ## Tests
 
 ```bash
-docker compose run --rm laravel.test ./vendor/bin/pest
+./vendor/bin/sail pest
 ```
 
 Aktuell deckt die Suite die Authorization-Schichten für Project,
-Chapter und Entry ab (13 Tests). Weiteres Coverage entsteht in der
-Sicherheitsnetz-Phase.
+Chapter und Entry ab (17 Tests, davon 4 für den Create-Pfad-Bypass
+NF-LAR-003). Weiteres Coverage entsteht in der Sicherheitsnetz-Phase.
 
 ## Dokumentation
 
@@ -84,15 +90,18 @@ Sicherheitsnetz-Phase.
 | `docs/smoke.md`            | Smoke-Pfad-Inventar (Login bis Invitation, 10 Pfade)      |
 | `licenses.md`              | Lizenzen der eingesetzten Drittpakete                     |
 
+Architektur-Entscheidungen liegen in der internen Werkbank
+(`.werkbank/ADR/`, nicht im Repo-Diff): 0001 Ziel-Stack (PHP 8.4 /
+Laravel 12), 0002 composer.lock eingecheckt, 0010 InnoDB für alle
+Tabellen, 0011 utf8mb4-Konvertierung, 0013 Authorization über
+Laravel-Policies + Spatie-Permission. Wer Zugang braucht, fragt im
+Team.
+
 ## Mitwirken
 
 Conventional Commits:
 `type(scope): kurze beschreibung` mit Body, der das *Warum* erklärt.
 Pro PR: kleiner, thematisch fokussierter Diff.
-
-Authorization-Modell, Rollen und weiterer Architektur-Hintergrund
-landen in einem `docs/architecture.md`, sobald die laufende
-Modernisierungswelle abgeschlossen ist.
 
 ## Kontakt
 

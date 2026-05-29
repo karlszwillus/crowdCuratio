@@ -10,9 +10,15 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
-Stand nach Phase 1 (Stabilisierung + Sofortmaßnahmen). 36 Commits auf
-`phase-1/setup-reset`, alle vier in Phase 0 identifizierten Blocker
-geschlossen.
+Stand nach Phase 1 (Stabilisierung + Sofortmaßnahmen) inkl. Reviewer-
+Nachschlag (Phase 1.5). 40+ Commits auf `phase-1/setup-reset`,
+alle vier in Phase 0 identifizierten Blocker geschlossen, dazu vier
+neue Findings aus der Post-Phase-1-Review behoben.
+
+ADR-Grundlagen für diese Welle: ADR-0001 (Ziel-Stack PHP 8.4 /
+Laravel 12), ADR-0002 (composer.lock eingecheckt), ADR-0010 (InnoDB
+für alle Tabellen), ADR-0011 (utf8mb4-Konvertierung), ADR-0013
+(Authorization über Laravel-Policies + Spatie-Permission).
 
 ### Hinzugefügt
 
@@ -88,6 +94,17 @@ geschlossen.
 - Stock-Breeze-Tests, die das Self-Service-Signup-Modell testen, das
   crowdCuratio nicht hat (`tests/Feature/RegistrationTest`, drei
   `ExampleTest`-Stubs).
+- Tote PHP-7.4-Build-Variante `docker/7.4/` (NF-DOCKER-014) — wurde
+  nach dem Umzug auf 8.1 von keiner Compose-Datei mehr referenziert.
+- Tote Image-Preview-Route `/image/{file}/preview` (NF-CODE-006), die
+  den Storage-Disk-Fix nie mitbekommen hatte und ohne Caller im Code
+  steht.
+- Fünf Custom-Gate-Closures aus `AuthServiceProvider::boot()`
+  (`edit-`, `add-`, `delete-`, `publish-`, `comment-project`); ihre
+  Owner-Logik war ohnehin semantisch schief
+  (`$user->id === $project`). View-Aufrufe in
+  `chapters/index.blade.php` (10 Stellen) jetzt auf die Project-Policy
+  umgehängt.
 
 ### Sicherheit
 
@@ -97,6 +114,16 @@ geschlossen.
   Controller-Action als auch in der View, ob der eingeloggte User
   Eigentümer oder Admin ist. Belegt durch Pest-Suite
   `tests/Feature/AuthorizationTest.php`.
+- **Create-Pfad-Bypass in Chapter/Entry** geschlossen (Reviewer-Befund
+  NF-LAR-003). `ChapterController::store` und `EntryController::store`
+  haben jetzt einen Owner-Check (`createIn`-Policy-Methode); die
+  ursprüngliche D.4-Suite hat nur Update/Destroy abgedeckt. Vier neue
+  Pest-Tests sichern das ab (Intruder 403, Admin 302).
+- **Logo-Upload-Validation und Path-Traversal-Pfad** geschlossen
+  (NF-SEC-007). `ProjectController::update` las `$request['logo']`
+  blind und schrieb den Wert in die DB — Path-Traversal-Vektor. Logo
+  kommt jetzt ausschließlich aus `setImage()`, `project_image` wird
+  als File mit MIME-Whitelist und 4 MB Limit validiert.
 - **`facade/ignition`-RCE (CVE-2021-3129)** entschärft: durch
   `composer install` mit Lock zieht der Build die geprüfte Version
   2.17.7 ein, nicht die anfälligen 2.5.0/.1.
@@ -152,5 +179,5 @@ Details und Roadmap siehe interne Werkbank (`.werkbank/KONTEXT.md`).
 
 ---
 
-[Unreleased]: about:blank
-[0.8.0]: about:blank
+[Unreleased]: https://github.com/berlinHistory/crowdCuratio/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/berlinHistory/crowdCuratio/releases/tag/v0.8.0
