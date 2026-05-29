@@ -323,8 +323,8 @@ Workflow zum Schluss verifiziert:
   führt zur Passwort-Vergabe-Page.
 
 Verbleibende Beobachtungen (nicht-blockierend, in Phase 6/Frontend):
-- Form-Logik im `Auth/RegisterController`: Validation fordert auch
-  bei „hat Admin-Recht"-Haken weiter eine `roles`-Auswahl. Ohne
+- Form-Logik im `Auth/RegisteredUserController`: Validation fordert
+  auch bei „hat Admin-Recht"-Haken weiter eine `roles`-Auswahl. Ohne
   Default-Rolle nicht abschließbar, mit Admin-Haken aber semantisch
   überflüssig.
 - Übersetzungs-Lücke `roles ist erforderlich` → „Rolle ist

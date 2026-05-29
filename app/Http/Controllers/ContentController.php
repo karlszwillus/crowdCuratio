@@ -29,7 +29,6 @@ use App\Models\Project;
 use App\Models\Source;
 use App\Models\Text;
 use App\Services\CommentRetrieve;
-use App\Traits\SourceTrait;
 use App\Traits\UploadTrait;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
@@ -48,7 +47,6 @@ use Symfony\Component\ErrorHandler\Debug;
 
 class ContentController extends Controller
 {
-    use SourceTrait;
     use UploadTrait;
 
     /**
