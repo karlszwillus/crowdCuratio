@@ -141,8 +141,6 @@ class ProjectController extends Controller
 
     /**
      * Store a newly created resource in storage.
-     *
-     * @return Response
      */
     public function store(StoreProjectRequest $request): RedirectResponse
     {
@@ -381,8 +379,6 @@ class ProjectController extends Controller
 
     /**
      * Update the specified resource in storage.
-     *
-     * @return Response
      */
     public function update(UpdateProjectRequest $request, Project $project): RedirectResponse
     {
