@@ -16,6 +16,9 @@ composer.phar
 # Werkbank (lokale Notizen, ADRs, TODOs für die Modernisierungsarbeit)
 .werkbank/
 
+# PHPStorm-Files
+.idea/
+
 # macOS Finder-Artefakte
 .DS_Store
 smoke-image.jpg
