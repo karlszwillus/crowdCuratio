@@ -24,7 +24,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
-
 use App\Models\Audiovisual;
 use App\Models\Gallery;
 use App\Models\Image;
