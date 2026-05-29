@@ -48,16 +48,21 @@ class AppServiceProvider extends ServiceProvider
         Schema::defaultStringLength(191);
 
         // Strict-Mode in non-production aktiv (Phase 2 / C.1, F-LAR-013).
-        // Wirft Exceptions bei:
-        // - Lazy-Loading nach eager-loaded Query (preventLazyLoading)
-        // - Zugriff auf nicht gefüllte Attribute (preventAccessingMissingAttributes)
-        // - Silently-discarded Mass-Assignment (preventSilentlyDiscardingAttributes)
         //
-        // Wir aktivieren das bewusst nur außerhalb von Production —
-        // Tests, Sail-Dev, CI-Pest-Pfade — damit das Frühwarnsystem
-        // greift, ohne live-User durch eine späte Regression zu treffen.
-        // Sobald Phase 4 die N+1-Hotspots aufgeräumt hat, darf das in
-        // Production scharf werden.
-        Model::shouldBeStrict(! $this->app->isProduction());
+        // Auf Laravel 8.12 ist nur preventLazyLoading verfügbar — die
+        // Sammelmethode Model::shouldBeStrict() kam erst mit 9.35, und
+        // preventAccessingMissingAttributes erst mit 9.35. Phase 3
+        // (Framework-Upgrade) wird das Set erweitern und idealerweise
+        // auf shouldBeStrict konsolidieren.
+        //
+        // preventLazyLoading wirft LazyLoadingViolationException, wenn
+        // ein eager-loaded Modell auf eine Relation greift, die nicht
+        // mit-geladen wurde. Frühwarnsystem gegen N+1.
+        //
+        // Bewusst nur außerhalb von Production — Tests, Sail-Dev,
+        // CI-Pest-Pfade — damit Live-User keine späte Regression
+        // erleben. Sobald Phase 4 die N+1-Hotspots aufgeräumt hat,
+        // darf das in Production scharf werden.
+        Model::preventLazyLoading(! $this->app->isProduction());
     }
 }
