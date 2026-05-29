@@ -570,11 +570,11 @@ test('Owner darf Entry via PATCH ändern (D.13)', function () {
 
 test('StoreProjectRequest: name ist Pflicht', function () {
     $owner = User::factory()->create();
+    // ProjectController hat middleware('permission:add', […create, store]).
+    // Ohne add-Permission wirft die Spatie-Middleware vor dem FormRequest,
+    // und der Test sieht 302 ohne errors-Bag statt 422 von der Validation.
+    $owner->givePermissionTo(PermissionName::ADD);
 
-    // from(...) setzt den HTTP_REFERER, damit der Validation-Failure-
-    // Redirect die errors-Bag auf den richtigen Path schreibt (siehe
-    // Laravel-FormRequest-Doc: "If a previous URL is not available,
-    // an HTTP 500 response will be generated").
     $response = $this->actingAs($owner)
         ->from(route('projects.create'))
         ->post(
@@ -635,18 +635,30 @@ test('UpdateProjectRequest: project_image akzeptiert nur Bild-MIME-Typen (NF-SEC
 // 401/302 belegt: die Route ist offen, der FormRequest greift.
 // ----------------------------------------------------------------------
 
-test('RegisterRequest: firstName ist Pflicht (Gast-Pfad)', function () {
-    $response = $this->from(route('register'))->post(
-        route('register'),
-        [
-            // firstName absichtlich weggelassen
-            'lastName' => 'Mustermann',
-            'email' => 'max@example.com',
-            'roles' => 2,
-            'policy' => 1,
-        ]
-    );
+test('RegisterRequest: firstName ist Pflicht (Admin-Einladung)', function () {
+    // Hinweis: der RegisteredUserController hat im __construct die
+    // middleware('auth'), während Route /register als 'guest' deklariert
+    // ist — Bestands-Konflikt aus AM-D-4 (Phase-1-Reviewer). In der
+    // tatsächlichen App wird /register nur durch Admins erreicht, die
+    // neue User ins System einladen. Der Test bildet diesen Pfad ab,
+    // statt den theoretischen Self-Service-Gast-Pfad zu testen, der
+    // wegen des Konflikts ohnehin nicht funktioniert.
+    $admin = User::factory()->create();
+    $admin->assignRole('Admin');
+
+    $response = $this->actingAs($admin)
+        ->from(route('register'))
+        ->post(
+            route('register'),
+            [
+                // firstName absichtlich weggelassen
+                'lastName' => 'Mustermann',
+                'email' => 'max@example.com',
+                'roles' => 2,
+                'policy' => 1,
+            ]
+        );
 
     $response->assertInvalid(['firstName']);
-    expect(User::count())->toBe(0);
+    expect(User::count())->toBe(1); // nur der Admin selbst, kein neuer User
 });
