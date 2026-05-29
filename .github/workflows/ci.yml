@@ -62,3 +62,49 @@ jobs:
           DB_CONNECTION: sqlite
           DB_DATABASE: ':memory:'
         run: ./vendor/bin/pest --colors=always
+
+  composer-audit:
+    name: composer audit
+    runs-on: ubuntu-22.04
+    # Phase-2-Strategie: Audit läuft, soll aber den Build (noch) nicht
+    # brechen. Ergebnisse fließen in audit-baseline.txt, harter Fail
+    # wird in Block G aktiviert. Die meisten heutigen CVEs sind aus
+    # dem Laravel-8-Umfeld und gehen mit dem Upgrade in Phase 3 weg.
+    continue-on-error: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.1
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          tools: composer:v2
+          coverage: none
+
+      - name: Composer audit (production deps only)
+        run: composer audit --no-dev --locked --format=plain
+
+  npm-audit:
+    name: npm audit
+    runs-on: ubuntu-22.04
+    # Gleiche Soft-Fail-Strategie wie composer-audit. Hinweis: bei
+    # crowdCuratio liegen axios und alpinejs in devDependencies, weil
+    # Laravel-Mix sie zur Buildzeit konsumiert — `--omit=dev` blendet
+    # die also aus. Das volle CVE-Bild kommt mit Phase 5 (Mix → Vite,
+    # axios/alpine-Upgrade).
+    continue-on-error: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: npm audit (production deps, high+ severity)
+        run: npm audit --omit=dev --audit-level=high
