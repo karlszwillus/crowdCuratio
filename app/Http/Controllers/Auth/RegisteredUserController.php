@@ -2,7 +2,7 @@
 
 /**
 crowdCuratio - Curating together virtually
-Copyright (C)2022 - berlinHistory e.V.
+Copyright (C)2022, 2026 - berlinHistory e.V.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -55,7 +55,9 @@ class RegisteredUserController extends Controller
      */
     public function create()
     {
-        $roles = Role::where('id', 'not like', '1')->pluck('name', 'name')->all();
+        // F-DB-013: vorher Role::where('id', 'not like', '1') —
+        // LIKE auf INT-Spalte mit hartkodierter Admin-ID.
+        $roles = Role::where('name', '!=', 'Admin')->pluck('name', 'name')->all();
 
         return view('auth.register', compact('roles'));
     }

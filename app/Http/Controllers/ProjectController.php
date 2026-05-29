@@ -248,8 +248,10 @@ class ProjectController extends Controller
         }
 
         $permissions = Permission::all();
-        $listRole = Role::where('id', 'not like', '1')->pluck('name', 'id');
-        $users = User::whereNull('deleted_at')->get();
+        // F-DB-013: vorher Role::where('id', 'not like', '1').
+        $listRole = Role::where('name', '!=', 'Admin')->pluck('name', 'id');
+        // F-DB-014: SoftDeletes-Scope greift implizit — kein whereNull nötig.
+        $users = User::all();
         $userService = new UserService;
         $listPermissions = $userService->getAllUsers($project->id);
         $allPermissions = Permission::pluck('name', 'id');
@@ -289,8 +291,8 @@ class ProjectController extends Controller
      */
     protected function getUsersForThisProject($id)
     {
-
-        $users = User::whereNull('deleted_at')->get();
+        // F-DB-014: SoftDeletes-Scope greift implizit.
+        $users = User::all();
 
         $userList = [];
         foreach ($users as $key => $user) {
@@ -998,7 +1000,8 @@ class ProjectController extends Controller
 
         $project = Project::findOrFail($projectId);
         $listGrantedUsers = $this->getUsersForThisProject($projectId);
-        $listRole = Role::where('id', 'not like', '1')->pluck('name', 'id');
+        // F-DB-013: vorher Role::where('id', 'not like', '1').
+        $listRole = Role::where('name', '!=', 'Admin')->pluck('name', 'id');
         $permissions = Permission::all();
         asort($listGrantedUsers);
 

@@ -63,9 +63,14 @@ class ChapterController extends Controller
             'publish' => [],
             'comment' => [],
         ];
-        $project = Project::whereNull('deleted_at')->findOrFail($request['id']);
+        // SoftDeletes-Scope auf Project schließt trashed schon implizit
+        // aus — kein whereNull('deleted_at') nötig (F-DB-014).
+        $project = Project::findOrFail($request['id']);
         $permissions = Permission::all();
-        $listRole = Role::where('id', 'not like', '1')->pluck('name', 'id');
+        // F-DB-013: vorher Role::where('id', 'not like', '1') —
+        // LIKE-Vergleich auf INT-Spalte mit hartkodierter ID.
+        // Sauber: per Rollen-Name filtern.
+        $listRole = Role::where('name', '!=', 'Admin')->pluck('name', 'id');
 
         return view('chapters.index', compact('project', 'listPermissions', 'permissions', 'listRole'));
     }
