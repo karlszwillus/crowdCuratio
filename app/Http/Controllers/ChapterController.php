@@ -65,7 +65,21 @@ class ChapterController extends Controller
         ];
         // SoftDeletes-Scope auf Project schließt trashed schon implizit
         // aus — kein whereNull('deleted_at') nötig (F-DB-014).
-        $project = Project::findOrFail($request['id']);
+        //
+        // Eager-Loading-Baum für chapters/index.blade.php — die View
+        // rendert die komplette Hierarchie inkl. Kommentaren auf
+        // jeder Ebene. Ohne with(...) wirft preventLazyLoading
+        // (Phase 2 / C.1) eine LazyLoadingViolationException auf
+        // entry->comments, item->text->comments etc.
+        $project = Project::with([
+            'chapters.comments',
+            'chapters.entries.comments',
+            'chapters.entries.mediaContent.comments',
+            'chapters.entries.mediaContent.text.comments',
+            'chapters.entries.mediaContent.audiovisual.comments',
+            'chapters.entries.mediaContent.gallery.comments',
+            'chapters.entries.mediaContent.gallery.images.comments',
+        ])->findOrFail($request['id']);
         $permissions = Permission::all();
         // F-DB-013: vorher Role::where('id', 'not like', '1') —
         // LIKE-Vergleich auf INT-Spalte mit hartkodierter ID.
