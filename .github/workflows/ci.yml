@@ -189,3 +189,42 @@ jobs:
         # --test bricht bei Verstößen ab, statt zu fixen.
         # --diff zeigt im CI-Log konkret, was geändert würde.
         run: ./vendor/bin/pint --test
+
+  changelog-check:
+    name: CHANGELOG diff
+    runs-on: ubuntu-22.04
+    # Läuft nur auf PRs (push auf main hat keine PR-Labels und
+    # ist eh Merge-Resultat). Aktive PRs sollen CHANGELOG.md
+    # mit-berühren; Ausnahmen über Label `skip-changelog`
+    # (Dependabot-PRs oder reine CI/Pint-Sweeps).
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout (with merge base)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Skip if label 'skip-changelog' is set
+        id: skip
+        run: |
+          labels='${{ toJson(github.event.pull_request.labels) }}'
+          if echo "$labels" | grep -q '"skip-changelog"'; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "PR has skip-changelog label — CHANGELOG check übersprungen."
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Verify CHANGELOG.md was touched
+        if: steps.skip.outputs.skip == 'false'
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+
+          if git diff --name-only "$BASE_SHA" "$HEAD_SHA" | grep -qx 'CHANGELOG.md'; then
+            echo "CHANGELOG.md im PR-Diff — OK."
+          else
+            echo "::error::PR berührt CHANGELOG.md nicht. Trage die Änderung in [Unreleased] ein oder setze das Label 'skip-changelog'."
+            exit 1
+          fi
