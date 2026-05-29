@@ -391,13 +391,13 @@ class ProjectController extends Controller
         $request->validate(
             [
                 'name' => 'required',
-                'imprint' => 'required'
+                'imprint' => 'required',
+                // NF-SEC-007: project_image darf nur als Upload mit
+                // gängigen Bildformaten reinkommen, nicht als beliebiger
+                // String. mime-Validation, max 4 MB.
+                'project_image' => 'sometimes|nullable|file|mimes:jpeg,jpg,png,gif,webp|max:4096',
             ]
         );
-
-        if($request->has('project_image')){
-            $this->setImage($request);
-        }
 
         $project->update(
             [
@@ -408,8 +408,16 @@ class ProjectController extends Controller
             ]
         );
 
-        if (isset($request['logo']) && !is_null($request['logo'])) {
-            $project->update(['logo' => $request['logo']]);
+        // NF-SEC-007: vorher las der Controller `$request['logo']` blind
+        // und schrieb es in die DB — Path-Traversal-Vektor, weil ein
+        // Client `logo=../../etc/...` mitsenden konnte. Logo-Filename
+        // kommt jetzt ausschließlich aus setImage(), das einen
+        // datums­basierten Namen vergibt.
+        if ($request->has('project_image')) {
+            $logo = $this->setImage($request);
+            if ($logo !== '') {
+                $project->update(['logo' => $logo]);
+            }
         }
 
         return redirect()->back()->with('success', __("message_edit_project_success"));
