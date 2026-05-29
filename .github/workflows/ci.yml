@@ -149,11 +149,7 @@ jobs:
   pint:
     name: Pint (Laravel preset)
     runs-on: ubuntu-22.04
-    # Soft-Fail bis Block B.10 (Pint-Baseline-Sweep) gelaufen ist —
-    # vorher ist der Bestandscode noch nicht konform. Sobald der
-    # Sweep-Commit drin ist, wird hier auf Hard-Fail umgestellt (im
-    # selben Commit).
-    continue-on-error: true
+    continue-on-error: false
 
     steps:
       - name: Checkout
