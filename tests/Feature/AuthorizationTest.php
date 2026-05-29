@@ -48,6 +48,7 @@ use App\Models\Entry;
 use App\Models\Project;
 use App\Models\User;
 use App\Support\PermissionName;
+use Illuminate\Http\UploadedFile;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -560,4 +561,82 @@ test('Owner darf Entry via PATCH ändern (D.13)', function () {
 
     $response->assertRedirect();
     expect($entry->fresh()->name)->toBe('Via PATCH geändert');
+});
+
+// ----------------------------------------------------------------------
+// D.3 + D.6 — Validation pro StoreProjectRequest / UpdateProjectRequest
+// inkl. der NF-SEC-001 / NF-SEC-007-Härtung beim Bild-Upload.
+// ----------------------------------------------------------------------
+
+test('StoreProjectRequest: name ist Pflicht', function () {
+    $owner = User::factory()->create();
+
+    $response = $this->actingAs($owner)->post(
+        route('projects.store'),
+        [
+            // name absichtlich weggelassen
+            'imprint' => 'Pflicht-Impressum',
+        ]
+    );
+
+    $response->assertInvalid(['name']);
+    expect(Project::count())->toBe(0);
+});
+
+test('UpdateProjectRequest: name ist Pflicht', function () {
+    $owner = User::factory()->create();
+    $project = makeProject($owner);
+
+    $response = $this->actingAs($owner)->put(
+        route('projects.update', $project),
+        [
+            // name absichtlich weggelassen
+            'imprint' => 'Geänderter Imprint',
+        ]
+    );
+
+    $response->assertInvalid(['name']);
+    expect($project->fresh()->name)->toBe('Original Name');
+});
+
+test('UpdateProjectRequest: project_image akzeptiert nur Bild-MIME-Typen (NF-SEC-001)', function () {
+    $owner = User::factory()->create();
+    $project = makeProject($owner);
+
+    $response = $this->actingAs($owner)->put(
+        route('projects.update', $project),
+        [
+            'name' => 'Trotzdem geänderter Name',
+            'imprint' => 'Imprint',
+            'project_image' => UploadedFile::fake()->create('exploit.php', 50, 'application/x-php'),
+        ]
+    );
+
+    $response->assertInvalid(['project_image']);
+    expect($project->fresh()->name)->toBe('Original Name');
+});
+
+// ----------------------------------------------------------------------
+// D.7 — RegisterRequest Validation + Gast-Pfad (ADR-0017).
+//
+// Der Gast-Pfad-Test prüft, dass die Route für nicht-eingeloggte
+// User erreichbar ist (kein 302-Redirect zu Login). Ohne explizites
+// actingAs() sendet Pest als Gast. Das Validation-Fail-422 statt
+// 401/302 belegt: die Route ist offen, der FormRequest greift.
+// ----------------------------------------------------------------------
+
+test('RegisterRequest: firstName ist Pflicht (Gast-Pfad)', function () {
+    $response = $this->post(
+        route('register'),
+        [
+            // firstName absichtlich weggelassen
+            'lastName' => 'Mustermann',
+            'email' => 'max@example.com',
+            'roles' => 2,
+            'policy' => 1,
+        ]
+    );
+
+    $response->assertInvalid(['firstName']);
+    expect(User::count())->toBe(0);
 });
