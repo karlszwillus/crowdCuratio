@@ -11,17 +11,20 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 ## [Unreleased]
 
 Stand nach Phase 1 (Stabilisierung + Sofortmaßnahmen) inkl. Reviewer-
-Nachschlag (Phase 1.5) und Phase-2-Block-B (CI-Skeleton). 50+ Commits
-verteilt auf `phase-1/setup-reset` (gemerged) und
-`phase-2/ci-skeleton`. Alle vier in Phase 0 identifizierten Blocker
-geschlossen, vier Phase-1-Reviewer-Findings behoben, CI mit Pest,
-Larastan, Pint, Dependency-Audits und CHANGELOG-Diff-Check spannt
-ab Phase 2 das Sicherheitsnetz.
+Nachschlag (Phase 1.5), Phase-2-Block-B (CI-Skeleton) und Phase-2-
+Block-C (Eloquent-Hygiene). Commits verteilt auf `phase-1/setup-reset`
+(gemerged), `phase-2/ci-skeleton` (gemerged) und
+`phase-2/eloquent-hygiene`. Alle vier in Phase 0 identifizierten
+Blocker geschlossen, vier Phase-1-Reviewer-Findings behoben, CI mit
+Pest, Larastan, Pint, Dependency-Audits und CHANGELOG-Diff-Check
+spannt ab Phase 2 das Sicherheitsnetz; Eloquent-Schicht ist mit
+Strict-Mode, expliziten Casts und entfernten Inline-Filtern aufgeräumt.
 
 ADR-Grundlagen für diese Welle: ADR-0001 (Ziel-Stack PHP 8.4 /
-Laravel 12), ADR-0002 (composer.lock eingecheckt), ADR-0010 (InnoDB
-für alle Tabellen), ADR-0011 (utf8mb4-Konvertierung), ADR-0013
-(Authorization über Laravel-Policies + Spatie-Permission).
+Laravel 12, in C.4 um Active-Record-Bekenntnis ergänzt), ADR-0002
+(composer.lock eingecheckt), ADR-0010 (InnoDB für alle Tabellen),
+ADR-0011 (utf8mb4-Konvertierung), ADR-0013 (Authorization über
+Laravel-Policies + Spatie-Permission).
 
 ### Hinzugefügt
 
@@ -60,6 +63,19 @@ für alle Tabellen), ADR-0011 (utf8mb4-Konvertierung), ADR-0013
   - `doctrine/dbal ^3.0` als require. `migrate` über SQLite
     (CI-Pfad) und production-side schema patches mit `dropColumn`
     laufen über den Doctrine-Schema-Manager.
+
+- **Phase 2 / Block C — Eloquent-Hygiene.**
+  - `Model::preventLazyLoading(! app()->isProduction())` im
+    `AppServiceProvider::boot`. Wirft `LazyLoadingViolationException`
+    bei N+1-Pattern aus eager-geladenen Collections in non-production
+    (Dev, Tests, CI). F-LAR-013 zu.
+  - Explizite `$casts` auf `Chapter`, `Entry`, `User`: `is_translated`
+    als boolean, `User::welcome_valid_until` als datetime,
+    `User::is_admin` / `create_project` als boolean (NF-LAR-005,
+    F-LAR-005).
+  - ADR-0001 (Ziel-Stack) um Active-Record-Bekenntnis ergänzt
+    (F-ARCH-011): keine Repository-Schicht, Service-Klassen kommen
+    in Phase 4 für aggregierte Use Cases.
 
   Bekannte composer-audit-Soft-Befunde nach Block B:
   - `laravelcollective/html` ist abandoned. Ersatz in Phase 3
@@ -113,6 +129,11 @@ für alle Tabellen), ADR-0011 (utf8mb4-Konvertierung), ADR-0013
   `style(pint): apply laravel preset to entire codebase`-Commit).
   Reine Whitespace-/Brace-/Import-Reorder-Änderung, Pest-Suite vor
   und nach dem Sweep identisch grün.
+- **Phase 2 / Block C**: vier Stellen `Role::where('id', 'not like',
+  '1')` auf `Role::where('name', '!=', 'Admin')` umgestellt
+  (F-DB-013). LIKE auf INT-Spalte mit hartkodierter Admin-ID
+  abgelöst, Filter ist jetzt rolle-namensbasiert und semantisch
+  klar.
 
 ### Behoben
 
@@ -170,6 +191,15 @@ für alle Tabellen), ADR-0011 (utf8mb4-Konvertierung), ADR-0013
 - **Phase 2 / Block B**: `.idea/`-Tracking. PHPStorm-Workspace-State
   bleibt lokal, wandert nicht mehr ins Repo (`.gitignore` ergänzt,
   zwei zuvor getrackte Files aus dem Index entfernt).
+- **Phase 2 / Block C**: vier redundante `whereNull('deleted_at')`-
+  Aufrufe in Eloquent-Queries (`ChapterController`,
+  `ProjectController` 2×, `CommentRetrieve`). Models nutzen
+  durchgängig `SoftDeletes`; der Default-Scope schließt trashed
+  Rows bereits implizit aus — der explizite Filter war noop und
+  irreführend. Die fünfte Stelle in `UserController` bleibt
+  bewusst stehen, weil sie über `DB::table('users')` läuft und der
+  Soft-Delete-Scope dort nicht greift. F-DB-014 weitgehend zu;
+  Phase-4-TODO (F-LAR-007 `DB::table → Eloquent`) hängt dran.
 
 ### Sicherheit
 
