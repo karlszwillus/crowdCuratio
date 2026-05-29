@@ -257,24 +257,9 @@ class ProjectController extends Controller
         $allPermissions = Permission::pluck('name', 'id');
         $currentUserPermissions = $this->getCurrentUsersPermissions(Auth::user()->id);
 
-        // Eager-Loading-Baum für die in projects/edit eingeschlossene
-        // View chapters/index.blade.php — sie rendert die komplette
-        // Hierarchie inkl. Kommentaren auf jeder Ebene. Ohne with(...)
-        // wirft preventLazyLoading (Phase 2 / C.1) Exceptions auf
-        // entry->comments, item->text->comments etc.
-        $data = Project::with([
-            'chapters.comments',
-            'chapters.entries.comments',
-            'chapters.entries.mediaContent.comments',
-            'chapters.entries.mediaContent.text.comments',
-            'chapters.entries.mediaContent.text.copyrightText',
-            'chapters.entries.mediaContent.text.originText',
-            'chapters.entries.mediaContent.audiovisual.comments',
-            'chapters.entries.mediaContent.gallery.comments',
-            'chapters.entries.mediaContent.gallery.images.comments',
-            'chapters.entries.mediaContent.gallery.images.copyrightImage',
-            'chapters.entries.mediaContent.gallery.images.originImage',
-        ])->findOrFail($project->id);
+        // withEditTree() lädt die volle Hierarchie für die in
+        // projects/edit eingeschlossene View chapters/index eager.
+        $data = Project::withEditTree()->findOrFail($project->id);
         $listGrantedUsers = $this->getUsersForThisProject($project->id);
 
         $links = session()->has('links') ? session('links') : [];
@@ -1050,14 +1035,7 @@ class ProjectController extends Controller
             $parameters['pdf'] = 1;
         }
         $parameters['id'] = $request['project'];
-        // Eager-Loading-Baum für preview/index.blade.php — rendert
-        // chapters.entries.mediaContent mit text/gallery.images/audiovisual.
-        // Keine Source-Relations und keine Comments in preview-Views.
-        $project = Project::with([
-            'chapters.entries.mediaContent.text',
-            'chapters.entries.mediaContent.gallery.images',
-            'chapters.entries.mediaContent.audiovisual',
-        ])->findOrFail($request['project']);
+        $project = Project::withPreviewTree()->findOrFail($request['project']);
 
         return \view('preview.index', compact('project', 'parameters'));
     }
@@ -1084,13 +1062,7 @@ class ProjectController extends Controller
             $parameters['pdf'] = 1;
         }
 
-        // Selber Baum wie previewProject — preview/pdf.blade.php rendert
-        // identische Hierarchie für den PDF-Export.
-        $project = Project::with([
-            'chapters.entries.mediaContent.text',
-            'chapters.entries.mediaContent.gallery.images',
-            'chapters.entries.mediaContent.audiovisual',
-        ])->findOrFail($request->id);
+        $project = Project::withPreviewTree()->findOrFail($request->id);
         $html = View('preview.pdf', compact('project', 'parameters'))->render();
 
         $options = new Options;
@@ -1112,9 +1084,7 @@ class ProjectController extends Controller
         $parameters = $request['parameters'];
 
         if (isset($parameters['id'])) {
-            // preview/copyright.blade.php rendert nur $project->chapters
-            // mit ->name — flacher Baum als preview/index.
-            $project = Project::with('chapters')->findOrFail($parameters['id']);
+            $project = Project::withCopyrightTree()->findOrFail($parameters['id']);
             if ($request->type == 'copyright') {
                 $content = $project->terms;
                 $type = 'copyright';
