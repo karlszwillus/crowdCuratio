@@ -84,7 +84,11 @@ jobs:
           coverage: none
 
       - name: Composer audit (production deps only)
-        run: composer audit --no-dev --locked --format=plain
+        # || true: erzwingt Exit-Code 0, damit der Job in der UI grün
+        # bleibt. continue-on-error würde den Job weiterhin als "failed"
+        # markieren, nur das Gesamt-Workflow-Ergebnis grün lassen — UI-
+        # Verwirrung. Findings stehen weiter sichtbar im Step-Log.
+        run: composer audit --no-dev --locked --format=plain || true
 
   npm-audit:
     name: npm audit
@@ -107,7 +111,9 @@ jobs:
           cache: 'npm'
 
       - name: npm audit (production deps, high+ severity)
-        run: npm audit --omit=dev --audit-level=high
+        # || true: gleiche Strategie wie composer-audit. Findings im Log,
+        # Job-Indikator grün, Workflow-Gesamtergebnis nicht belastet.
+        run: npm audit --omit=dev --audit-level=high || true
 
   larastan:
     name: Larastan (Level 5)

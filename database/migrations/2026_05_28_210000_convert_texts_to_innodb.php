@@ -35,6 +35,13 @@ class ConvertTextsToInnodb extends Migration
 {
     public function up(): void
     {
+        // information_schema und MyISAM/InnoDB sind MySQL-Konzepte.
+        // Auf SQLite (CI-Test-Pfad) ist die Migration ein No-Op —
+        // siehe NF-DB-103 im Phase-1-Review.
+        if (DB::connection()->getDriverName() !== 'mysql') {
+            return;
+        }
+
         $currentEngine = $this->getEngine('texts');
 
         if ($currentEngine === null) {
