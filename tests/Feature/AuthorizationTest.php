@@ -336,3 +336,95 @@ test('Intruder darf fremden Entry NICHT löschen (B-4b)', function () {
     $response->assertForbidden();
     expect(Entry::query()->find($entry->id))->not->toBeNull();
 });
+
+// ----------------------------------------------------------------------
+// NF-LAR-003 — Create-Pfad-Bypass.
+//
+// In Phase 1 hatten die Update-/Destroy-Pfade Owner-Checks, die store()-
+// Methoden von ChapterController und EntryController aber nicht. Wer
+// `add`-Permission in irgendeinem Projekt hatte, konnte in jedem
+// anderen Projekt Chapter/Entries anlegen. Diese Tests sichern, dass
+// der Create-Pfad jetzt ebenfalls über Owner+Admin gehärtet ist.
+// ----------------------------------------------------------------------
+
+test('Intruder darf in fremdem Project KEIN Chapter anlegen (NF-LAR-003a)', function () {
+    $owner = User::factory()->create();
+    $project = makeProject($owner);
+
+    $intruder = User::factory()->create();
+
+    $response = $this->actingAs($intruder)->post(
+        route('chapters.store'),
+        [
+            'projectId' => $project->id,
+            'chapterTitle' => 'HACKED',
+            'chapterSubtitle' => 'HACKED',
+            'chapterDescription' => 'HACKED',
+        ]
+    );
+
+    $response->assertForbidden();
+    expect(Chapter::where('project_id', $project->id)->count())->toBe(0);
+});
+
+test('Admin darf in fremdem Project ein Chapter anlegen (NF-LAR-003a)', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('Admin');
+
+    $owner = User::factory()->create();
+    $project = makeProject($owner);
+
+    $response = $this->actingAs($admin)->post(
+        route('chapters.store'),
+        [
+            'projectId' => $project->id,
+            'chapterTitle' => 'Vom Admin angelegt',
+            'chapterSubtitle' => 'Untertitel',
+            'chapterDescription' => 'Beschreibung',
+        ]
+    );
+
+    $response->assertRedirect();
+    expect(Chapter::where('project_id', $project->id)->count())->toBe(1);
+});
+
+test('Intruder darf in fremdem Chapter KEINEN Entry anlegen (NF-LAR-003b)', function () {
+    $owner = User::factory()->create();
+    $chapter = makeChapter(makeProject($owner));
+
+    $intruder = User::factory()->create();
+
+    $response = $this->actingAs($intruder)->post(
+        route('entries.store'),
+        [
+            'chapterId' => $chapter->id,
+            'entryTitle' => 'HACKED',
+            'entrySubtitle' => 'HACKED',
+            'entryDescription' => 'HACKED',
+        ]
+    );
+
+    $response->assertForbidden();
+    expect(Entry::where('chapter_id', $chapter->id)->count())->toBe(0);
+});
+
+test('Admin darf in fremdem Chapter einen Entry anlegen (NF-LAR-003b)', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('Admin');
+
+    $owner = User::factory()->create();
+    $chapter = makeChapter(makeProject($owner));
+
+    $response = $this->actingAs($admin)->post(
+        route('entries.store'),
+        [
+            'chapterId' => $chapter->id,
+            'entryTitle' => 'Vom Admin angelegt',
+            'entrySubtitle' => 'Untertitel',
+            'entryDescription' => 'Beschreibung',
+        ]
+    );
+
+    $response->assertRedirect();
+    expect(Entry::where('chapter_id', $chapter->id)->count())->toBe(1);
+});

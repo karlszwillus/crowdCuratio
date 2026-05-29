@@ -21,6 +21,7 @@ If not, see <https://www.gnu.org/licenses/>.
 namespace App\Policies;
 
 use App\Models\Chapter;
+use App\Models\Project;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
@@ -50,6 +51,18 @@ class ChapterPolicy
     public function create(User $user): bool
     {
         return $user->can('add');
+    }
+
+    /**
+     * Darf $user im konkreten $project ein Chapter anlegen?
+     *
+     * Owner-Check zusätzlich zur Permission. Schließt NF-LAR-003:
+     * Permission 'add' allein reichte nicht, weil sie projekt­übergreifend
+     * gilt — der Owner-Check verhindert das Anlegen in fremden Projekten.
+     */
+    public function createIn(User $user, Project $project): bool
+    {
+        return $user->id === (int) $project->user_id;
     }
 
     public function update(User $user, Chapter $chapter): bool

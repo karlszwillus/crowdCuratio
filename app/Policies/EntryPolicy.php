@@ -20,6 +20,7 @@ If not, see <https://www.gnu.org/licenses/>.
  */
 namespace App\Policies;
 
+use App\Models\Chapter;
 use App\Models\Entry;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
@@ -48,6 +49,18 @@ class EntryPolicy
     public function create(User $user): bool
     {
         return $user->can('add');
+    }
+
+    /**
+     * Darf $user im konkreten $chapter einen Entry anlegen?
+     *
+     * Owner-Check transitiv über Project. Schließt NF-LAR-003:
+     * Permission 'add' allein reichte nicht, weil sie projekt­übergreifend
+     * gilt — der Owner-Check verhindert das Anlegen in fremden Kapiteln.
+     */
+    public function createIn(User $user, Chapter $chapter): bool
+    {
+        return $user->id === (int) $chapter->project->user_id;
     }
 
     public function update(User $user, Entry $entry): bool

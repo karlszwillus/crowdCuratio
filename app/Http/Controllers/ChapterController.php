@@ -83,12 +83,17 @@ class ChapterController extends Controller
             $this->update($request);
             return redirect()->back()->with('success', __("message_edit_chapter_success"));
         } else {
-            $pos = Chapter::where('project_id', $request['projectId'])->orderBy('position', 'desc')->first();
+            // NF-LAR-003: Owner-Check vor dem Anlegen — Permission 'add'
+            // allein reicht nicht, weil sie projekt­übergreifend gilt.
+            $project = Project::findOrFail($request['projectId']);
+            $this->authorize('createIn', [Chapter::class, $project]);
+
+            $pos = Chapter::where('project_id', $project->id)->orderBy('position', 'desc')->first();
             $position = 0;
             if(!empty($pos->position)) $position = $pos->position;
             Chapter::create(
                 [
-                    'project_id' => $request['projectId'],
+                    'project_id' => $project->id,
                     'name' => $request['chapterTitle'],
                     'subtitle' => $request['chapterSubtitle'],
                     'description' => $request['chapterDescription'],
@@ -96,7 +101,7 @@ class ChapterController extends Controller
                 ]
             );
 
-            return redirect()->route('projects.edit', [$request['projectId']])->with('success', __("message_add_chapter_success"));
+            return redirect()->route('projects.edit', [$project->id])->with('success', __("message_add_chapter_success"));
 
         }
     }

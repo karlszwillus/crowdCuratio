@@ -20,6 +20,7 @@ If not, see <https://www.gnu.org/licenses/>.
  */
 namespace App\Http\Controllers;
 
+use App\Models\Chapter;
 use App\Models\Entry;
 use App\Services\CommentRetrieve;
 use Illuminate\Http\JsonResponse;
@@ -68,14 +69,19 @@ class EntryController extends Controller
 
             return redirect()->back()->with('success', __("message_edit_entry_success"));
         } else {
+            // NF-LAR-003: Owner-Check vor dem Anlegen, transitiv über
+            // chapter->project. Permission 'add' allein reicht nicht,
+            // weil sie projekt­übergreifend gilt.
+            $chapter = Chapter::findOrFail($request['chapterId']);
+            $this->authorize('createIn', [Entry::class, $chapter]);
 
-            $pos = Entry::where('chapter_id', $request['chapterId'])->orderBy('position', 'desc')->first();
+            $pos = Entry::where('chapter_id', $chapter->id)->orderBy('position', 'desc')->first();
             $position = 0;
             if(!empty($pos->position)) $position = $pos->position;
 
             Entry::create(
                 [
-                    'chapter_id' => $request['chapterId'],
+                    'chapter_id' => $chapter->id,
                     'name' => $request['entryTitle'],
                     'subtitle' => $request['entrySubtitle'],
                     'description' => $request['entryDescription'],
