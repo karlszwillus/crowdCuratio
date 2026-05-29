@@ -2,7 +2,7 @@
 
 /**
 crowdCuratio - Curating together virtually
-Copyright (C)2022 - berlinHistory e.V.
+Copyright (C)2022, 2026 - berlinHistory e.V.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -76,7 +76,10 @@ class CommentRetrieve
                 break;
         }
 
-        $model = $class::whereNull('deleted_at')->findOrFail($id);
+        // F-DB-014: alle hier möglichen Klassen (Project/Chapter/Entry/
+        // MediaContent/Text/Image/Gallery/Audiovisual) nutzen SoftDeletes —
+        // der Scope schließt trashed bereits implizit aus.
+        $model = $class::findOrFail($id);
 
         foreach (config('project.comment') as $v => $k) {
             $status[$v] = $k;

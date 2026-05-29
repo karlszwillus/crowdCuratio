@@ -2,7 +2,7 @@
 
 /**
 crowdCuratio - Curating together virtually
-Copyright (C)2022 - berlinHistory e.V.
+Copyright (C)2022, 2026 - berlinHistory e.V.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -76,6 +76,14 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        // F-LAR-005 / Phase-1-Reviewer: welcome_valid_until ist seit
+        // 2021_05_07 in der users-Tabelle als DATETIME, wurde aber bisher
+        // nicht in $casts geführt — Controller-Code hat manuell parse()
+        // gerufen. Mit dem Cast bekommt jeder Property-Zugriff direkt
+        // ein Carbon-Objekt.
+        'welcome_valid_until' => 'datetime',
+        'is_admin' => 'boolean',
+        'create_project' => 'boolean',
     ];
 
     /**

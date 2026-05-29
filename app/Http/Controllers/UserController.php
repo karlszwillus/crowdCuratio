@@ -2,7 +2,7 @@
 
 /**
 crowdCuratio - Curating together virtually
-Copyright (C)2022 - berlinHistory e.V.
+Copyright (C)2022, 2026 - berlinHistory e.V.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -49,6 +49,11 @@ class UserController extends Controller
      */
     public function index()
     {
+        // F-DB-014: hier ist whereNull('deleted_at') bewusst stehen
+        // geblieben — DB::table() umgeht den SoftDeletes-Scope, anders
+        // als die Eloquent-Queries an den anderen Stellen.
+        // Phase-4-TODO (F-LAR-007): Query auf Eloquent umstellen, dann
+        // fällt der explizite Filter weg.
         $data = DB::table('users')
             ->join('model_has_roles', 'model_id', '=', 'users.id')
             ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
