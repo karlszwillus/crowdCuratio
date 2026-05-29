@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,6 +19,7 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Models;
 
 use App\Http\Controllers\Auth\MyCustomWelcomeNotification;
@@ -32,11 +34,14 @@ use Spatie\WelcomeNotification\ReceivesWelcomeNotification;
 
 class User extends Authenticatable
 {
-    use HasFactory, SoftDeletes, Notifiable, HasRoles, LogsActivity, ReceivesWelcomeNotification;
+    use HasFactory, HasRoles, LogsActivity, Notifiable, ReceivesWelcomeNotification, SoftDeletes;
 
     protected static $logName = 'User';
+
     protected static $logFillable = true;
+
     protected static $logOnlyDirty = true;
+
     protected static $submitEmptyLogs = false;
 
     /**
@@ -51,8 +56,9 @@ class User extends Authenticatable
         'password',
         'is_admin',
         'create_project',
-        'created_at'
+        'created_at',
     ];
+
     /**
      * The attributes that should be hidden for arrays.
      *
@@ -87,7 +93,8 @@ class User extends Authenticatable
         return $this->roles()->where('name', 'Admin')->exists();
     }
 
-    public function projects(){
+    public function projects()
+    {
 
         return $this->hasMany(Project::class);
     }
@@ -97,7 +104,8 @@ class User extends Authenticatable
         $this->notify(new MyCustomWelcomeNotification($validUntil, $firstName, $settingsContent));
     }
 
-    public function currentRole(){
-        return $this->belongsToMany(Role::class,'model_has_roles','model_id','role_id');
+    public function currentRole()
+    {
+        return $this->belongsToMany(Role::class, 'model_has_roles', 'model_id', 'role_id');
     }
 }

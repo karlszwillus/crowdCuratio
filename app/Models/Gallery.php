@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,6 +19,7 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Models;
 
 use App\Traits\CommentTrait;
@@ -32,11 +34,14 @@ use Spatie\Translatable\HasTranslations;
 
 class Gallery extends Model
 {
-    use HasFactory, SoftDeletes, LogsActivity, CommentTrait, HasTranslations;
+    use CommentTrait, HasFactory, HasTranslations, LogsActivity, SoftDeletes;
 
     protected static $logName = 'Gallery';
+
     protected static $logFillable = true;
+
     protected static $logOnlyDirty = true;
+
     protected static $submitEmptyLogs = false;
 
     /**
@@ -71,8 +76,9 @@ class Gallery extends Model
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
-    public function images(){
-        return $this->hasMany(Image::class,'gallery_id','id')->orderBy('position', 'asc');
+    public function images()
+    {
+        return $this->hasMany(Image::class, 'gallery_id', 'id')->orderBy('position', 'asc');
     }
 
     /**
@@ -87,13 +93,11 @@ class Gallery extends Model
 
     /**
      * Add language to log
-     *
-     * @param Activity $activity
      */
     public function tapActivity(Activity $activity)
     {
         $activity->properties = $activity->properties->merge([
-                                                                 'language' => Lang::getLocale(),
-                                                             ]);
+            'language' => Lang::getLocale(),
+        ]);
     }
 }

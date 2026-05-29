@@ -13,10 +13,10 @@ return [
     |
     */
 
-    'reset' => __("message_reset_password"),
-    'sent' => __("message_email_password"),
-    'throttled' => __("message_please_wait"),
-    'token' => __("message_token_invalid"),
-    'user' => __("message_no_user_found"),
+    'reset' => __('message_reset_password'),
+    'sent' => __('message_email_password'),
+    'throttled' => __('message_please_wait'),
+    'token' => __('message_token_invalid'),
+    'user' => __('message_no_user_found'),
 
 ];

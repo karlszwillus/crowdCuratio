@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,6 +19,7 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -29,7 +31,9 @@ class Invitation extends Model
     use HasFactory, LogsActivity;
 
     protected static $logName = 'Entry';
+
     protected static $logFillable = true;
+
     protected static $logOnlyDirty = true;
 
     /**
@@ -37,5 +41,5 @@ class Invitation extends Model
      *
      * @var array
      */
-    protected $fillable = ['user_id', 'guest_id','project_id'];
+    protected $fillable = ['user_id', 'guest_id', 'project_id'];
 }

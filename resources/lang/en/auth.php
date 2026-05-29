@@ -13,8 +13,8 @@ return [
     |
     */
 
-    'failed' => __("message_no_match"),
-    'password' => __("message_password_incorrect"),
-    'throttle' => __("message_too_many_attempts"),
+    'failed' => __('message_no_match'),
+    'password' => __('message_password_incorrect'),
+    'throttle' => __('message_too_many_attempts'),
 
 ];

@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022, 2026 - berlinHistory e.V.
@@ -18,6 +19,7 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Http\Controllers;
 
 use App\Models\Audiovisual;
@@ -52,11 +54,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\URL;
-use Spatie\Activitylog\Models\Activity;
 use Mpdf\Pdf;
-use Mpdf\Mpdf;
-
+use Spatie\Activitylog\Models\Activity;
 
 class ProjectController extends Controller
 {
@@ -87,7 +86,7 @@ class ProjectController extends Controller
      */
     public function index()
     {
-        //get all available projects
+        // get all available projects
         $data = $this->getAllProjects();
 
         return view('projects.index', compact('data'));
@@ -101,7 +100,7 @@ class ProjectController extends Controller
     public function getAllProjects()
     {
 
-        if(Auth::user()->isAdmin()) {
+        if (Auth::user()->isAdmin()) {
 
             return Project::query()
                 ->join('users', 'users.id', '=', 'projects.user_id')
@@ -116,9 +115,9 @@ class ProjectController extends Controller
                 ->leftJoin('invitations', 'invitations.project_id', '=', 'projects.id')
                 ->select('projects.*', 'users.name as user_name')
                 ->distinct()
-                ->Where(function($query) {
-                    $query->where('invitations.guest_id',Auth::user()->id)
-                            ->orWhere('projects.user_id',Auth::user()->id);
+                ->Where(function ($query) {
+                    $query->where('invitations.guest_id', Auth::user()->id)
+                        ->orWhere('projects.user_id', Auth::user()->id);
                 })
                 ->whereNull('projects.deleted_at')
                 ->whereNull('users.deleted_at')
@@ -140,20 +139,19 @@ class ProjectController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param Request $request
      * @return Response
      */
     public function store(Request $request)
     {
 
-            $request->validate(
-                [
-                    'name' => 'required',
-                    'imprint' => 'required',
-                ]
-            );
+        $request->validate(
+            [
+                'name' => 'required',
+                'imprint' => 'required',
+            ]
+        );
 
-            $new = Project::create($this->mapData($request));
+        $new = Project::create($this->mapData($request));
 
         return redirect()->route('chapters.index', ['id' => $new->id])
             ->with('success', 'Project added successfully');
@@ -162,22 +160,32 @@ class ProjectController extends Controller
     /**
      * Map data
      *
-     * @param $request
      * @return array
      */
-    protected function mapData($request){
+    protected function mapData($request)
+    {
 
         $data = [];
         $data['user_id'] = Auth::user()->id;
         $data['status'] = config('project.status.default');
 
-        if(isset($request['name'])) $data['name'] = $request['name'];
-        if(isset($request['imprint'])) $data['imprint'] = $request['imprint'];
-        if(isset($request['terms'])) $data['terms'] = $request['terms'];
-        if(isset($request['description'])) $data['description'] = $request['description'];
+        if (isset($request['name'])) {
+            $data['name'] = $request['name'];
+        }
+        if (isset($request['imprint'])) {
+            $data['imprint'] = $request['imprint'];
+        }
+        if (isset($request['terms'])) {
+            $data['terms'] = $request['terms'];
+        }
+        if (isset($request['description'])) {
+            $data['description'] = $request['description'];
+        }
 
         $logo = $this->setImage($request);
-        if($logo != '') $data['logo'] = $logo;
+        if ($logo != '') {
+            $data['logo'] = $logo;
+        }
 
         return $data;
     }
@@ -185,7 +193,6 @@ class ProjectController extends Controller
     /**
      * Save image
      *
-     * @param $request
      * @return $this
      */
     protected function setImage($request)
@@ -209,7 +216,6 @@ class ProjectController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param Project $project
      * @return Response
      */
     public function show(Project $project)
@@ -220,7 +226,6 @@ class ProjectController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param Project $project
      * @return Response
      */
     public function edit(Request $request, Project $project)
@@ -229,9 +234,9 @@ class ProjectController extends Controller
         $comments = [];
         $isComment = false;
 
-        if(isset($request['comment'])){
+        if (isset($request['comment'])) {
             $isComment = true;
-            $comment = new CommentRetrieve();
+            $comment = new CommentRetrieve;
 
             $comments = $comment->getComments($request['model'], $request['comment']);
 
@@ -245,7 +250,7 @@ class ProjectController extends Controller
         $permissions = Permission::all();
         $listRole = Role::where('id', 'not like', '1')->pluck('name', 'id');
         $users = User::whereNull('deleted_at')->get();
-        $userService = new UserService();
+        $userService = new UserService;
         $listPermissions = $userService->getAllUsers($project->id);
         $allPermissions = Permission::pluck('name', 'id');
         $currentUserPermissions = $this->getCurrentUsersPermissions(Auth::user()->id);
@@ -280,10 +285,10 @@ class ProjectController extends Controller
     /**
      * Get users that are allowed to work in the current project
      *
-     * @param $id
      * @return bool
      */
-    protected function getUsersForThisProject($id){
+    protected function getUsersForThisProject($id)
+    {
 
         $users = User::whereNull('deleted_at')->get();
 
@@ -297,35 +302,33 @@ class ProjectController extends Controller
         $listGrantedUsers = [];
 
         foreach ($listUsersPermissions as $key => $value) {
-            if (!array_key_exists($value->user_id, $listGrantedUsers) && array_key_exists($value->user_id, $userList)) {
-                $listGrantedUsers[$value->user_id]['name'] = $userList[$value->user_id]['name'] . ' ' . $userList[$value->user_id]['lastName'];
+            if (! array_key_exists($value->user_id, $listGrantedUsers) && array_key_exists($value->user_id, $userList)) {
+                $listGrantedUsers[$value->user_id]['name'] = $userList[$value->user_id]['name'].' '.$userList[$value->user_id]['lastName'];
                 $userPermission = $this->getSelectedPermissionUser($value->user_id, $id);
                 $listGrantedUsers[$value->user_id]['permission'] = $userPermission;
             }
         }
-;
+
         return $listGrantedUsers;
     }
 
     /**
-     * @param $model
-     * @param $id
      * @return array
      */
     public function history($model, $id)
     {
-        $type = "App\Models\\" . $model;
+        $type = "App\Models\\".$model;
         $exception = '[]';
 
         $activities = Activity::where('subject_id', '=', $id)
-            ->where('subject_type', '=', $type)->where('description' , 'NOT LIKE', '%created%')
-            ->where('properties','NOT LIKE', '%is_translate%')
-            ->where('properties','NOT LIKE', '%'.$exception.'%')
-            ->where('properties->language',Lang::getLocale())
+            ->where('subject_type', '=', $type)->where('description', 'NOT LIKE', '%created%')
+            ->where('properties', 'NOT LIKE', '%is_translate%')
+            ->where('properties', 'NOT LIKE', '%'.$exception.'%')
+            ->where('properties->language', Lang::getLocale())
             ->orderBy(
-            'updated_at',
-            'desc'
-        )->get();
+                'updated_at',
+                'desc'
+            )->get();
 
         $logs = [];
 
@@ -335,8 +338,8 @@ class ProjectController extends Controller
                 $lastName = isset($value->causer->last_name) ? $value->causer->last_name : null;
                 $logs[] = [
                     'id' => $value->id,
-                    'userName' => $firstName . ' ' . $lastName,
-                    'created_at' => isset($value->created_at) ? $value->created_at : null
+                    'userName' => $firstName.' '.$lastName,
+                    'created_at' => isset($value->created_at) ? $value->created_at : null,
                 ];
             }
         }
@@ -347,7 +350,6 @@ class ProjectController extends Controller
     /**
      * Get current permission of this user
      *
-     * @param $id
      * @return array
      */
     protected function getCurrentUsersPermissions($id)
@@ -364,8 +366,6 @@ class ProjectController extends Controller
     /**
      * Get permissions for the selected user as array
      *
-     * @param $userId
-     * @param $projectId
      * @return array
      */
     protected function getSelectedPermissionUser($userId, $projectId)
@@ -380,8 +380,6 @@ class ProjectController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param Request $request
-     * @param Project $project
      * @return Response
      */
     public function update(Request $request, Project $project)
@@ -404,7 +402,7 @@ class ProjectController extends Controller
                 'name' => $request['name'],
                 'imprint' => $request['imprint'],
                 'terms' => $request['terms'],
-                'description' => $request['description']
+                'description' => $request['description'],
             ]
         );
 
@@ -420,13 +418,12 @@ class ProjectController extends Controller
             }
         }
 
-        return redirect()->back()->with('success', __("message_edit_project_success"));
+        return redirect()->back()->with('success', __('message_edit_project_success'));
     }
 
     /**
      * Remove the specified resource from storage.
      *
-     * @param Project $project
      * @return Response
      */
     public function destroy(Project $project)
@@ -436,7 +433,7 @@ class ProjectController extends Controller
         $project->delete();
 
         return redirect()->route('projects.index')
-            ->with('success', __("message_delete_project_success"));
+            ->with('success', __('message_delete_project_success'));
     }
 
     /**
@@ -464,8 +461,6 @@ class ProjectController extends Controller
     /**
      * Comment project
      *
-     * @param Request $request
-     * @param Project $project
      * @return RedirectResponse
      */
     public function commentProject(Request $request, Project $project)
@@ -482,20 +477,18 @@ class ProjectController extends Controller
     /**
      * Retrieve all comment of current entry
      *
-     * @param $id
      * @return JsonResponse
      */
     public function getProjectComment($id)
     {
-        $comment = new CommentRetrieve();
+        $comment = new CommentRetrieve;
+
         return $comment->getComments('App\Models\Project', $id);
     }
 
     /**
      * Save current entry
      *
-     * @param Request $request
-     * @param Project $project
      * @return RedirectResponse
      */
     public function saveCommentProject(Request $request, Project $project)
@@ -514,39 +507,37 @@ class ProjectController extends Controller
     /**
      * Set status project
      *
-     * @param Request $request
-     * @param Project $project
      * @return JsonResponse
      */
     public function setStatusProject(Request $request, Project $project)
     {
         $data = $project->status($request);
+
         return response()->json($data);
     }
 
     /**
      * Set permission for user on project
      *
-     * @param Request $request
      * @return RedirectResponse
      */
     public function setPermissionForUserOnProject(Request $request)
     {
-        //delete old permissions
+        // delete old permissions
         UserHasPermission::where('project_id', $request['project'])
             ->where('user_id', $request['user'])->delete();
 
         Invitation::where('project_id', $request['project'])
             ->where('guest_id', $request['user'])->delete();
 
-        //save new permission
+        // save new permission
         if (isset($request['permissions']) && count($request['permissions']) > 0) {
             foreach ($request['permissions'] as $key => $permission) {
                 UserHasPermission::firstOrCreate(
                     [
                         'project_id' => $request['project'],
                         'permission_id' => $permission,
-                        'user_id' => $request['user']
+                        'user_id' => $request['user'],
                     ]
                 );
             }
@@ -557,11 +548,11 @@ class ProjectController extends Controller
         $error_code = 5;
 
         Invitation::firstOrCreate([
-                               'user_id' => Auth::user()->id,
-                               'guest_id' => $request['user'],
-                               'project_id' => $request['project']],[
-                               'created_at' => now()
-                           ]);
+            'user_id' => Auth::user()->id,
+            'guest_id' => $request['user'],
+            'project_id' => $request['project']], [
+                'created_at' => now(),
+            ]);
 
         return redirect()->back()->with(['error_code' => $error_code, 'user' => $user, 'permissions' => $permissions]);
     }
@@ -569,7 +560,6 @@ class ProjectController extends Controller
     /**
      * ajax retrieve user's permission
      *
-     * @param $id
      * @return JsonResponse
      */
     public function givePermissionToUser($id)
@@ -583,20 +573,17 @@ class ProjectController extends Controller
     }
 
     /**
-     * @param $id
      * @return array|mixed
      */
     public function getCurrentLog($id)
     {
-        $log = new LogService();
+        $log = new LogService;
         $activities = $log->textLog($id);
 
         return redirect()->back()->with('activities', $activities);
     }
 
     /**
-     * @param $project
-     * @param $id
      * @return Application|Factory|View
      */
     public function getDetails($project, $id)
@@ -657,14 +644,12 @@ class ProjectController extends Controller
     /**
      * Difference between text
      *
-     * @param $old
-     * @param $new
      * @return string[]
      */
     public function HighlightTextDifference($old, $new)
     {
         $from_start = is_null($old) ? strspn($new, "\0") : strspn($old ^ $new, "\0");
-        $from_end = is_null($old) ? strspn(strrev($new), "\0") :strspn(strrev($old) ^ strrev($new), "\0");
+        $from_end = is_null($old) ? strspn(strrev($new), "\0") : strspn(strrev($old) ^ strrev($new), "\0");
 
         $old_end = strlen($old) - $from_end;
         $new_end = strlen($new) - $from_end;
@@ -676,13 +661,13 @@ class ProjectController extends Controller
 
         $new = "$start<span style='background-color:#ccffcc'>$new_diff</span>$end";
         $old = "$start<del style='background-color:#ffcccc'>$old_diff</del>$end";
-        return array("old" => $old, "new" => $new);
+
+        return ['old' => $old, 'new' => $new];
     }
 
     /**
      * Get parent text
      *
-     * @param $id
      * @return Collection
      */
     public function getParentText($table, $model, $id)
@@ -692,28 +677,27 @@ class ProjectController extends Controller
                 return DB::table($table)
                     ->join('chapters', 'chapters.id', '=', 'entries.chapter_id')
                     ->select('chapters.name as chapter_name', 'entries.name as entry_name')
-                    ->where($table . '.id', '=', $id)
+                    ->where($table.'.id', '=', $id)
                     ->get();
             case 'images':
             case 'texts':
                 return DB::table($table)
-                    ->join('media_content', $table . '.id', '=', 'media_content.media_content_id')
+                    ->join('media_content', $table.'.id', '=', 'media_content.media_content_id')
                     ->join('entries', 'entries.id', '=', 'media_content.media_contentable_id')
                     ->join('chapters', 'chapters.id', '=', 'entries.chapter_id')
                     ->select('chapters.name as chapter_name', 'entries.name as entry_name')
-                    ->where($table . '.id', '=', $id)
+                    ->where($table.'.id', '=', $id)
                     ->where('media_content.media_contentable_type', '=', $model)
                     ->get();
         }
     }
 
     /**
-     * @param Request $request
      * @return Application|RedirectResponse|Redirector
      */
     public function resetValue(Request $request)
     {
-        if (isset($request['subjectType']) && !is_null($request['subjectType'])) {
+        if (isset($request['subjectType']) && ! is_null($request['subjectType'])) {
             $model = $request['subjectType']::findorFail($request['subjectId']);
 
             if (isset($request['nameReset'])) {
@@ -765,8 +749,6 @@ class ProjectController extends Controller
     /**
      * Get source of content
      *
-     * @param $value
-     * @param $type
      * @return mixed
      */
     protected function getSource($value, $type)
@@ -776,6 +758,7 @@ class ProjectController extends Controller
         foreach ($source as $key => $v) {
             if ($v->name == $value) {
                 $id = $v->id;
+
                 return $id;
             }
         }
@@ -784,6 +767,7 @@ class ProjectController extends Controller
             $id = Source::insertGetId(
                 ['name' => json_encode([app()->getLocale() => $value]), 'type' => $type, 'created_at' => now()]
             );
+
             return $id;
         }
 
@@ -793,7 +777,6 @@ class ProjectController extends Controller
     /**
      * Translate project
      *
-     * @param $id
      * @return Application|Factory|View
      */
     public function translateCurrentProject($id)
@@ -805,7 +788,6 @@ class ProjectController extends Controller
     }
 
     /**
-     * @param $id
      * @return array
      */
     public function allData($id)
@@ -859,7 +841,7 @@ class ProjectController extends Controller
                                 }
                                 $total++;
                             }
-                        } else if ($item['media_contentable_type'] == 'App\Models\Audiovisual') {
+                        } elseif ($item['media_contentable_type'] == 'App\Models\Audiovisual') {
                             $audiovisual = Audiovisual::find($item['media_content_id']);
                             if ($audiovisual) {
                                 $audiovisual->media_id = $item['id'];
@@ -872,7 +854,7 @@ class ProjectController extends Controller
                             }
                         } else {
                             $gallery = Gallery::find($item['media_content_id']);
-                            //$image = Image::find($item['media_content_id']);
+                            // $image = Image::find($item['media_content_id']);
                             if ($gallery) {
                                 $gallery->media_id = $item['id'];
                                 $gallery->image_list = $gallery->images;
@@ -904,8 +886,6 @@ class ProjectController extends Controller
     /**
      * User invitation
      *
-     * @param $id
-     * @param $projectId
      * @return Application|Factory|View
      */
     public function inviteUserForProject($id, $projectId)
@@ -928,7 +908,6 @@ class ProjectController extends Controller
      * code_error 6: already exist
      * code_error 7: doesn't exist
      *
-     * @param Request $request
      * @return RedirectResponse
      */
     protected function checkEmail(Request $request)
@@ -957,7 +936,7 @@ class ProjectController extends Controller
                     'listAllPermissions' => $listAllPermissions,
                     'permissionForProject' => $permissionForProject,
                     'permissionProject' => $permissionProject,
-                    'permissionForRole' => $permissionForRole
+                    'permissionForRole' => $permissionForRole,
                 ]
             );
         } else {
@@ -968,8 +947,6 @@ class ProjectController extends Controller
     /**
      * Get permissions for the selected user
      *
-     * @param $userId
-     * @param $projectId
      * @return Collection
      */
     protected function getSelectedPermissionUserPluck($userId, $projectId)
@@ -984,7 +961,6 @@ class ProjectController extends Controller
     /**
      * Get role of user
      *
-     * @param $userId
      * @return Collection
      */
     protected function getRoleSelectedUser($userId)
@@ -994,31 +970,31 @@ class ProjectController extends Controller
             ->where('model_has_roles.model_id', $userId)
             ->pluck('roles.name');
     }
+
     /**
      * Delete user from single project
      *
-     * @param $userId
-     * @param $projectId
      * @return RedirectResponse
      */
-    protected function deleteUserFromProject($userId, $projectId){
+    protected function deleteUserFromProject($userId, $projectId)
+    {
 
-     UserHasPermission::where('project_id',$projectId)
+        UserHasPermission::where('project_id', $projectId)
             ->where('user_id', $userId)->delete();
 
-     Invitation::where('project_id', $projectId)
-         ->where('guest_id', $userId)->delete();
+        Invitation::where('project_id', $projectId)
+            ->where('guest_id', $userId)->delete();
 
-        return redirect()->back()->with('success', __("message_edit_project_success"));
+        return redirect()->back()->with('success', __('message_edit_project_success'));
     }
 
     /**
      * Edit metadata
      *
-     * @param $projectId
      * @return Application|Factory|View
      */
-    public function editMetaData($projectId){
+    public function editMetaData($projectId)
+    {
 
         $project = Project::findOrFail($projectId);
         $listGrantedUsers = $this->getUsersForThisProject($projectId);
@@ -1026,49 +1002,65 @@ class ProjectController extends Controller
         $permissions = Permission::all();
         asort($listGrantedUsers);
 
-        return \view('projects.create', compact('project', 'listGrantedUsers','listRole','permissions'));
+        return \view('projects.create', compact('project', 'listGrantedUsers', 'listRole', 'permissions'));
 
     }
 
     /**
      * Preview project
      *
-     * @param $id
+     * @param  $id
      * @return Application|Factory|View
      */
-    public function previewProject(Request $request){
+    public function previewProject(Request $request)
+    {
         $parameters = [];
 
-        if (isset($request['colorAccent'])) $parameters['colorAccent'] = $request['colorAccent'];
-        if (isset($request['colorChapter'])) $parameters['colorChapter'] = $request['colorChapter'];
-        $parameters['backgroundSecond'] = (isset($request['backgroundSecond'])) ? "hintergrundgrau" : "hintergrundweiss";
-        if (isset($request['collapse'])) $parameters['collapse'] = 1;
-        if (isset($request['pdf'])) $parameters['pdf'] = 1;
+        if (isset($request['colorAccent'])) {
+            $parameters['colorAccent'] = $request['colorAccent'];
+        }
+        if (isset($request['colorChapter'])) {
+            $parameters['colorChapter'] = $request['colorChapter'];
+        }
+        $parameters['backgroundSecond'] = (isset($request['backgroundSecond'])) ? 'hintergrundgrau' : 'hintergrundweiss';
+        if (isset($request['collapse'])) {
+            $parameters['collapse'] = 1;
+        }
+        if (isset($request['pdf'])) {
+            $parameters['pdf'] = 1;
+        }
         $parameters['id'] = $request['project'];
         $project = Project::findOrFail($request['project']);
 
-        return \view('preview.index',compact('project', 'parameters'));
+        return \view('preview.index', compact('project', 'parameters'));
     }
 
     /**
      * Generate pdf
-     *
-     * @param Request $request
      */
-    public function downloadPreview(Request $request){
+    public function downloadPreview(Request $request)
+    {
 
         $parameters = [];
 
-        if (isset($request->colorAccent)) $parameters['colorAccent'] = $request->colorAccent;
-        if (isset($request->colorChapter)) $parameters['colorChapter'] = $request->colorChapter;
-        $parameters['backgroundSecond'] = (isset($request->backgroundSecond)) ? "hintergrundgrau" : "hintergrundweiss";
-        if (isset($request->collapse)) $parameters['collapse'] = $request->collapse;
-        if (isset($request->pdf)) $parameters['pdf'] = 1;
+        if (isset($request->colorAccent)) {
+            $parameters['colorAccent'] = $request->colorAccent;
+        }
+        if (isset($request->colorChapter)) {
+            $parameters['colorChapter'] = $request->colorChapter;
+        }
+        $parameters['backgroundSecond'] = (isset($request->backgroundSecond)) ? 'hintergrundgrau' : 'hintergrundweiss';
+        if (isset($request->collapse)) {
+            $parameters['collapse'] = $request->collapse;
+        }
+        if (isset($request->pdf)) {
+            $parameters['pdf'] = 1;
+        }
 
         $project = Project::findOrFail($request->id);
-        $html = View('preview.pdf',compact('project', 'parameters'))->render();
+        $html = View('preview.pdf', compact('project', 'parameters'))->render();
 
-        $options = new Options();
+        $options = new Options;
         $options->setChroot(['/var/www/html/public/']);
         $dompdf = new Dompdf($options);
         $dompdf->loadHtml($html);
@@ -1081,22 +1073,22 @@ class ProjectController extends Controller
 
     }
 
-
-    public function projectMetadata(Request $request){
+    public function projectMetadata(Request $request)
+    {
 
         $parameters = $request['parameters'];
 
-        if (isset($parameters['id'])){
+        if (isset($parameters['id'])) {
             $project = Project::findOrFail($parameters['id']);
-            if ($request->type == 'copyright'){
+            if ($request->type == 'copyright') {
                 $content = $project->terms;
                 $type = 'copyright';
-            }else{
+            } else {
                 $content = $project->imprint;
                 $type = 'policy';
             }
         }
 
-        return \view('preview.copyright', compact('project', 'parameters', 'content','type'));
+        return \view('preview.copyright', compact('project', 'parameters', 'content', 'type'));
     }
 }

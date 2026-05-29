@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022, 2026 - berlinHistory e.V.
@@ -18,6 +19,7 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Http\Controllers;
 
 use App\Models\Chapter;
@@ -34,7 +36,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class ChapterController extends Controller
@@ -50,7 +51,6 @@ class ChapterController extends Controller
     /**
      * Display a listing of the resource.
      *
-     * @param Request $request
      * @return Application|Factory|View
      */
     public function index(Request $request)
@@ -61,19 +61,18 @@ class ChapterController extends Controller
             'edit' => [],
             'delete' => [],
             'publish' => [],
-            'comment' => []
+            'comment' => [],
         ];
         $project = Project::whereNull('deleted_at')->findOrFail($request['id']);
         $permissions = Permission::all();
         $listRole = Role::where('id', 'not like', '1')->pluck('name', 'id');
 
-        return view('chapters.index', compact('project', 'listPermissions','permissions','listRole'));
+        return view('chapters.index', compact('project', 'listPermissions', 'permissions', 'listRole'));
     }
 
     /**
      * Store a newly created resource in storage.
      *
-     * @param Request $request
      * @return RedirectResponse
      */
     public function store(Request $request)
@@ -81,7 +80,8 @@ class ChapterController extends Controller
 
         if (isset($request['chapterId']) && $request['chapterId'] != '') {
             $this->update($request);
-            return redirect()->back()->with('success', __("message_edit_chapter_success"));
+
+            return redirect()->back()->with('success', __('message_edit_chapter_success'));
         } else {
             // NF-LAR-003: Owner-Check vor dem Anlegen — Permission 'add'
             // allein reicht nicht, weil sie projekt­übergreifend gilt.
@@ -90,18 +90,20 @@ class ChapterController extends Controller
 
             $pos = Chapter::where('project_id', $project->id)->orderBy('position', 'desc')->first();
             $position = 0;
-            if(!empty($pos->position)) $position = $pos->position;
+            if (! empty($pos->position)) {
+                $position = $pos->position;
+            }
             Chapter::create(
                 [
                     'project_id' => $project->id,
                     'name' => $request['chapterTitle'],
                     'subtitle' => $request['chapterSubtitle'],
                     'description' => $request['chapterDescription'],
-                    'position' => $position + 1
+                    'position' => $position + 1,
                 ]
             );
 
-            return redirect()->route('projects.edit', [$project->id])->with('success', __("message_add_chapter_success"));
+            return redirect()->route('projects.edit', [$project->id])->with('success', __('message_add_chapter_success'));
 
         }
     }
@@ -109,7 +111,6 @@ class ChapterController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param Request $request
      * @return $this
      */
     public function update(Request $request)
@@ -118,11 +119,13 @@ class ChapterController extends Controller
 
         $this->authorize('update', $chapter);
 
-        if (isset($request['translationChapter'])){
+        if (isset($request['translationChapter'])) {
             $chapter->setTranslation('name', 'en', $request['chapterTitle']);
             $chapter->setTranslation('subtitle', 'en', $request['chapterSubtitle']);
-            if ($request['chapterDescription'] != "undefined") $chapter->setTranslation('description', 'en', $request['chapterDescription']);
-        }else{
+            if ($request['chapterDescription'] != 'undefined') {
+                $chapter->setTranslation('description', 'en', $request['chapterDescription']);
+            }
+        } else {
             $chapter->name = $request['chapterTitle'];
             $chapter->subtitle = $request['chapterSubtitle'];
             $chapter->description = $request['chapterDescription'];
@@ -143,7 +146,6 @@ class ChapterController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param $id
      * @return JsonResponse
      */
     public function edit($id)
@@ -156,11 +158,10 @@ class ChapterController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param Request $request
-     * @param int $id
+     * @param  int  $id
      * @return Response
      */
-    public function destroy(Request $request,$id)
+    public function destroy(Request $request, $id)
     {
         $chapter = Chapter::findOrFail($id);
 
@@ -168,14 +169,12 @@ class ChapterController extends Controller
 
         $chapter->delete();
 
-        return redirect('projects/'.$request->project.'/edit')->with('success', __("message_delete_chapter_success"));
+        return redirect('projects/'.$request->project.'/edit')->with('success', __('message_delete_chapter_success'));
     }
 
     /**
      * Comment chapter
      *
-     * @param Request $request
-     * @param Chapter $chapter
      * @return RedirectResponse
      */
     public function commentChapter(Request $request, Chapter $chapter)
@@ -192,12 +191,11 @@ class ChapterController extends Controller
     /**
      * Retrieve all comment of current chapter
      *
-     * @param $id
      * @return JsonResponse
      */
     public function getChapterComment($id)
     {
-        $comment = new CommentRetrieve();
+        $comment = new CommentRetrieve;
         $comments = $comment->getComments('App\Models\Chapter', $id);
 
         return redirect()->back()->with(['comments' => $comments]);
@@ -206,14 +204,12 @@ class ChapterController extends Controller
     /**
      * Save current comment
      *
-     * @param Request $request
-     * @param Chapter $chapter
      * @return RedirectResponse
      */
     public function saveComment(Request $request, Chapter $chapter)
     {
 
-        if(isset($request['name']) && $request['name'] == 'edit'){
+        if (isset($request['name']) && $request['name'] == 'edit') {
             return $chapter->editAsUser($request);
         }
 
@@ -231,20 +227,18 @@ class ChapterController extends Controller
     /**
      * Set status
      *
-     * @param Request $request
-     * @param Chapter $chapter
      * @return JsonResponse
      */
     public function setStatus(Request $request, Chapter $chapter)
     {
         $data = $chapter->status($request);
+
         return response()->json($data);
     }
 
     /**
      * Update position and relationship through drag and drop.
      *
-     * @param Request $request
      * @return JsonResponse
      */
     public function saveDragAndDrop(Request $request)
@@ -253,26 +247,28 @@ class ChapterController extends Controller
         $data = isset($request['data']) ? $request['data'] : [];
 
         Log::info($request);
-        if (count($data) > 0){
-            switch ($request['element']){
+        if (count($data) > 0) {
+            switch ($request['element']) {
                 case 'chapter':
-                    foreach ($data as $key => $value){
-                        Chapter::where('id', $value)->update(['position' => $key+1]);
+                    foreach ($data as $key => $value) {
+                        Chapter::where('id', $value)->update(['position' => $key + 1]);
                     }
                     break;
                 case 'entry':
-                    foreach ($data as $key => $value){
-                        if (is_null($value)) continue;
-                        Entry::where('id', $value)->update(['chapter_id' =>$request['chapter'],'position' => $key+1]);
+                    foreach ($data as $key => $value) {
+                        if (is_null($value)) {
+                            continue;
+                        }
+                        Entry::where('id', $value)->update(['chapter_id' => $request['chapter'], 'position' => $key + 1]);
                     }
 
                     break;
                 case 'content':
-                    foreach ($data as $key => $value){
-                        if($request['entry']){
-                            MediaContent::where('id', $value)->update(['media_contentable_id' => $request['entry'], 'position' => $key+1]);
-                        }else{
-                            MediaContent::where('id', $value)->update(['position' => $key+1]);
+                    foreach ($data as $key => $value) {
+                        if ($request['entry']) {
+                            MediaContent::where('id', $value)->update(['media_contentable_id' => $request['entry'], 'position' => $key + 1]);
+                        } else {
+                            MediaContent::where('id', $value)->update(['position' => $key + 1]);
                         }
 
                     }
@@ -283,6 +279,4 @@ class ChapterController extends Controller
 
         return response()->json('Updated successfully');
     }
-
-
 }

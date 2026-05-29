@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,6 +19,7 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Models;
 
 use App\Traits\CommentTrait;
@@ -32,11 +34,14 @@ use Spatie\Translatable\HasTranslations;
 
 class Chapter extends Model
 {
-    use HasFactory, SoftDeletes, LogsActivity, CommentTrait, HasTranslations;
+    use CommentTrait, HasFactory, HasTranslations, LogsActivity, SoftDeletes;
 
     protected static $logName = 'Chapter';
+
     protected static $logFillable = true;
+
     protected static $logOnlyDirty = true;
+
     protected static $submitEmptyLogs = false;
 
     /**
@@ -44,8 +49,10 @@ class Chapter extends Model
      *
      * @var array
      */
-    protected $fillable = ['project_id', 'name', 'subtitle', 'description', 'is_translated','position'];
+    protected $fillable = ['project_id', 'name', 'subtitle', 'description', 'is_translated', 'position'];
+
     protected $dates = ['deleted_at'];
+
     public $translatable = ['name', 'subtitle', 'description'];
 
     /**
@@ -101,14 +108,11 @@ class Chapter extends Model
 
     /**
      * Add language to log
-     *
-     * @param Activity $activity
      */
     public function tapActivity(Activity $activity)
     {
         $activity->properties = $activity->properties->merge([
-                                                                 'language' => Lang::getLocale(),
-                                                             ]);
+            'language' => Lang::getLocale(),
+        ]);
     }
-
 }

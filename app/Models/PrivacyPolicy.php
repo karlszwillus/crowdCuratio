@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,6 +19,7 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -27,9 +29,10 @@ use Spatie\Translatable\HasTranslations;
 
 class PrivacyPolicy extends Model
 {
-    use HasFactory, LogsActivity, HasTranslations;
+    use HasFactory, HasTranslations, LogsActivity;
 
     protected static $logFillable = true;
+
     protected static $submitEmptyLogs = false;
 
     public $table = 'privacy_policy';

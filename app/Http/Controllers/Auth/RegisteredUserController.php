@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,12 +19,12 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\Invitation;
 use App\Models\MailSetting;
-use App\Models\Permission;
 use App\Models\RoleHasPermission;
 use App\Models\User;
 use App\Models\UserHasPermission;
@@ -39,7 +40,6 @@ use Spatie\Permission\Models\Role;
 
 class RegisteredUserController extends Controller
 {
-
     /**
      * Instantiate a new ProjectController instance.
      */
@@ -56,19 +56,18 @@ class RegisteredUserController extends Controller
     public function create()
     {
         $roles = Role::where('id', 'not like', '1')->pluck('name', 'name')->all();
+
         return view('auth.register', compact('roles'));
     }
 
     /**
      * Handle an incoming registration request.
      *
-     * @param Request $request
      * @return RedirectResponse
-     *
      */
     public function store(Request $request)
     {
-        $mail = !empty(MailSetting::first()) ? MailSetting::first() : null;
+        $mail = ! empty(MailSetting::first()) ? MailSetting::first() : null;
 
         $request->validate(
             [
@@ -76,10 +75,9 @@ class RegisteredUserController extends Controller
                 'lastName' => 'required|string|max:255',
                 'email' => 'required|string|email|max:255',
                 'roles' => 'required',
-                'policy' => 'required'
+                'policy' => 'required',
             ]
         );
-
 
         $ifUserExists = DB::table('users')->where('email', $request->email)->first();
 
@@ -87,7 +85,6 @@ class RegisteredUserController extends Controller
             $affected = DB::table('users')
                 ->where('email', $request->email)
                 ->update(['deleted_at' => null]);
-
 
             return redirect()->route('users.index')->with(
                 'success',
@@ -99,36 +96,36 @@ class RegisteredUserController extends Controller
 
             event(new Registered($user));
 
-            if(isset($request->adminUser)){
+            if (isset($request->adminUser)) {
                 $user->assignRole(1);
-            }else{
+            } else {
                 $user->assignRole($request->input('roles'));
             }
 
             $expiresAt = now()->addDay(3);
-            $invitation = (isset($mail['invitation']) && !empty(strip_tags($mail['invitation']))) ? strip_tags(
+            $invitation = (isset($mail['invitation']) && ! empty(strip_tags($mail['invitation']))) ? strip_tags(
                 $mail['invitation']
             ) : config('project.mail.default');
 
             $user->sendWelcomeNotification($expiresAt, $request->firstName, $invitation);
 
             if (isset($request->projectId)) {
-                $permissions = RoleHasPermission::where('role_id',$request->input('roles'))->pluck('permission_id');
-                foreach ($permissions as $permission){
+                $permissions = RoleHasPermission::where('role_id', $request->input('roles'))->pluck('permission_id');
+                foreach ($permissions as $permission) {
                     UserHasPermission::create([
                         'project_id' => $request->projectId,
                         'permission_id' => $permission,
                         'user_id' => $user->id,
-                        'created_at' => now()
-                                              ]);
+                        'created_at' => now(),
+                    ]);
                 }
 
                 Invitation::create([
                     'user_id' => Auth::user()->id,
                     'guest_id' => $user->id,
                     'project_id' => $request->projectId,
-                    'created_at' => now()
-                                   ]);
+                    'created_at' => now(),
+                ]);
 
                 return Redirect()->back()->with('success', 'User added successful');
             } else {
@@ -137,20 +134,30 @@ class RegisteredUserController extends Controller
         }
     }
 
-    protected function formatData($request){
+    protected function formatData($request)
+    {
 
         $data = [];
 
-        if(isset($request->firstName)) $data['name'] = $request->firstName;
-        if(isset($request->lastName)) $data['last_name'] = $request->lastName;
-        if(isset($request->email)) $data['email'] = $request->email;
-        if(isset($request->adminUser)) $data['is_admin'] = $request->adminUser;
-        if(isset($request->createProject)) $data['create_project'] = $request->createProject;
+        if (isset($request->firstName)) {
+            $data['name'] = $request->firstName;
+        }
+        if (isset($request->lastName)) {
+            $data['last_name'] = $request->lastName;
+        }
+        if (isset($request->email)) {
+            $data['email'] = $request->email;
+        }
+        if (isset($request->adminUser)) {
+            $data['is_admin'] = $request->adminUser;
+        }
+        if (isset($request->createProject)) {
+            $data['create_project'] = $request->createProject;
+        }
 
         $data['password'] = Hash::make(Str::random(8));
         $data['created_at'] = now();
 
         return $data;
     }
-
 }

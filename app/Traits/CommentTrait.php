@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,23 +19,19 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Traits;
 
 use App\Models\Comment;
 use App\Models\Image;
-use App\Models\MediaContent;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 trait CommentTrait
 {
-
     /**
      * Leave comment
      *
-     * @param Request $request
      * @return RedirectResponse
      */
     public function commentAsUser(Request $request, $class = null)
@@ -47,31 +44,31 @@ trait CommentTrait
         $comment->created_at = now();
         $comment->user()->associate($request->user());
 
-        $class = !is_null($class) ? $class : get_class();
+        $class = ! is_null($class) ? $class : get_class();
 
-       /* if (in_array($class, ['App\Models\Image', 'App\Models\Text','App\Models\Audiovisual','App\Models\Gallery'])){
-            switch ($comment->commentable_type){
-                case 'App\Models\Image':
-                    $comment->commentable_type = 'App\Models\Image';
-                    Image::where('id',$request->imageId)->update(['has_comment' => 1]);
-                    break;
-                case 'App\Models\Text':
-                    $comment->commentable_type = 'App\Models\Text';
-                    break;
-                case 'App\Models\Gallery':
-                    $comment->commentable_type = 'App\Models\Gallery';
-                    break;
-                case 'App\Models\Audiovisual':
-                    $comment->commentable_type = 'App\Models\Audiovisual';
-                    break;
-            }
-            $comment->commentable_id = $request->id;
-            $comment->save();
+        /* if (in_array($class, ['App\Models\Image', 'App\Models\Text','App\Models\Audiovisual','App\Models\Gallery'])){
+             switch ($comment->commentable_type){
+                 case 'App\Models\Image':
+                     $comment->commentable_type = 'App\Models\Image';
+                     Image::where('id',$request->imageId)->update(['has_comment' => 1]);
+                     break;
+                 case 'App\Models\Text':
+                     $comment->commentable_type = 'App\Models\Text';
+                     break;
+                 case 'App\Models\Gallery':
+                     $comment->commentable_type = 'App\Models\Gallery';
+                     break;
+                 case 'App\Models\Audiovisual':
+                     $comment->commentable_type = 'App\Models\Audiovisual';
+                     break;
+             }
+             $comment->commentable_id = $request->id;
+             $comment->save();
 
-        } else{*/
-            $model = $class::find($request->id);
-            $model->comments()->save($comment);
-        //}
+         } else{*/
+        $model = $class::find($request->id);
+        $model->comments()->save($comment);
+        // }
 
         return redirect()->back()->with('success', 'Reply to comment added successfully');
     }
@@ -79,7 +76,6 @@ trait CommentTrait
     /**
      * Reply to comment
      *
-     * @param Request $request
      * @return RedirectResponse
      */
     public function replyAsUser(Request $request)
@@ -104,17 +100,15 @@ trait CommentTrait
         return redirect()->back()->with('success', 'Reply to comment added successfully');
     }
 
-
     /**
      * Edit comment
      *
-     * @param Request $request
      * @return RedirectResponse
      */
     public function editAsUser(Request $request)
     {
-        Comment::where('id',$request['pk'])
-                ->update(['comment' => json_encode(['de' => $request['value']])]);
+        Comment::where('id', $request['pk'])
+            ->update(['comment' => json_encode(['de' => $request['value']])]);
 
         return redirect()->back()->with('success', 'Comment edited successfully');
     }
@@ -122,7 +116,6 @@ trait CommentTrait
     /**
      * Delete comment
      *
-     * @param $id
      * @return RedirectResponse
      */
     public function deleteAsUser($id)
@@ -136,7 +129,6 @@ trait CommentTrait
     /**
      * Set comment status
      *
-     * @param $request
      * @return $this
      */
     public function status($request)
@@ -148,5 +140,4 @@ trait CommentTrait
 
         return $this;
     }
-
 }

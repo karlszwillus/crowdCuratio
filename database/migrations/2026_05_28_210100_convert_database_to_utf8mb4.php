@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2026 - berlinHistory e.V.
@@ -36,6 +37,7 @@ use Illuminate\Support\Facades\DB;
 class ConvertDatabaseToUtf8mb4 extends Migration
 {
     private string $targetCharset = 'utf8mb4';
+
     private string $targetCollation = 'utf8mb4_unicode_ci';
 
     public function up(): void
@@ -48,8 +50,8 @@ class ConvertDatabaseToUtf8mb4 extends Migration
         $database = DB::connection()->getDatabaseName();
         DB::statement(
             "ALTER DATABASE `{$database}` "
-            . "CHARACTER SET {$this->targetCharset} "
-            . "COLLATE {$this->targetCollation}"
+            ."CHARACTER SET {$this->targetCharset} "
+            ."COLLATE {$this->targetCollation}"
         );
 
         // 2) Jede Tabelle einzeln, falls sie noch nicht utf8mb4 fährt.
@@ -69,8 +71,8 @@ class ConvertDatabaseToUtf8mb4 extends Migration
 
             DB::statement(
                 "ALTER TABLE `{$table}` "
-                . "CONVERT TO CHARACTER SET {$this->targetCharset} "
-                . "COLLATE {$this->targetCollation}"
+                ."CONVERT TO CHARACTER SET {$this->targetCharset} "
+                ."COLLATE {$this->targetCollation}"
             );
         }
     }

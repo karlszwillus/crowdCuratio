@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -46,7 +47,7 @@ Route::get(
 );
 
 Route::group(
-    ['middleware' => ['web', WelcomesNewUsers::class, /*ProtectAgainstSpam::class,*/]],
+    ['middleware' => ['web', WelcomesNewUsers::class/* ProtectAgainstSpam::class, */]],
     function () {
         Route::get('welcome/{user}', [App\Http\Controllers\Auth\MyWelcomeController::class, 'showWelcomeForm'])->name(
             'welcome'
@@ -82,7 +83,7 @@ Route::group(
         Route::resource('/roles', \App\Http\Controllers\RoleController::class);
         Route::resource('/chapters', ChapterController::class);
         Route::resource('/entries', EntryController::class);
-        //Route::resource('/contents', \App\Http\Controllers\ContentController::class);
+        // Route::resource('/contents', \App\Http\Controllers\ContentController::class);
         Route::post('/text/store', [ContentController::class, 'saveText'])->name('text.store');
         Route::get('/edit/{id}/text', [ContentController::class, 'editText'])->name('text.edit');
         Route::delete('/delete/{id}/text', [ContentController::class, 'destroyText'])->name(
@@ -255,13 +256,13 @@ Route::group(
                 // sucht Storage::response auf der Default-Disk ('local',
                 // storage/app/) und liefert nichts — siehe Finding F-LAR-010
                 // bzw. AM-B-1.
-                return \Storage::disk('public')->response('uploads/images/' . $file);
+                return \Storage::disk('public')->response('uploads/images/'.$file);
             }
         )->name('image');
         Route::get(
             '/audio/{file}',
             function ($file) {
-                return \Storage::disk('public')->response('uploads/audio/' . $file);
+                return \Storage::disk('public')->response('uploads/audio/'.$file);
             }
         )->name('audio');
 
@@ -389,4 +390,4 @@ Route::group(
     }
 );
 
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';

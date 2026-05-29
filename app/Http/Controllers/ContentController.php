@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,6 +19,7 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Http\Controllers;
 
 use App\Models\Audiovisual;
@@ -36,14 +38,9 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
-use PhpParser\Builder;
-use Symfony\Component\ErrorHandler\Debug;
 
 class ContentController extends Controller
 {
@@ -60,33 +57,29 @@ class ContentController extends Controller
     /**
      * Delete Text
      *
-     * @param Request $request
-     * @param $id
      * @return RedirectResponse
      */
-    public function destroyText(Request $request,$id)
+    public function destroyText(Request $request, $id)
     {
-        //Detach media
+        // Detach media
         $this->detachMedia($id, 'App\Models\Text');
 
         $text = Text::find($id);
         $text->delete();
 
-        return redirect('projects/'.$request->project.'/edit')->with('success', __("message_delete_text_success"));
+        return redirect('projects/'.$request->project.'/edit')->with('success', __('message_delete_text_success'));
     }
 
     /**
      * Detach media from entry
      *
      *
-     * @param $id
-     * @param $type
      * @return mixed
      */
     public function detachMedia($id, $type)
     {
 
-        Comment::where('commentable_id',$id)->where('commentable_type',$type)->update(['deleted_at' => now()]);
+        Comment::where('commentable_id', $id)->where('commentable_type', $type)->update(['deleted_at' => now()]);
 
         return MediaContent::where('media_contentable_id', $id)
             ->where('media_contentable_type', $type)
@@ -96,8 +89,6 @@ class ContentController extends Controller
     /**
      * Delete Image
      *
-     * @param Request $request
-     * @param $id
      * @return RedirectResponse
      */
     public function destroyImage(Request $request, $id)
@@ -105,23 +96,22 @@ class ContentController extends Controller
         $image = Image::find($id);
         $image->delete();
 
-        return redirect('projects/'.$request->project.'/edit')->with('success', __("message_delete_image_success"));
+        return redirect('projects/'.$request->project.'/edit')->with('success', __('message_delete_image_success'));
     }
 
     /**
      * Ajax autocomplete
      *
-     * @param Request $request
      * @return array
      */
     public function autocomplete(Request $request)
     {
         $data = [];
-        $res = Source::where('name', 'like', '%' . $request->input("query") . '%')
-            ->where('type', '=', $request->input("type"))
-            ->get(['id','name']);
+        $res = Source::where('name', 'like', '%'.$request->input('query').'%')
+            ->where('type', '=', $request->input('type'))
+            ->get(['id', 'name']);
 
-        foreach ($res as $key => $value){
+        foreach ($res as $key => $value) {
             $data[$key] = $value->name;
         }
 
@@ -131,40 +121,40 @@ class ContentController extends Controller
     /**
      * Save or update image
      *
-     * @param Request $request
      * @return RedirectResponse
      */
     public function saveImage(Request $request)
     {
 
-        if (isset($request['translationMode'])){
-            if (isset($request['originId'])){
+        if (isset($request['translationMode'])) {
+            if (isset($request['originId'])) {
                 $this->translateField($request['originId'], $request['originField'], $request['isTranslated']);
             }
 
-            if(isset($request['copyrightId'])){
+            if (isset($request['copyrightId'])) {
                 $this->translateField($request['copyrightId'], $request['copyrightField'], $request['isTranslated']);
             }
 
-            if(isset($request['altField'])){
+            if (isset($request['altField'])) {
                 $image = Image::findOrFail($request['imageId']);
                 $image->setTranslation('alt', 'en', $request['altField']);
                 $image->save();
             }
 
-            return redirect()->back()->with('success', __("message_edit_image_success"));
+            return redirect()->back()->with('success', __('message_edit_image_success'));
         }
 
         $request->validate(
             [
                 'copyrightImage' => 'required',
-                'originImage' => 'required'
+                'originImage' => 'required',
             ]
         );
 
         if (isset($request['imageId']) && $request['imageId'] != '') {
             $this->updateImage($request);
-            return redirect()->back()->with('success', __("message_edit_image_success"));
+
+            return redirect()->back()->with('success', __('message_edit_image_success'));
         } else {
             $request->validate(
                 [
@@ -175,12 +165,12 @@ class ContentController extends Controller
             $name = '';
             // Check if an image should be uploaded
             $name = $this->setImage($request);
-            $position = Image::where('gallery_id',$request['galleryId'])->orderBy('position','desc')->pluck('position')->first();
+            $position = Image::where('gallery_id', $request['galleryId'])->orderBy('position', 'desc')->pluck('position')->first();
 
-            //Set copyright value
+            // Set copyright value
             $copyright = $this->getSource($request['copyrightImage'], 'Copyright');
 
-            //Set origin value
+            // Set origin value
             $origin = $this->getSource($request['originImage'], 'Origin');
 
             $im = Image::firstOrCreate(
@@ -192,37 +182,36 @@ class ContentController extends Controller
                     'copyright' => $copyright,
                     'url' => Storage::path($name),
                     'alt' => $request['altText'],
-                    'created_at' => now()
+                    'created_at' => now(),
                 ]
             );
 
-            //Attach image to gallery
-            //$this->attachMedia($im->id, $request['entryId'], 'App\Models\Image');
+            // Attach image to gallery
+            // $this->attachMedia($im->id, $request['entryId'], 'App\Models\Image');
 
-            //Attach gallery to entry
-            //$this->attachMedia($im->id, $request['entryId'], 'App\Models\Image');
+            // Attach gallery to entry
+            // $this->attachMedia($im->id, $request['entryId'], 'App\Models\Image');
 
-            return redirect()->back()->with('success', __("message_add_image_success"));
+            return redirect()->back()->with('success', __('message_add_image_success'));
         }
     }
 
     /**
      * Update image
      *
-     * @param Request $request
      * @return $this
      */
     public function updateImage(Request $request)
     {
         $image = Image::find($request['imageId']);
 
-        //Set copyright value
+        // Set copyright value
         $copyright = $this->getSource($request['copyrightImage'], 'Copyright');
 
-        //Set origin value
+        // Set origin value
         $origin = $this->getSource($request['originImage'], 'Origin');
 
-        if (isset($request['newImage']) && !is_null($request['newImage'])) {
+        if (isset($request['newImage']) && ! is_null($request['newImage'])) {
             // Check if an image should be uploaded
             $name = $this->setImage($request);
             $image->image = $name;
@@ -233,7 +222,7 @@ class ContentController extends Controller
         $image->copyright = $copyright;
         $image->updated_at = now();
 
-        if (isset($request['altText'])){
+        if (isset($request['altText'])) {
             $image->alt = $request['altText'];
         }
 
@@ -245,11 +234,11 @@ class ContentController extends Controller
     /**
      * Translate metadata
      *
-     * @param $id
-     * @param $request
+     * @param  $request
      * @return $this
      */
-    public function translateField($id,$field,$translated){
+    public function translateField($id, $field, $translated)
+    {
 
         $source = Source::findOrFail($id);
         $source->setTranslation('name', 'en', $field);
@@ -264,23 +253,23 @@ class ContentController extends Controller
     /**
      * Get source of content
      *
-     * @param $value
-     * @param $type
      * @return mixed
      */
     protected function getSource($value, $type)
     {
-        $source = Source::where('type',$type)->get();
+        $source = Source::where('type', $type)->get();
         $id = '';
-        foreach ($source as $key => $v){
-            if($v->name == $value){
+        foreach ($source as $key => $v) {
+            if ($v->name == $value) {
                 $id = $v->id;
+
                 return $id;
             }
         }
 
-        if($id == ''){
-            $id = Source::insertGetId(['name'=> json_encode([app()->getLocale() => $value]), 'type' => $type, 'created_at' => now()]);
+        if ($id == '') {
+            $id = Source::insertGetId(['name' => json_encode([app()->getLocale() => $value]), 'type' => $type, 'created_at' => now()]);
+
             return $id;
         }
 
@@ -291,7 +280,6 @@ class ContentController extends Controller
     /**
      * Set Image
      *
-     * @param Request $request
      * @return string
      */
     protected function setImage(Request $request)
@@ -328,25 +316,24 @@ class ContentController extends Controller
     /**
      * Attach media to entry
      *
-     * @param $id
-     * @param $entry
-     * @param $type
      * @return mixed
      */
     public function attachMedia($id, $entry, $type)
     {
-        //get last position
+        // get last position
         $position = MediaContent::where('media_contentable_id', $entry)->orderBy('position', 'desc')->first();
 
         $pos = 0;
-        if(!empty($position->position)) $pos = $position->position;
+        if (! empty($position->position)) {
+            $pos = $position->position;
+        }
 
         return MediaContent::create(
             [
                 'position' => $pos + 1,
                 'media_content_id' => $id,
                 'media_contentable_id' => $entry,
-                'media_contentable_type' => $type
+                'media_contentable_type' => $type,
             ]
         );
     }
@@ -354,7 +341,6 @@ class ContentController extends Controller
     /**
      * Get selected Image to be modified
      *
-     * @param $id
      * @return JsonResponse
      */
     public function editImage($id)
@@ -368,81 +354,80 @@ class ContentController extends Controller
     /**
      * Save or update text
      *
-     * @param Request $request
      * @return RedirectResponse
      */
     public function saveText(Request $request)
     {
 
-        if (isset($request['translationMode'])){
-            if (isset($request['textId'])){
+        if (isset($request['translationMode'])) {
+            if (isset($request['textId'])) {
                 $this->saveTranslatedText($request);
             }
-            if (isset($request['originId'])){
+            if (isset($request['originId'])) {
                 $this->translateField($request['originId'], $request['originField'], $request['isTranslated']);
             }
 
-            if(isset($request['copyrightId'])){
+            if (isset($request['copyrightId'])) {
                 $this->translateField($request['copyrightId'], $request['copyrightField'], $request['isTranslated']);
             }
 
-            return redirect()->back()->with('success', __("message_edit_text_success"));
+            return redirect()->back()->with('success', __('message_edit_text_success'));
         }
 
         $request->validate(
             [
                 'contentText' => 'required',
                 'copyrightText' => 'required',
-                'originText' => 'required'
+                'originText' => 'required',
             ]
         );
 
         if (isset($request['textId']) && $request['textId'] != '') {
             $this->updateText($request);
-            return redirect()->back()->with('success', __("message_edit_text_success"));
+
+            return redirect()->back()->with('success', __('message_edit_text_success'));
         } else {
-            //Set copyright value
+            // Set copyright value
             $copyright = $this->getSource($request['copyrightText'], 'Copyright');
 
-            //Set origin value
+            // Set origin value
             $origin = $this->getSource($request['originText'], 'Origin');
 
-            //filter text before saving
-            $strClean = str_replace(array('<script>', '</script>'), array('', ''), $request['contentText']);
+            // filter text before saving
+            $strClean = str_replace(['<script>', '</script>'], ['', ''], $request['contentText']);
 
             $id = Text::insertGetId(
                 [
                     'text' => json_encode([app()->getLocale() => $strClean]),
                     'origin' => $origin,
                     'copyright' => $copyright,
-                    'created_at' => now()
+                    'created_at' => now(),
                 ]
 
             );
 
-            //Attach text to entry
+            // Attach text to entry
             $this->attachMedia($id, $request['entryId'], 'App\Models\Text');
 
-            return redirect()->back()->with('success', __("message_add_text_success"));
+            return redirect()->back()->with('success', __('message_add_text_success'));
         }
     }
 
     /**
      * Update text
      *
-     * @param Request $request
      * @return $this
      */
     public function updateText(Request $request)
     {
-        //Set copyright value
+        // Set copyright value
         $copyright = $this->getSource($request['copyrightText'], 'Copyright');
 
-        //Set origin value
+        // Set origin value
         $origin = $this->getSource($request['originText'], 'Origin');
 
-        //filter text before saving
-        $strClean = str_replace(array('<script>', '</script>'), array('', ''), $request['contentText']);
+        // filter text before saving
+        $strClean = str_replace(['<script>', '</script>'], ['', ''], $request['contentText']);
 
         $text = Text::find($request['textId']);
         $text->text = $strClean;
@@ -458,13 +443,12 @@ class ContentController extends Controller
     /**
      * get selected text to be modified
      *
-     * @param $id
      * @return JsonResponse
      */
     public function editText($id)
     {
         $text = Text::findOrFail($id);
-        $data = ['id' => $text->id, 'text'=> $text->text, 'origin' => $text->originText->name, 'copyright' => $text->copyrightText->name];
+        $data = ['id' => $text->id, 'text' => $text->text, 'origin' => $text->originText->name, 'copyright' => $text->copyrightText->name];
 
         return response()->json($data);
     }
@@ -472,8 +456,6 @@ class ContentController extends Controller
     /**
      * Comment Text
      *
-     * @param Request $request
-     * @param Text $text
      * @return RedirectResponse
      */
     public function commentText(Request $request, Text $text)
@@ -491,20 +473,18 @@ class ContentController extends Controller
     /**
      * Retrieve all comment of current text
      *
-     * @param $id
      * @return JsonResponse
      */
     public function getTextComment($id)
     {
-        $comment = new CommentRetrieve();
+        $comment = new CommentRetrieve;
+
         return $comment->getComments('App\Models\MediaContent', $id);
     }
 
     /**
      * Save current text
      *
-     * @param Request $request
-     * @param Text $text
      * @return RedirectResponse
      */
     public function saveCommentText(Request $request, Text $text)
@@ -525,8 +505,6 @@ class ContentController extends Controller
     /**
      * Comment Image
      *
-     * @param Request $request
-     * @param Image $image
      * @return RedirectResponse
      */
     public function commentImage(Request $request, Image $image)
@@ -543,25 +521,23 @@ class ContentController extends Controller
     /**
      * Retrieve all comment of current image
      *
-     * @param $id
      * @return JsonResponse
      */
     public function getImageComment($id)
     {
-        $comment = new CommentRetrieve();
+        $comment = new CommentRetrieve;
+
         return $comment->getComments('App\Models\MediaContent', $id);
     }
 
     /**
      * Save current image
      *
-     * @param Request $request
-     * @param Image $image
      * @return RedirectResponse
      */
     public function saveCommentImage(Request $request, Image $image)
     {
-        if(isset($request['name']) && $request['name'] == 'edit'){
+        if (isset($request['name']) && $request['name'] == 'edit') {
             return $image->editAsUser($request);
         }
 
@@ -581,33 +557,30 @@ class ContentController extends Controller
     /**
      * Set status text
      *
-     * @param Request $request
-     * @param Text $text
      * @return JsonResponse
      */
     public function setStatusText(Request $request, Text $text)
     {
         $data = $text->status($request);
+
         return response()->json($data);
     }
 
     /**
      * Set status image
      *
-     * @param Request $request
-     * @param Image $image
      * @return JsonResponse
      */
     public function setStatusImage(Request $request, Image $image)
     {
         $data = $image->status($request);
+
         return response()->json($data);
     }
 
     /**
      * Reset text
      *
-     * @param Request $request
      * @return RedirectResponse
      */
     public function resetText(Request $request)
@@ -628,7 +601,7 @@ class ContentController extends Controller
     public function listComments()
     {
 
-        if(Auth::user()->isAdmin()){
+        if (Auth::user()->isAdmin()) {
             $comments = Comment::with('User')->whereNotNull('project_id')->get();
 
             return view('contents.comment', compact('comments'));
@@ -638,9 +611,9 @@ class ContentController extends Controller
             ->join('users', 'users.id', '=', 'projects.user_id')
             ->leftJoin('invitations', 'invitations.project_id', '=', 'projects.id')
             ->distinct()
-            ->Where(function($query) {
-                $query->where('invitations.guest_id',Auth::user()->id)
-                    ->orWhere('projects.user_id',Auth::user()->id);
+            ->Where(function ($query) {
+                $query->where('invitations.guest_id', Auth::user()->id)
+                    ->orWhere('projects.user_id', Auth::user()->id);
             })
             ->whereNull('projects.deleted_at')
             ->whereNull('users.deleted_at')
@@ -649,23 +622,22 @@ class ContentController extends Controller
 
         $comments = Comment::whereIn('project_id', $projects)->whereNotNull('project_id')->get();
 
-
         return view('contents.comment', compact('comments'));
     }
 
     /**
      * Save translation text
      *
-     * @param Request $request
      * @return $this
      */
-    public function saveTranslatedText(Request $request){
+    public function saveTranslatedText(Request $request)
+    {
 
         $text = Text::findOrFail($request['textId']);
 
-        //filter text before saving
-        if($request['text'] != "undefined"){
-            $strClean = str_replace(array('<script>', '</script>'), array('', ''), $request['text']);
+        // filter text before saving
+        if ($request['text'] != 'undefined') {
+            $strClean = str_replace(['<script>', '</script>'], ['', ''], $request['text']);
             $text->setTranslation('text', 'en', $strClean);
         }
         $text->is_translated = isset($request['isTranslated']) ? 1 : 0;
@@ -677,27 +649,27 @@ class ContentController extends Controller
     /**
      * Update status
      *
-     * @param $id
-     * @param $status
      * @return RedirectResponse
      */
-    public function updateStatus($id, $status){
+    public function updateStatus($id, $status)
+    {
 
-       Comment::where('id', $id)->update(['status' => $status]);
+        Comment::where('id', $id)->update(['status' => $status]);
 
-        return redirect()->back()->with('success', __("message_status_success"));
+        return redirect()->back()->with('success', __('message_status_success'));
     }
 
-    public function saveGallery(Request $request){
+    public function saveGallery(Request $request)
+    {
 
-        if(isset($request['galleryId']) && $request['galleryId'] != ''){
+        if (isset($request['galleryId']) && $request['galleryId'] != '') {
             $gallery = Gallery::findOrFail($request['galleryId']);
 
-            if (isset($request['translationGallery'])){
+            if (isset($request['translationGallery'])) {
                 $gallery->setTranslation('title', 'en', $request['galleryTitle']);
                 $gallery->setTranslation('subtitle', 'en', $request['gallerySubtitle']);
                 $gallery->setTranslation('description', 'en', $request['galleryDescription']);
-            }else {
+            } else {
 
                 $gallery->title = $request['title'];
                 $gallery->subtitle = $request['subtitle'];
@@ -708,82 +680,84 @@ class ContentController extends Controller
             $gallery->is_translated = isset($request['isTranslated']) ? 1 : 0;
             $gallery->save();
 
-            return redirect()->back()->with('success', __("message_update_success"));
+            return redirect()->back()->with('success', __('message_update_success'));
         }
 
         $gallery = Gallery::create($this->mapData($request));
         $this->attachMedia($gallery->id, $request['entryId'], 'App\Models\Image');
 
-        return redirect()->back()->with('success', __("message_gallery_success"));
+        return redirect()->back()->with('success', __('message_gallery_success'));
 
     }
 
     /**
      * Mapping request
      *
-     * @param $data
      * @return array
      */
-    protected function mapData($data){
+    protected function mapData($data)
+    {
 
         $result = [];
 
-        if(isset($data['entryId']) && $data['entryId'] != ''){
+        if (isset($data['entryId']) && $data['entryId'] != '') {
 
             $result['entryId'] = $data['entryId'];
 
         }
 
-        if (isset($data['title'])) $result['title'] = $data['title'];
-        if (isset($data['subtitle'])) $result['subtitle'] = $data['subtitle'];
-        if (isset($data['description'])) $result['description'] = $data['description'];
+        if (isset($data['title'])) {
+            $result['title'] = $data['title'];
+        }
+        if (isset($data['subtitle'])) {
+            $result['subtitle'] = $data['subtitle'];
+        }
+        if (isset($data['description'])) {
+            $result['description'] = $data['description'];
+        }
 
         return $result;
     }
 
-
     /**
      * Get gallery
      *
-     * @param $id
      * @return JsonResponse
      */
-    public function editGallery($id){
+    public function editGallery($id)
+    {
 
-        $gallery = Gallery::where('id',$id)->first();
+        $gallery = Gallery::where('id', $id)->first();
 
         return \response()->json($gallery);
     }
 
-
     /**
      * Destroy gallery
      *
-     * @param Request $request
-     * @param $id
      * @return RedirectResponse
      */
-    public function destroyGallery(Request $request,$id){
+    public function destroyGallery(Request $request, $id)
+    {
 
-        //Detach media
+        // Detach media
         $this->detachMedia($id, 'App\Models\Gallery');
 
-        //delete from image
+        // delete from image
         DB::table('images')->where('gallery_id', '=', $id)->update(['deleted_at' => now()]);
 
         DB::table('galleries')->where('id', '=', $id)->update(['deleted_at' => now()]);
 
-        return redirect('projects/'.$request->project.'/edit')->with('success', __("message_delete_text_success"));
+        return redirect('projects/'.$request->project.'/edit')->with('success', __('message_delete_text_success'));
     }
 
     /**
      * Comment or reply on gallery
      *
-     * @param Request $request
-     * @param Gallery $gallery
      * @return $this|RedirectResponse
      */
-    public function commentGallery(Request $request, Gallery $gallery){
+    public function commentGallery(Request $request, Gallery $gallery)
+    {
 
         if (isset($request['btn_submit'])) {
             if ($request['btn_submit'] == 'Edit') {
@@ -803,11 +777,10 @@ class ContentController extends Controller
     /**
      * New comment on audiovisual
      *
-     * @param Request $request
-     * @param Gallery $gallery
      * @return RedirectResponse
      */
-    public function galleryCommentSave(Request $request, Gallery $gallery){
+    public function galleryCommentSave(Request $request, Gallery $gallery)
+    {
 
         $request->validate(
             [
@@ -815,6 +788,6 @@ class ContentController extends Controller
             ]
         );
 
-        return $gallery->commentAsUser($request,'App\Models\Gallery');
+        return $gallery->commentAsUser($request, 'App\Models\Gallery');
     }
 }

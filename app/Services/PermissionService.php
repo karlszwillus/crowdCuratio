@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,13 +19,10 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
-namespace App\Services;
 
+namespace App\Services;
 
 class PermissionService
 {
-
-    public function getAllPermissions(){
-
-    }
+    public function getAllPermissions() {}
 }

@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,6 +19,7 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace Database\Seeders;
 
 use App\Models\PermissionDescription;
@@ -34,7 +36,7 @@ class PreviewSeeder extends Seeder
     public function run()
     {
         $permission = Permission::updateOrCreate(['name' => 'preview']);
-        PermissionDescription::updateOrCreate(['permission_id' => $permission->id],['description' => ['de' => '<strong>Vorschau-Zugriff</strong>, Rollen mit diesem Recht können nur die Vorschau des Projektes aufrufen, zu dem sie auch eingeladen sind.', 'en' => '<strong>Preview access</strong>, roles with this right have the access to the preview of projects they are invited to.']]);
+        PermissionDescription::updateOrCreate(['permission_id' => $permission->id], ['description' => ['de' => '<strong>Vorschau-Zugriff</strong>, Rollen mit diesem Recht können nur die Vorschau des Projektes aufrufen, zu dem sie auch eingeladen sind.', 'en' => '<strong>Preview access</strong>, roles with this right have the access to the preview of projects they are invited to.']]);
 
     }
 }

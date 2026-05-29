@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022 - berlinHistory e.V.
@@ -18,6 +19,7 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -30,11 +32,14 @@ use Spatie\Translatable\HasTranslations;
 
 class Comment extends Model
 {
-    use HasFactory, SoftDeletes, LogsActivity, HasTranslations;
+    use HasFactory, HasTranslations, LogsActivity, SoftDeletes;
 
     protected static $logName = 'Entry';
+
     protected static $logFillable = true;
+
     protected static $logOnlyDirty = true;
+
     public $timestamps = false;
 
     /**
@@ -49,8 +54,9 @@ class Comment extends Model
         'comment',
         'status',
         'commentable_id',
-        'commentable_type'
+        'commentable_type',
     ];
+
     protected $dates = ['deleted_at'];
 
     public $translatable = ['comment'];
@@ -119,20 +125,18 @@ class Comment extends Model
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    public function content(){
-        return $this->belongsTo(MediaContent::class, 'commentable_id','id');
+    public function content()
+    {
+        return $this->belongsTo(MediaContent::class, 'commentable_id', 'id');
     }
 
     /**
      * Add language to log
-     *
-     * @param Activity $activity
      */
     public function tapActivity(Activity $activity)
     {
         $activity->properties = $activity->properties->merge([
-                                                                 'language' => Lang::getLocale(),
-                                                             ]);
+            'language' => Lang::getLocale(),
+        ]);
     }
-
 }

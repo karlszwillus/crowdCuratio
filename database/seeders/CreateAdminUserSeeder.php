@@ -1,4 +1,5 @@
 <?php
+
 /**
 crowdCuratio - Curating together virtually
 Copyright (C)2022, 2026 - berlinHistory e.V.
@@ -18,14 +19,14 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+
 namespace Database\Seeders;
 
+use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-
-use App\Models\User;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class CreateAdminUserSeeder extends Seeder
 {
@@ -50,8 +51,8 @@ class CreateAdminUserSeeder extends Seeder
         if (empty($email) || empty($password)) {
             throw new \RuntimeException(
                 'CreateAdminUserSeeder requires ADMIN_EMAIL and ADMIN_PASSWORD '
-                . 'to be set in your .env file before running db:seed. '
-                . 'See README and ADR-0013.'
+                .'to be set in your .env file before running db:seed. '
+                .'See README and ADR-0013.'
             );
         }
 
