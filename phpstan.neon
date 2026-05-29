@@ -1,4 +1,7 @@
 includes:
+    # nunomaduro/larastan v1.x — Laravel-8-kompatible Linie. Larastan v2+
+    # verlangt Laravel 9+ und wandert mit dem Framework-Upgrade in Phase 3
+    # auf seinen aktuellen Stand. Extension-Pfad ist in v1 und v2 gleich.
     - ./vendor/nunomaduro/larastan/extension.neon
     # Baseline für gewachsenen Bestandscode. Wird einmalig mit
     # `./vendor/bin/sail phpstan analyse --generate-baseline` erzeugt
