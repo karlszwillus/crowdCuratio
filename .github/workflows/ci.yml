@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# Cancelt einen laufenden Workflow, wenn ein neuer Push auf den
+# gleichen Branch kommt. Spart Runner-Zeit auf aktiven Feature-Branches.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Pest (PHP 8.1, SQLite)
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP 8.1
+        uses: shivammathur/setup-php@v2
+        with:
+          # 8.1 entspricht dem Container-PHP aus docker/8.1/Dockerfile
+          # (Phase 1, Commit adcb538). 8.4 ist Phase-3-Ziel — bis dahin
+          # spiegelt CI die Produktiv-Version.
+          php-version: '8.1'
+          extensions: mbstring, dom, fileinfo, sqlite, pdo_sqlite, intl, zip, bcmath, gd
+          coverage: none
+          tools: composer:v2
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php-8.1-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-8.1-composer-
+
+      - name: Install composer dependencies
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Run Pest
+        # SQLite-In-Memory wird hier zur Laufzeit gesetzt, nicht in
+        # phpunit.xml — so bleibt Karls lokaler Pest-Lauf (gegen die
+        # Sail-MySQL) unverändert. NF-DB-103 (drei MySQL-only-Migrations)
+        # ist hier abgedeckt: die Migrations prüfen selbst auf den
+        # Driver und werden auf SQLite zum No-Op.
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+        run: ./vendor/bin/pest --colors=always
