@@ -450,3 +450,114 @@ test('Admin darf in fremdem Chapter einen Entry anlegen (NF-LAR-003b)', function
     $response->assertRedirect();
     expect(Entry::where('chapter_id', $chapter->id)->count())->toBe(1);
 });
+
+// ----------------------------------------------------------------------
+// D.10 — Validation-Pflichttests pro FormRequest (ADR-0017).
+//
+// Pro FormRequest ein 422-Test, der dokumentiert, dass die rules()-
+// Schicht greift. Owner-Pfad, fehlendes Pflichtfeld; Erwartung:
+// assertInvalid().
+// ----------------------------------------------------------------------
+
+test('StoreChapterRequest: chapterTitle ist Pflicht', function () {
+    $owner = User::factory()->create();
+    $project = makeProject($owner);
+
+    $response = $this->actingAs($owner)->post(
+        route('chapters.store'),
+        [
+            'projectId' => $project->id,
+            // chapterTitle absichtlich weggelassen
+            'chapterSubtitle' => 'Sub',
+        ]
+    );
+
+    $response->assertInvalid(['chapterTitle']);
+    expect(Chapter::where('project_id', $project->id)->count())->toBe(0);
+});
+
+test('UpdateChapterRequest: chapterTitle ist Pflicht', function () {
+    $owner = User::factory()->create();
+    $chapter = makeChapter(makeProject($owner));
+
+    $response = $this->actingAs($owner)->patch(
+        route('chapters.update', $chapter),
+        [
+            // chapterTitle absichtlich weggelassen
+            'chapterSubtitle' => 'Sub',
+        ]
+    );
+
+    $response->assertInvalid(['chapterTitle']);
+    expect($chapter->fresh()->name)->toBe('Original Kapitel-Titel');
+});
+
+test('StoreEntryRequest: entryTitle ist Pflicht', function () {
+    $owner = User::factory()->create();
+    $chapter = makeChapter(makeProject($owner));
+
+    $response = $this->actingAs($owner)->post(
+        route('entries.store'),
+        [
+            'chapterId' => $chapter->id,
+            // entryTitle absichtlich weggelassen
+        ]
+    );
+
+    $response->assertInvalid(['entryTitle']);
+    expect(Entry::where('chapter_id', $chapter->id)->count())->toBe(0);
+});
+
+test('UpdateEntryRequest: entryTitle ist Pflicht', function () {
+    $owner = User::factory()->create();
+    $entry = makeEntry(makeChapter(makeProject($owner)));
+
+    $response = $this->actingAs($owner)->patch(
+        route('entries.update', $entry),
+        [
+            // entryTitle absichtlich weggelassen
+            'entrySubtitle' => 'Sub',
+        ]
+    );
+
+    $response->assertInvalid(['entryTitle']);
+    expect($entry->fresh()->name)->toBe('Original Entry-Titel');
+});
+
+// ----------------------------------------------------------------------
+// D.12/D.13 — Sanity-Tests, dass die PATCH-Variante greift.
+//
+// Die ursprünglichen Update-Tests senden PUT, was bei Resource-Routes
+// gleichbedeutend ist. Diese zwei Tests dokumentieren explizit den
+// PATCH-Pfad, den das Frontend nach D.12/D.13 nutzt.
+// ----------------------------------------------------------------------
+
+test('Owner darf Chapter via PATCH ändern (D.12)', function () {
+    $owner = User::factory()->create();
+    $chapter = makeChapter(makeProject($owner));
+
+    $response = $this->actingAs($owner)->patch(
+        route('chapters.update', $chapter),
+        [
+            'chapterTitle' => 'Via PATCH geändert',
+        ]
+    );
+
+    $response->assertRedirect();
+    expect($chapter->fresh()->name)->toBe('Via PATCH geändert');
+});
+
+test('Owner darf Entry via PATCH ändern (D.13)', function () {
+    $owner = User::factory()->create();
+    $entry = makeEntry(makeChapter(makeProject($owner)));
+
+    $response = $this->actingAs($owner)->patch(
+        route('entries.update', $entry),
+        [
+            'entryTitle' => 'Via PATCH geändert',
+        ]
+    );
+
+    $response->assertRedirect();
+    expect($entry->fresh()->name)->toBe('Via PATCH geändert');
+});
