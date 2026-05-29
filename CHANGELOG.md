@@ -11,20 +11,25 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 ## [Unreleased]
 
 Stand nach Phase 1 (Stabilisierung + Sofortmaßnahmen) inkl. Reviewer-
-Nachschlag (Phase 1.5), Phase-2-Block-B (CI-Skeleton) und Phase-2-
-Block-C (Eloquent-Hygiene). Commits verteilt auf `phase-1/setup-reset`
-(gemerged), `phase-2/ci-skeleton` (gemerged) und
-`phase-2/eloquent-hygiene`. Alle vier in Phase 0 identifizierten
-Blocker geschlossen, vier Phase-1-Reviewer-Findings behoben, CI mit
-Pest, Larastan, Pint, Dependency-Audits und CHANGELOG-Diff-Check
-spannt ab Phase 2 das Sicherheitsnetz; Eloquent-Schicht ist mit
-Strict-Mode, expliziten Casts und entfernten Inline-Filtern aufgeräumt.
+Nachschlag (Phase 1.5), Phase-2-Block-B (CI-Skeleton), Phase-2-
+Block-C (Eloquent-Hygiene) und Phase-2-Block-D (FormRequest-
+Refactor + Authorization-Test-Ausbau). Branches `phase-1/setup-reset`,
+`phase-2/ci-skeleton`, `phase-2/eloquent-hygiene` sind gemerged;
+`phase-2/formrequests` ist Block-D-Stand. Alle vier in Phase 0
+identifizierten Blocker geschlossen, vier Phase-1-Reviewer-Findings
+behoben, CI mit Pest, Larastan, Pint, Dependency-Audits und
+CHANGELOG-Diff-Check spannt das Sicherheitsnetz; Eloquent-Schicht
+mit Strict-Mode, expliziten Casts und Local-Scope-Eager-Loading
+aufgeräumt; Validation und Authorization aller mutierenden Routes
+laufen über dedizierte FormRequest-Klassen, Chapter/Entry über
+saubere PATCH-Trennung.
 
 ADR-Grundlagen für diese Welle: ADR-0001 (Ziel-Stack PHP 8.4 /
 Laravel 12, in C.4 um Active-Record-Bekenntnis ergänzt), ADR-0002
 (composer.lock eingecheckt), ADR-0010 (InnoDB für alle Tabellen),
 ADR-0011 (utf8mb4-Konvertierung), ADR-0013 (Authorization über
-Laravel-Policies + Spatie-Permission).
+Laravel-Policies + Spatie-Permission), ADR-0017 (FormRequest-
+Konvention, neu in Block D).
 
 ### Hinzugefügt
 
@@ -63,6 +68,39 @@ Laravel-Policies + Spatie-Permission).
   - `doctrine/dbal ^3.0` als require. `migrate` über SQLite
     (CI-Pfad) und production-side schema patches mit `dropColumn`
     laufen über den Doctrine-Schema-Manager.
+
+- **Phase 2 / Block D — FormRequest-Refactor + Auth-Test-Ausbau.**
+  - Sieben neue FormRequest-Klassen unter `app/Http/Requests/`:
+    `StoreChapterRequest`, `UpdateChapterRequest`,
+    `StoreEntryRequest`, `UpdateEntryRequest`, `StoreProjectRequest`,
+    `UpdateProjectRequest` und `Auth\RegisterRequest`. Jede delegiert
+    `authorize()` an die zuständige Policy und definiert `rules()`
+    mit Laravel-Standard-Validation. Eigene Klassen-Doc-Blöcke
+    erklären je Pflicht-Felder und Quelle.
+  - **PATCH-Route-Trennung** für Chapter und Entry: Update läuft
+    jetzt über `PATCH /chapters/{chapter}` bzw.
+    `PATCH /entries/{entry}` mit Route-Model-Binding statt
+    POST + `$request['chapterId']`-Verzweigung im Controller.
+    Frontend-JS in `chapters/index.blade.php` zieht mit (`_method`-
+    Hidden-Field, action-URL beim Modify-Klick gesetzt, beim
+    Modal-Close zurückgesetzt). (NF-LAR-002, NF-LAR-004)
+  - **`App\Support\PermissionName`** zentralisiert die sieben
+    Permission-Strings (`view`, `add`, …) als public-Konstanten.
+    Seeder, Policies und Tests nutzen ab jetzt die Konstanten;
+    Blade-Views bleiben mit Strings (bewusster Tradeoff, Konstante
+    in Templates schlechter lesbar). (NF-CODE-003)
+  - **File-Upload-Validation** in StoreProjectRequest und
+    UpdateProjectRequest: `project_image` als File mit MIME-
+    Whitelist (jpeg/jpg/png/gif/webp) und 4 MB Limit. Systematische
+    Lösung für NF-SEC-001 (offen seit Phase 1) und NF-SEC-007
+    (Phase-1.5-Inline-Härtung jetzt im FormRequest).
+  - **`Validator::make` in `RegisteredUserController`** durch
+    `RegisterRequest` ersetzt (F-LAR-008). `authorize()` ist offen;
+    Routing-Middleware regelt Gast vs. Auth.
+  - **Pest-Suite von 17 auf 27 Authorization-/Validation-Tests
+    erweitert**: 422-Pflichttests pro FormRequest, PATCH-Sanity-Tests
+    für Chapter und Entry, MIME-Whitelist-Test für `project_image`
+    via `UploadedFile::fake()`, Gast-Pfad-Test für RegisterRequest.
 
 - **Phase 2 / Block C — Eloquent-Hygiene.**
   - `Model::preventLazyLoading(! app()->isProduction())` im
