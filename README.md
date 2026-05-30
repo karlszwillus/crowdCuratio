@@ -77,9 +77,17 @@ phpMyAdmin: <http://localhost:8080> (nur Loopback)
 ./vendor/bin/sail pest
 ```
 
-Aktuell deckt die Suite die Authorization-Schichten für Project,
-Chapter und Entry ab (17 Tests, davon 4 für den Create-Pfad-Bypass
-NF-LAR-003). Weiteres Coverage entsteht in der Sicherheitsnetz-Phase.
+Aktuell deckt die Suite Authorization und Validation für Project,
+Chapter, Entry sowie den Register-Flow ab (Stand 36 Tests grün:
+Authorization-Bypass, Create-Pfad-Bypass NF-LAR-003,
+FormRequest-422-Pflichten, PATCH-Sanity für Chapter/Entry,
+File-Upload-MIME-Whitelist für `project_image`).
+
+GitHub Actions (`.github/workflows/ci.yml`) führt auf jedem PR und
+Push nach `main` parallel sechs Jobs aus: Pest (SQLite-in-memory),
+`composer audit`, `npm audit`, Larastan (Level 5, Baseline),
+Pint (Laravel-Preset, Hard-Fail) und einen Changelog-Diff-Check
+(Pull-Requests, übersteuerbar via Label `skip-changelog`).
 
 ## Dokumentation
 
@@ -94,8 +102,9 @@ Architektur-Entscheidungen liegen in der internen Werkbank
 (`.werkbank/ADR/`, nicht im Repo-Diff): 0001 Ziel-Stack (PHP 8.4 /
 Laravel 12), 0002 composer.lock eingecheckt, 0010 InnoDB für alle
 Tabellen, 0011 utf8mb4-Konvertierung, 0013 Authorization über
-Laravel-Policies + Spatie-Permission. Wer Zugang braucht, fragt im
-Team.
+Laravel-Policies + Spatie-Permission, 0017 FormRequest-Konvention,
+0018 utf8mb4-Prod-Konvertierung (achtstufiges Runbook). Wer Zugang
+braucht, fragt im Team.
 
 ## Mitwirken
 

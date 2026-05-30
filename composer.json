@@ -1,7 +1,7 @@
 {
   "name": "berlinhistory/crowdcuratio",
   "type": "project",
-  "description": "CrowdCuratio - Curating together virtually",
+  "description": "crowdCuratio - Curating together virtually",
   "version": "0.8.0",
   "authors": [{"name": "berlinHistory e.V."}, {"name": "Aktives Museum Berlin"}, {"name": "Ben"}],
   "copyright": "2022(c) berlinHistory e.V.",
