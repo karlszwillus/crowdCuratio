@@ -163,5 +163,4 @@ class RegisteredUserController extends Controller
             }
         }
     }
-
 }
