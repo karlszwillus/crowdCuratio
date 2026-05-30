@@ -104,17 +104,25 @@ class RegisteredUserController extends Controller
             $isAdminInvite = $callerIsAdmin && $request->boolean('adminUser');
             $grantCreateProject = $callerIsAdmin && $request->boolean('createProject');
 
-            $user = User::create($this->formatData($request));
-
-            if ($isAdminInvite) {
-                $user->is_admin = true;
-            }
-            if ($grantCreateProject) {
-                $user->create_project = true;
-            }
-            if ($isAdminInvite || $grantCreateProject) {
-                $user->save();
-            }
+            // Felder einzeln per Property-Setter, nicht via
+            // `User::create($array)`: `is_admin` und `create_project`
+            // sind nicht mehr in `$fillable`, würden bei Mass-Assignment
+            // verworfen und der Insert liefe ohne sie. Auf SQLite
+            // (Pest-Pfad) gibt es keinen Spalten-Default (die
+            // default_for_user_admin_flags-Migration ist dort No-Op,
+            // siehe NF-DB-103) — Insert würde mit NOT-NULL-Verstoß
+            // brechen. Direkt-Assignment umgeht `$fillable` und setzt
+            // die Werte explizit, ohne den Mass-Assignment-Schutz
+            // aufzuweichen (keine Request-Daten landen ungefiltert
+            // im Modell).
+            $user = new User;
+            $user->name = $request->firstName;
+            $user->last_name = $request->lastName;
+            $user->email = $request->email;
+            $user->password = Hash::make(Str::random(8));
+            $user->is_admin = $isAdminInvite;
+            $user->create_project = $grantCreateProject;
+            $user->save();
 
             event(new Registered($user));
 
@@ -156,31 +164,4 @@ class RegisteredUserController extends Controller
         }
     }
 
-    /**
-     * Baut das Datenset für `User::create()`.
-     *
-     * NF-SEC-202: `is_admin` und `create_project` werden hier NICHT
-     * mehr gesetzt — beide Flags sind privilegiert und werden nach
-     * dem User::create() in store() unter einem Admin-Gate explizit
-     * geschrieben. `created_at` ebenfalls raus, Laravel verwaltet
-     * Timestamps automatisch.
-     */
-    protected function formatData($request)
-    {
-        $data = [];
-
-        if (isset($request->firstName)) {
-            $data['name'] = $request->firstName;
-        }
-        if (isset($request->lastName)) {
-            $data['last_name'] = $request->lastName;
-        }
-        if (isset($request->email)) {
-            $data['email'] = $request->email;
-        }
-
-        $data['password'] = Hash::make(Str::random(8));
-
-        return $data;
-    }
 }
