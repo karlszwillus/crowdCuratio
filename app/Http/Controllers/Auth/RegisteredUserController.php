@@ -85,12 +85,49 @@ class RegisteredUserController extends Controller
             );
         } else {
 
-            $user = User::create($this->formatData($request));
+            // NF-SEC-202: `is_admin` und `create_project` (plus die
+            // Admin-Rolle) sind privilegiert. Sie werden ausschließlich
+            // gesetzt, wenn der aktuell eingeloggte User selbst Admin
+            // ist. Erste Schicht ist die Route-Middleware `role:Admin`
+            // (web.php), dieser Check ist die zweite Schicht — falls
+            // die Route-Konfiguration jemals fällt oder ein neuer
+            // Einstiegspunkt entsteht, bleibt der Pfad zu.
+            //
+            // Quelle der Wahrheit ist die Spatie-Rolle, nicht das
+            // `is_admin`-Feld auf users. Der CreateAdminUserSeeder
+            // setzt nur die Rolle. Das `is_admin`-Feld ist ein
+            // bestehender Daten-Attribut-Doppel-Begriff, der in
+            // Phase 4 mit ADR-0005 (Permission-Mehrgleisigkeit)
+            // aufgelöst wird.
+            $caller = Auth::user();
+            $callerIsAdmin = $caller?->hasRole('Admin') === true;
+            $isAdminInvite = $callerIsAdmin && $request->boolean('adminUser');
+            $grantCreateProject = $callerIsAdmin && $request->boolean('createProject');
+
+            // Felder einzeln per Property-Setter, nicht via
+            // `User::create($array)`: `is_admin` und `create_project`
+            // sind nicht mehr in `$fillable`, würden bei Mass-Assignment
+            // verworfen und der Insert liefe ohne sie. Auf SQLite
+            // (Pest-Pfad) gibt es keinen Spalten-Default (die
+            // default_for_user_admin_flags-Migration ist dort No-Op,
+            // siehe NF-DB-103) — Insert würde mit NOT-NULL-Verstoß
+            // brechen. Direkt-Assignment umgeht `$fillable` und setzt
+            // die Werte explizit, ohne den Mass-Assignment-Schutz
+            // aufzuweichen (keine Request-Daten landen ungefiltert
+            // im Modell).
+            $user = new User;
+            $user->name = $request->firstName;
+            $user->last_name = $request->lastName;
+            $user->email = $request->email;
+            $user->password = Hash::make(Str::random(8));
+            $user->is_admin = $isAdminInvite;
+            $user->create_project = $grantCreateProject;
+            $user->save();
 
             event(new Registered($user));
 
-            if (isset($request->adminUser)) {
-                $user->assignRole(1);
+            if ($isAdminInvite) {
+                $user->assignRole('Admin');
             } else {
                 $user->assignRole($request->input('roles'));
             }
@@ -125,32 +162,5 @@ class RegisteredUserController extends Controller
                 return redirect()->route('users.index')->with('success', 'User added successful');
             }
         }
-    }
-
-    protected function formatData($request)
-    {
-
-        $data = [];
-
-        if (isset($request->firstName)) {
-            $data['name'] = $request->firstName;
-        }
-        if (isset($request->lastName)) {
-            $data['last_name'] = $request->lastName;
-        }
-        if (isset($request->email)) {
-            $data['email'] = $request->email;
-        }
-        if (isset($request->adminUser)) {
-            $data['is_admin'] = $request->adminUser;
-        }
-        if (isset($request->createProject)) {
-            $data['create_project'] = $request->createProject;
-        }
-
-        $data['password'] = Hash::make(Str::random(8));
-        $data['created_at'] = now();
-
-        return $data;
     }
 }

@@ -47,6 +47,16 @@ class User extends Authenticatable
     /**
      * The attributes that are mass assignable.
      *
+     * NF-SEC-202 / Phase-2.5-Hotfix: `is_admin` und `create_project`
+     * sind hier bewusst raus. Beide Felder steuern Berechtigungen
+     * im System und dürfen NIEMALS über Mass-Assignment aus einem
+     * Request gesetzt werden. Wer sie schreiben will, ruft
+     * `setAttribute()` bzw. weist direkt zu (`$user->is_admin = …`)
+     * und hat damit die Verantwortung, vorher die Aufrufer-Identität
+     * zu prüfen — siehe `RegisteredUserController::store()`. Das
+     * `created_at` gehört ebenfalls nicht ins `$fillable`; Laravel
+     * pflegt es als Timestamp automatisch.
+     *
      * @var array
      */
     protected $fillable = [
@@ -54,9 +64,6 @@ class User extends Authenticatable
         'last_name',
         'email',
         'password',
-        'is_admin',
-        'create_project',
-        'created_at',
     ];
 
     /**

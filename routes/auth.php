@@ -25,16 +25,17 @@ use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\EmailVerificationPromptController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
-use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/register', [RegisteredUserController::class, 'create'])
-    ->middleware('guest')
-    ->name('register');
-
-Route::post('/register', [RegisteredUserController::class, 'store'])
-    ->middleware('guest');
+// NF-SEC-202 / AM-D-4 (Phase-2.5-Hotfix): crowdCuratio kennt keinen
+// Self-Service-Registration-Flow. Neue User werden ausschließlich von
+// Admins über das eingeloggte CMS angelegt — der Register-Endpoint
+// lebt deshalb in routes/web.php im `auth + role:Admin`-Block. Die
+// vorherigen `guest`-gemiddlewareten Routen hier waren der erste Teil
+// der Doppel-Route (AM-D-4) und der Einstiegspfad für die
+// Privilege-Escalation (NF-SEC-202). Bewusst gelöscht statt
+// auskommentiert — das alte Verhalten ist im CHANGELOG dokumentiert.
 
 Route::get('/login', [AuthenticatedSessionController::class, 'create'])
     ->middleware('guest')

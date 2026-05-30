@@ -636,13 +636,11 @@ test('UpdateProjectRequest: project_image akzeptiert nur Bild-MIME-Typen (NF-SEC
 // ----------------------------------------------------------------------
 
 test('RegisterRequest: firstName ist Pflicht (Admin-Einladung)', function () {
-    // Hinweis: der RegisteredUserController hat im __construct die
-    // middleware('auth'), während Route /register als 'guest' deklariert
-    // ist — Bestands-Konflikt aus AM-D-4 (Phase-1-Reviewer). In der
-    // tatsächlichen App wird /register nur durch Admins erreicht, die
-    // neue User ins System einladen. Der Test bildet diesen Pfad ab,
-    // statt den theoretischen Self-Service-Gast-Pfad zu testen, der
-    // wegen des Konflikts ohnehin nicht funktioniert.
+    // Seit NF-SEC-202-Hotfix (Phase 2.5) ist /register ein reiner
+    // Admin-Endpoint unter `auth + role:Admin`. AM-D-4 (die alte
+    // Doppel-Route guest/auth) ist mit beseitigt; ein
+    // Self-Service-Gast-Pfad existiert nicht mehr und wird auch
+    // nicht getestet.
     $admin = User::factory()->create();
     $admin->assignRole('Admin');
 
@@ -661,4 +659,95 @@ test('RegisterRequest: firstName ist Pflicht (Admin-Einladung)', function () {
 
     $response->assertInvalid(['firstName']);
     expect(User::count())->toBe(1); // nur der Admin selbst, kein neuer User
+});
+
+// ----------------------------------------------------------------------
+// NF-SEC-202 / Phase-2.5-Hotfix — Privilege-Escalation über /register.
+//
+// Vor dem Hotfix: `User::$fillable` enthielt `is_admin`, der
+// RegisterRequest::authorize() war `true`, die Route hatte keinen
+// Rollenfilter. Jeder eingeloggte User (Reader, Reviewer, Editor)
+// konnte sich über `POST /register` mit `adminUser=1` ein Admin-
+// Konto anlegen.
+//
+// Nach dem Hotfix: zwei Schichten. Route hängt an `role:Admin`,
+// Controller setzt `is_admin`/`create_project` nur dann, wenn der
+// Caller selbst die Spatie-Rolle „Admin" hat. AM-D-4 (Doppel-
+// Route in auth.php) ist mit beseitigt.
+// ----------------------------------------------------------------------
+
+test('NF-SEC-202: non-Admin kann keinen User über /register anlegen', function () {
+    $intruder = User::factory()->create();
+    // keine Rolle — `role:Admin`-Route-Middleware muss 403 liefern.
+
+    $response = $this->actingAs($intruder)
+        ->from(route('register'))
+        ->post(route('register'), [
+            'firstName' => 'Mallory',
+            'lastName' => 'Intruder',
+            'email' => 'mallory@example.com',
+            'roles' => 'Editor',
+            'policy' => 1,
+            'adminUser' => 1,
+        ]);
+
+    $response->assertForbidden();
+    expect(User::where('email', 'mallory@example.com')->exists())->toBeFalse();
+});
+
+test('NF-SEC-202: Admin kann Admin-Einladung anlegen, is_admin wird gesetzt', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('Admin');
+
+    $response = $this->actingAs($admin)
+        ->from(route('register'))
+        ->post(route('register'), [
+            'firstName' => 'Alice',
+            'lastName' => 'Admin',
+            'email' => 'alice.admin@example.com',
+            'roles' => 'Admin',
+            'policy' => 1,
+            'adminUser' => 1,
+        ]);
+
+    $response->assertRedirect();
+    $newUser = User::where('email', 'alice.admin@example.com')->firstOrFail();
+    expect((bool) $newUser->is_admin)->toBeTrue();
+    expect($newUser->hasRole('Admin'))->toBeTrue();
+});
+
+test('NF-SEC-202: Admin lädt regulären User ein — is_admin bleibt false', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('Admin');
+    Role::firstOrCreate(['name' => 'Editor', 'guard_name' => 'web']);
+
+    $response = $this->actingAs($admin)
+        ->from(route('register'))
+        ->post(route('register'), [
+            'firstName' => 'Bob',
+            'lastName' => 'Editor',
+            'email' => 'bob.editor@example.com',
+            'roles' => 'Editor',
+            'policy' => 1,
+            // adminUser absichtlich nicht gesetzt
+        ]);
+
+    $response->assertRedirect();
+    $newUser = User::where('email', 'bob.editor@example.com')->firstOrFail();
+    expect((bool) $newUser->is_admin)->toBeFalse();
+    expect($newUser->hasRole('Admin'))->toBeFalse();
+});
+
+test('NF-SEC-202: Gast wird auf Login umgeleitet (auth-Middleware vor role:Admin)', function () {
+    $response = $this->post(route('register'), [
+        'firstName' => 'Eve',
+        'lastName' => 'Guest',
+        'email' => 'eve@example.com',
+        'roles' => 'Editor',
+        'policy' => 1,
+        'adminUser' => 1,
+    ]);
+
+    $response->assertRedirect(route('login'));
+    expect(User::where('email', 'eve@example.com')->exists())->toBeFalse();
 });
