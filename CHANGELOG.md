@@ -11,25 +11,28 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 ## [Unreleased]
 
 Stand nach Phase 1 (Stabilisierung + Sofortmaßnahmen) inkl. Reviewer-
-Nachschlag (Phase 1.5), Phase-2-Block-B (CI-Skeleton), Phase-2-
-Block-C (Eloquent-Hygiene) und Phase-2-Block-D (FormRequest-
-Refactor + Authorization-Test-Ausbau). Branches `phase-1/setup-reset`,
-`phase-2/ci-skeleton`, `phase-2/eloquent-hygiene` sind gemerged;
-`phase-2/formrequests` ist Block-D-Stand. Alle vier in Phase 0
-identifizierten Blocker geschlossen, vier Phase-1-Reviewer-Findings
+Nachschlag (Phase 1.5) und Phase 2 vollständig: Block B (CI-Skeleton),
+Block C (Eloquent-Hygiene), Block D (FormRequest-Refactor +
+Authorization-Test-Ausbau) und Block E+F+G zusammengeführt unter
+`phase-2/db-heartung` (Migrations-Rollback-Fixes, `db:audit-fk`
+Console-Command, ADR-0018 für utf8mb4-Prod-Konvertierung, Docker-
+Härtung aus den Reviewer-Befunden, Doku-Sync). Alle vier in Phase 0
+identifizierten Blocker geschlossen, sechs Phase-1-Reviewer-Findings
 behoben, CI mit Pest, Larastan, Pint, Dependency-Audits und
 CHANGELOG-Diff-Check spannt das Sicherheitsnetz; Eloquent-Schicht
 mit Strict-Mode, expliziten Casts und Local-Scope-Eager-Loading
 aufgeräumt; Validation und Authorization aller mutierenden Routes
 laufen über dedizierte FormRequest-Klassen, Chapter/Entry über
-saubere PATCH-Trennung.
+saubere PATCH-Trennung; Docker-Stack härtet sich mit Healthchecks,
+restart-Policy, Loopback-Bindings und signed-by-Keyrings.
 
 ADR-Grundlagen für diese Welle: ADR-0001 (Ziel-Stack PHP 8.4 /
 Laravel 12, in C.4 um Active-Record-Bekenntnis ergänzt), ADR-0002
 (composer.lock eingecheckt), ADR-0010 (InnoDB für alle Tabellen),
 ADR-0011 (utf8mb4-Konvertierung), ADR-0013 (Authorization über
 Laravel-Policies + Spatie-Permission), ADR-0017 (FormRequest-
-Konvention, neu in Block D).
+Konvention, neu in Block D), ADR-0018 (utf8mb4-Prod-Konvertierung
+mit Backup, Wartungsfenster, Orphan-Audit, neu in Block E).
 
 ### Hinzugefügt
 
@@ -101,6 +104,20 @@ Konvention, neu in Block D).
     erweitert**: 422-Pflichttests pro FormRequest, PATCH-Sanity-Tests
     für Chapter und Entry, MIME-Whitelist-Test für `project_image`
     via `UploadedFile::fake()`, Gast-Pfad-Test für RegisterRequest.
+
+- **Phase 2 / Block E — DB-Detail-Härtung.**
+  - `ADR-0018` — Strategie für die `utf8mb4`-Konvertierung auf
+    Produktion. Achtstufiges Runbook (Backup → Wartung → Orphan-
+    Audit → Audit-Fix → `foreign_key_checks=0` → ALTER → checks=1
+    → Verifikation → Wartung aus) plus Verantwortlichkeits-Tabelle
+    Karl / Aktives Museum / berlinHistory.
+  - `app/Console/Commands/AuditForeignKeys.php` — Console-Command
+    `db:audit-fk [--fix] [--confirm]`. Read-only-Default produziert
+    eine Markdown-Tabelle mit Orphan-Foreign-Keys
+    (`texts.origin → sources.id`, `texts.copyright → sources.id`).
+    Der `--fix --confirm`-Pfad schreibt vorher ein JSON-Protokoll
+    nach `storage/logs/fk-audit-fix-YYYYMMDD-HHmmss.json` und
+    setzt orphan-Werte transaktional auf NULL.
 
 - **Phase 2 / Block C — Eloquent-Hygiene.**
   - `Model::preventLazyLoading(! app()->isProduction())` im
@@ -177,6 +194,34 @@ Konvention, neu in Block D).
   (F-DB-013). LIKE auf INT-Spalte mit hartkodierter Admin-ID
   abgelöst, Filter ist jetzt rolle-namensbasiert und semantisch
   klar.
+- **Phase 2 / Block F — Docker-Härtung aus Reviewer-Befunden.**
+  - `docker-compose.yml`: Healthchecks für meilisearch (`/health`)
+    und mailpit (`/readyz`) (NF-DOCKER-001), `restart:
+    unless-stopped` auf mysql, redis, meilisearch, mailpit
+    (NF-DOCKER-002), MySQL-Healthcheck jetzt mit Root-Credentials
+    plus `interval` / `timeout` / `retries` (NF-DOCKER-004 — der
+    bisherige `mysqladmin ping` ohne Credentials lieferte unter
+    MySQL 8 ein `Access denied`, das Docker als `läuft`
+    fehlinterpretierte), Forward-Ports von mysql, redis,
+    meilisearch und mailpit-Dashboard an `127.0.0.1` gebunden
+    (NF-DOCKER-005 — mailpit-SMTP-Port bleibt offen, weil der
+    App-Container ihn intern erreichen muss).
+  - `.env.example`: `WWWUSER` / `WWWGROUP` als kommentierter
+    Hinweis aufgenommen (NF-DOCKER-003). macOS und arm64 brauchen
+    den Default 1000 nicht zu ändern, Linux-Hosts mit
+    abweichender UID/GID schon — sonst Permission-Probleme in
+    `storage/` und `bootstrap/cache/`.
+  - `docker/8.1/Dockerfile`: Composer aus dem offiziellen
+    `composer:2`-Image kopiert (F-DOCK-002) — deterministische
+    Version, signierte Distribution, keine HTTP-Pipe (`curl
+    http://getcomposer.org/installer | php`) als MITM-Fläche im
+    Build. `apt-key adv … --recv-keys` für Ondrej PHP PPA und
+    Yarn durch `signed-by`-Keyrings unter `/etc/apt/keyrings`
+    ersetzt (F-DOCK-011) — `apt-key` ist seit Ubuntu 22.04
+    deprecated und in 24.04 entfernt, jeder Repo-Eintrag ist
+    jetzt an genau einen Schlüssel gebunden. `EXPOSE 8000` →
+    `EXPOSE 80` (F-DOCK-013) — docker-compose mappt den Host-
+    Port ohnehin auf Container-Port 80.
 
 ### Behoben
 

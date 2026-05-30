@@ -2,7 +2,7 @@
 
 /**
 crowdCuratio - Curating together virtually
-Copyright (C)2022 - berlinHistory e.V.
+Copyright (C)2022, 2026 - berlinHistory e.V.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -42,13 +42,25 @@ class CustomizeHasPermissionsTable extends Migration
     /**
      * Reverse the migrations.
      *
+     * NF-DB-101 / Phase 2 / E.5: Vorher droppte down() `project_id`,
+     * obwohl up() `user_id` anlegt — ein vergessener Spalten-Drop, der
+     * `migrate:rollback` mit `Cannot drop 'project_id'` brechen liess.
+     * Plus: FK auf users.id muss explizit raus, sonst MySQL-Error 1553.
+     * hasColumn-Guards analog F-DB-008, damit der Rollback auch auf
+     * einer DB sicher ist, die up() nicht durchlaufen hatte.
+     *
      * @return void
      */
     public function down()
     {
         Schema::table('model_has_permissions', function (Blueprint $table) {
-            $table->dropColumn('project_id');
-            $table->dropColumn('updated_at');
+            if (Schema::hasColumn('model_has_permissions', 'user_id')) {
+                $table->dropForeign(['user_id']);
+                $table->dropColumn('user_id');
+            }
+            if (Schema::hasColumn('model_has_permissions', 'updated_at')) {
+                $table->dropColumn('updated_at');
+            }
         });
     }
 }

@@ -77,9 +77,16 @@ class ConvertTextsToInnodb extends Migration
 
     public function down(): void
     {
-        // Bewusst keine echte Rück-Migration auf MyISAM. Wer es
-        // braucht, schreibt einen eigenen Schritt — aber wir wollen
-        // niemanden ermutigen, dorthin zurückzukehren.
+        // NF-DB-104 / Phase 2 / E.6: bewusst keine echte Rück-Migration
+        // auf MyISAM — die ist destruktiv (FKs würden still verworfen,
+        // siehe ADR-0010). Ein No-Op-down() würde aber den Eindruck
+        // erwecken, der Roll-back habe funktioniert. RuntimeException
+        // ist die ehrlichste Antwort: wer wirklich zurück will, muss
+        // einen eigenen Schritt schreiben und das Risiko bewusst tragen.
+        throw new \RuntimeException(
+            'Rollback to MyISAM is not supported — siehe ADR-0010 '
+            .'für die Begründung.'
+        );
     }
 
     private function getEngine(string $table): ?string

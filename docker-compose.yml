@@ -23,8 +23,11 @@ services:
         condition: service_healthy
   mysql:
     image: 'mysql:8.0'
+    # NF-DOCKER-005: Port nur auf Loopback, nicht auf 0.0.0.0.
     ports:
-      - '${FORWARD_DB_PORT:-8005}:3306'
+      - '127.0.0.1:${FORWARD_DB_PORT:-8005}:3306'
+    # NF-DOCKER-002: nach Crash automatisch neu starten.
+    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: '${DB_PASSWORD}'
       MYSQL_DATABASE: '${DB_DATABASE}'
@@ -34,8 +37,14 @@ services:
       - 'sailmysql:/var/lib/mysql'
     networks:
       - sail
+    # NF-DOCKER-004: mysqladmin ping ohne Credentials gibt unter
+    # MySQL 8 ein 'Access denied', das Docker als 'läuft' interpretiert.
+    # Echter Healthcheck mit Root-Credentials und expliziten Timings.
     healthcheck:
-      test: [ "CMD", "mysqladmin", "ping" ]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "--password=${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
   phpmyadmin:
     networks:
       - sail
@@ -48,8 +57,11 @@ services:
       PMA_HOST: mysql
   redis:
     image: 'redis:7-alpine'
+    # NF-DOCKER-005: Port auf Loopback.
     ports:
-      - '${FORWARD_REDIS_PORT:-6379}:6379'
+      - '127.0.0.1:${FORWARD_REDIS_PORT:-6379}:6379'
+    # NF-DOCKER-002.
+    restart: unless-stopped
     volumes:
       - 'sailredis:/data'
     networks:
@@ -58,19 +70,38 @@ services:
       test: [ "CMD", "redis-cli", "ping" ]
   meilisearch:
     image: 'getmeili/meilisearch:v1.6'
+    # NF-DOCKER-005: Port auf Loopback.
     ports:
-      - '${FORWARD_MEILISEARCH_PORT:-7700}:7700'
+      - '127.0.0.1:${FORWARD_MEILISEARCH_PORT:-7700}:7700'
+    # NF-DOCKER-002.
+    restart: unless-stopped
     volumes:
       - 'sailmeilisearch:/data.ms'
     networks:
       - sail
+    # NF-DOCKER-001: Healthcheck gegen die /health-Route.
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7700/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
   mailpit:
     image: 'axllent/mailpit:v1.20'
+    # SMTP-Port bewusst auf 0.0.0.0:1025 (App-Container muss ihn intern
+    # erreichen); Web-Dashboard nur auf Loopback.
     ports:
       - '${FORWARD_MAILPIT_PORT:-1025}:1025'
       - '127.0.0.1:${FORWARD_MAILPIT_DASHBOARD_PORT:-8025}:8025'
+    # NF-DOCKER-002.
+    restart: unless-stopped
     networks:
       - sail
+    # NF-DOCKER-001: Healthcheck gegen /readyz.
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8025/readyz || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 networks:
   sail:
     driver: bridge
