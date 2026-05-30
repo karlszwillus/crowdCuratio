@@ -105,7 +105,29 @@ Route::group(
             'image.delete'
         );
         Route::get('/element', [ProjectController::class, 'element'])->name('element');
-        Route::resource('/register', RegisteredUserController::class);
+        // NF-SEC-202 / Phase-2.5-Hotfix: Privilege-Escalation-Pfad
+        // dichtgemacht. Vorher konnte jeder eingeloggte User
+        // (Reader, Reviewer, Editor) POST /register mit
+        // `adminUser=1` aufrufen und sich darüber ein Admin-Konto
+        // anlegen — `User::$fillable` enthielt `is_admin`,
+        // `RegisterRequest::authorize()` war `true`, die Route
+        // hatte keinen Rollenfilter. Defense-in-depth: hier die
+        // Route-Schicht (`role:Admin`), im RegisteredUserController::store()
+        // die zweite Schicht (Admin-Gate).
+        //
+        // Zwei explizite Routen statt `Route::resource`: der
+        // Controller hat nur `create()` und `store()`. Resource
+        // hätte zusätzlich `show/edit/update/destroy` generiert,
+        // die nicht existieren — `UserController` deckt das ab.
+        // Damit ist auch AM-D-4 (Doppel-Route in auth.php)
+        // bereinigt; `auth.php` registriert keinen Register-
+        // Endpoint mehr.
+        Route::get('/register', [RegisteredUserController::class, 'create'])
+            ->middleware('role:Admin')
+            ->name('register');
+        Route::post('/register', [RegisteredUserController::class, 'store'])
+            ->middleware('role:Admin')
+            ->name('register.store');
         Route::resource('/users', UserController::class);
         Route::get('/profile', [UserController::class, 'profile'])->name(
             'profile'

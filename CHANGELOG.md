@@ -320,6 +320,21 @@ mit Backup, Wartungsfenster, Orphan-Audit, neu in Block E).
   still durchzulaufen.
 - File-Upload-`public`-Disk und Mailpit-/phpMyAdmin-Loopback-Binding
   reduzieren die Lateral-Movement-Fläche im lokalen Dev-Netz.
+- **NF-SEC-202 (Phase-2.5-Hotfix) — Privilege-Escalation über
+  `/register` geschlossen.** Vor dem Hotfix konnte jeder eingeloggte
+  User (Reader, Reviewer, Editor) `POST /register` mit `adminUser=1`
+  aufrufen und sich ein Admin-Konto anlegen: `User::$fillable`
+  enthielt `is_admin` und `create_project`, `RegisterRequest::
+  authorize()` war `true`, die Route hatte keinen Rollenfilter, die
+  alte `auth.php`-Doppel-Route (AM-D-4) lief mit. Defense-in-depth:
+  `is_admin` und `create_project` raus aus `User::$fillable`, die
+  Route hängt jetzt an `role:Admin`, im Controller setzt ein
+  zweiter Gate die privilegierten Felder nur, wenn der Caller
+  selbst die Spatie-Rolle „Admin" hat. Self-Service-Routen aus
+  `auth.php` gelöscht — AM-D-4 dadurch teilbereinigt. Vier neue
+  Pest-Tests sichern den Pfad ab (non-Admin → 403, Admin mit
+  `adminUser=1` → neuer Admin, Admin ohne `adminUser` → regulärer
+  User, Gast → Login-Redirect).
 
 ---
 

@@ -85,12 +85,41 @@ class RegisteredUserController extends Controller
             );
         } else {
 
+            // NF-SEC-202: `is_admin` und `create_project` (plus die
+            // Admin-Rolle) sind privilegiert. Sie werden ausschließlich
+            // gesetzt, wenn der aktuell eingeloggte User selbst Admin
+            // ist. Erste Schicht ist die Route-Middleware `role:Admin`
+            // (web.php), dieser Check ist die zweite Schicht — falls
+            // die Route-Konfiguration jemals fällt oder ein neuer
+            // Einstiegspunkt entsteht, bleibt der Pfad zu.
+            //
+            // Quelle der Wahrheit ist die Spatie-Rolle, nicht das
+            // `is_admin`-Feld auf users. Der CreateAdminUserSeeder
+            // setzt nur die Rolle. Das `is_admin`-Feld ist ein
+            // bestehender Daten-Attribut-Doppel-Begriff, der in
+            // Phase 4 mit ADR-0005 (Permission-Mehrgleisigkeit)
+            // aufgelöst wird.
+            $caller = Auth::user();
+            $callerIsAdmin = $caller?->hasRole('Admin') === true;
+            $isAdminInvite = $callerIsAdmin && $request->boolean('adminUser');
+            $grantCreateProject = $callerIsAdmin && $request->boolean('createProject');
+
             $user = User::create($this->formatData($request));
+
+            if ($isAdminInvite) {
+                $user->is_admin = true;
+            }
+            if ($grantCreateProject) {
+                $user->create_project = true;
+            }
+            if ($isAdminInvite || $grantCreateProject) {
+                $user->save();
+            }
 
             event(new Registered($user));
 
-            if (isset($request->adminUser)) {
-                $user->assignRole(1);
+            if ($isAdminInvite) {
+                $user->assignRole('Admin');
             } else {
                 $user->assignRole($request->input('roles'));
             }
@@ -127,9 +156,17 @@ class RegisteredUserController extends Controller
         }
     }
 
+    /**
+     * Baut das Datenset für `User::create()`.
+     *
+     * NF-SEC-202: `is_admin` und `create_project` werden hier NICHT
+     * mehr gesetzt — beide Flags sind privilegiert und werden nach
+     * dem User::create() in store() unter einem Admin-Gate explizit
+     * geschrieben. `created_at` ebenfalls raus, Laravel verwaltet
+     * Timestamps automatisch.
+     */
     protected function formatData($request)
     {
-
         $data = [];
 
         if (isset($request->firstName)) {
@@ -141,15 +178,8 @@ class RegisteredUserController extends Controller
         if (isset($request->email)) {
             $data['email'] = $request->email;
         }
-        if (isset($request->adminUser)) {
-            $data['is_admin'] = $request->adminUser;
-        }
-        if (isset($request->createProject)) {
-            $data['create_project'] = $request->createProject;
-        }
 
         $data['password'] = Hash::make(Str::random(8));
-        $data['created_at'] = now();
 
         return $data;
     }
