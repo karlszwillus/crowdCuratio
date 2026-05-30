@@ -9,16 +9,29 @@ WORKDIR /var/www/html
 ENV DEBIAN_FRONTEND noninteractive
 ENV TZ=UTC
 
+# F-DOCK-002: Composer aus dem offiziellen Composer-Image übernehmen statt
+# `curl http://getcomposer.org/installer | php` zur Buildzeit auszuführen.
+# Vorteile: deterministische Composer-Version, signierte Distribution,
+# keine HTTP-Download-Pipe als MITM-Angriffsfläche im Build.
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
+# F-DOCK-011: `apt-key` ist seit Ubuntu 22.04 deprecated und in 24.04 entfernt.
+# Wir legen die GPG-Keys explizit als signed-by-Keyrings unter
+# /etc/apt/keyrings ab und referenzieren sie in den .list-Dateien.
+# Das macht jeden Repo-Eintrag an genau einen Schlüssel gebunden — kein
+# globaler Trust-Store für alle Repos mehr.
 RUN apt-get update \
     && apt-get install -y gnupg gosu curl ca-certificates zip unzip git supervisor sqlite3 libcap2-bin libpng-dev \
-    && mkdir -p ~/.gnupg \
+    && mkdir -p /etc/apt/keyrings ~/.gnupg \
     && chmod 600 ~/.gnupg \
     && echo "disable-ipv6" >> ~/.gnupg/dirmngr.conf \
-    && apt-key adv --homedir ~/.gnupg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys E5267A6C \
-    && apt-key adv --homedir ~/.gnupg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C300EE8C \
-    && echo "deb http://ppa.launchpad.net/ondrej/php/ubuntu jammy main" > /etc/apt/sources.list.d/ppa_ondrej_php.list \
+    && gpg --no-default-keyring --keyring /etc/apt/keyrings/ondrej-php.gpg \
+        --keyserver hkp://keyserver.ubuntu.com:80 \
+        --recv-keys E5267A6C C300EE8C \
+    && echo "deb [signed-by=/etc/apt/keyrings/ondrej-php.gpg] http://ppa.launchpad.net/ondrej/php/ubuntu jammy main" \
+        > /etc/apt/sources.list.d/ppa_ondrej_php.list \
     && apt-get update \
     && apt-get install -y php8.1-cli php8.1-dev \
        php8.1-pgsql php8.1-sqlite3 php8.1-gd \
@@ -28,11 +41,12 @@ RUN apt-get update \
        php8.1-intl php8.1-readline \
        php8.1-msgpack php8.1-igbinary php8.1-ldap \
        php8.1-redis \
-    && php -r "readfile('http://getcomposer.org/installer');" | php -- --install-dir=/usr/bin/ --filename=composer \
     && curl -sL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
-    && curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
-    && echo "deb https://dl.yarnpkg.com/debian/ stable main" > /etc/apt/sources.list.d/yarn.list \
+    && curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg \
+        | gpg --dearmor -o /etc/apt/keyrings/yarn.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/yarn.gpg] https://dl.yarnpkg.com/debian/ stable main" \
+        > /etc/apt/sources.list.d/yarn.list \
     && apt-get update \
     && apt-get install -y yarn \
     && apt-get install -y mysql-client \
@@ -51,6 +65,8 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY php.ini /etc/php/8.1/cli/conf.d/99-sail.ini
 RUN chmod +x /usr/local/bin/start-container
 
-EXPOSE 8000
+# F-DOCK-013: docker-compose mappt den Host-Port auf 80, nicht 8000.
+# Das EXPOSE diente bisher nur als Doku-Hinweis und war irreführend.
+EXPOSE 80
 
 ENTRYPOINT ["start-container"]
