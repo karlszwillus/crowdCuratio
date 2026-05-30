@@ -1,15 +1,24 @@
-# Smoke-Test — Baseline Phase 1
+# Smoke-Test — Hauptpfade
 
-Dokumentiert den heutigen Stand der Hauptpfade in crowdCuratio
-**vor** jeder Refactoring-Maßnahme. Ziel: ein belastbarer Vorher-Schnappschuss,
-gegen den wir nach Phase 2–5 vergleichen können (Regressionen sichtbar machen).
+Dokumentiert den manuell verifizierten Stand der Hauptpfade in
+crowdCuratio. Ziel: ein belastbarer Vorher-Schnappschuss, gegen den wir
+nach jeder Modernisierungs-Welle vergleichen können (Regressionen
+sichtbar machen).
 
-**Stand:** 2026-05-28
-**Umgebung:** Lokales Sail-Setup (Branch `phase-1/setup-reset`,
-PHP 8.1 / Ubuntu 22.04, Apple Silicon nativ), MySQL 8, Redis 7,
+**Stand:** 2026-05-30 (Re-Run nach v0.9.0).
+**Umgebung:** Lokales Sail-Setup auf `main`,
+PHP 8.1 / Ubuntu 22.04, Apple Silicon nativ, MySQL 8, Redis 7,
 Mailpit, Meilisearch.
 **Tester:** Karl Szwillus.
 **App-URL:** `http://localhost:${APP_PORT:-8084}`.
+
+**Re-Run-Notiz v0.9.0:** Die zehn Phase-1-Pfade unten wurden mehrfach
+über den Phase-2-Verlauf hin geschmokt und liefen jeweils ohne
+Regressionen. Pfad 11 ist neu mit dem Privilege-Escalation-Hotfix
+hinzugekommen. Die in Phase 1 als „kaputt" markierten Pfade 7 (AM-B-2)
+und 8 (AM-B-3) sind bewusst unverändert geblieben — sie hängen am
+Preview-Template und an der PDF-Lib-Konsolidierung, beide stehen für
+die Refactoring-Welle.
 
 ## Status-Schlüssel
 
@@ -33,6 +42,7 @@ Mailpit, Meilisearch.
 | 8   | PDF-Export / Preview-Download              | kaputt      | **AM-B-3**    |
 | 9   | Kommentar zu einem Element                 | kaputt      | AM-D-2 (Save schlägt still fehl) |
 | 10  | Invitation-Flow (User einladen)            | **grün**    | (war broken, gefixt mit F.5 + Mail-Defaults) |
+| 11  | Admin-Register-Gate (Reader/Editor blockiert) | **grün** | (Privilege-Escalation-Hotfix, v0.9.0) |
 
 \* funktional, aber mit kleinen Auffälligkeiten im UX (siehe Pfad-Details).
 
@@ -333,15 +343,37 @@ Verbleibende Beobachtungen (nicht-blockierend, in Phase 6/Frontend):
 
 ---
 
+## 11. Admin-Register-Gate (NF-SEC-202)
+
+Schritte: (a) Eingeloggt als Editor (oder Reviewer / Reader) auf
+`/register` zugreifen. (b) Logout, dann eingeloggt als Admin Form
+ausfüllen mit „hat Admin-Recht"-Haken und absenden. (c) Erneut als
+Admin Form ausfüllen ohne den Haken.
+
+Erwartetes Verhalten nach dem Hotfix:
+
+- (a) Non-Admin-User bekommt **403 Forbidden**. Die Route ist an
+  `role:Admin` gehängt.
+- (b) Neuer User wird angelegt und hat die Admin-Rolle (`is_admin = 1`,
+  Spatie-Rolle „Admin" zugewiesen).
+- (c) Neuer User wird angelegt als regulärer User (`is_admin = 0`,
+  Default-Rolle laut Form).
+- Gast (nicht eingeloggt) wird auf `/login` umgeleitet.
+
+Status: **grün** — manuell verifiziert nach Phase-2.5-Hotfix
+(2026-05-30). Vier zugehörige Pest-Tests laufen in CI.
+
+---
+
 ## Zusammenfassung
 
 | Status     | Anzahl Pfade |
 |------------|-------------:|
-| grün       | 7 (1, 2, 3, 4, 5, **6 nach F.3-Fix**, **10 nach F.5 + Mail-Defaults**) |
+| grün       | 8 (1, 2, 3, 4, 5, 6, 10, **11 neu mit v0.9.0**) |
 | kaputt     | 3 (7 = AM-B-2, 8 = AM-B-3, 9 = AM-D-2 Kommentar-Save) |
 | teilweise  | 0            |
 | blockiert  | 0            |
-| **Summe**  | **10**       |
+| **Summe**  | **11**       |
 
 Stakeholder-Bug-Verifikation:
 

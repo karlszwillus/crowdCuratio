@@ -10,331 +10,298 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
-Stand nach Phase 1 (Stabilisierung + Sofortmaßnahmen) inkl. Reviewer-
-Nachschlag (Phase 1.5) und Phase 2 vollständig: Block B (CI-Skeleton),
-Block C (Eloquent-Hygiene), Block D (FormRequest-Refactor +
-Authorization-Test-Ausbau) und Block E+F+G zusammengeführt unter
-`phase-2/db-heartung` (Migrations-Rollback-Fixes, `db:audit-fk`
-Console-Command, ADR-0018 für utf8mb4-Prod-Konvertierung, Docker-
-Härtung aus den Reviewer-Befunden, Doku-Sync). Alle vier in Phase 0
-identifizierten Blocker geschlossen, sechs Phase-1-Reviewer-Findings
-behoben, CI mit Pest, Larastan, Pint, Dependency-Audits und
-CHANGELOG-Diff-Check spannt das Sicherheitsnetz; Eloquent-Schicht
-mit Strict-Mode, expliziten Casts und Local-Scope-Eager-Loading
-aufgeräumt; Validation und Authorization aller mutierenden Routes
-laufen über dedizierte FormRequest-Klassen, Chapter/Entry über
-saubere PATCH-Trennung; Docker-Stack härtet sich mit Healthchecks,
-restart-Policy, Loopback-Bindings und signed-by-Keyrings.
+Nächste Welle: Major-Upgrade-Pfad (PHP 8.1 → 8.4, Laravel 8 → 12) und
+Server-Migration. Vor dem Upgrade-Sweep werden die letzten offenen
+Sicherheits-Pfade geschlossen — Upload-Validation in `UploadTrait`
+und in den Audio-/Image-Upload-Routen, Mass-Assignment-Schutz für
+`Project.user_id`, Owner-Check vor der Drag&Drop-Reorder-Route.
 
-ADR-Grundlagen für diese Welle: ADR-0001 (Ziel-Stack PHP 8.4 /
-Laravel 12, in C.4 um Active-Record-Bekenntnis ergänzt), ADR-0002
-(composer.lock eingecheckt), ADR-0010 (InnoDB für alle Tabellen),
-ADR-0011 (utf8mb4-Konvertierung), ADR-0013 (Authorization über
-Laravel-Policies + Spatie-Permission), ADR-0017 (FormRequest-
-Konvention, neu in Block D), ADR-0018 (utf8mb4-Prod-Konvertierung
-mit Backup, Wartungsfenster, Orphan-Audit, neu in Block E).
+## [0.9.0] — 2026-05-30 — Sicherheitsnetz
+
+Erste Modernisierungs-Welle nach der Repo-Übernahme. CI-Schicht,
+40 Pest-Tests, Authorization über Laravel-Policies, dedizierte
+FormRequests für alle mutierenden Routen, Mass-Assignment-Schutz für
+privilegierte Felder, Härtung von Docker-Stack und Datenbank-Layer.
+Vier in der initialen Tiefenanalyse identifizierte Sicherheits-Blocker
+geschlossen, plus ein Privilege-Escalation-Hotfix gegen die
+Registrierungs-Route.
 
 ### Hinzugefügt
 
 - `CHANGELOG.md` als verbindliche Änderungsspur.
-- `composer.lock` wird ab sofort committet (Reproduzierbarkeit,
-  `composer audit`-Baseline möglich).
-- Pest als Test-Framework, Authorization-Bypass-Suite mit 13
-  reproduzierbaren Szenarien für Project, Chapter und Entry.
-- `app/Policies/ProjectPolicy.php`, `ChapterPolicy.php`,
-  `EntryPolicy.php` — saubere Laravel-Policy-Schicht für
-  besitzer-/admin-basierte Authorization.
-- `database/seeders/RoleTableSeeder.php` legt drei Default-Rollen an
-  (Editor, Reviewer, Reader) — User-Invitation im Standard-Setup wieder
-  durchführbar.
-- `docs/smoke.md` als belastbares Baseline-Inventar (10 Smoke-Pfade).
-- **Phase 2 / Block B — Sicherheitsnetz im CI.**
-  - `.github/workflows/ci.yml` — GitHub-Actions-Workflow mit fünf
-    parallelen Jobs auf jedem PR und Push nach `main`: Pest gegen
-    SQLite-in-memory, `composer audit`, `npm audit`, Larastan,
-    Pint. Sechster Job `changelog-check` läuft nur auf
-    Pull-Requests und prüft, dass `CHANGELOG.md` berührt wurde
-    (Ausnahme: PR-Label `skip-changelog`).
-  - `nunomaduro/larastan ^1.0` (Laravel-8-Linie, Phase-3-Upgrade auf
-    v2/v3 vorgemerkt) mit `phpstan.neon` auf Level 5 und einer
-    Baseline (`phpstan-baseline.neon`) von 198 Bestandsbefunden.
-    Neue Verstöße brechen den Build (NF-SEC-006, NF-CODE-005).
-  - `laravel/pint ^1.13` mit `pint.json` (Laravel-Preset). Voller
-    Baseline-Sweep über die Codebasis als isolierter
-    `style(pint): apply laravel preset`-Commit; SHA in
-    `.git-blame-ignore-revs`, damit `git blame` über den Style-
-    Commit hinwegspringt.
-  - `.github/dependabot.yml` — wöchentliche Scans für composer,
-    npm und github-actions. Major-Bumps für Laravel, Spatie-Pakete,
-    axios, alpine, tailwind und Mix sind ignoriert (gehören in
-    den koordinierten Phase-3/5-Upgrade-Sweep). F-SEC-015 zu.
-  - `doctrine/dbal ^3.0` als require. `migrate` über SQLite
-    (CI-Pfad) und production-side schema patches mit `dropColumn`
-    laufen über den Doctrine-Schema-Manager.
-
-- **Phase 2 / Block D — FormRequest-Refactor + Auth-Test-Ausbau.**
-  - Sieben neue FormRequest-Klassen unter `app/Http/Requests/`:
-    `StoreChapterRequest`, `UpdateChapterRequest`,
-    `StoreEntryRequest`, `UpdateEntryRequest`, `StoreProjectRequest`,
-    `UpdateProjectRequest` und `Auth\RegisterRequest`. Jede delegiert
-    `authorize()` an die zuständige Policy und definiert `rules()`
-    mit Laravel-Standard-Validation. Eigene Klassen-Doc-Blöcke
-    erklären je Pflicht-Felder und Quelle.
-  - **PATCH-Route-Trennung** für Chapter und Entry: Update läuft
-    jetzt über `PATCH /chapters/{chapter}` bzw.
-    `PATCH /entries/{entry}` mit Route-Model-Binding statt
-    POST + `$request['chapterId']`-Verzweigung im Controller.
-    Frontend-JS in `chapters/index.blade.php` zieht mit (`_method`-
-    Hidden-Field, action-URL beim Modify-Klick gesetzt, beim
-    Modal-Close zurückgesetzt). (NF-LAR-002, NF-LAR-004)
-  - **`App\Support\PermissionName`** zentralisiert die sieben
-    Permission-Strings (`view`, `add`, …) als public-Konstanten.
-    Seeder, Policies und Tests nutzen ab jetzt die Konstanten;
-    Blade-Views bleiben mit Strings (bewusster Tradeoff, Konstante
-    in Templates schlechter lesbar). (NF-CODE-003)
-  - **File-Upload-Validation** in StoreProjectRequest und
-    UpdateProjectRequest: `project_image` als File mit MIME-
-    Whitelist (jpeg/jpg/png/gif/webp) und 4 MB Limit. Systematische
-    Lösung für NF-SEC-001 (offen seit Phase 1) und NF-SEC-007
-    (Phase-1.5-Inline-Härtung jetzt im FormRequest).
-  - **`Validator::make` in `RegisteredUserController`** durch
-    `RegisterRequest` ersetzt (F-LAR-008). `authorize()` ist offen;
-    Routing-Middleware regelt Gast vs. Auth.
-  - **Pest-Suite von 17 auf 27 Authorization-/Validation-Tests
-    erweitert**: 422-Pflichttests pro FormRequest, PATCH-Sanity-Tests
-    für Chapter und Entry, MIME-Whitelist-Test für `project_image`
-    via `UploadedFile::fake()`, Gast-Pfad-Test für RegisterRequest.
-
-- **Phase 2 / Block E — DB-Detail-Härtung.**
-  - `ADR-0018` — Strategie für die `utf8mb4`-Konvertierung auf
-    Produktion. Achtstufiges Runbook (Backup → Wartung → Orphan-
-    Audit → Audit-Fix → `foreign_key_checks=0` → ALTER → checks=1
-    → Verifikation → Wartung aus) plus Verantwortlichkeits-Tabelle
-    Karl / Aktives Museum / berlinHistory.
-  - `app/Console/Commands/AuditForeignKeys.php` — Console-Command
-    `db:audit-fk [--fix] [--confirm]`. Read-only-Default produziert
-    eine Markdown-Tabelle mit Orphan-Foreign-Keys
-    (`texts.origin → sources.id`, `texts.copyright → sources.id`).
-    Der `--fix --confirm`-Pfad schreibt vorher ein JSON-Protokoll
-    nach `storage/logs/fk-audit-fix-YYYYMMDD-HHmmss.json` und
-    setzt orphan-Werte transaktional auf NULL.
-
-- **Phase 2 / Block C — Eloquent-Hygiene.**
-  - `Model::preventLazyLoading(! app()->isProduction())` im
-    `AppServiceProvider::boot`. Wirft `LazyLoadingViolationException`
-    bei N+1-Pattern aus eager-geladenen Collections in non-production
-    (Dev, Tests, CI). F-LAR-013 zu. Folge-Anpassungen: fünf
-    Controller-Pfade lädt `Project` jetzt mit explizitem
-    `with(...)`-Baum (Project::edit, Chapter::index, previewProject,
-    downloadPreview, projectMetadata) — sonst rendern die Hierarchie-
-    Views eine Lazy-Loading-Exception. Den Eager-Loading-Baum als
-    Local Scope auf das Project-Model zu ziehen, ist Phase-4-TODO.
-  - Explizite `$casts` auf `Chapter`, `Entry`, `User`: `is_translated`
-    als boolean, `User::welcome_valid_until` als datetime,
-    `User::is_admin` / `create_project` als boolean (NF-LAR-005,
-    F-LAR-005).
-  - ADR-0001 (Ziel-Stack) um Active-Record-Bekenntnis ergänzt
-    (F-ARCH-011): keine Repository-Schicht, Service-Klassen kommen
-    in Phase 4 für aggregierte Use Cases.
-
-  Bekannte composer-audit-Soft-Befunde nach Block B:
-  - `laravelcollective/html` ist abandoned. Ersatz in Phase 3
-    (F-LAR-019, `spatie/laravel-html` oder native Blade-Forms).
-  - `swiftmailer/swiftmailer` ist abandoned. Geht mit dem
-    Laravel-9-Upgrade in Phase 3 automatisch raus — Symfony Mailer
-    ersetzt Swift. Kein eigenständiger Schritt nötig.
-  - **CVE-2025-27515 — Laravel File Validation Bypass** (Severity
-    moderate, 6.9/10). Betroffen: `laravel/framework < 10.48.29`.
-    Wir sind auf 8.12, also formal in der Range. Konkret nicht
-    ausnutzbar in crowdCuratio: der Angriffspfad braucht eine
-    Wildcard-Validation der Form `files.*|image|mimes:…` — ein
-    Pattern, das im Code aktuell nirgends auftaucht (grep über
-    `app/` ohne Treffer). Phase 2 / Block D wird File-Uploads über
-    FormRequests neu schneiden; dabei wird das `files.*`-Pattern
-    bewusst nicht eingeführt. Endgültig zu mit Laravel ≥ 10.48.29
-    in Phase 3. Hintergrund: Laravel 8 ist seit 2023 EOL, kein
-    Backport für 8.x verfügbar — Phase 3 ist die einzige
-    realistische Patch-Schiene.
+- `composer.lock` wird ab sofort committet — Reproduzierbarkeit
+  und `composer audit`-Baseline möglich.
+- **CI-Schicht auf GitHub Actions** (`.github/workflows/ci.yml`):
+  sechs parallele Jobs auf jedem PR und Push nach `main` — Pest
+  gegen SQLite-in-memory, `composer audit`, `npm audit`, Larastan,
+  Pint und ein Changelog-Diff-Check, der erzwingt, dass jeder PR
+  den Changelog berührt (mit Opt-out via Label `skip-changelog`).
+- **Larastan ^1.0** (Laravel-8-kompatibel) mit `phpstan.neon` auf
+  Level 5 und `phpstan-baseline.neon` für die Bestandsbefunde —
+  neue Verstöße brechen den Build.
+- **Laravel Pint** im Laravel-Preset, Hard-Fail im CI. Baseline-
+  Sweep über die gesamte Codebasis als isolierter Style-Commit,
+  dessen SHA in `.git-blame-ignore-revs` steht — `git blame`
+  springt über die Whitespace-/Brace-/Import-Änderungen hinweg.
+- **Dependabot** für Composer, npm und GitHub Actions (wöchentlich).
+  Major-Bumps für Laravel, Spatie-Pakete, axios, alpine, tailwind
+  und Mix sind bewusst ausgenommen — sie gehören in den
+  koordinierten Upgrade-Sweep.
+- **Pest-Suite mit 40 Tests** — Authorization-Bypass-Szenarien für
+  Project / Chapter / Entry, Create-Pfad-Owner-Checks,
+  FormRequest-Pflichtfeld-Tests, MIME-Whitelist-Test für das
+  Project-Logo, PATCH-Sanity-Tests für Chapter und Entry,
+  Pfad-Schutz für die Registrierung.
+- **Laravel-Policy-Schicht** für Project, Chapter und Entry
+  (`app/Policies/`), inklusive `createIn`-Methode für den
+  Owner-Check beim Anlegen.
+- **`App\Support\PermissionName`** zentralisiert die sieben
+  Permission-Strings (`view`, `add`, …) als public-Konstanten —
+  Seeder, Policies und Tests nutzen die Konstanten.
+- **Sieben FormRequest-Klassen** unter `app/Http/Requests/`:
+  `StoreChapterRequest`, `UpdateChapterRequest`,
+  `StoreEntryRequest`, `UpdateEntryRequest`, `StoreProjectRequest`,
+  `UpdateProjectRequest`, `Auth\RegisterRequest`. Jede delegiert
+  `authorize()` an die zuständige Policy und definiert `rules()`
+  mit Standard-Validation.
+- **Console-Command `db:audit-fk`**
+  (`app/Console/Commands/AuditForeignKeys.php`): Read-only-Default
+  produziert eine Markdown-Tabelle mit Orphan-Foreign-Keys
+  (`texts.origin`, `texts.copyright` gegen `sources.id`). Der
+  `--fix --confirm`-Pfad schreibt vorher ein JSON-Protokoll nach
+  `storage/logs/` und setzt orphan-Werte transaktional auf NULL.
+- **`database/seeders/RoleTableSeeder.php`** legt drei
+  Default-Rollen an (Editor, Reviewer, Reader) — der
+  User-Invitation-Workflow läuft im Standard-Setup wieder durch.
+- **`docs/smoke.md`** als belastbares Baseline-Inventar — zehn
+  manuell verifizierte Haupt-Pfade von Login bis Invitation-Flow.
+- **`doctrine/dbal ^3`** als Require — wird für `Schema::dropColumn`
+  benötigt, das in SQLite (CI-Pfad) und in Produktions-Migrations
+  durch den Doctrine-Schema-Manager läuft.
 
 ### Geändert
 
-- `.gitignore`: `.werkbank/` lokal, `composer.lock` jetzt eingecheckt,
-  `.DS_Store` und Smoke-Artefakte ignoriert.
-- `docker-compose.yml`: Image-Tags gepinnt (`mysql:8.0`,
-  `redis:7-alpine`, `getmeili/meilisearch:v1.6`, `phpmyadmin:5.2`),
-  `mailhog → axllent/mailpit:v1.20`, `selenium` entfernt (Phase 2
-  bei Bedarf mit `seleniarm`), `phpmyadmin` und Mailpit-Dashboard
-  nur auf Loopback, `depends_on` mit `service_healthy`.
-- `docker/8.0` → `docker/8.1` (PHP 8.1), Ubuntu 20.04 → 22.04
-  (`jammy`), `ondrej/php`-PPA auf jammy-Arm64, Node 15 → Node 20 LTS.
-- `config/database.php`: `charset = utf8mb4`, `collation =
-  utf8mb4_unicode_ci`, `strict = true`.
-- `dompdf/dompdf ^1.2` → `^2.0` (8 Security-Advisories in 1.2.x).
-- `.env.example`: Sail-taugliche Defaults (`DB_HOST=mysql`,
+- **PHP 8.0 → PHP 8.1**, Ubuntu 20.04 → 22.04 (`jammy`),
+  Node 15 → Node 20 LTS, `dompdf/dompdf ^1.2` → `^2.0` (acht
+  Security-Advisories in 1.2.x). Container-Build neu unter
+  `docker/8.1/`.
+- **Datenbank-Layer:** Charset auf `utf8mb4` (vorher `utf8mb3`),
+  `strict = true` aktiviert — Zero-Dates, GROUP-BY-Verstöße und
+  Inserts ohne Pflichtfelder werfen ab sofort hörbar Fehler statt
+  still durchzulaufen.
+- **`docker-compose.yml`:** Image-Tags gepinnt (`mysql:8.0`,
+  `redis:7-alpine`, `getmeili/meilisearch:v1.6`, `phpmyadmin:5.2`,
+  `axllent/mailpit:v1.20`). Mailhog durch Mailpit ersetzt, das
+  `selenium`-Image entfernt (kein arm64-Support). Healthchecks
+  für meilisearch und mailpit, MySQL-Healthcheck mit Root-
+  Credentials (vorher lieferte `mysqladmin ping` unter MySQL 8
+  ein `Access denied`, das Docker als „läuft" fehlinterpretierte).
+  `restart: unless-stopped` auf mysql, redis, meilisearch,
+  mailpit. Forward-Ports von mysql, redis, meilisearch und dem
+  mailpit-Dashboard an `127.0.0.1` gebunden (nur der SMTP-Port
+  von mailpit bleibt offen, weil der App-Container ihn intern
+  erreicht).
+- **Dockerfile:** Composer aus dem offiziellen `composer:2`-Image
+  übernommen statt `curl http://...`-Pipe — deterministische
+  Version, signierte Distribution. `apt-key` durch
+  `signed-by`-Keyrings unter `/etc/apt/keyrings` ersetzt
+  (`apt-key` ist seit Ubuntu 22.04 deprecated und in 24.04
+  entfernt). `EXPOSE 80` statt `EXPOSE 8000` — Compose mappte
+  ohnehin auf Container-Port 80.
+- **`.env.example`:** Sail-taugliche Defaults (`DB_HOST=mysql`,
   `REDIS_HOST=redis`, `MAIL_HOST=mailpit`, `MAIL_FROM_ADDRESS`
-  vorbelegt, `ADMIN_*`-Variablen dokumentiert,
-  `APP_DEBUG`-Warnkommentar).
-- `CreateAdminUserSeeder`: liest `ADMIN_EMAIL` / `ADMIN_PASSWORD` /
-  `ADMIN_NAME` / `ADMIN_LAST_NAME` aus dem Environment, bricht beim
-  Fehlen mit `RuntimeException` ab. Idempotent.
-- `DatabaseSeeder` ruft jetzt `PermissionTableSeeder` →
-  `RoleTableSeeder` → `CreateAdminUserSeeder`. `PreviewSeeder` bleibt
-  manuell.
-- `ProjectController::update/destroy`, `ChapterController` und
-  `EntryController` rufen `$this->authorize(...)` auf. Views nutzen
-  `Auth::user()->can('update', $project)` statt der alten
-  Eigenbau-Gates.
-- **Phase 2 / Block B**: gesamte Codebasis einmal durch
-  `pint --preset=laravel` gezogen (isolierter
-  `style(pint): apply laravel preset to entire codebase`-Commit).
-  Reine Whitespace-/Brace-/Import-Reorder-Änderung, Pest-Suite vor
-  und nach dem Sweep identisch grün.
-- **Phase 2 / Block C**: vier Stellen `Role::where('id', 'not like',
-  '1')` auf `Role::where('name', '!=', 'Admin')` umgestellt
-  (F-DB-013). LIKE auf INT-Spalte mit hartkodierter Admin-ID
-  abgelöst, Filter ist jetzt rolle-namensbasiert und semantisch
-  klar.
-- **Phase 2 / Block F — Docker-Härtung aus Reviewer-Befunden.**
-  - `docker-compose.yml`: Healthchecks für meilisearch (`/health`)
-    und mailpit (`/readyz`) (NF-DOCKER-001), `restart:
-    unless-stopped` auf mysql, redis, meilisearch, mailpit
-    (NF-DOCKER-002), MySQL-Healthcheck jetzt mit Root-Credentials
-    plus `interval` / `timeout` / `retries` (NF-DOCKER-004 — der
-    bisherige `mysqladmin ping` ohne Credentials lieferte unter
-    MySQL 8 ein `Access denied`, das Docker als `läuft`
-    fehlinterpretierte), Forward-Ports von mysql, redis,
-    meilisearch und mailpit-Dashboard an `127.0.0.1` gebunden
-    (NF-DOCKER-005 — mailpit-SMTP-Port bleibt offen, weil der
-    App-Container ihn intern erreichen muss).
-  - `.env.example`: `WWWUSER` / `WWWGROUP` als kommentierter
-    Hinweis aufgenommen (NF-DOCKER-003). macOS und arm64 brauchen
-    den Default 1000 nicht zu ändern, Linux-Hosts mit
-    abweichender UID/GID schon — sonst Permission-Probleme in
-    `storage/` und `bootstrap/cache/`.
-  - `docker/8.1/Dockerfile`: Composer aus dem offiziellen
-    `composer:2`-Image kopiert (F-DOCK-002) — deterministische
-    Version, signierte Distribution, keine HTTP-Pipe (`curl
-    http://getcomposer.org/installer | php`) als MITM-Fläche im
-    Build. `apt-key adv … --recv-keys` für Ondrej PHP PPA und
-    Yarn durch `signed-by`-Keyrings unter `/etc/apt/keyrings`
-    ersetzt (F-DOCK-011) — `apt-key` ist seit Ubuntu 22.04
-    deprecated und in 24.04 entfernt, jeder Repo-Eintrag ist
-    jetzt an genau einen Schlüssel gebunden. `EXPOSE 8000` →
-    `EXPOSE 80` (F-DOCK-013) — docker-compose mappt den Host-
-    Port ohnehin auf Container-Port 80.
+  vorbelegt). `ADMIN_*`-Variablen für den Admin-Seeder
+  dokumentiert. `WWWUSER` / `WWWGROUP` als kommentierter Hinweis
+  für Linux-Hosts mit abweichender UID/GID. `APP_DEBUG`-
+  Warnkommentar — Stacktraces dürfen nicht in Produktion.
+- **`CreateAdminUserSeeder`** liest `ADMIN_EMAIL` /
+  `ADMIN_PASSWORD` / `ADMIN_NAME` / `ADMIN_LAST_NAME` aus dem
+  Environment, bricht beim Fehlen mit `RuntimeException` ab,
+  idempotent (`firstOrCreate`).
+- **`DatabaseSeeder`** ruft jetzt `PermissionTableSeeder` →
+  `RoleTableSeeder` → `CreateAdminUserSeeder` in dieser
+  Reihenfolge. `PreviewSeeder` bleibt manuell.
+- **Authorization über Policies:** `ProjectController`,
+  `ChapterController`, `EntryController` rufen
+  `$this->authorize(...)` in allen mutierenden Methoden auf.
+  Views nutzen `Auth::user()->can('update', $project)` statt
+  Custom-Gates.
+- **PATCH-Route-Trennung** für Chapter und Entry: Update läuft
+  jetzt über `PATCH /chapters/{chapter}` bzw.
+  `PATCH /entries/{entry}` mit Route-Model-Binding, statt über
+  POST mit `$request['chapterId']`-Verzweigung im Controller.
+  Das zugehörige Frontend-JS in `chapters/index.blade.php`
+  zieht per `_method`-Hidden-Field mit.
+- **Eloquent-Hygiene:**
+  - `Model::preventLazyLoading()` ausserhalb der Produktion —
+    N+1-Pattern werfen in Dev, Tests und CI sofort eine
+    `LazyLoadingViolationException`. Fünf Controller-Pfade laden
+    `Project` jetzt mit explizitem `with(...)`-Baum.
+  - Drei Local Scopes auf dem `Project`-Model
+    (`withEditTree`, `withPreviewTree`, `withCopyrightTree`)
+    konsolidieren die Eager-Loading-Bäume.
+  - Explizite `$casts` auf `Chapter`, `Entry`, `User` für
+    `is_translated`, `welcome_valid_until`, `is_admin` und
+    `create_project`.
+  - `Role::where('id', 'not like', '1')` an vier Stellen durch
+    `Role::where('name', '!=', 'Admin')` ersetzt — LIKE auf
+    INT-Spalte mit hardkodierter Admin-ID war semantisch schief.
+- **File-Upload-Validation** in `StoreProjectRequest` und
+  `UpdateProjectRequest`: `project_image` als File mit
+  MIME-Whitelist (jpeg, jpg, png, gif, webp) und 4 MB Limit.
+- **`Validator::make` in `RegisteredUserController`** durch
+  `RegisterRequest` ersetzt.
+- **Pint-Baseline-Sweep** über die gesamte Codebasis (isolierter
+  Style-Commit). Pest-Suite vor und nach dem Sweep identisch
+  grün.
+- **`.gitignore`:** `composer.lock` ist jetzt eingecheckt,
+  `.DS_Store` und Smoke-Artefakte ignoriert.
 
 ### Behoben
 
-- **Foto-Upload-Anzeige (Stakeholder-Bug AM-B-1):** die
-  `image`/`audio`-Routen liefen gegen die Default-Disk `local`, während
-  Uploads auf der Disk `public` landen. Wechsel auf
-  `Storage::disk('public')->response(…)` rendert hochgeladene Bilder
-  wieder (incl. Project-Logo).
-- **User-Invitation-Workflow (Stakeholder-Bug AM-D-3):** Default-Rollen
-  fehlten, MAIL-Defaults waren leer. Mit dem Role-Seeder und
-  vernünftigen `MAIL_*`-Defaults läuft der Einladungs-Flow inkl.
+- **Foto-Upload-Anzeige für Project-Logos und Image-Blöcke:**
+  die `image`/`audio`-Routen liefen gegen die Default-Disk
+  `local`, während Uploads auf der `public`-Disk landen.
+  Wechsel auf `Storage::disk('public')->response(...)` rendert
+  hochgeladene Bilder wieder.
+- **User-Invitation-Workflow:** Default-Rollen fehlten,
+  `MAIL_*`-Defaults waren leer. Mit dem Role-Seeder und
+  vernünftigen Mail-Defaults läuft der Einladungs-Flow inkl.
   Welcome-Mail wieder durch.
-- `drop_foreign_key_table`-Migration läuft auf frischer DB nicht mehr
-  in 1091, weil sie Spalten droppt, die `create_texts_table` /
-  `create_image_table` nie angelegt haben — jetzt mit
-  `Schema::hasColumn`-Guard.
-- `ChapterController::update` und `EntryController::update` gaben
-  bisher `return $this;` zurück — der Controller-Instance-Return wäre
-  beim Versuch, das Response zu serialisieren, mit `TypeError`
-  hochgegangen. Korrigiert zu `return back();`.
-- DB-Defaults für `users.is_admin`, `users.create_project` und
-  `users.last_name`, plus explizite `position`-Werte im
-  `PermissionTableSeeder` — alles latente Schema-Lücken, die `strict =
-  true` jetzt sichtbar gemacht hat.
+- **`drop_foreign_key_table`-Migration** lief auf frischer DB
+  in MySQL-Fehler 1091, weil sie Spalten droppte, die
+  `create_texts_table` / `create_image_table` nie angelegt
+  hatten. Jetzt mit `Schema::hasColumn`-Guard.
+- **Drei Migrations mit fehlenden oder destruktiven
+  `down()`-Operationen** gehärtet:
+  - `add_welcome_valid_until_field_to_users` hatte keine
+    `down()`, jetzt mit `dropColumn`-Guard.
+  - `customize_has_permissions_table::down()` droppte die
+    falsche Spalte (`project_id` statt `user_id`).
+  - `convert_texts_to_innodb::down()` ist jetzt eine
+    `RuntimeException` — eine Rück-Konvertierung auf MyISAM
+    würde die Foreign-Key-Constraints still verwerfen und ist
+    ehrlich verboten statt scheinbar funktionsfähig.
+- **`ChapterController::update` und `EntryController::update`**
+  gaben bisher `return $this;` zurück — die Versuche, die
+  Controller-Instance als Response zu serialisieren, wären als
+  `TypeError` hochgegangen. Korrigiert zu `return back();`.
+- **DB-Defaults** für `users.is_admin`, `users.create_project`
+  und `users.last_name`, plus explizite `position`-Werte im
+  `PermissionTableSeeder` — alles latente Schema-Lücken, die
+  der `strict = true`-Modus sichtbar gemacht hat.
 
 ### Entfernt
 
-- Spurloses `selenium`-Image aus dem Compose-Stack (kein arm64).
-- Stock-Breeze-Tests, die das Self-Service-Signup-Modell testen, das
+- **Sechs tote Legacy-Auth-Controller** (`LoginController`,
+  `RegisterController`, `ConfirmPasswordController`,
+  `ForgotPasswordController`, `ResetPasswordController`,
+  `VerificationController`). Referenzierten
+  `Illuminate\Foundation\Auth\*`-Traits, die in Laravel 8+
+  nicht mehr existieren, und waren seit dem Breeze-Umzug
+  ohne Caller. Auth läuft jetzt durchgängig über die
+  Breeze-Klassen.
+- **Tote PHP-7.4-Build-Variante** `docker/7.4/` — nach dem
+  Umzug auf 8.1 von keiner Compose-Datei mehr referenziert.
+- **`selenium`-Image** aus dem Compose-Stack (kein arm64-
+  Support).
+- **`app/Traits/SourceTrait.php`** plus seine zwei Aufrufer im
+  `ContentController`. Der Trait hatte genau eine Methode
+  (`checkMeta`), die nirgends aufgerufen wurde; ihre Signature
+  (required-Parameter nach optional) war seit PHP 8.0
+  deprecated und ab 8.4 fatal.
+- **Tote Image-Preview-Route** `/image/{file}/preview`, die
+  den Storage-Disk-Fix nie mitbekommen hatte und ohne Caller
+  im Code stand.
+- **Fünf Custom-Gate-Closures aus `AuthServiceProvider::boot`**
+  (`edit-`, `add-`, `delete-`, `publish-`, `comment-project`).
+  Die Owner-Logik war semantisch schief (`$user->id === $project`).
+  View-Aufrufe in `chapters/index.blade.php` (zehn Stellen) auf
+  die Project-Policy umgehängt.
+- **Vier redundante `whereNull('deleted_at')`-Aufrufe** in
+  Eloquent-Queries (`ChapterController`, `ProjectController`,
+  `CommentRetrieve`). Models nutzen durchgängig `SoftDeletes`,
+  der Default-Scope schließt trashed Rows implizit aus.
+- **Stock-Breeze-Tests** für das Self-Service-Signup-Modell, das
   crowdCuratio nicht hat (`tests/Feature/RegistrationTest`, drei
   `ExampleTest`-Stubs).
-- Tote PHP-7.4-Build-Variante `docker/7.4/` (NF-DOCKER-014) — wurde
-  nach dem Umzug auf 8.1 von keiner Compose-Datei mehr referenziert.
-- Tote Image-Preview-Route `/image/{file}/preview` (NF-CODE-006), die
-  den Storage-Disk-Fix nie mitbekommen hatte und ohne Caller im Code
-  steht.
-- Fünf Custom-Gate-Closures aus `AuthServiceProvider::boot()`
-  (`edit-`, `add-`, `delete-`, `publish-`, `comment-project`); ihre
-  Owner-Logik war ohnehin semantisch schief
-  (`$user->id === $project`). View-Aufrufe in
-  `chapters/index.blade.php` (10 Stellen) jetzt auf die Project-Policy
-  umgehängt.
-- **Phase 2 / Block B**: sechs tote Legacy-Auth-Controller
-  (`LoginController`, `RegisterController`, `ConfirmPasswordController`,
-  `ForgotPasswordController`, `ResetPasswordController`,
-  `VerificationController`). Sie referenzierten
-  `Illuminate\Foundation\Auth\*`-Traits, die in Laravel 8+ nicht mehr
-  existieren, und waren seit dem Breeze-Umzug ohne Caller. Auth läuft
-  über die Breeze-Klassen.
-- **Phase 2 / Block B**: `app/Traits/SourceTrait.php` plus seine zwei
-  Referenzen in `ContentController`. Der Trait hatte genau eine
-  Methode (`checkMeta`), die nirgends aufgerufen wurde; ihre
-  Signature (required-Parameter nach optional) war seit PHP 8.0
-  deprecated und ab 8.4 fatal.
-- **Phase 2 / Block B**: `.idea/`-Tracking. PHPStorm-Workspace-State
-  bleibt lokal, wandert nicht mehr ins Repo (`.gitignore` ergänzt,
-  zwei zuvor getrackte Files aus dem Index entfernt).
-- **Phase 2 / Block C**: vier redundante `whereNull('deleted_at')`-
-  Aufrufe in Eloquent-Queries (`ChapterController`,
-  `ProjectController` 2×, `CommentRetrieve`). Models nutzen
-  durchgängig `SoftDeletes`; der Default-Scope schließt trashed
-  Rows bereits implizit aus — der explizite Filter war noop und
-  irreführend. Die fünfte Stelle in `UserController` bleibt
-  bewusst stehen, weil sie über `DB::table('users')` läuft und der
-  Soft-Delete-Scope dort nicht greift. F-DB-014 weitgehend zu;
-  Phase-4-TODO (F-LAR-007 `DB::table → Eloquent`) hängt dran.
+- **Self-Service-Registrierungs-Routen** in `routes/auth.php`
+  (`GET` und `POST /register` mit `guest`-Middleware). Lebten
+  parallel zur Admin-Registrierung in `routes/web.php` und
+  stifteten Verwirrung. crowdCuratio kennt keinen Gast-
+  Registrierungs-Pfad — neue User werden nur durch Admins
+  eingeladen.
+- **`.idea/`-Tracking**: PHPStorm-Workspace-State bleibt lokal,
+  wandert nicht mehr ins Repo.
 
 ### Sicherheit
 
 - **Authorization-Bypass über direkte HTTP-Aufrufe** geschlossen
-  (Stakeholder-Risiko Phase-0 B-3 / F-SEC-007 + B-4 / F-LAR-001).
-  Project / Chapter / Entry-Mutationen prüfen ab sofort sowohl in der
+  ([`7ce63dc`](https://github.com/berlinHistory/crowdCuratio/commit/7ce63dc),
+  [`6a213e2`](https://github.com/berlinHistory/crowdCuratio/commit/6a213e2)).
+  Project-, Chapter-, Entry-Mutationen prüfen sowohl in der
   Controller-Action als auch in der View, ob der eingeloggte User
-  Eigentümer oder Admin ist. Belegt durch Pest-Suite
-  `tests/Feature/AuthorizationTest.php`.
-- **Create-Pfad-Bypass in Chapter/Entry** geschlossen (Reviewer-Befund
-  NF-LAR-003). `ChapterController::store` und `EntryController::store`
-  haben jetzt einen Owner-Check (`createIn`-Policy-Methode); die
-  ursprüngliche D.4-Suite hat nur Update/Destroy abgedeckt. Vier neue
-  Pest-Tests sichern das ab (Intruder 403, Admin 302).
+  Eigentümer oder Admin ist. Bisher reichte ein direkter HTTP-
+  Aufruf gegen die Update-/Destroy-Routen, um fremde Daten zu
+  ändern. Belegt durch die Pest-Suite (13 Authorization-Bypass-
+  Szenarien grün).
+- **Create-Pfad-Bypass für Chapter und Entry** geschlossen
+  ([`f586d56`](https://github.com/berlinHistory/crowdCuratio/commit/f586d56)).
+  Die Update-/Destroy-Tests hatten den Bypass beim Anlegen
+  übersehen — jeder eingeloggte User konnte Chapter und Entry in
+  fremden Projekten erzeugen. Neue `createIn`-Policy-Methode plus
+  vier Pest-Tests.
 - **Logo-Upload-Validation und Path-Traversal-Pfad** geschlossen
-  (NF-SEC-007). `ProjectController::update` las `$request['logo']`
-  blind und schrieb den Wert in die DB — Path-Traversal-Vektor. Logo
-  kommt jetzt ausschließlich aus `setImage()`, `project_image` wird
-  als File mit MIME-Whitelist und 4 MB Limit validiert.
-- **`facade/ignition`-RCE (CVE-2021-3129)** entschärft: durch
-  `composer install` mit Lock zieht der Build die geprüfte Version
-  2.17.7 ein, nicht die anfälligen 2.5.0/.1.
-- **MyISAM-Datenintegritäts-Bug** in der `texts`-Tabelle behoben:
-  Engine-Konvertierung auf InnoDB plus Reinstall der
-  Source-Foreign-Keys, die unter MyISAM still verworfen wurden.
-- **Charset auf `utf8mb4`** (vorher `utf8mb3`): 4-Byte-Glyphen werden
-  ab sofort gespeichert statt gestrippt.
-- **MySQL `strict`-Mode** ist an: zero-dates, GROUP-BY-Verstöße,
-  Inserts ohne Required-Felder werfen ab sofort hörbar Fehler statt
-  still durchzulaufen.
-- File-Upload-`public`-Disk und Mailpit-/phpMyAdmin-Loopback-Binding
-  reduzieren die Lateral-Movement-Fläche im lokalen Dev-Netz.
-- **NF-SEC-202 (Phase-2.5-Hotfix) — Privilege-Escalation über
-  `/register` geschlossen.** Vor dem Hotfix konnte jeder eingeloggte
-  User (Reader, Reviewer, Editor) `POST /register` mit `adminUser=1`
-  aufrufen und sich ein Admin-Konto anlegen: `User::$fillable`
-  enthielt `is_admin` und `create_project`, `RegisterRequest::
-  authorize()` war `true`, die Route hatte keinen Rollenfilter, die
-  alte `auth.php`-Doppel-Route (AM-D-4) lief mit. Defense-in-depth:
-  `is_admin` und `create_project` raus aus `User::$fillable`, die
-  Route hängt jetzt an `role:Admin`, im Controller setzt ein
-  zweiter Gate die privilegierten Felder nur, wenn der Caller
-  selbst die Spatie-Rolle „Admin" hat. Self-Service-Routen aus
-  `auth.php` gelöscht — AM-D-4 dadurch teilbereinigt. Vier neue
+  ([`871f6d0`](https://github.com/berlinHistory/crowdCuratio/commit/871f6d0)).
+  `ProjectController::update` las `$request['logo']` blind und
+  schrieb den Wert in die DB — ein Path-Traversal-Vektor. Logo
+  kommt jetzt ausschließlich aus der validierten Upload-Routine,
+  `project_image` wird als File mit MIME-Whitelist und 4 MB Limit
+  validiert.
+- **Privilege-Escalation über `POST /register` geschlossen**
+  ([`81055ac`](https://github.com/berlinHistory/crowdCuratio/commit/81055ac)).
+  Bis zum Hotfix konnte jeder eingeloggte User (Reader, Reviewer,
+  Editor) `POST /register` mit `adminUser=1` aufrufen und sich
+  ein Admin-Konto anlegen — `User::$fillable` enthielt `is_admin`
+  und `create_project`, der FormRequest war ohne Authorization,
+  die Route hatte keinen Rollenfilter. Defense-in-depth-Fix:
+  privilegierte Felder aus `User::$fillable` raus, Route hängt
+  an `role:Admin`, der Controller setzt die Felder zusätzlich
+  nur, wenn der Caller selbst die Admin-Rolle hat. Vier neue
   Pest-Tests sichern den Pfad ab (non-Admin → 403, Admin mit
-  `adminUser=1` → neuer Admin, Admin ohne `adminUser` → regulärer
-  User, Gast → Login-Redirect).
+  `adminUser=1` → neuer Admin, Admin ohne `adminUser` →
+  regulärer User, Gast → Login-Redirect).
+- **MyISAM → InnoDB für die `texts`-Tabelle**
+  ([`5ae90c2`](https://github.com/berlinHistory/crowdCuratio/commit/5ae90c2)).
+  Engine-Konvertierung plus Reinstall der Source-Foreign-Keys,
+  die unter MyISAM still verworfen wurden — Datenintegrität für
+  Quellenangaben wieder gewährleistet.
+- **`facade/ignition`-RCE (CVE-2021-3129)** entschärft: durch
+  `composer install` mit Lock zieht der Build die geprüfte
+  Version 2.17.7 ein, nicht die anfälligen 2.5.0/.1.
+- **Charset auf `utf8mb4`** (vorher `utf8mb3`): 4-Byte-Glyphen
+  (Emoji etc.) werden ab sofort gespeichert statt gestrippt.
+- **MySQL `strict`-Mode** an: zero-dates, GROUP-BY-Verstöße,
+  Inserts ohne Pflichtfelder werfen ab sofort hörbar Fehler
+  statt still durchzulaufen.
+- **File-Upload-Disk auf `public`** umgestellt — File-URLs
+  funktionieren, Lateral-Movement-Fläche im lokalen Dev-Netz
+  reduziert. Mailpit-Web-Dashboard und phpMyAdmin nur noch auf
+  Loopback erreichbar.
+- **CVE-2025-27515 — Laravel File Validation Bypass**
+  (Severity moderate, betrifft `laravel/framework < 10.48.29`).
+  crowdCuratio läuft auf Laravel 8.12 und ist formal in der
+  Range. Konkret nicht ausnutzbar: der Angriffspfad braucht eine
+  Wildcard-Validation der Form `files.*|image|mimes:…`, die im
+  Code aktuell nirgends auftaucht (grep über `app/` ohne
+  Treffer). Endgültig zu mit dem Laravel-9-Sprung im Upgrade-
+  Pfad.
+- **Bekannte offene Lasten aus `composer audit`:** zwei
+  abandoned Pakete. `swiftmailer/swiftmailer` (transitive
+  Abhängigkeit aus Laravel 8) fällt mit dem Laravel-9-Sprung
+  automatisch raus, weil Symfony Mailer übernimmt.
+  `laravelcollective/html` braucht einen aktiven Ersatz und ist
+  für die Refactoring-Welle vorgemerkt.
 
 ---
 
@@ -373,9 +340,8 @@ Repo-Übernahmezeitpunkt.
 - Zwei PDF-Libraries parallel.
 - Eigene Permission-Modell-Variante weicht vom Spatie-Standard ab.
 
-Details und Roadmap siehe interne Werkbank (`.werkbank/KONTEXT.md`).
-
 ---
 
-[Unreleased]: https://github.com/berlinHistory/crowdCuratio/compare/v0.8.0...HEAD
+[Unreleased]: https://github.com/berlinHistory/crowdCuratio/compare/v0.9.0...HEAD
+[0.9.0]: https://github.com/berlinHistory/crowdCuratio/releases/tag/v0.9.0
 [0.8.0]: https://github.com/berlinHistory/crowdCuratio/releases/tag/v0.8.0
