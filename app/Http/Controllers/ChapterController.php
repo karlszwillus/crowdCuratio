@@ -22,6 +22,8 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreChapterRequest;
+use App\Http\Requests\UpdateChapterRequest;
 use App\Models\Chapter;
 use App\Models\Entry;
 use App\Models\MediaContent;
@@ -77,75 +79,58 @@ class ChapterController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created chapter (POST /chapters).
      *
-     * @return RedirectResponse
+     * Authorization + Validation kommen aus StoreChapterRequest.
+     * Update läuft jetzt über PATCH /chapters/{chapter}; die alte
+     * isset($chapterId)-Verzweigung ist entfallen (Phase 2 / D.4).
      */
-    public function store(Request $request)
+    public function store(StoreChapterRequest $request): RedirectResponse
     {
+        $data = $request->validated();
 
-        if (isset($request['chapterId']) && $request['chapterId'] != '') {
-            $this->update($request);
+        $pos = Chapter::where('project_id', $data['projectId'])
+            ->orderBy('position', 'desc')
+            ->first();
 
-            return redirect()->back()->with('success', __('message_edit_chapter_success'));
-        } else {
-            // NF-LAR-003: Owner-Check vor dem Anlegen — Permission 'add'
-            // allein reicht nicht, weil sie projekt­übergreifend gilt.
-            $project = Project::findOrFail($request['projectId']);
-            $this->authorize('createIn', [Chapter::class, $project]);
+        Chapter::create([
+            'project_id' => $data['projectId'],
+            'name' => $data['chapterTitle'],
+            'subtitle' => $data['chapterSubtitle'] ?? null,
+            'description' => $data['chapterDescription'] ?? null,
+            'position' => ($pos->position ?? 0) + 1,
+        ]);
 
-            $pos = Chapter::where('project_id', $project->id)->orderBy('position', 'desc')->first();
-            $position = 0;
-            if (! empty($pos->position)) {
-                $position = $pos->position;
-            }
-            Chapter::create(
-                [
-                    'project_id' => $project->id,
-                    'name' => $request['chapterTitle'],
-                    'subtitle' => $request['chapterSubtitle'],
-                    'description' => $request['chapterDescription'],
-                    'position' => $position + 1,
-                ]
-            );
-
-            return redirect()->route('projects.edit', [$project->id])->with('success', __('message_add_chapter_success'));
-
-        }
+        return redirect()->route('projects.edit', $data['projectId'])
+            ->with('success', __('message_add_chapter_success'));
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update an existing chapter (PATCH /chapters/{chapter}).
      *
-     * @return $this
+     * Route-Model-Binding über $chapter; Authorization + Validation
+     * kommen aus UpdateChapterRequest. Phase 2 / D.4, ADR-0017.
      */
-    public function update(Request $request)
+    public function update(UpdateChapterRequest $request, Chapter $chapter): RedirectResponse
     {
-        $chapter = Chapter::findorFail($request['chapterId']);
+        $data = $request->validated();
 
-        $this->authorize('update', $chapter);
-
-        if (isset($request['translationChapter'])) {
-            $chapter->setTranslation('name', 'en', $request['chapterTitle']);
-            $chapter->setTranslation('subtitle', 'en', $request['chapterSubtitle']);
-            if ($request['chapterDescription'] != 'undefined') {
-                $chapter->setTranslation('description', 'en', $request['chapterDescription']);
+        if ($request->boolean('translationChapter')) {
+            $chapter->setTranslation('name', 'en', $data['chapterTitle']);
+            $chapter->setTranslation('subtitle', 'en', $data['chapterSubtitle'] ?? '');
+            if (($data['chapterDescription'] ?? '') !== 'undefined') {
+                $chapter->setTranslation('description', 'en', $data['chapterDescription'] ?? '');
             }
         } else {
-            $chapter->name = $request['chapterTitle'];
-            $chapter->subtitle = $request['chapterSubtitle'];
-            $chapter->description = $request['chapterDescription'];
+            $chapter->name = $data['chapterTitle'];
+            $chapter->subtitle = $data['chapterSubtitle'] ?? null;
+            $chapter->description = $data['chapterDescription'] ?? null;
         }
 
-        $chapter->is_translated = isset($request['isTranslated']) ? 1 : 0;
+        $chapter->is_translated = $request->boolean('isTranslated');
 
         $chapter->save();
 
-        // Vorher: return $this; — gibt den Controller selbst zurück
-        // und bricht jede assertOk-Verifikation mit TypeError, weil
-        // Symfony's Response::setContent() einen String erwartet. Im
-        // Frontend ignoriert das JS den Body, deshalb fiel es bisher
-        // nicht auf. back() ist semantisch das, was im Browser passiert.
         return back();
     }
 

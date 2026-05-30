@@ -79,7 +79,15 @@ class CommentRetrieve
         // F-DB-014: alle hier möglichen Klassen (Project/Chapter/Entry/
         // MediaContent/Text/Image/Gallery/Audiovisual) nutzen SoftDeletes —
         // der Scope schließt trashed bereits implizit aus.
-        $model = $class::findOrFail($id);
+        //
+        // Block-C-Folge: preventLazyLoading (Phase 2 / C.1) wirft bei
+        // $model->comments, $value->replies und ->user. Eager-Loading
+        // jetzt mit-anzieht. Das Pattern gilt für alle commentable
+        // Klassen; jede hat eine `comments`-MorphMany via CommentTrait.
+        $model = $class::with([
+            'comments.user',
+            'comments.replies.user',
+        ])->findOrFail($id);
 
         foreach (config('project.comment') as $v => $k) {
             $status[$v] = $k;

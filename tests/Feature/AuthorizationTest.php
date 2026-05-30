@@ -47,6 +47,8 @@ use App\Models\Chapter;
 use App\Models\Entry;
 use App\Models\Project;
 use App\Models\User;
+use App\Support\PermissionName;
+use Illuminate\Http\UploadedFile;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -56,7 +58,7 @@ use Spatie\Permission\Models\Role;
  * ohne den Admin-User selbst zu erzeugen.
  */
 beforeEach(function () {
-    foreach (['view', 'add', 'edit', 'delete', 'publish', 'comment', 'invite'] as $name) {
+    foreach (PermissionName::all() as $name) {
         Permission::firstOrCreate(['name' => $name, 'guard_name' => 'web']);
     }
 
@@ -448,4 +450,215 @@ test('Admin darf in fremdem Chapter einen Entry anlegen (NF-LAR-003b)', function
 
     $response->assertRedirect();
     expect(Entry::where('chapter_id', $chapter->id)->count())->toBe(1);
+});
+
+// ----------------------------------------------------------------------
+// D.10 — Validation-Pflichttests pro FormRequest (ADR-0017).
+//
+// Pro FormRequest ein 422-Test, der dokumentiert, dass die rules()-
+// Schicht greift. Owner-Pfad, fehlendes Pflichtfeld; Erwartung:
+// assertInvalid().
+// ----------------------------------------------------------------------
+
+test('StoreChapterRequest: chapterTitle ist Pflicht', function () {
+    $owner = User::factory()->create();
+    $project = makeProject($owner);
+
+    $response = $this->actingAs($owner)->post(
+        route('chapters.store'),
+        [
+            'projectId' => $project->id,
+            // chapterTitle absichtlich weggelassen
+            'chapterSubtitle' => 'Sub',
+        ]
+    );
+
+    $response->assertInvalid(['chapterTitle']);
+    expect(Chapter::where('project_id', $project->id)->count())->toBe(0);
+});
+
+test('UpdateChapterRequest: chapterTitle ist Pflicht', function () {
+    $owner = User::factory()->create();
+    $chapter = makeChapter(makeProject($owner));
+
+    $response = $this->actingAs($owner)->patch(
+        route('chapters.update', $chapter),
+        [
+            // chapterTitle absichtlich weggelassen
+            'chapterSubtitle' => 'Sub',
+        ]
+    );
+
+    $response->assertInvalid(['chapterTitle']);
+    expect($chapter->fresh()->name)->toBe('Original Kapitel-Titel');
+});
+
+test('StoreEntryRequest: entryTitle ist Pflicht', function () {
+    $owner = User::factory()->create();
+    $chapter = makeChapter(makeProject($owner));
+
+    $response = $this->actingAs($owner)->post(
+        route('entries.store'),
+        [
+            'chapterId' => $chapter->id,
+            // entryTitle absichtlich weggelassen
+        ]
+    );
+
+    $response->assertInvalid(['entryTitle']);
+    expect(Entry::where('chapter_id', $chapter->id)->count())->toBe(0);
+});
+
+test('UpdateEntryRequest: entryTitle ist Pflicht', function () {
+    $owner = User::factory()->create();
+    $entry = makeEntry(makeChapter(makeProject($owner)));
+
+    $response = $this->actingAs($owner)->patch(
+        route('entries.update', $entry),
+        [
+            // entryTitle absichtlich weggelassen
+            'entrySubtitle' => 'Sub',
+        ]
+    );
+
+    $response->assertInvalid(['entryTitle']);
+    expect($entry->fresh()->name)->toBe('Original Entry-Titel');
+});
+
+// ----------------------------------------------------------------------
+// D.12/D.13 — Sanity-Tests, dass die PATCH-Variante greift.
+//
+// Die ursprünglichen Update-Tests senden PUT, was bei Resource-Routes
+// gleichbedeutend ist. Diese zwei Tests dokumentieren explizit den
+// PATCH-Pfad, den das Frontend nach D.12/D.13 nutzt.
+// ----------------------------------------------------------------------
+
+test('Owner darf Chapter via PATCH ändern (D.12)', function () {
+    $owner = User::factory()->create();
+    $chapter = makeChapter(makeProject($owner));
+
+    $response = $this->actingAs($owner)->patch(
+        route('chapters.update', $chapter),
+        [
+            'chapterTitle' => 'Via PATCH geändert',
+        ]
+    );
+
+    $response->assertRedirect();
+    expect($chapter->fresh()->name)->toBe('Via PATCH geändert');
+});
+
+test('Owner darf Entry via PATCH ändern (D.13)', function () {
+    $owner = User::factory()->create();
+    $entry = makeEntry(makeChapter(makeProject($owner)));
+
+    $response = $this->actingAs($owner)->patch(
+        route('entries.update', $entry),
+        [
+            'entryTitle' => 'Via PATCH geändert',
+        ]
+    );
+
+    $response->assertRedirect();
+    expect($entry->fresh()->name)->toBe('Via PATCH geändert');
+});
+
+// ----------------------------------------------------------------------
+// D.3 + D.6 — Validation pro StoreProjectRequest / UpdateProjectRequest
+// inkl. der NF-SEC-001 / NF-SEC-007-Härtung beim Bild-Upload.
+// ----------------------------------------------------------------------
+
+test('StoreProjectRequest: name ist Pflicht', function () {
+    $owner = User::factory()->create();
+    // ProjectController hat middleware('permission:add', […create, store]).
+    // Ohne add-Permission wirft die Spatie-Middleware vor dem FormRequest,
+    // und der Test sieht 302 ohne errors-Bag statt 422 von der Validation.
+    $owner->givePermissionTo(PermissionName::ADD);
+
+    $response = $this->actingAs($owner)
+        ->from(route('projects.create'))
+        ->post(
+            route('projects.store'),
+            [
+                // name absichtlich weggelassen
+                'imprint' => 'Pflicht-Impressum',
+            ]
+        );
+
+    $response->assertInvalid(['name']);
+    expect(Project::count())->toBe(0);
+});
+
+test('UpdateProjectRequest: name ist Pflicht', function () {
+    $owner = User::factory()->create();
+    $project = makeProject($owner);
+
+    $response = $this->actingAs($owner)
+        ->from(route('projects.edit', $project))
+        ->put(
+            route('projects.update', $project),
+            [
+                // name absichtlich weggelassen
+                'imprint' => 'Geänderter Imprint',
+            ]
+        );
+
+    $response->assertInvalid(['name']);
+    expect($project->fresh()->name)->toBe('Original Name');
+});
+
+test('UpdateProjectRequest: project_image akzeptiert nur Bild-MIME-Typen (NF-SEC-001)', function () {
+    $owner = User::factory()->create();
+    $project = makeProject($owner);
+
+    $response = $this->actingAs($owner)
+        ->from(route('projects.edit', $project))
+        ->put(
+            route('projects.update', $project),
+            [
+                'name' => 'Trotzdem geänderter Name',
+                'imprint' => 'Imprint',
+                'project_image' => UploadedFile::fake()->create('exploit.php', 50, 'application/x-php'),
+            ]
+        );
+
+    $response->assertInvalid(['project_image']);
+    expect($project->fresh()->name)->toBe('Original Name');
+});
+
+// ----------------------------------------------------------------------
+// D.7 — RegisterRequest Validation + Gast-Pfad (ADR-0017).
+//
+// Der Gast-Pfad-Test prüft, dass die Route für nicht-eingeloggte
+// User erreichbar ist (kein 302-Redirect zu Login). Ohne explizites
+// actingAs() sendet Pest als Gast. Das Validation-Fail-422 statt
+// 401/302 belegt: die Route ist offen, der FormRequest greift.
+// ----------------------------------------------------------------------
+
+test('RegisterRequest: firstName ist Pflicht (Admin-Einladung)', function () {
+    // Hinweis: der RegisteredUserController hat im __construct die
+    // middleware('auth'), während Route /register als 'guest' deklariert
+    // ist — Bestands-Konflikt aus AM-D-4 (Phase-1-Reviewer). In der
+    // tatsächlichen App wird /register nur durch Admins erreicht, die
+    // neue User ins System einladen. Der Test bildet diesen Pfad ab,
+    // statt den theoretischen Self-Service-Gast-Pfad zu testen, der
+    // wegen des Konflikts ohnehin nicht funktioniert.
+    $admin = User::factory()->create();
+    $admin->assignRole('Admin');
+
+    $response = $this->actingAs($admin)
+        ->from(route('register'))
+        ->post(
+            route('register'),
+            [
+                // firstName absichtlich weggelassen
+                'lastName' => 'Mustermann',
+                'email' => 'max@example.com',
+                'roles' => 2,
+                'policy' => 1,
+            ]
+        );
+
+    $response->assertInvalid(['firstName']);
+    expect(User::count())->toBe(1); // nur der Admin selbst, kein neuer User
 });

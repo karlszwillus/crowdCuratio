@@ -546,6 +546,8 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                   method="POST"
                                   enctype="multipart/form-data">
                                 @csrf
+                                {{-- Phase 2 / D.12: _method-Override für die PATCH-Variante --}}
+                                <input name="_method" type="hidden" value="">
                                 <div class="col-xs-6">
                                     <input name="projectId" id="projectId" type="hidden" class="form-control mb-3"
                                            value="{{$project->id}}">
@@ -890,6 +892,29 @@ If not, see <https://www.gnu.org/licenses/>. -->
             $('#lblChapter').text(chapter);
         })
 
+        // Phase 2 / D.12: zentrale Helper für Chapter-Form-Mode.
+        // Phase-1-Verzweigung im Controller ist weg — wir müssen jetzt
+        // im Client zwischen POST /chapters und PATCH /chapters/{id}
+        // umschalten.
+        const chapterStoreUrl = "{{ route('chapters.store') }}";
+        const chapterUpdateUrlTpl = "{{ route('chapters.update', ':id') }}";
+
+        function resetChapterForm() {
+            $('#chapter_frm').attr('action', chapterStoreUrl);
+            $('#chapter_frm input[name="_method"]').val('');
+            $('input[name="chapterId"]').val('');
+        }
+
+        function setChapterFormUpdate(id) {
+            $('#chapter_frm').attr('action', chapterUpdateUrlTpl.replace(':id', id));
+            $('#chapter_frm input[name="_method"]').val('PATCH');
+        }
+
+        // Chapter-Modal kann sowohl für Add (Default) als auch für
+        // Modify geöffnet werden; ein hidden-Reset stellt sicher, dass
+        // der nächste Add nicht aus dem letzten Update-Mode lebt.
+        $('#myModal').on('hidden.bs.modal', resetChapterForm);
+
         //Modify chapter
         $('.open-ModifyChapter').click(function () {
             $('#chapterTitle').val('');
@@ -898,11 +923,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
             let url = "{{ route('chapters.edit', ":id") }}";
             url = url.replace(':id', id);
 
+            setChapterFormUpdate(id);
+
             $.ajax({
                 type: 'GET',
                 url: url,
                 success: function (data) {
-                    //$('#chapterId').val(data.id);
                     $('input[name="chapterId"]').val(data.id);
                     $('#chapterTitle').val(data.name[Object.keys(data.name)[0]]);
                     $('#chapterSubtitle').val(data.subtitle[Object.keys(data.subtitle)[0]]);
@@ -912,6 +938,25 @@ If not, see <https://www.gnu.org/licenses/>. -->
         })
 
         //Modify entry
+        // Phase 2 / D.13: zentrale Helper für Entry-Form-Mode (analog
+        // zu Chapter, siehe oben). Add ist Default, Modify schaltet auf
+        // PATCH um.
+        const entryStoreUrl = "{{ route('entries.store') }}";
+        const entryUpdateUrlTpl = "{{ route('entries.update', ':id') }}";
+
+        function resetEntryForm() {
+            $('#entry_frm').attr('action', entryStoreUrl);
+            $('#entry_frm input[name="_method"]').val('');
+            $('input[name="entryId"]').val('');
+        }
+
+        function setEntryFormUpdate(id) {
+            $('#entry_frm').attr('action', entryUpdateUrlTpl.replace(':id', id));
+            $('#entry_frm input[name="_method"]').val('PATCH');
+        }
+
+        $('#entryModal').on('hidden.bs.modal', resetEntryForm);
+
         $('.open-ModifyEntry').click(function () {
             $('#entryTitle').val('');
             $('#entrySubtitle').val();
@@ -919,11 +964,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
             let url = "{{ route('entries.edit', ":id") }}";
             url = url.replace(':id', id);
 
+            setEntryFormUpdate(id);
+
             $.ajax({
                 type: 'GET',
                 url: url,
                 success: function (data) {
-                    //$('#entryId').val(data.id);
                     $('input[name="entryId"]').val(data.id);
                     $('#entryTitle').val(data.name[Object.keys(data.name)[0]]);
                     $('#entrySubtitle').val(data.subtitle[Object.keys(data.subtitle)[0]]);

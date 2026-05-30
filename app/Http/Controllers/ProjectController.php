@@ -22,6 +22,8 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreProjectRequest;
+use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Audiovisual;
 use App\Models\Gallery;
 use App\Models\Image;
@@ -138,19 +140,12 @@ class ProjectController extends Controller
 
     /**
      * Store a newly created resource in storage.
-     *
-     * @return Response
      */
-    public function store(Request $request)
+    public function store(StoreProjectRequest $request): RedirectResponse
     {
-
-        $request->validate(
-            [
-                'name' => 'required',
-                'imprint' => 'required',
-            ]
-        );
-
+        // mapData() arbeitet weiter mit der vollen Request — es liest
+        // file('project_image') ab und delegiert an setImage(). Die
+        // Validation hat das Feld vorher MIME-geprüft.
         $new = Project::create($this->mapData($request));
 
         return redirect()->route('chapters.index', ['id' => $new->id])
@@ -383,39 +378,22 @@ class ProjectController extends Controller
 
     /**
      * Update the specified resource in storage.
-     *
-     * @return Response
      */
-    public function update(Request $request, Project $project)
+    public function update(UpdateProjectRequest $request, Project $project): RedirectResponse
     {
-        $this->authorize('update', $project);
+        $data = $request->validated();
 
-        $request->validate(
-            [
-                'name' => 'required',
-                'imprint' => 'required',
-                // NF-SEC-007: project_image darf nur als Upload mit
-                // gängigen Bildformaten reinkommen, nicht als beliebiger
-                // String. mime-Validation, max 4 MB.
-                'project_image' => 'sometimes|nullable|file|mimes:jpeg,jpg,png,gif,webp|max:4096',
-            ]
-        );
+        $project->update([
+            'name' => $data['name'],
+            'imprint' => $data['imprint'],
+            'terms' => $data['terms'] ?? null,
+            'description' => $data['description'] ?? null,
+        ]);
 
-        $project->update(
-            [
-                'name' => $request['name'],
-                'imprint' => $request['imprint'],
-                'terms' => $request['terms'],
-                'description' => $request['description'],
-            ]
-        );
-
-        // NF-SEC-007: vorher las der Controller `$request['logo']` blind
-        // und schrieb es in die DB — Path-Traversal-Vektor, weil ein
-        // Client `logo=../../etc/...` mitsenden konnte. Logo-Filename
-        // kommt jetzt ausschließlich aus setImage(), das einen
-        // datums­basierten Namen vergibt.
-        if ($request->has('project_image')) {
+        // NF-SEC-007: Logo-Filename kommt ausschließlich aus setImage(),
+        // nie aus $request['logo']. UpdateProjectRequest hat den File
+        // vorher MIME-validiert.
+        if ($request->hasFile('project_image')) {
             $logo = $this->setImage($request);
             if ($logo !== '') {
                 $project->update(['logo' => $logo]);

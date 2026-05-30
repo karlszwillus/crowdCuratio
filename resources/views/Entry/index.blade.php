@@ -41,6 +41,8 @@ If not, see <https://www.gnu.org/licenses/>. -->
                               method="POST"
                               enctype="multipart/form-data">
                             @csrf
+                            {{-- Phase 2 / D.13: _method-Override für die PATCH-Variante --}}
+                            <input name="_method" type="hidden" value="">
                             <div class="col mt-3">
                                 <input name="chapterId" id="chapterId" type="hidden" class="form-control mb-3"
                                        value="">

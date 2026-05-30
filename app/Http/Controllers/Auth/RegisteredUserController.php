@@ -23,6 +23,7 @@ If not, see <https://www.gnu.org/licenses/>.
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\Invitation;
 use App\Models\MailSetting;
 use App\Models\RoleHasPermission;
@@ -67,19 +68,9 @@ class RegisteredUserController extends Controller
      *
      * @return RedirectResponse
      */
-    public function store(Request $request)
+    public function store(RegisterRequest $request)
     {
         $mail = ! empty(MailSetting::first()) ? MailSetting::first() : null;
-
-        $request->validate(
-            [
-                'firstName' => 'required|string|max:255',
-                'lastName' => 'required|string|max:255',
-                'email' => 'required|string|email|max:255',
-                'roles' => 'required',
-                'policy' => 'required',
-            ]
-        );
 
         $ifUserExists = DB::table('users')->where('email', $request->email)->first();
 
