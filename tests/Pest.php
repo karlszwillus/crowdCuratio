@@ -40,7 +40,59 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+use App\Models\Chapter;
+use App\Models\Entry;
+use App\Models\Project;
+use App\Models\User;
+
+/**
+ * Test-Helper für Feature-Tests, die ein realistisches
+ * Curating-Setup brauchen. Liegen hier zentral, damit
+ * AuthorizationTest, HappyPathTest und künftige Feature-Suites
+ * sie ohne Duplizierung nutzen können.
+ *
+ * `makeProject` setzt `user_id` über den Property-Setter, weil
+ * die Spalte nicht in `Project::$fillable` ist (F-SEC-010).
+ */
+function makeProject(User $owner, array $overrides = []): Project
 {
-    // ..
+    $data = array_merge([
+        'name' => 'Original Name',
+        'imprint' => 'Original Impressum',
+        'terms' => 'Original AGB',
+        'status' => 'draft',
+        'description' => 'Original Beschreibung',
+    ], $overrides);
+
+    $userId = $overrides['user_id'] ?? $owner->id;
+    unset($data['user_id']);
+
+    $project = new Project();
+    $project->fill($data);
+    $project->user_id = $userId;
+    $project->save();
+
+    return $project;
+}
+
+function makeChapter(Project $project, array $overrides = []): Chapter
+{
+    return Chapter::create(array_merge([
+        'project_id' => $project->id,
+        'name' => 'Original Kapitel-Titel',
+        'subtitle' => 'Original Untertitel',
+        'description' => 'Original Beschreibung',
+        'position' => 0,
+    ], $overrides));
+}
+
+function makeEntry(Chapter $chapter, array $overrides = []): Entry
+{
+    return Entry::create(array_merge([
+        'chapter_id' => $chapter->id,
+        'name' => 'Original Entry-Titel',
+        'subtitle' => 'Original Untertitel',
+        'description' => 'Original Beschreibung',
+        'position' => 0,
+    ], $overrides));
 }

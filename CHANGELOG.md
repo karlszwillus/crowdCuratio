@@ -44,6 +44,18 @@ Sicherheits-Pfade geschlossen.
   Zerlegung in drei dedizierte Reorder-Endpunkte (chapter,
   entry, content) bleibt Refactoring-Material.
 
+- Acht Happy-Path-Tests in `tests/Feature/HappyPathTest.php` —
+  Project / Chapter / Entry / Text-Block / Image-Block /
+  Audio-Upload, dazu Admin-Invitation mit Notification-Dispatch
+  und Permission-Cascade über die Editor-Rolle. Erweitert die
+  Pest-Suite von 46 auf 54 grüne Tests. Sicherheitsnetz für den
+  bevorstehenden Major-Upgrade-Sprung — die Authorization-Suite
+  prüft „darf der User das?", diese Suite prüft „macht die App
+  das, was sie soll?".
+- Test-Helper `makeProject`, `makeChapter`, `makeEntry` liegen
+  zentral in `tests/Pest.php` und sind über Feature-Suites
+  hinweg verfügbar.
+
 ### Sicherheit
 
 - **Upload-Härtung in den Image- und Audio-Routen**
