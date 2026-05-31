@@ -616,6 +616,11 @@ parameters:
 			path: tests/Feature/AuthorizationTest.php
 
 		-
+			message: "#^Undefined variable\\: \\$this$#"
+			count: 8
+			path: tests/Feature/HappyPathTest.php
+
+		-
 			message: "#^Access to an undefined property Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\|Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$email\\.$#"
 			count: 1
 			path: tests/Feature/EmailVerificationTest.php

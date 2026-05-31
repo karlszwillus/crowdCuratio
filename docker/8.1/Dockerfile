@@ -41,6 +41,7 @@ RUN apt-get update \
        php8.1-intl php8.1-readline \
        php8.1-msgpack php8.1-igbinary php8.1-ldap \
        php8.1-redis \
+       php8.1-pcov \
     && curl -sL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y nodejs \
     && curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg \

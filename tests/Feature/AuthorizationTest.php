@@ -66,56 +66,9 @@ beforeEach(function () {
         ->syncPermissions(Permission::all());
 });
 
-/**
- * Hilfs-Funktion zum Anlegen eines Test-Projects mit den
- * Pflichtfeldern aus dem Schema.
- */
-function makeProject(User $owner, array $overrides = []): Project
-{
-    $data = array_merge([
-        'name' => 'Original Name',
-        'imprint' => 'Original Impressum',
-        'terms' => 'Original AGB',
-        'status' => 'draft',
-        'description' => 'Original Beschreibung',
-    ], $overrides);
-
-    // F-SEC-010: user_id ist nicht in Project::$fillable. Beim Test-
-    // Helper setzen wir die Spalte explizit per Property-Setter,
-    // analog zum Controller-Store-Pfad. Tests können den Owner via
-    // $overrides['user_id'] umschreiben (für Stranger-Szenarien).
-    $userId = $overrides['user_id'] ?? $owner->id;
-    unset($data['user_id']);
-
-    $project = new Project;
-    $project->fill($data);
-    $project->user_id = $userId;
-    $project->save();
-
-    return $project;
-}
-
-function makeChapter(Project $project, array $overrides = []): Chapter
-{
-    return Chapter::create(array_merge([
-        'project_id' => $project->id,
-        'name' => 'Original Kapitel-Titel',
-        'subtitle' => 'Original Untertitel',
-        'description' => 'Original Beschreibung',
-        'position' => 0,
-    ], $overrides));
-}
-
-function makeEntry(Chapter $chapter, array $overrides = []): Entry
-{
-    return Entry::create(array_merge([
-        'chapter_id' => $chapter->id,
-        'name' => 'Original Entry-Titel',
-        'subtitle' => 'Original Untertitel',
-        'description' => 'Original Beschreibung',
-        'position' => 0,
-    ], $overrides));
-}
+// Test-Helper `makeProject`, `makeChapter`, `makeEntry` liegen
+// zentral in tests/Pest.php — geteilt mit den anderen Feature-
+// Suites (HappyPathTest etc.).
 
 test('Owner darf sein eigenes Project ändern', function () {
     $owner = User::factory()->create();

@@ -75,13 +75,15 @@ phpMyAdmin: <http://localhost:8080> (nur Loopback)
 
 ```bash
 ./vendor/bin/sail pest
+./vendor/bin/sail composer test-coverage
 ```
 
-Aktuell deckt die Suite Authorization und Validation für Project,
-Chapter, Entry sowie den Register-Flow ab (Stand 36 Tests grün:
-Authorization-Bypass, Create-Pfad-Bypass NF-LAR-003,
-FormRequest-422-Pflichten, PATCH-Sanity für Chapter/Entry,
-File-Upload-MIME-Whitelist für `project_image`).
+Aktuell deckt die Suite Authorization, Validation und Happy-Path-
+Verhalten für Project, Chapter, Entry, Text-/Image-/Audio-Blocks
+sowie den Register- und Invitation-Flow ab (54 Tests grün).
+Coverage wird vom PCOV-Driver erhoben, der im PHP-Container
+mitgeliefert ist — kein Overhead im normalen App-Lauf, aktiv nur
+bei `--coverage`.
 
 GitHub Actions (`.github/workflows/ci.yml`) führt auf jedem PR und
 Push nach `main` parallel sechs Jobs aus: Pest (SQLite-in-memory),
