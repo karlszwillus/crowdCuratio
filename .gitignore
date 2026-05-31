@@ -22,3 +22,4 @@ composer.phar
 # macOS Finder-Artefakte
 .DS_Store
 smoke-image.jpg
+phpstan-*-errors.txt
