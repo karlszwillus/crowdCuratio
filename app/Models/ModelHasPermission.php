@@ -34,7 +34,7 @@ class ModelHasPermission extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $fillable = ['permission_id', 'model_type', 'model_id', 'project_id'];
 

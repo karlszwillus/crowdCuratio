@@ -34,7 +34,7 @@ class UserHasPermission extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $fillable = ['project_id', 'permission_id', 'user_id'];
 

@@ -51,7 +51,7 @@ class User extends Authenticatable
      * `created_at` gehört ebenfalls nicht ins `$fillable`; Laravel
      * pflegt es als Timestamp automatisch.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $fillable = [
         'name',
@@ -63,7 +63,7 @@ class User extends Authenticatable
     /**
      * The attributes that should be hidden for arrays.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $hidden = [
         'password',

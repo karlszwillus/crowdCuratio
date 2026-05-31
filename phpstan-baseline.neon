@@ -1,401 +1,451 @@
 parameters:
 	ignoreErrors:
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\Auth\\\\EmailVerificationNotificationController\\:\\:store\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
+			message: '#^Method App\\Http\\Controllers\\Auth\\EmailVerificationNotificationController\:\:store\(\) should return Illuminate\\Http\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
 			count: 2
 			path: app/Http/Controllers/Auth/EmailVerificationNotificationController.php
 
 		-
-			message: "#^Property App\\\\Http\\\\Controllers\\\\Auth\\\\MyCustomWelcomeNotification\\:\\:\\$firstName is never read, only written\\.$#"
+			message: '#^Property App\\Http\\Controllers\\Auth\\MyCustomWelcomeNotification\:\:\$firstName is never read, only written\.$#'
+			identifier: property.onlyWritten
 			count: 1
 			path: app/Http/Controllers/Auth/MyCustomWelcomeNotification.php
 
 		-
-			message: "#^Property Spatie\\\\WelcomeNotification\\\\WelcomeNotification\\:\\:\\$validUntil \\(Carbon\\\\Carbon\\) does not accept Carbon\\\\CarbonInterface\\.$#"
+			message: '#^Property Spatie\\WelcomeNotification\\WelcomeNotification\:\:\$validUntil \(Carbon\\Carbon\) does not accept Carbon\\CarbonInterface\.$#'
+			identifier: assign.propertyType
 			count: 1
 			path: app/Http/Controllers/Auth/MyCustomWelcomeNotification.php
 
 		-
-			message: "#^Method Carbon\\\\Carbon\\:\\:addDay\\(\\) invoked with 1 parameter, 0 required\\.$#"
+			message: '#^Method Carbon\\Carbon\:\:addDay\(\) invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
 			count: 1
 			path: app/Http/Controllers/Auth/RegisteredUserController.php
 
 		-
-			message: "#^Parameter \\#1 \\$user of class Illuminate\\\\Auth\\\\Events\\\\Verified constructor expects Illuminate\\\\Contracts\\\\Auth\\\\MustVerifyEmail, App\\\\Models\\\\User\\|null given\\.$#"
+			message: '#^Parameter \#1 \$user of class Illuminate\\Auth\\Events\\Verified constructor expects Illuminate\\Contracts\\Auth\\MustVerifyEmail, App\\Models\\User\|null given\.$#'
+			identifier: argument.type
 			count: 1
 			path: app/Http/Controllers/Auth/VerifyEmailController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\ChapterController\\:\\:destroy\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$project\.$#'
+			identifier: property.notFound
 			count: 1
 			path: app/Http/Controllers/ChapterController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\ChapterController\\:\\:getChapterComment\\(\\) should return Illuminate\\\\Http\\\\JsonResponse but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
+			message: '#^Method App\\Http\\Controllers\\ChapterController\:\:destroy\(\) should return Illuminate\\Http\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
 			count: 1
 			path: app/Http/Controllers/ChapterController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\ChapterController\\:\\:saveComment\\(\\) should return Illuminate\\\\Http\\\\RedirectResponse but return statement is missing\\.$#"
+			message: '#^Method App\\Http\\Controllers\\ChapterController\:\:getChapterComment\(\) should return Illuminate\\Http\\JsonResponse but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
 			count: 1
 			path: app/Http/Controllers/ChapterController.php
 
 		-
-			message: "#^Called 'first' on Laravel collection, but could have been retrieved as a query\\.$#"
+			message: '#^Method App\\Http\\Controllers\\ChapterController\:\:saveComment\(\) should return Illuminate\\Http\\RedirectResponse but return statement is missing\.$#'
+			identifier: return.missing
+			count: 1
+			path: app/Http/Controllers/ChapterController.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
+			identifier: property.notFound
+			count: 4
+			path: app/Http/Controllers/ContentController.php
+
+		-
+			message: '#^Called ''first'' on Laravel collection, but could have been retrieved as a query\.$#'
+			identifier: larastan.noUnnecessaryCollectionCall
 			count: 1
 			path: app/Http/Controllers/ContentController.php
 
 		-
-			message: "#^If condition is always true\\.$#"
+			message: '#^Loose comparison using \=\= between '''' and '''' will always evaluate to true\.$#'
+			identifier: equal.alwaysTrue
 			count: 1
 			path: app/Http/Controllers/ContentController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\ContentController\\:\\:saveCommentImage\\(\\) should return Illuminate\\\\Http\\\\RedirectResponse but return statement is missing\\.$#"
+			message: '#^Method App\\Http\\Controllers\\ContentController\:\:saveCommentImage\(\) should return Illuminate\\Http\\RedirectResponse but return statement is missing\.$#'
+			identifier: return.missing
 			count: 1
 			path: app/Http/Controllers/ContentController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\ContentController\\:\\:saveCommentText\\(\\) should return Illuminate\\\\Http\\\\RedirectResponse but return statement is missing\\.$#"
+			message: '#^Method App\\Http\\Controllers\\ContentController\:\:saveCommentText\(\) should return Illuminate\\Http\\RedirectResponse but return statement is missing\.$#'
+			identifier: return.missing
 			count: 1
 			path: app/Http/Controllers/ContentController.php
 
 		-
-			message: "#^Negated boolean expression is always true\\.$#"
+			message: '#^Negated boolean expression is always true\.$#'
+			identifier: booleanNot.alwaysTrue
 			count: 1
 			path: app/Http/Controllers/ContentController.php
 
 		-
-			message: "#^Relation 'user' is not found in App\\\\Models\\\\Comment model\\.$#"
+			message: '#^Relation ''user'' is not found in App\\Models\\Comment model\.$#'
+			identifier: larastan.relationExistence
 			count: 1
 			path: app/Http/Controllers/ContentController.php
 
 		-
-			message: "#^Unreachable statement \\- code above always terminates\\.$#"
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
 			count: 1
 			path: app/Http/Controllers/ContentController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\EntryController\\:\\:create\\(\\) should return Illuminate\\\\Http\\\\Response but return statement is missing\\.$#"
+			message: '#^Method App\\Http\\Controllers\\EntryController\:\:create\(\) should return Illuminate\\Http\\Response but return statement is missing\.$#'
+			identifier: return.missing
 			count: 1
 			path: app/Http/Controllers/EntryController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\EntryController\\:\\:destroy\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
+			message: '#^Method App\\Http\\Controllers\\EntryController\:\:destroy\(\) should return Illuminate\\Http\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
 			count: 1
 			path: app/Http/Controllers/EntryController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\EntryController\\:\\:edit\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\JsonResponse\\.$#"
+			message: '#^Method App\\Http\\Controllers\\EntryController\:\:edit\(\) should return Illuminate\\Http\\Response but returns Illuminate\\Http\\JsonResponse\.$#'
+			identifier: return.type
 			count: 1
 			path: app/Http/Controllers/EntryController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\EntryController\\:\\:index\\(\\) should return Illuminate\\\\Http\\\\Response but return statement is missing\\.$#"
+			message: '#^Method App\\Http\\Controllers\\EntryController\:\:index\(\) should return Illuminate\\Http\\Response but return statement is missing\.$#'
+			identifier: return.missing
 			count: 1
 			path: app/Http/Controllers/EntryController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\EntryController\\:\\:saveCommentEntry\\(\\) should return Illuminate\\\\Http\\\\RedirectResponse but return statement is missing\\.$#"
+			message: '#^Method App\\Http\\Controllers\\EntryController\:\:saveCommentEntry\(\) should return Illuminate\\Http\\RedirectResponse but return statement is missing\.$#'
+			identifier: return.missing
 			count: 1
 			path: app/Http/Controllers/EntryController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\EntryController\\:\\:show\\(\\) should return Illuminate\\\\Http\\\\Response but return statement is missing\\.$#"
+			message: '#^Method App\\Http\\Controllers\\EntryController\:\:show\(\) should return Illuminate\\Http\\Response but return statement is missing\.$#'
+			identifier: return.missing
 			count: 1
 			path: app/Http/Controllers/EntryController.php
 
 		-
-			message: "#^Access to an undefined property App\\\\Models\\\\Audiovisual\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, App\\\\Models\\\\Audiovisual\\>\\:\\:\\$media_id\\.$#"
+			message: '#^Access to an undefined property App\\Models\\Audiovisual\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Audiovisual\>\:\:\$media_id\.$#'
+			identifier: property.notFound
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: "#^Access to an undefined property App\\\\Models\\\\Gallery\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, App\\\\Models\\\\Gallery\\>\\:\\:\\$image_list\\.$#"
+			message: '#^Access to an undefined property App\\Models\\Gallery\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Gallery\>\:\:\$image_list\.$#'
+			identifier: property.notFound
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: "#^Access to an undefined property App\\\\Models\\\\Gallery\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, App\\\\Models\\\\Gallery\\>\\:\\:\\$media_id\\.$#"
+			message: '#^Access to an undefined property App\\Models\\Gallery\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Gallery\>\:\:\$media_id\.$#'
+			identifier: property.notFound
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: "#^Access to an undefined property App\\\\Models\\\\Project\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, App\\\\Models\\\\Project\\>\\:\\:\\$chapters\\.$#"
+			message: '#^Access to an undefined property App\\Models\\Project\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Project\>\:\:\$chapters\.$#'
+			identifier: property.notFound
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: "#^Access to an undefined property App\\\\Models\\\\Text\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, App\\\\Models\\\\Text\\>\\:\\:\\$media_id\\.$#"
+			message: '#^Access to an undefined property App\\Models\\Text\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Text\>\:\:\$media_id\.$#'
+			identifier: property.notFound
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: "#^Call to function compact\\(\\) contains possibly undefined variable \\$content\\.$#"
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$is_translated\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Http/Controllers/ProjectController.php
+
+		-
+			message: '#^Call to function compact\(\) contains possibly undefined variable \$content\.$#'
+			identifier: variable.undefined
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: "#^Call to function compact\\(\\) contains possibly undefined variable \\$project\\.$#"
+			message: '#^Call to function compact\(\) contains possibly undefined variable \$project\.$#'
+			identifier: variable.undefined
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: "#^Call to function compact\\(\\) contains possibly undefined variable \\$type\\.$#"
+			message: '#^Call to function compact\(\) contains possibly undefined variable \$type\.$#'
+			identifier: variable.undefined
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: "#^Class App\\\\Services\\\\LogService constructor invoked with 0 parameters, 1 required\\.$#"
+			message: '#^Class App\\Services\\LogService constructor invoked with 0 parameters, 1 required\.$#'
+			identifier: arguments.count
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: "#^If condition is always true\\.$#"
+			message: '#^Loose comparison using \=\= between '''' and '''' will always evaluate to true\.$#'
+			identifier: equal.alwaysTrue
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\ProjectController\\:\\:create\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\View\\\\View\\.$#"
+			message: '#^Method App\\Http\\Controllers\\ProjectController\:\:create\(\) should return Illuminate\\Http\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\ProjectController\\:\\:destroy\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
+			message: '#^Method App\\Http\\Controllers\\ProjectController\:\:destroy\(\) should return Illuminate\\Http\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\ProjectController\\:\\:edit\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\View\\\\View\\.$#"
+			message: '#^Method App\\Http\\Controllers\\ProjectController\:\:edit\(\) should return Illuminate\\Http\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\ProjectController\\:\\:element\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\View\\\\View\\.$#"
+			message: '#^Method App\\Http\\Controllers\\ProjectController\:\:element\(\) should return Illuminate\\Http\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\ProjectController\\:\\:getParentText\\(\\) should return Illuminate\\\\Support\\\\Collection but return statement is missing\\.$#"
+			message: '#^Method App\\Http\\Controllers\\ProjectController\:\:getParentText\(\) should return Illuminate\\Support\\Collection but return statement is missing\.$#'
+			identifier: return.missing
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\ProjectController\\:\\:getUsersForThisProject\\(\\) should return bool but returns array\\<int, array\\<string, array\\|string\\>\\>\\.$#"
+			message: '#^Method App\\Http\\Controllers\\ProjectController\:\:index\(\) should return Illuminate\\Http\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\ProjectController\\:\\:index\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\View\\\\View\\.$#"
+			message: '#^Method App\\Http\\Controllers\\ProjectController\:\:saveCommentProject\(\) should return Illuminate\\Http\\RedirectResponse but return statement is missing\.$#'
+			identifier: return.missing
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\ProjectController\\:\\:saveCommentProject\\(\\) should return Illuminate\\\\Http\\\\RedirectResponse but return statement is missing\\.$#"
+			message: '#^Method App\\Http\\Controllers\\ProjectController\:\:setImage\(\) should return \$this\(App\\Http\\Controllers\\ProjectController\) but returns string\.$#'
+			identifier: return.type
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\ProjectController\\:\\:setImage\\(\\) should return \\$this\\(App\\\\Http\\\\Controllers\\\\ProjectController\\) but returns string\\.$#"
+			message: '#^Method App\\Http\\Controllers\\ProjectController\:\:show\(\) should return Illuminate\\Http\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\ProjectController\\:\\:show\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\View\\\\View\\.$#"
+			message: '#^Negated boolean expression is always true\.$#'
+			identifier: booleanNot.alwaysTrue
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: "#^Negated boolean expression is always true\\.$#"
+			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
+			identifier: argument.type
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: "#^Parameter \\#1 \\$array of function asort expects array, bool given\\.$#"
+			message: '#^Strict comparison using \!\=\= between \$this\(App\\Http\\Controllers\\ProjectController\) and '''' will always evaluate to true\.$#'
+			identifier: notIdentical.alwaysTrue
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: "#^Parameter \\#1 \\$string of function strspn expects string, int given\\.$#"
+			message: '#^Unreachable statement \- code above always terminates\.$#'
+			identifier: deadCode.unreachable
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: "#^Unreachable statement \\- code above always terminates\\.$#"
-			count: 1
-			path: app/Http/Controllers/ProjectController.php
-
-		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\RoleController\\:\\:create\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\View\\\\View\\.$#"
+			message: '#^Method App\\Http\\Controllers\\RoleController\:\:create\(\) should return Illuminate\\Http\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
 			count: 1
 			path: app/Http/Controllers/RoleController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\RoleController\\:\\:destroy\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
+			message: '#^Method App\\Http\\Controllers\\RoleController\:\:destroy\(\) should return Illuminate\\Http\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
 			count: 1
 			path: app/Http/Controllers/RoleController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\RoleController\\:\\:edit\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\View\\\\View\\.$#"
+			message: '#^Method App\\Http\\Controllers\\RoleController\:\:edit\(\) should return Illuminate\\Http\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
 			count: 1
 			path: app/Http/Controllers/RoleController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\RoleController\\:\\:index\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\View\\\\View\\.$#"
+			message: '#^Method App\\Http\\Controllers\\RoleController\:\:index\(\) should return Illuminate\\Http\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
 			count: 1
 			path: app/Http/Controllers/RoleController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\RoleController\\:\\:show\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\View\\\\View\\.$#"
+			message: '#^Method App\\Http\\Controllers\\RoleController\:\:show\(\) should return Illuminate\\Http\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
 			count: 1
 			path: app/Http/Controllers/RoleController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\RoleController\\:\\:store\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
+			message: '#^Method App\\Http\\Controllers\\RoleController\:\:store\(\) should return Illuminate\\Http\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
 			count: 1
 			path: app/Http/Controllers/RoleController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\RoleController\\:\\:update\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
+			message: '#^Method App\\Http\\Controllers\\RoleController\:\:update\(\) should return Illuminate\\Http\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
 			count: 1
 			path: app/Http/Controllers/RoleController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\SettingController\\:\\:store\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
+			message: '#^Method App\\Http\\Controllers\\SettingController\:\:store\(\) should return Illuminate\\Http\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
 			count: 5
 			path: app/Http/Controllers/SettingController.php
 
 		-
-			message: "#^Negated boolean expression is always true\\.$#"
+			message: '#^Negated boolean expression is always true\.$#'
+			identifier: booleanNot.alwaysTrue
 			count: 3
 			path: app/Http/Controllers/SettingController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\UserController\\:\\:create\\(\\) should return Illuminate\\\\Http\\\\Response but return statement is missing\\.$#"
+			message: '#^Method App\\Http\\Controllers\\UserController\:\:create\(\) should return Illuminate\\Http\\Response but return statement is missing\.$#'
+			identifier: return.missing
 			count: 1
 			path: app/Http/Controllers/UserController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\UserController\\:\\:edit\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\View\\\\View\\.$#"
+			message: '#^Method App\\Http\\Controllers\\UserController\:\:edit\(\) should return Illuminate\\Http\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
 			count: 1
 			path: app/Http/Controllers/UserController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\UserController\\:\\:index\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\View\\\\View\\.$#"
+			message: '#^Method App\\Http\\Controllers\\UserController\:\:index\(\) should return Illuminate\\Http\\Response but returns Illuminate\\View\\View\.$#'
+			identifier: return.type
 			count: 1
 			path: app/Http/Controllers/UserController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\UserController\\:\\:resendInvitation\\(\\) should return \\$this\\(App\\\\Http\\\\Controllers\\\\UserController\\) but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
+			message: '#^Method App\\Http\\Controllers\\UserController\:\:resendInvitation\(\) should return \$this\(App\\Http\\Controllers\\UserController\) but returns Illuminate\\Http\\RedirectResponse\.$#'
+			identifier: return.type
 			count: 1
 			path: app/Http/Controllers/UserController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\UserController\\:\\:show\\(\\) should return Illuminate\\\\Http\\\\Response but return statement is missing\\.$#"
+			message: '#^Method App\\Http\\Controllers\\UserController\:\:show\(\) should return Illuminate\\Http\\Response but return statement is missing\.$#'
+			identifier: return.missing
 			count: 1
 			path: app/Http/Controllers/UserController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\UserController\\:\\:store\\(\\) should return Illuminate\\\\Http\\\\Response but return statement is missing\\.$#"
+			message: '#^Method App\\Http\\Controllers\\UserController\:\:store\(\) should return Illuminate\\Http\\Response but return statement is missing\.$#'
+			identifier: return.missing
 			count: 1
 			path: app/Http/Controllers/UserController.php
 
 		-
-			message: "#^Method Carbon\\\\Carbon\\:\\:addDay\\(\\) invoked with 1 parameter, 0 required\\.$#"
+			message: '#^Method Carbon\\Carbon\:\:addDay\(\) invoked with 1 parameter, 0 required\.$#'
+			identifier: arguments.count
 			count: 1
 			path: app/Http/Controllers/UserController.php
 
 		-
-			message: "#^Parameter \\#8 \\$inverse of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:morphToMany\\(\\) expects bool, string given\\.$#"
-			count: 1
-			path: app/Models/Comment.php
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$project\.$#'
+			identifier: property.notFound
+			count: 3
+			path: app/Policies/EntryPolicy.php
 
 		-
-			message: "#^Argument of an invalid type Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasMany\\<App\\\\Models\\\\MediaContent\\> supplied for foreach, only iterables are supported\\.$#"
-			count: 1
-			path: app/Models/Entry.php
-
-		-
-			message: "#^Method App\\\\Models\\\\MediaContent\\:\\:audiovisual\\(\\) should return Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\MorphToMany but returns Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo\\<App\\\\Models\\\\Audiovisual, App\\\\Models\\\\MediaContent\\>\\.$#"
-			count: 1
-			path: app/Models/MediaContent.php
-
-		-
-			message: "#^Method App\\\\Models\\\\MediaContent\\:\\:image\\(\\) should return Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\MorphToMany but returns Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo\\<App\\\\Models\\\\Image, App\\\\Models\\\\MediaContent\\>\\.$#"
-			count: 1
-			path: app/Models/MediaContent.php
-
-		-
-			message: "#^Method App\\\\Models\\\\MediaContent\\:\\:text\\(\\) should return Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\MorphToMany but returns Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo\\<App\\\\Models\\\\Text, App\\\\Models\\\\MediaContent\\>\\.$#"
-			count: 1
-			path: app/Models/MediaContent.php
-
-		-
-			message: "#^PHPDoc tag @var above a method has no effect\\.$#"
+			message: '#^PHPDoc tag @var above a method has no effect\.$#'
+			identifier: varTag.misplaced
 			count: 1
 			path: app/Providers/RouteServiceProvider.php
 
 		-
-			message: "#^PHPDoc tag @var does not specify variable name\\.$#"
-			count: 1
-			path: app/Providers/RouteServiceProvider.php
-
-		-
-			message: "#^Method App\\\\Services\\\\CommentRetrieve\\:\\:getComments\\(\\) should return Illuminate\\\\Http\\\\JsonResponse but returns array\\<string, mixed\\>\\.$#"
+			message: '#^Method App\\Services\\CommentRetrieve\:\:getComments\(\) should return Illuminate\\Http\\JsonResponse but returns array\<string, mixed\>\.$#'
+			identifier: return.type
 			count: 1
 			path: app/Services/CommentRetrieve.php
 
 		-
-			message: "#^Variable \\$pathReply might not be defined\\.$#"
+			message: '#^Variable \$pathReply might not be defined\.$#'
+			identifier: variable.undefined
 			count: 1
 			path: app/Services/CommentRetrieve.php
 
 		-
-			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$chapter_name\\.$#"
+			message: '#^Access to an undefined property Spatie\\Activitylog\\Models\\Activity\:\:\$chapter_name\.$#'
+			identifier: property.notFound
 			count: 1
 			path: app/Services/LogService.php
 
 		-
-			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$entry_name\\.$#"
+			message: '#^Access to an undefined property Spatie\\Activitylog\\Models\\Activity\:\:\$entry_name\.$#'
+			identifier: property.notFound
 			count: 1
 			path: app/Services/LogService.php
 
 		-
-			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$highlight\\.$#"
+			message: '#^Access to an undefined property Spatie\\Activitylog\\Models\\Activity\:\:\$highlight\.$#'
+			identifier: property.notFound
 			count: 1
 			path: app/Services/LogService.php
 
 		-
-			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$old\\.$#"
+			message: '#^Access to an undefined property Spatie\\Activitylog\\Models\\Activity\:\:\$old\.$#'
+			identifier: property.notFound
 			count: 1
 			path: app/Services/LogService.php
 
 		-
-			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$userName\\.$#"
+			message: '#^Access to an undefined property Spatie\\Activitylog\\Models\\Activity\:\:\$userName\.$#'
+			identifier: property.notFound
 			count: 1
 			path: app/Services/LogService.php
 
 		-
-			message: "#^Method App\\\\Services\\\\LogService\\:\\:getParentText\\(\\) should return Illuminate\\\\Support\\\\Collection but return statement is missing\\.$#"
+			message: '#^Method App\\Services\\LogService\:\:getParentText\(\) should return Illuminate\\Support\\Collection but return statement is missing\.$#'
+			identifier: return.missing
 			count: 1
 			path: app/Services/LogService.php
 
 		-
-			message: "#^Parameter \\#1 \\$string of function strspn expects string, int given\\.$#"
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$chapter_id\.$#'
+			identifier: property.notFound
 			count: 1
-			path: app/Services/LogService.php
-
-		-
-			message: "#^Undefined variable\\: \\$this$#"
-			count: 37
-			path: tests/Feature/AuthorizationTest.php
-
-		-
-			message: "#^Undefined variable\\: \\$this$#"
-			count: 8
 			path: tests/Feature/HappyPathTest.php
 
 		-
-			message: "#^Undefined variable\\: \\$this$#"
+			message: '#^Undefined variable\: \$this$#'
+			identifier: variable.undefined
 			count: 1
 			path: tests/Pest.php

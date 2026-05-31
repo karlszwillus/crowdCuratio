@@ -51,7 +51,7 @@ class Project extends Model
      * User hängen. `ProjectController::store()` setzt `user_id`
      * explizit über den Property-Setter aus `Auth::user()->id`.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $fillable = ['name', 'logo', 'imprint', 'terms', 'status', 'description'];
 

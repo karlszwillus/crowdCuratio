@@ -46,7 +46,7 @@ class MediaContent extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $fillable = ['media_content_id', 'media_contentable_id', 'media_contentable_type', 'position'];
 

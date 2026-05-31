@@ -33,10 +33,16 @@ class CreateAdminUserSeeder extends Seeder
     /**
      * Seed the initial admin user.
      *
-     * Reads ADMIN_EMAIL, ADMIN_PASSWORD and (optional) ADMIN_NAME from
-     * the environment. Refuses to run if the required values are
-     * missing — that prevents the historical "empty password admin"
-     * footgun (see ADR-0013, finding F-SEC-009).
+     * Reads admin.email, admin.password and (optional) admin.name from
+     * the application config (config/admin.php — gespeist aus
+     * ADMIN_EMAIL / ADMIN_PASSWORD / ADMIN_NAME / ADMIN_LAST_NAME in
+     * .env). Refuses to run if the required values are missing — das
+     * verhindert das historische "leeres Passwort Admin"-Footgun
+     * (siehe ADR-0013, Befund F-SEC-009).
+     *
+     * Der Umweg über config() statt env() ist nötig, damit
+     * `php artisan config:cache` den Seeder nicht aushebelt
+     * (Larastan-Regel `larastan.noEnvCallsOutsideOfConfig`).
      *
      * The seeder is idempotent: re-running it does not reset an
      * existing admin's password and does not duplicate the Admin role.
@@ -45,8 +51,8 @@ class CreateAdminUserSeeder extends Seeder
      */
     public function run()
     {
-        $email = env('ADMIN_EMAIL');
-        $password = env('ADMIN_PASSWORD');
+        $email = config('admin.email');
+        $password = config('admin.password');
 
         if (empty($email) || empty($password)) {
             throw new \RuntimeException(
@@ -59,8 +65,8 @@ class CreateAdminUserSeeder extends Seeder
         $user = User::firstOrCreate(
             ['email' => $email],
             [
-                'name' => env('ADMIN_NAME', 'Admin'),
-                'last_name' => env('ADMIN_LAST_NAME', ''),
+                'name' => config('admin.name', 'Admin'),
+                'last_name' => config('admin.last_name', ''),
                 'password' => Hash::make($password),
                 'email_verified_at' => now(),
             ]

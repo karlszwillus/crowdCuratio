@@ -44,7 +44,7 @@ class Chapter extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $fillable = ['project_id', 'name', 'subtitle', 'description', 'is_translated', 'position'];
 
