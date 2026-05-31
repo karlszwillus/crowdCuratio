@@ -16,6 +16,19 @@ ist durch, sechs weitere folgen.
 
 ### Geändert
 
+- **Laravel 9 → 10.** `composer.json` `laravel/framework` auf `^10.0`.
+  Mit ziehen: `spatie/laravel-permission ^6`, `spatie/laravel-translatable
+  ^6`, `spatie/laravel-ignition ^2`, `nunomaduro/collision ^7`,
+  `laravel/breeze ^1.21`, `pestphp/pest ^2`, `pestphp/pest-plugin-laravel
+  ^2`, `phpunit/phpunit ^10`. Pest 2 + PHPUnit 10 ist ein paralleler
+  Major-Sprung, der mit Laravel 10 zusammen passiert.
+- **Spatie-Permission v5 → v6 Middleware-Namespace.**
+  `Spatie\Permission\Middlewares\*` → `Spatie\Permission\Middleware\*`
+  (Singular). Imports in `app/Http/Kernel.php` entsprechend angepasst.
+- **PHPUnit-10-Konfig** in `phpunit.xml` migriert auf das neue Schema —
+  `<coverage>`-Block umgestellt, deprecated Attribute entfernt.
+- **`.gitignore`** ergänzt um `.phpunit.cache/` (PHPUnit-10-Verzeichnis)
+  und `*.bak` (Backup-Pattern für Schema-Migrations).
 - **PHP 8.3 → 8.4 + Laravel 8 → 9 (verschränkt).** ADR-0003 hatte
   PHP-erst-dann-Laravel festgelegt; an PHP 8.4 stieß Larastan v1 an
   ein hartes PHPStan-Versions-Limit (`IS_READONLY`-Type-Mismatch in
