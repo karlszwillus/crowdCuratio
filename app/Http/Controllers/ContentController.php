@@ -609,7 +609,12 @@ class ContentController extends Controller
     {
 
         if (Auth::user()->isAdmin()) {
-            $comments = Comment::with('User')->whereNotNull('project_id')->get();
+            // Larastan-v2 / Laravel-9-Sprung: Relation-Name ist lowercase
+            // (Eloquent-Konvention), das große 'User' war ein silenter
+            // Eager-Load-Bug — Spatie/Eloquent hat den Aufruf still
+            // ignoriert, ohne dass jemand das gemerkt hätte. Korrekter
+            // Pfad ist `user()`, definiert in Comment.php.
+            $comments = Comment::with('user')->whereNotNull('project_id')->get();
 
             return view('contents.comment', compact('comments'));
         }

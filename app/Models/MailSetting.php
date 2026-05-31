@@ -24,6 +24,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Translatable\HasTranslations;
 
@@ -31,11 +32,16 @@ class MailSetting extends Model
 {
     use HasFactory, HasTranslations, LogsActivity;
 
-    protected static $logFillable = true;
-
     public $table = 'mail';
 
     public $translatable = ['invitation'];
 
     protected $fillable = ['invitation'];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('MailSetting')
+            ->logFillable();
+    }
 }

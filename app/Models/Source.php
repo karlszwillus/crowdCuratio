@@ -34,7 +34,7 @@ class Source extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var array<int, string>
      */
     protected $fillable = ['content_id', 'name', 'type', 'is_translated'];
 

@@ -71,6 +71,7 @@ beforeEach(function () {
 // Suites (HappyPathTest etc.).
 
 test('Owner darf sein eigenes Project ändern', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $project = makeProject($owner);
 
@@ -87,9 +88,11 @@ test('Owner darf sein eigenes Project ändern', function () {
 });
 
 test('Admin darf jedes Project ändern', function () {
+    /** @var User $admin */
     $admin = User::factory()->create();
     $admin->assignRole('Admin');
 
+    /** @var User $owner */
     $owner = User::factory()->create();
     $project = makeProject($owner);
 
@@ -112,9 +115,11 @@ test('Admin darf jedes Project ändern', function () {
  * tatsächlich verändert. Genau das demonstriert der Test.
  */
 test('Intruder darf fremdes Project NICHT ändern (B-3)', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $project = makeProject($owner);
 
+    /** @var User $intruder */
     $intruder = User::factory()->create();
 
     $response = $this->actingAs($intruder)->put(
@@ -138,9 +143,11 @@ test('Intruder darf fremdes Project NICHT ändern (B-3)', function () {
  * fremde Projects löschen.
  */
 test('Intruder darf fremdes Project NICHT löschen (B-4)', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $project = makeProject($owner);
 
+    /** @var User $intruder */
     $intruder = User::factory()->create();
 
     $response = $this->actingAs($intruder)->delete(
@@ -157,6 +164,7 @@ test('Intruder darf fremdes Project NICHT löschen (B-4)', function () {
  * (Owner muss seine Rechte behalten).
  */
 test('Owner darf sein eigenes Project löschen', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $project = makeProject($owner);
 
@@ -173,6 +181,7 @@ test('Owner darf sein eigenes Project löschen', function () {
 // ----------------------------------------------------------------------
 
 test('Owner darf eigenes Chapter ändern', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $chapter = makeChapter(makeProject($owner));
 
@@ -191,9 +200,11 @@ test('Owner darf eigenes Chapter ändern', function () {
 });
 
 test('Admin darf jedes Chapter ändern', function () {
+    /** @var User $admin */
     $admin = User::factory()->create();
     $admin->assignRole('Admin');
 
+    /** @var User $owner */
     $owner = User::factory()->create();
     $chapter = makeChapter(makeProject($owner));
 
@@ -212,9 +223,11 @@ test('Admin darf jedes Chapter ändern', function () {
 });
 
 test('Intruder darf fremdes Chapter NICHT ändern (B-3a)', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $chapter = makeChapter(makeProject($owner));
 
+    /** @var User $intruder */
     $intruder = User::factory()->create();
 
     $response = $this->actingAs($intruder)->put(
@@ -232,10 +245,12 @@ test('Intruder darf fremdes Chapter NICHT ändern (B-3a)', function () {
 });
 
 test('Intruder darf fremdes Chapter NICHT löschen (B-4a)', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $project = makeProject($owner);
     $chapter = makeChapter($project);
 
+    /** @var User $intruder */
     $intruder = User::factory()->create();
 
     $response = $this->actingAs($intruder)->delete(
@@ -252,6 +267,7 @@ test('Intruder darf fremdes Chapter NICHT löschen (B-4a)', function () {
 // ----------------------------------------------------------------------
 
 test('Owner darf eigenen Entry ändern', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $entry = makeEntry(makeChapter(makeProject($owner)));
 
@@ -270,9 +286,11 @@ test('Owner darf eigenen Entry ändern', function () {
 });
 
 test('Admin darf jeden Entry ändern', function () {
+    /** @var User $admin */
     $admin = User::factory()->create();
     $admin->assignRole('Admin');
 
+    /** @var User $owner */
     $owner = User::factory()->create();
     $entry = makeEntry(makeChapter(makeProject($owner)));
 
@@ -291,9 +309,11 @@ test('Admin darf jeden Entry ändern', function () {
 });
 
 test('Intruder darf fremden Entry NICHT ändern (B-3b)', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $entry = makeEntry(makeChapter(makeProject($owner)));
 
+    /** @var User $intruder */
     $intruder = User::factory()->create();
 
     $response = $this->actingAs($intruder)->put(
@@ -311,10 +331,12 @@ test('Intruder darf fremden Entry NICHT ändern (B-3b)', function () {
 });
 
 test('Intruder darf fremden Entry NICHT löschen (B-4b)', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $project = makeProject($owner);
     $entry = makeEntry(makeChapter($project));
 
+    /** @var User $intruder */
     $intruder = User::factory()->create();
 
     $response = $this->actingAs($intruder)->delete(
@@ -337,9 +359,11 @@ test('Intruder darf fremden Entry NICHT löschen (B-4b)', function () {
 // ----------------------------------------------------------------------
 
 test('Intruder darf in fremdem Project KEIN Chapter anlegen (NF-LAR-003a)', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $project = makeProject($owner);
 
+    /** @var User $intruder */
     $intruder = User::factory()->create();
 
     $response = $this->actingAs($intruder)->post(
@@ -357,9 +381,11 @@ test('Intruder darf in fremdem Project KEIN Chapter anlegen (NF-LAR-003a)', func
 });
 
 test('Admin darf in fremdem Project ein Chapter anlegen (NF-LAR-003a)', function () {
+    /** @var User $admin */
     $admin = User::factory()->create();
     $admin->assignRole('Admin');
 
+    /** @var User $owner */
     $owner = User::factory()->create();
     $project = makeProject($owner);
 
@@ -378,9 +404,11 @@ test('Admin darf in fremdem Project ein Chapter anlegen (NF-LAR-003a)', function
 });
 
 test('Intruder darf in fremdem Chapter KEINEN Entry anlegen (NF-LAR-003b)', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $chapter = makeChapter(makeProject($owner));
 
+    /** @var User $intruder */
     $intruder = User::factory()->create();
 
     $response = $this->actingAs($intruder)->post(
@@ -398,9 +426,11 @@ test('Intruder darf in fremdem Chapter KEINEN Entry anlegen (NF-LAR-003b)', func
 });
 
 test('Admin darf in fremdem Chapter einen Entry anlegen (NF-LAR-003b)', function () {
+    /** @var User $admin */
     $admin = User::factory()->create();
     $admin->assignRole('Admin');
 
+    /** @var User $owner */
     $owner = User::factory()->create();
     $chapter = makeChapter(makeProject($owner));
 
@@ -427,6 +457,7 @@ test('Admin darf in fremdem Chapter einen Entry anlegen (NF-LAR-003b)', function
 // ----------------------------------------------------------------------
 
 test('StoreChapterRequest: chapterTitle ist Pflicht', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $project = makeProject($owner);
 
@@ -444,6 +475,7 @@ test('StoreChapterRequest: chapterTitle ist Pflicht', function () {
 });
 
 test('UpdateChapterRequest: chapterTitle ist Pflicht', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $chapter = makeChapter(makeProject($owner));
 
@@ -460,6 +492,7 @@ test('UpdateChapterRequest: chapterTitle ist Pflicht', function () {
 });
 
 test('StoreEntryRequest: entryTitle ist Pflicht', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $chapter = makeChapter(makeProject($owner));
 
@@ -476,6 +509,7 @@ test('StoreEntryRequest: entryTitle ist Pflicht', function () {
 });
 
 test('UpdateEntryRequest: entryTitle ist Pflicht', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $entry = makeEntry(makeChapter(makeProject($owner)));
 
@@ -500,6 +534,7 @@ test('UpdateEntryRequest: entryTitle ist Pflicht', function () {
 // ----------------------------------------------------------------------
 
 test('Owner darf Chapter via PATCH ändern (D.12)', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $chapter = makeChapter(makeProject($owner));
 
@@ -515,6 +550,7 @@ test('Owner darf Chapter via PATCH ändern (D.12)', function () {
 });
 
 test('Owner darf Entry via PATCH ändern (D.13)', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $entry = makeEntry(makeChapter(makeProject($owner)));
 
@@ -535,6 +571,7 @@ test('Owner darf Entry via PATCH ändern (D.13)', function () {
 // ----------------------------------------------------------------------
 
 test('StoreProjectRequest: name ist Pflicht', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     // ProjectController hat middleware('permission:add', […create, store]).
     // Ohne add-Permission wirft die Spatie-Middleware vor dem FormRequest,
@@ -556,6 +593,7 @@ test('StoreProjectRequest: name ist Pflicht', function () {
 });
 
 test('UpdateProjectRequest: name ist Pflicht', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $project = makeProject($owner);
 
@@ -574,6 +612,7 @@ test('UpdateProjectRequest: name ist Pflicht', function () {
 });
 
 test('UpdateProjectRequest: project_image akzeptiert nur Bild-MIME-Typen (NF-SEC-001)', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $project = makeProject($owner);
 
@@ -607,6 +646,7 @@ test('RegisterRequest: firstName ist Pflicht (Admin-Einladung)', function () {
     // Doppel-Route guest/auth) ist mit beseitigt; ein
     // Self-Service-Gast-Pfad existiert nicht mehr und wird auch
     // nicht getestet.
+    /** @var User $admin */
     $admin = User::factory()->create();
     $admin->assignRole('Admin');
 
@@ -643,6 +683,7 @@ test('RegisterRequest: firstName ist Pflicht (Admin-Einladung)', function () {
 // ----------------------------------------------------------------------
 
 test('NF-SEC-202: non-Admin kann keinen User über /register anlegen', function () {
+    /** @var User $intruder */
     $intruder = User::factory()->create();
     // keine Rolle — `role:Admin`-Route-Middleware muss 403 liefern.
 
@@ -662,6 +703,7 @@ test('NF-SEC-202: non-Admin kann keinen User über /register anlegen', function 
 });
 
 test('NF-SEC-202: Admin kann Admin-Einladung anlegen, is_admin wird gesetzt', function () {
+    /** @var User $admin */
     $admin = User::factory()->create();
     $admin->assignRole('Admin');
 
@@ -683,6 +725,7 @@ test('NF-SEC-202: Admin kann Admin-Einladung anlegen, is_admin wird gesetzt', fu
 });
 
 test('NF-SEC-202: Admin lädt regulären User ein — is_admin bleibt false', function () {
+    /** @var User $admin */
     $admin = User::factory()->create();
     $admin->assignRole('Admin');
     Role::firstOrCreate(['name' => 'Editor', 'guard_name' => 'web']);
@@ -727,6 +770,7 @@ test('NF-SEC-202: Gast wird auf Login umgeleitet (auth-Middleware vor role:Admin
 // ----------------------------------------------------------------------
 
 test('NF-SEC-201: image.store weist ungültigen MIME ab (.php-Datei)', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
 
     $response = $this->actingAs($owner)
@@ -743,6 +787,7 @@ test('NF-SEC-201: image.store weist ungültigen MIME ab (.php-Datei)', function 
 });
 
 test('NF-SEC-201: image.store weist zu großes File ab (>4 MB)', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
 
     $response = $this->actingAs($owner)
@@ -760,6 +805,7 @@ test('NF-SEC-201: image.store weist zu großes File ab (>4 MB)', function () {
 });
 
 test('NF-SEC-201: save.audiovisual weist nicht-Audio-MIME ab (.exe)', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
 
     $response = $this->actingAs($owner)
@@ -814,6 +860,7 @@ test('F-API-009: Intruder kann kein chapter-reorder in fremdem Project', functio
     $project = makeProject($owner);
     $chapter = makeChapter($project, ['name' => 'Kapitel A', 'position' => 0]);
 
+    /** @var User $intruder */
     $intruder = User::factory()->create();
 
     $response = $this->actingAs($intruder)

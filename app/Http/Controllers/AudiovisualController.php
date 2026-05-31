@@ -26,6 +26,7 @@ use App\Http\Requests\StoreAudiovisualRequest;
 use App\Models\Audiovisual;
 use App\Models\MediaContent;
 use App\Traits\UploadTrait;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -50,7 +51,7 @@ class AudiovisualController extends Controller
      * Whitelist (audio/mpeg, audio/mp4, audio/wav, audio/ogg,
      * audio/x-m4a) und 20-MB-Limit greifen vor dem Methoden-Body.
      *
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function store(StoreAudiovisualRequest $request)
     {
@@ -102,7 +103,7 @@ class AudiovisualController extends Controller
     /**
      * Delete audiovisual
      *
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function delete(Request $request, $id)
     {
@@ -206,7 +207,7 @@ class AudiovisualController extends Controller
     /**
      * Comment or reply on audiovisual
      *
-     * @return $this|\Illuminate\Http\RedirectResponse
+     * @return $this|RedirectResponse
      */
     public function commentAudiovisual(Request $request, Audiovisual $audiovisual)
     {
@@ -229,7 +230,7 @@ class AudiovisualController extends Controller
     /**
      * New comment on audiovisual
      *
-     * @return \Illuminate\Http\RedirectResponse
+     * @return RedirectResponse
      */
     public function audiovisualCommentSave(Request $request, Audiovisual $audiovisual)
     {

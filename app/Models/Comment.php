@@ -24,8 +24,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Lang;
+use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Translatable\HasTranslations;
@@ -34,18 +38,12 @@ class Comment extends Model
 {
     use HasFactory, HasTranslations, LogsActivity, SoftDeletes;
 
-    protected static $logName = 'Entry';
-
-    protected static $logFillable = true;
-
-    protected static $logOnlyDirty = true;
-
     public $timestamps = false;
 
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var array<int, string>
      */
     protected $fillable = [
         'user_id',
@@ -74,7 +72,7 @@ class Comment extends Model
     /**
      * Get chapter
      *
-     * @return \Illuminate\Database\Eloquent\Relations\MorphToMany
+     * @return MorphToMany
      */
     public function chapter()
     {
@@ -84,7 +82,7 @@ class Comment extends Model
     /**
      * relationship
      *
-     * @return \Illuminate\Database\Eloquent\Relations\MorphTo
+     * @return MorphTo
      */
     public function commentable()
     {
@@ -94,7 +92,7 @@ class Comment extends Model
     /**
      * Get media
      *
-     * @return \Illuminate\Database\Eloquent\Relations\MorphToMany
+     * @return MorphToMany
      */
     public function media()
     {
@@ -113,7 +111,7 @@ class Comment extends Model
     /**
      * Get project
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function project()
     {
@@ -123,7 +121,7 @@ class Comment extends Model
     /**
      * Get content
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function content()
     {
@@ -138,5 +136,13 @@ class Comment extends Model
         $activity->properties = $activity->properties->merge([
             'language' => Lang::getLocale(),
         ]);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('Entry')
+            ->logFillable()
+            ->logOnlyDirty();
     }
 }

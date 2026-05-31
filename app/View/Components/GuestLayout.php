@@ -23,13 +23,14 @@ If not, see <https://www.gnu.org/licenses/>.
 namespace App\View\Components;
 
 use Illuminate\View\Component;
+use Illuminate\View\View;
 
 class GuestLayout extends Component
 {
     /**
      * Get the view / contents that represents the component.
      *
-     * @return \Illuminate\View\View
+     * @return View
      */
     public function render()
     {

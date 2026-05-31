@@ -25,8 +25,11 @@ namespace App\Models;
 use App\Traits\CommentTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Lang;
+use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Permission\Traits\HasPermissions;
@@ -36,15 +39,7 @@ class Project extends Model
 {
     use CommentTrait, HasFactory, HasPermissions, HasTranslations,LogsActivity, SoftDeletes;
 
-    protected static $logName = 'Project';
-
-    protected static $logFillable = true;
-
-    protected static $logOnlyDirty = true;
-
     protected $guard_name = 'web';
-
-    protected static $submitEmptyLogs = false;
 
     /**
      * The attributes that are mass assignable.
@@ -56,7 +51,7 @@ class Project extends Model
      * User hängen. `ProjectController::store()` setzt `user_id`
      * explizit über den Property-Setter aus `Auth::user()->id`.
      *
-     * @var array
+     * @var array<int, string>
      */
     protected $fillable = ['name', 'logo', 'imprint', 'terms', 'status', 'description'];
 
@@ -89,7 +84,7 @@ class Project extends Model
     /**
      * Get comments
      *
-     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
+     * @return MorphMany
      */
     public function comments()
     {
@@ -99,7 +94,7 @@ class Project extends Model
     /**
      * Granted users
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function permittedUsers()
     {
@@ -109,7 +104,7 @@ class Project extends Model
     /**
      * Grant user's right
      *
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     * @return HasMany
      */
     public function grantUserRights()
     {
@@ -183,5 +178,14 @@ class Project extends Model
     public function scopeWithCopyrightTree($query)
     {
         return $query->with('chapters');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('Project')
+            ->logFillable()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 }

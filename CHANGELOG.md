@@ -16,6 +16,43 @@ ist durch, sechs weitere folgen.
 
 ### Geändert
 
+- **PHP 8.3 → 8.4 + Laravel 8 → 9 (verschränkt).** ADR-0003 hatte
+  PHP-erst-dann-Laravel festgelegt; an PHP 8.4 stieß Larastan v1 an
+  ein hartes PHPStan-Versions-Limit (`IS_READONLY`-Type-Mismatch in
+  PHPStan-BetterReflection-Stubs), und Larastan v2 verlangt Laravel 9.
+  Pragmatische Korrektur: beide Major-Sprünge in einem Branch
+  zusammengelegt. Elf Composer-Constraints simultan gebumpt:
+  `laravel/framework ^9`, `nunomaduro/larastan ^2`,
+  `spatie/laravel-{permission ^5, activitylog ^4, translatable ^5}`,
+  `laravelcollective/html ^6.4`, `laravel/breeze ^1.9`,
+  `nunomaduro/collision ^6`, `facade/ignition` raus →
+  `spatie/laravel-ignition ^1`, `fideloper/proxy` raus.
+- **Spatie-Activitylog v3 → v4 — neue API-Konvention.** Statische
+  Properties (`$logName`, `$logFillable`, `$logOnlyDirty`,
+  `$submitEmptyLogs`) sind in v4 entfernt, jedes Modell mit
+  `LogsActivity` braucht jetzt eine `getActivitylogOptions():
+  LogOptions`-Methode. 18 Modelle entsprechend angepasst, zwei neue
+  Schema-Spalten (`batch_uuid`, `event`) per veröffentlichten
+  Migrations in der DB ergänzt.
+- **`App\Http\Middleware\TrustProxies`** extends jetzt
+  `Illuminate\Http\Middleware\TrustProxies` (Laravel-9-eigene
+  Implementation, `fideloper/proxy` obsolet).
+- **Laravel-9-PHPDoc-Generics nachgezogen.** 30+ App-Stellen:
+  `@var array` → `@var array<int, string>` etc. auf
+  `$middleware`/`$middlewareGroups`/`$routeMiddleware`,
+  `$except` in 4 Middleware-Klassen, `$fillable` in 18 Modellen,
+  `$policies`/`$listen` in den Providern, plus
+  `App\Exceptions\Handler` Generics.
+- **Test-Suite-Annotationen.** 51 `/** @var \App\Models\User */`-
+  Hints in 5 Test-Dateien — Larastan-v2-Inferenz hatte
+  `User::factory()->create()` als `Illuminate\Database\Eloquent\Model`
+  gesehen und Folgeoperationen (`assignRole`, `givePermissionTo`,
+  `makeProject`-Helper, `actingAs`, `$user->email/id`) als Type-
+  Mismatch gemeldet.
+- **Larastan-Baseline komplett regeneriert** — 130 Einträge gegen
+  v2-Inferenz, ersetzt die Phase-2-Baseline (~200 v1-Einträge,
+  davon viele Duplikate). Phase-4-Plan „Larastan-Baseline aktiv
+  abbauen" gewinnt damit eine präzise Liste.
 - **PHP 8.2 → 8.3.** `composer.json` `require.php` von `^8.2` auf
   `^8.3`. Container-Build neu unter `docker/8.3/`. CI-Workflow auf
   allen vier Jobs auf PHP 8.3. Ubuntu noble und Node 22 bleiben aus

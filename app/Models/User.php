@@ -23,11 +23,13 @@ If not, see <https://www.gnu.org/licenses/>.
 namespace App\Models;
 
 use App\Http\Controllers\Auth\MyCustomWelcomeNotification;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Permission\Traits\HasRoles;
 use Spatie\WelcomeNotification\ReceivesWelcomeNotification;
@@ -35,14 +37,6 @@ use Spatie\WelcomeNotification\ReceivesWelcomeNotification;
 class User extends Authenticatable
 {
     use HasFactory, HasRoles, LogsActivity, Notifiable, ReceivesWelcomeNotification, SoftDeletes;
-
-    protected static $logName = 'User';
-
-    protected static $logFillable = true;
-
-    protected static $logOnlyDirty = true;
-
-    protected static $submitEmptyLogs = false;
 
     /**
      * The attributes that are mass assignable.
@@ -57,7 +51,7 @@ class User extends Authenticatable
      * `created_at` gehört ebenfalls nicht ins `$fillable`; Laravel
      * pflegt es als Timestamp automatisch.
      *
-     * @var array
+     * @var array<int, string>
      */
     protected $fillable = [
         'name',
@@ -69,7 +63,7 @@ class User extends Authenticatable
     /**
      * The attributes that should be hidden for arrays.
      *
-     * @var array
+     * @var array<int, string>
      */
     protected $hidden = [
         'password',
@@ -79,7 +73,7 @@ class User extends Authenticatable
     /**
      * The attributes that should be cast to native types.
      *
-     * @var array
+     * @var array<string, string>
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
@@ -114,7 +108,7 @@ class User extends Authenticatable
         return $this->hasMany(Project::class);
     }
 
-    public function sendWelcomeNotification(\Carbon\Carbon $validUntil, $firstName, $settingsContent)
+    public function sendWelcomeNotification(Carbon $validUntil, $firstName, $settingsContent)
     {
         $this->notify(new MyCustomWelcomeNotification($validUntil, $firstName, $settingsContent));
     }
@@ -122,5 +116,14 @@ class User extends Authenticatable
     public function currentRole()
     {
         return $this->belongsToMany(Role::class, 'model_has_roles', 'model_id', 'role_id');
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('User')
+            ->logFillable()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 }

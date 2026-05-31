@@ -21,6 +21,7 @@ If not, see <https://www.gnu.org/licenses/>.
  */
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -63,7 +64,7 @@ class ConvertTextsToInnodb extends Migration
         $this->dropForeignKeyIfExists('texts', 'texts_origin_foreign');
         $this->dropForeignKeyIfExists('texts', 'texts_copyright_foreign');
 
-        Schema::table('texts', function (Illuminate\Database\Schema\Blueprint $table): void {
+        Schema::table('texts', function (Blueprint $table): void {
             $table->foreign('origin', 'texts_origin_foreign')
                 ->references('id')->on('sources')
                 ->onUpdate('restrict')
@@ -83,7 +84,7 @@ class ConvertTextsToInnodb extends Migration
         // erwecken, der Roll-back habe funktioniert. RuntimeException
         // ist die ehrlichste Antwort: wer wirklich zurück will, muss
         // einen eigenen Schritt schreiben und das Risiko bewusst tragen.
-        throw new \RuntimeException(
+        throw new RuntimeException(
             'Rollback to MyISAM is not supported — siehe ADR-0010 '
             .'für die Begründung.'
         );

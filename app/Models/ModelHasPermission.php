@@ -24,22 +24,25 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 class ModelHasPermission extends Model
 {
     use HasFactory, LogsActivity;
 
-    protected static $logName = 'ModelHasPermission';
-
-    protected static $logFillable = true;
-
-    protected static $logOnlyDirty = true;
-
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var array<int, string>
      */
     protected $fillable = ['permission_id', 'model_type', 'model_id', 'project_id'];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('ModelHasPermission')
+            ->logFillable()
+            ->logOnlyDirty();
+    }
 }

@@ -1,26 +1,6 @@
 parameters:
 	ignoreErrors:
 		-
-			message: "#^PHPDoc type array of property App\\\\Exceptions\\\\Handler\\:\\:\\$dontFlash is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Foundation\\\\Exceptions\\\\Handler\\:\\:\\$dontFlash\\.$#"
-			count: 1
-			path: app/Exceptions/Handler.php
-
-		-
-			message: "#^PHPDoc type array of property App\\\\Exceptions\\\\Handler\\:\\:\\$dontReport is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Foundation\\\\Exceptions\\\\Handler\\:\\:\\$dontReport\\.$#"
-			count: 1
-			path: app/Exceptions/Handler.php
-
-		-
-			message: "#^Variable \\$audio might not be defined\\.$#"
-			count: 2
-			path: app/Http/Controllers/AudiovisualController.php
-
-		-
-			message: "#^Variable \\$name might not be defined\\.$#"
-			count: 2
-			path: app/Http/Controllers/AudiovisualController.php
-
-		-
 			message: "#^Method App\\\\Http\\\\Controllers\\\\Auth\\\\EmailVerificationNotificationController\\:\\:store\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
 			count: 2
 			path: app/Http/Controllers/Auth/EmailVerificationNotificationController.php
@@ -41,6 +21,11 @@ parameters:
 			path: app/Http/Controllers/Auth/RegisteredUserController.php
 
 		-
+			message: "#^Parameter \\#1 \\$user of class Illuminate\\\\Auth\\\\Events\\\\Verified constructor expects Illuminate\\\\Contracts\\\\Auth\\\\MustVerifyEmail, App\\\\Models\\\\User\\|null given\\.$#"
+			count: 1
+			path: app/Http/Controllers/Auth/VerifyEmailController.php
+
+		-
 			message: "#^Method App\\\\Http\\\\Controllers\\\\ChapterController\\:\\:destroy\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
 			count: 1
 			path: app/Http/Controllers/ChapterController.php
@@ -52,11 +37,6 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Http\\\\Controllers\\\\ChapterController\\:\\:saveComment\\(\\) should return Illuminate\\\\Http\\\\RedirectResponse but return statement is missing\\.$#"
-			count: 1
-			path: app/Http/Controllers/ChapterController.php
-
-		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\ChapterController\\:\\:update\\(\\) should return \\$this\\(App\\\\Http\\\\Controllers\\\\ChapterController\\) but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
 			count: 1
 			path: app/Http/Controllers/ChapterController.php
 
@@ -77,6 +57,16 @@ parameters:
 
 		-
 			message: "#^Method App\\\\Http\\\\Controllers\\\\ContentController\\:\\:saveCommentText\\(\\) should return Illuminate\\\\Http\\\\RedirectResponse but return statement is missing\\.$#"
+			count: 1
+			path: app/Http/Controllers/ContentController.php
+
+		-
+			message: "#^Negated boolean expression is always true\\.$#"
+			count: 1
+			path: app/Http/Controllers/ContentController.php
+
+		-
+			message: "#^Relation 'user' is not found in App\\\\Models\\\\Comment model\\.$#"
 			count: 1
 			path: app/Http/Controllers/ContentController.php
 
@@ -116,52 +106,27 @@ parameters:
 			path: app/Http/Controllers/EntryController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\EntryController\\:\\:store\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
-			count: 2
-			path: app/Http/Controllers/EntryController.php
-
-		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\EntryController\\:\\:update\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
-			count: 1
-			path: app/Http/Controllers/EntryController.php
-
-		-
-			message: "#^Access to an undefined property App\\\\Models\\\\Audiovisual\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<App\\\\Models\\\\Audiovisual\\>\\:\\:\\$media_id\\.$#"
+			message: "#^Access to an undefined property App\\\\Models\\\\Audiovisual\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, App\\\\Models\\\\Audiovisual\\>\\:\\:\\$media_id\\.$#"
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: "#^Access to an undefined property App\\\\Models\\\\Gallery\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<App\\\\Models\\\\Gallery\\>\\:\\:\\$image_list\\.$#"
+			message: "#^Access to an undefined property App\\\\Models\\\\Gallery\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, App\\\\Models\\\\Gallery\\>\\:\\:\\$image_list\\.$#"
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: "#^Access to an undefined property App\\\\Models\\\\Gallery\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<App\\\\Models\\\\Gallery\\>\\:\\:\\$media_id\\.$#"
+			message: "#^Access to an undefined property App\\\\Models\\\\Gallery\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, App\\\\Models\\\\Gallery\\>\\:\\:\\$media_id\\.$#"
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: "#^Access to an undefined property App\\\\Models\\\\Project\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<App\\\\Models\\\\Project\\>\\:\\:\\$chapters\\.$#"
+			message: "#^Access to an undefined property App\\\\Models\\\\Project\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, App\\\\Models\\\\Project\\>\\:\\:\\$chapters\\.$#"
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: "#^Access to an undefined property App\\\\Models\\\\Text\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<App\\\\Models\\\\Text\\>\\:\\:\\$media_id\\.$#"
-			count: 1
-			path: app/Http/Controllers/ProjectController.php
-
-		-
-			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$created_at\\.$#"
-			count: 1
-			path: app/Http/Controllers/ProjectController.php
-
-		-
-			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$subject_id\\.$#"
-			count: 1
-			path: app/Http/Controllers/ProjectController.php
-
-		-
-			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$subject_type\\.$#"
+			message: "#^Access to an undefined property App\\\\Models\\\\Text\\|Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<int, App\\\\Models\\\\Text\\>\\:\\:\\$media_id\\.$#"
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
@@ -216,7 +181,7 @@ parameters:
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\ProjectController\\:\\:getUsersForThisProject\\(\\) should return bool but returns array\\<int\\|string, array\\<string, array\\|string\\>\\>\\.$#"
+			message: "#^Method App\\\\Http\\\\Controllers\\\\ProjectController\\:\\:getUsersForThisProject\\(\\) should return bool but returns array\\<int, array\\<string, array\\|string\\>\\>\\.$#"
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
@@ -241,12 +206,7 @@ parameters:
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\ProjectController\\:\\:store\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
-			count: 1
-			path: app/Http/Controllers/ProjectController.php
-
-		-
-			message: "#^Method App\\\\Http\\\\Controllers\\\\ProjectController\\:\\:update\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\Http\\\\RedirectResponse\\.$#"
+			message: "#^Negated boolean expression is always true\\.$#"
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
@@ -261,19 +221,9 @@ parameters:
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: "#^Parameter \\#1 \\$view of function view expects view\\-string\\|null, string given\\.$#"
-			count: 1
-			path: app/Http/Controllers/ProjectController.php
-
-		-
 			message: "#^Unreachable statement \\- code above always terminates\\.$#"
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
-
-		-
-			message: "#^Access to an undefined property Spatie\\\\Permission\\\\Models\\\\Role\\:\\:\\$name\\.$#"
-			count: 1
-			path: app/Http/Controllers/RoleController.php
 
 		-
 			message: "#^Method App\\\\Http\\\\Controllers\\\\RoleController\\:\\:create\\(\\) should return Illuminate\\\\Http\\\\Response but returns Illuminate\\\\View\\\\View\\.$#"
@@ -316,6 +266,11 @@ parameters:
 			path: app/Http/Controllers/SettingController.php
 
 		-
+			message: "#^Negated boolean expression is always true\\.$#"
+			count: 3
+			path: app/Http/Controllers/SettingController.php
+
+		-
 			message: "#^Method App\\\\Http\\\\Controllers\\\\UserController\\:\\:create\\(\\) should return Illuminate\\\\Http\\\\Response but return statement is missing\\.$#"
 			count: 1
 			path: app/Http/Controllers/UserController.php
@@ -351,44 +306,9 @@ parameters:
 			path: app/Http/Controllers/UserController.php
 
 		-
-			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$properties\\.$#"
-			count: 2
-			path: app/Models/Audiovisual.php
-
-		-
-			message: "#^PHPDoc type array of property App\\\\Models\\\\Audiovisual\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
-			count: 1
-			path: app/Models/Audiovisual.php
-
-		-
-			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$properties\\.$#"
-			count: 2
-			path: app/Models/Chapter.php
-
-		-
-			message: "#^PHPDoc type array of property App\\\\Models\\\\Chapter\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
-			count: 1
-			path: app/Models/Chapter.php
-
-		-
-			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$properties\\.$#"
-			count: 2
-			path: app/Models/Comment.php
-
-		-
-			message: "#^PHPDoc type array of property App\\\\Models\\\\Comment\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
-			count: 1
-			path: app/Models/Comment.php
-
-		-
 			message: "#^Parameter \\#8 \\$inverse of method Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:morphToMany\\(\\) expects bool, string given\\.$#"
 			count: 1
 			path: app/Models/Comment.php
-
-		-
-			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$properties\\.$#"
-			count: 2
-			path: app/Models/Entry.php
 
 		-
 			message: "#^Argument of an invalid type Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\HasMany\\<App\\\\Models\\\\MediaContent\\> supplied for foreach, only iterables are supported\\.$#"
@@ -396,129 +316,19 @@ parameters:
 			path: app/Models/Entry.php
 
 		-
-			message: "#^PHPDoc type array of property App\\\\Models\\\\Entry\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
-			count: 1
-			path: app/Models/Entry.php
-
-		-
-			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$properties\\.$#"
-			count: 2
-			path: app/Models/Gallery.php
-
-		-
-			message: "#^PHPDoc type array of property App\\\\Models\\\\Gallery\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
-			count: 1
-			path: app/Models/Gallery.php
-
-		-
-			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$properties\\.$#"
-			count: 2
-			path: app/Models/Image.php
-
-		-
-			message: "#^PHPDoc type array of property App\\\\Models\\\\Image\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
-			count: 1
-			path: app/Models/Image.php
-
-		-
-			message: "#^PHPDoc type array of property App\\\\Models\\\\Invitation\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
-			count: 1
-			path: app/Models/Invitation.php
-
-		-
-			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$properties\\.$#"
-			count: 2
-			path: app/Models/MediaContent.php
-
-		-
-			message: "#^Method App\\\\Models\\\\MediaContent\\:\\:audiovisual\\(\\) should return Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\MorphToMany but returns Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo\\<App\\\\Models\\\\Audiovisual\\>\\.$#"
+			message: "#^Method App\\\\Models\\\\MediaContent\\:\\:audiovisual\\(\\) should return Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\MorphToMany but returns Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo\\<App\\\\Models\\\\Audiovisual, App\\\\Models\\\\MediaContent\\>\\.$#"
 			count: 1
 			path: app/Models/MediaContent.php
 
 		-
-			message: "#^Method App\\\\Models\\\\MediaContent\\:\\:image\\(\\) should return Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\MorphToMany but returns Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo\\<App\\\\Models\\\\Image\\>\\.$#"
+			message: "#^Method App\\\\Models\\\\MediaContent\\:\\:image\\(\\) should return Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\MorphToMany but returns Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo\\<App\\\\Models\\\\Image, App\\\\Models\\\\MediaContent\\>\\.$#"
 			count: 1
 			path: app/Models/MediaContent.php
 
 		-
-			message: "#^Method App\\\\Models\\\\MediaContent\\:\\:text\\(\\) should return Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\MorphToMany but returns Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo\\<App\\\\Models\\\\Text\\>\\.$#"
+			message: "#^Method App\\\\Models\\\\MediaContent\\:\\:text\\(\\) should return Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\MorphToMany but returns Illuminate\\\\Database\\\\Eloquent\\\\Relations\\\\BelongsTo\\<App\\\\Models\\\\Text, App\\\\Models\\\\MediaContent\\>\\.$#"
 			count: 1
 			path: app/Models/MediaContent.php
-
-		-
-			message: "#^PHPDoc type array of property App\\\\Models\\\\MediaContent\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
-			count: 1
-			path: app/Models/MediaContent.php
-
-		-
-			message: "#^PHPDoc type array of property App\\\\Models\\\\ModelHasPermission\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
-			count: 1
-			path: app/Models/ModelHasPermission.php
-
-		-
-			message: "#^PHPDoc type array of property App\\\\Models\\\\ModelHasRole\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
-			count: 1
-			path: app/Models/ModelHasRole.php
-
-		-
-			message: "#^PHPDoc type array of property App\\\\Models\\\\Permission\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
-			count: 1
-			path: app/Models/Permission.php
-
-		-
-			message: "#^PHPDoc type array of property App\\\\Models\\\\PermissionDescription\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
-			count: 1
-			path: app/Models/PermissionDescription.php
-
-		-
-			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$properties\\.$#"
-			count: 2
-			path: app/Models/Project.php
-
-		-
-			message: "#^PHPDoc type array of property App\\\\Models\\\\Project\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
-			count: 1
-			path: app/Models/Project.php
-
-		-
-			message: "#^PHPDoc type array of property App\\\\Models\\\\Role\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
-			count: 1
-			path: app/Models/Role.php
-
-		-
-			message: "#^PHPDoc type array of property App\\\\Models\\\\Source\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
-			count: 1
-			path: app/Models/Source.php
-
-		-
-			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$properties\\.$#"
-			count: 2
-			path: app/Models/Text.php
-
-		-
-			message: "#^PHPDoc type array of property App\\\\Models\\\\Text\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
-			count: 1
-			path: app/Models/Text.php
-
-		-
-			message: "#^PHPDoc type array of property App\\\\Models\\\\User\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
-			count: 1
-			path: app/Models/User.php
-
-		-
-			message: "#^PHPDoc type array of property App\\\\Models\\\\UserHasPermission\\:\\:\\$fillable is not covariant with PHPDoc type array\\<string\\> of overridden property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$fillable\\.$#"
-			count: 1
-			path: app/Models/UserHasPermission.php
-
-		-
-			message: "#^Access to an undefined property App\\\\Models\\\\Chapter\\:\\:\\$project\\.$#"
-			count: 3
-			path: app/Policies/ChapterPolicy.php
-
-		-
-			message: "#^Access to an undefined property App\\\\Models\\\\Chapter\\:\\:\\$project\\.$#"
-			count: 4
-			path: app/Policies/EntryPolicy.php
 
 		-
 			message: "#^PHPDoc tag @var above a method has no effect\\.$#"
@@ -546,11 +356,6 @@ parameters:
 			path: app/Services/LogService.php
 
 		-
-			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$created_at\\.$#"
-			count: 2
-			path: app/Services/LogService.php
-
-		-
 			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$entry_name\\.$#"
 			count: 1
 			path: app/Services/LogService.php
@@ -562,16 +367,6 @@ parameters:
 
 		-
 			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$old\\.$#"
-			count: 1
-			path: app/Services/LogService.php
-
-		-
-			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$properties\\.$#"
-			count: 2
-			path: app/Services/LogService.php
-
-		-
-			message: "#^Access to an undefined property Spatie\\\\Activitylog\\\\Models\\\\Activity\\:\\:\\$subject_id\\.$#"
 			count: 1
 			path: app/Services/LogService.php
 
@@ -592,31 +387,6 @@ parameters:
 
 		-
 			message: "#^Undefined variable\\: \\$this$#"
-			count: 1
-			path: routes/console.php
-
-		-
-			message: "#^Access to an undefined property Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\|Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$email\\.$#"
-			count: 2
-			path: tests/Feature/AuthenticationTest.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\|Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:assignRole\\(\\)\\.$#"
-			count: 8
-			path: tests/Feature/AuthorizationTest.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\|Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:givePermissionTo\\(\\)\\.$#"
-			count: 1
-			path: tests/Feature/AuthorizationTest.php
-
-		-
-			message: "#^Parameter \\#1 \\$owner of function makeProject expects App\\\\Models\\\\User, Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\|Illuminate\\\\Database\\\\Eloquent\\\\Model given\\.$#"
-			count: 25
-			path: tests/Feature/AuthorizationTest.php
-
-		-
-			message: "#^Undefined variable\\: \\$this$#"
 			count: 37
 			path: tests/Feature/AuthorizationTest.php
 
@@ -624,36 +394,6 @@ parameters:
 			message: "#^Undefined variable\\: \\$this$#"
 			count: 8
 			path: tests/Feature/HappyPathTest.php
-
-		-
-			message: "#^Access to an undefined property Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\|Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$email\\.$#"
-			count: 1
-			path: tests/Feature/EmailVerificationTest.php
-
-		-
-			message: "#^Access to an undefined property Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\|Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$id\\.$#"
-			count: 2
-			path: tests/Feature/EmailVerificationTest.php
-
-		-
-			message: "#^Call to an undefined method Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\|Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:hasVerifiedEmail\\(\\)\\.$#"
-			count: 2
-			path: tests/Feature/EmailVerificationTest.php
-
-		-
-			message: "#^Parameter \\#1 \\$user of method Illuminate\\\\Foundation\\\\Testing\\\\TestCase\\:\\:actingAs\\(\\) expects Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable, Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\|Illuminate\\\\Database\\\\Eloquent\\\\Model given\\.$#"
-			count: 3
-			path: tests/Feature/EmailVerificationTest.php
-
-		-
-			message: "#^Parameter \\#1 \\$user of method Illuminate\\\\Foundation\\\\Testing\\\\TestCase\\:\\:actingAs\\(\\) expects Illuminate\\\\Contracts\\\\Auth\\\\Authenticatable, Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\|Illuminate\\\\Database\\\\Eloquent\\\\Model given\\.$#"
-			count: 3
-			path: tests/Feature/PasswordConfirmationTest.php
-
-		-
-			message: "#^Access to an undefined property Illuminate\\\\Database\\\\Eloquent\\\\Collection\\<Illuminate\\\\Database\\\\Eloquent\\\\Model\\>\\|Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$email\\.$#"
-			count: 4
-			path: tests/Feature/PasswordResetTest.php
 
 		-
 			message: "#^Undefined variable\\: \\$this$#"
