@@ -14,19 +14,19 @@ concurrency:
 
 jobs:
   tests:
-    name: Pest (PHP 8.1, SQLite)
+    name: Pest (PHP 8.4, SQLite)
     runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup PHP 8.1
+      - name: Setup PHP 8.4
         uses: shivammathur/setup-php@v2
         with:
-          # 8.1 entspricht dem Container-PHP aus docker/8.1/Dockerfile
-          # (Phase 1, Commit adcb538). 8.4 ist Phase-3-Ziel — bis dahin
-          # spiegelt CI die Produktiv-Version.
+          # 8.4 entspricht dem Container-PHP aus docker/8.4/Dockerfile
+          # (Phase 3 / Block D, Verschränkter Sprung PHP 8.4 + Laravel 9).
+          # CI und Sail laufen seit Phase-3-Ende auf identischer Major.
           php-version: '8.4'
           extensions: mbstring, dom, fileinfo, sqlite, pdo_sqlite, intl, zip, bcmath, gd
           coverage: none
@@ -40,9 +40,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-php-8.1-composer-${{ hashFiles('composer.lock') }}
+          key: ${{ runner.os }}-php-8.4-composer-${{ hashFiles('composer.lock') }}
           restore-keys: |
-            ${{ runner.os }}-php-8.1-composer-
+            ${{ runner.os }}-php-8.4-composer-
 
       - name: Install composer dependencies
         run: composer install --prefer-dist --no-progress --no-interaction
@@ -54,10 +54,9 @@ jobs:
 
       - name: Run Pest
         # SQLite-In-Memory wird hier zur Laufzeit gesetzt, nicht in
-        # phpunit.xml — so bleibt Karls lokaler Pest-Lauf (gegen die
-        # Sail-MySQL) unverändert. NF-DB-103 (drei MySQL-only-Migrations)
-        # ist hier abgedeckt: die Migrations prüfen selbst auf den
-        # Driver und werden auf SQLite zum No-Op.
+        # phpunit.xml — so bleibt der lokale Pest-Lauf (gegen die
+        # Sail-MySQL) unverändert. Die drei MySQL-only-Migrations
+        # prüfen selbst auf den Driver und werden auf SQLite zum No-Op.
         env:
           DB_CONNECTION: sqlite
           DB_DATABASE: ':memory:'
@@ -66,17 +65,19 @@ jobs:
   composer-audit:
     name: composer audit
     runs-on: ubuntu-22.04
-    # Phase-2-Strategie: Audit läuft, soll aber den Build (noch) nicht
-    # brechen. Ergebnisse fließen in audit-baseline.txt, harter Fail
-    # wird in Block G aktiviert. Die meisten heutigen CVEs sind aus
-    # dem Laravel-8-Umfeld und gehen mit dem Upgrade in Phase 3 weg.
+    # composer audit läuft weiter als Soft-Fail. Die Phase-3-Major-
+    # Welle hat die meisten Laravel-8-CVEs strukturell entfernt
+    # (CVE-2025-27515 ist mit Laravel 12 weg, vier abandoned-Packages
+    # raus), die Umstellung auf Hard-Fail steht als nächste kleine
+    # CI-Aufgabe an — zwei Zeilen, dann fällt continue-on-error /
+    # `|| true` weg.
     continue-on-error: true
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup PHP 8.1
+      - name: Setup PHP 8.4
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
@@ -104,10 +105,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: npm audit (production deps, high+ severity)
@@ -124,7 +125,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup PHP 8.1
+      - name: Setup PHP 8.4
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
@@ -140,9 +141,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-php-8.1-composer-${{ hashFiles('composer.lock') }}
+          key: ${{ runner.os }}-php-8.4-composer-${{ hashFiles('composer.lock') }}
           restore-keys: |
-            ${{ runner.os }}-php-8.1-composer-
+            ${{ runner.os }}-php-8.4-composer-
 
       - name: Install composer dependencies
         run: composer install --prefer-dist --no-progress --no-interaction
@@ -161,7 +162,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup PHP 8.1
+      - name: Setup PHP 8.4
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
@@ -176,9 +177,9 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ${{ steps.composer-cache.outputs.dir }}
-          key: ${{ runner.os }}-php-8.1-composer-${{ hashFiles('composer.lock') }}
+          key: ${{ runner.os }}-php-8.4-composer-${{ hashFiles('composer.lock') }}
           restore-keys: |
-            ${{ runner.os }}-php-8.1-composer-
+            ${{ runner.os }}-php-8.4-composer-
 
       - name: Install composer dependencies
         run: composer install --prefer-dist --no-progress --no-interaction
