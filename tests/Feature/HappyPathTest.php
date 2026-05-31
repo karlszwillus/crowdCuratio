@@ -287,7 +287,9 @@ test('Happy-Path: Editor-Rolle bringt add-Permission und Project-Anlage über Ro
     // Editor-Rolle hat add/view/edit/delete/publish/comment (siehe
     // RoleTableSeeder). Wir spiegeln den Seeder im beforeEach-Setup
     // und syncen die Permissions auf die Editor-Rolle.
-    Role::findByName('Editor', 'web')->syncPermissions(
+    /** @var Role $editorRole */
+    $editorRole = Role::findByName('Editor', 'web');
+    $editorRole->syncPermissions(
         Permission::whereIn('name', [
             PermissionName::VIEW,
             PermissionName::ADD,
