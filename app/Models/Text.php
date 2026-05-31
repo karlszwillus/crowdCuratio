@@ -48,9 +48,19 @@ class Text extends Model
     /**
      * The attributes that are mass assignable.
      *
+     * `position` ist in der DB als Spalte vorhanden, wird in der
+     * Anwendung aber nicht ausgewertet — die Reihenfolge eines Texts
+     * im Eintrag steckt in `media_content.position`. Beim Strict-Mode-
+     * Save iteriert Spatie-Activitylog über `$fillable` und würde auf
+     * `position` zugreifen; deshalb raus aus der Liste. Die Spalte
+     * selbst wandert mit dem Phase-4-Schema-Refactor weg.
+     *
+     * `id` gehört nicht in $fillable — Primary Key wird von Eloquent
+     * verwaltet, nie mass-assigned.
+     *
      * @var list<string>
      */
-    protected $fillable = ['id', 'text', 'origin', 'copyright', 'position'];
+    protected $fillable = ['text', 'origin', 'copyright'];
 
     public $translatable = ['text'];
 
