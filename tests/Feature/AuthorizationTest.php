@@ -87,7 +87,7 @@ function makeProject(User $owner, array $overrides = []): Project
     $userId = $overrides['user_id'] ?? $owner->id;
     unset($data['user_id']);
 
-    $project = new Project();
+    $project = new Project;
     $project->fill($data);
     $project->user_id = $userId;
     $project->save();
