@@ -47,22 +47,26 @@ class AppServiceProvider extends ServiceProvider
     {
         Schema::defaultStringLength(191);
 
-        // Strict-Mode in non-production aktiv (Phase 2 / C.1, F-LAR-013).
+        // Strict-Mode in non-production aktiv, mit Laravel 12 jetzt voll
+        // ausgefahren über die Sammelmethode Model::shouldBeStrict().
         //
-        // Auf Laravel 8.12 ist nur preventLazyLoading verfügbar — die
-        // Sammelmethode Model::shouldBeStrict() kam erst mit 9.35, und
-        // preventAccessingMissingAttributes erst mit 9.35. Phase 3
-        // (Framework-Upgrade) wird das Set erweitern und idealerweise
-        // auf shouldBeStrict konsolidieren.
-        //
-        // preventLazyLoading wirft LazyLoadingViolationException, wenn
-        // ein eager-loaded Modell auf eine Relation greift, die nicht
-        // mit-geladen wurde. Frühwarnsystem gegen N+1.
+        // shouldBeStrict() bündelt drei Schutzmaßnahmen:
+        //   - preventLazyLoading: wirft LazyLoadingViolationException,
+        //     wenn ein eager-loaded Modell auf eine Relation greift,
+        //     die nicht mitgeladen wurde. Frühwarnsystem gegen N+1.
+        //   - preventAccessingMissingAttributes: wirft
+        //     MissingAttributeException, wenn auf eine nicht-geladene
+        //     oder nicht-existierende Attribut-Spalte zugegriffen wird.
+        //     Deckt PHPDoc-Lücken zwischen Model und DB-Schema auf.
+        //   - preventSilentlyDiscardingAttributes: wirft
+        //     MassAssignmentException statt stillschweigend zu
+        //     ignorieren, wenn `fill()` Felder erhält, die nicht in
+        //     $fillable stehen.
         //
         // Bewusst nur außerhalb von Production — Tests, Sail-Dev,
-        // CI-Pest-Pfade — damit Live-User keine späte Regression
-        // erleben. Sobald Phase 4 die N+1-Hotspots aufgeräumt hat,
-        // darf das in Production scharf werden.
-        Model::preventLazyLoading(! $this->app->isProduction());
+        // CI-Pest-Pfade. Live-User sollen keine späten Regressionen
+        // erleben. Sobald die Hotspots ruhig sind, darf das in
+        // Production scharf werden.
+        Model::shouldBeStrict(! $this->app->isProduction());
     }
 }
