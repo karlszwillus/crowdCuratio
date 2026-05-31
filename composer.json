@@ -12,7 +12,7 @@
   ],
   "license": "GPL-3.0-or-later",
   "require": {
-    "php": "^8.2",
+    "php": "^8.3",
     "carbonphp/carbon-doctrine-types": "^2.0",
     "doctrine/dbal": "^3.0",
     "dompdf/dompdf": "^2.0",
