@@ -107,6 +107,7 @@ class LogService
 
         $changes = [];
 
+        /** @var \Spatie\Activitylog\Models\Activity $value */
         foreach ($activities as $key => $value) {
             if (isset($value->changes)) {
                 foreach ($value->properties['old'] as $key => $property) {

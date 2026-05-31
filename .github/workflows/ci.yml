@@ -27,7 +27,7 @@ jobs:
           # 8.1 entspricht dem Container-PHP aus docker/8.1/Dockerfile
           # (Phase 1, Commit adcb538). 8.4 ist Phase-3-Ziel — bis dahin
           # spiegelt CI die Produktiv-Version.
-          php-version: '8.1'
+          php-version: '8.2'
           extensions: mbstring, dom, fileinfo, sqlite, pdo_sqlite, intl, zip, bcmath, gd
           coverage: none
           tools: composer:v2
@@ -79,7 +79,7 @@ jobs:
       - name: Setup PHP 8.1
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'
+          php-version: '8.2'
           tools: composer:v2
           coverage: none
 
@@ -127,7 +127,7 @@ jobs:
       - name: Setup PHP 8.1
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'
+          php-version: '8.2'
           extensions: mbstring, dom, fileinfo, intl, zip, bcmath, gd
           coverage: none
           tools: composer:v2
@@ -164,7 +164,7 @@ jobs:
       - name: Setup PHP 8.1
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'
+          php-version: '8.2'
           coverage: none
           tools: composer:v2
 

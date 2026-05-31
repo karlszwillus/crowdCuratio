@@ -10,9 +10,30 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
-Nächste Welle: Major-Upgrade-Pfad (PHP 8.1 → 8.4, Laravel 8 → 12) und
-Server-Migration. Vor dem Upgrade-Sweep wurden die letzten offenen
-Sicherheits-Pfade geschlossen.
+Major-Upgrade-Pfad läuft (PHP 8.1 → 8.4, Laravel 8 → 12). PHP-Sprünge
+laufen zuerst und einzeln; Laravel-Sprünge folgen danach. Erster Sprung
+ist durch, sechs weitere folgen.
+
+### Geändert
+
+- **PHP 8.1 → 8.2.** `composer.json` `require.php` von `^7.3|^8.0` auf
+  `^8.2`. Container-Build neu unter `docker/8.2/`. CI-Workflow auf allen
+  vier Jobs (Pest, composer audit, Larastan, Pint) auf PHP 8.2.
+- **Ubuntu 22.04 jammy → 24.04 noble.** Im selben Container-Sprung. Die
+  PPA-Quelle `ondrej/php` zieht jetzt aus dem noble-Pool. Defensive
+  Vorbereitung: `ubuntu`-User mit UID 1000 wird vor dem `sail`-User-
+  Anlegen entfernt, weil noble den User per Default mitliefert und es
+  sonst zur GID-Kollision käme.
+- **Node 20 LTS → Node 22 LTS.** NodeSource-Setup-Script auf
+  `setup_22.x`. Node 20 ist seit Oktober 2025 in Maintenance, Node 22
+  ist die aktive LTS bis Oktober 2027.
+
+### Anmerkung zur Verifikation
+
+Pest 58 grün auf PHP 8.2, Larastan stabil, Pint grün, Coverage über
+25 %. Spatie-Activity-Stub-Lücken (`$created_at`) sind in der
+Larastan-Baseline aufgenommen — keine eigene Sache von uns, gehört zu
+Spatie-Phase-4-TODO.
 
 ### Hinzugefügt
 
