@@ -145,7 +145,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
     @endif
     <div class="card p-4 mb-4 mt-4">
         <div class="row versions">
-           <!-- <span class="ml-3">{{__('version')}}</span>-->
+           {{-- <span class="ml-3">{{__('version')}}</span> --}}
             @isset($textLog)
 
                 @foreach($textLog as $log => $v)

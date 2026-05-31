@@ -406,7 +406,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                         <div class="row mt-4 gallery_item" id="gallery_items_{{$item->gallery->id}}">
                                                                                             <div id="anchor_MediaContent_{{$item->id}}" class="img" style="background: url('{{route('image', $image->image)}}') no-repeat center center / cover" >
                                                                                                <div class="caption">{{$image->alt}}</div>
-																								<!-- <img src="{{route('image', $image->image)}}" alt="{{$item->alt}}" style=""> -->
+																								{{-- <img src="{{route('image', $image->image)}}" alt="{{$item->alt}}" style=""> --}}
 
                                                                                             </div>
                                                                                             <div class="text-right icons">
@@ -472,8 +472,8 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                         </div>
                                             @else
                                                 <ul class="list-group  ui-sortable-content sortable_list_content connectedSortableContent" data-entry="{{$entry->id}}" id="{{$entry->id}}">
-                                                   <!--<li class="" data-content="" data-entry="{{$entry->id}}">
-                                                    </li>-->
+                                                   {{-- <li class="" data-content="" data-entry="{{$entry->id}}">
+                                                    </li> --}}
                                                 </ul>
                                             @endif
                                             <div class="mb-4">

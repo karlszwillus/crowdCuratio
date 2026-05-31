@@ -31,12 +31,6 @@ parameters:
 			path: app/Http/Controllers/Auth/VerifyEmailController.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$project\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/ChapterController.php
-
-		-
 			message: '#^Method App\\Http\\Controllers\\ChapterController\:\:destroy\(\) should return Illuminate\\Http\\Response but returns Illuminate\\Http\\RedirectResponse\.$#'
 			identifier: return.type
 			count: 1
@@ -57,18 +51,12 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
 			identifier: property.notFound
-			count: 4
+			count: 2
 			path: app/Http/Controllers/ContentController.php
 
 		-
 			message: '#^Called ''first'' on Laravel collection, but could have been retrieved as a query\.$#'
 			identifier: larastan.noUnnecessaryCollectionCall
-			count: 1
-			path: app/Http/Controllers/ContentController.php
-
-		-
-			message: '#^Loose comparison using \=\= between '''' and '''' will always evaluate to true\.$#'
-			identifier: equal.alwaysTrue
 			count: 1
 			path: app/Http/Controllers/ContentController.php
 
@@ -93,12 +81,6 @@ parameters:
 		-
 			message: '#^Relation ''user'' is not found in App\\Models\\Comment model\.$#'
 			identifier: larastan.relationExistence
-			count: 1
-			path: app/Http/Controllers/ContentController.php
-
-		-
-			message: '#^Unreachable statement \- code above always terminates\.$#'
-			identifier: deadCode.unreachable
 			count: 1
 			path: app/Http/Controllers/ContentController.php
 
@@ -139,42 +121,6 @@ parameters:
 			path: app/Http/Controllers/EntryController.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\Audiovisual\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Audiovisual\>\:\:\$media_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/ProjectController.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Gallery\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Gallery\>\:\:\$image_list\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/ProjectController.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Gallery\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Gallery\>\:\:\$media_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/ProjectController.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Project\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Project\>\:\:\$chapters\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/ProjectController.php
-
-		-
-			message: '#^Access to an undefined property App\\Models\\Text\|Illuminate\\Database\\Eloquent\\Collection\<int, App\\Models\\Text\>\:\:\$media_id\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Http/Controllers/ProjectController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$is_translated\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Http/Controllers/ProjectController.php
-
-		-
 			message: '#^Call to function compact\(\) contains possibly undefined variable \$content\.$#'
 			identifier: variable.undefined
 			count: 1
@@ -195,12 +141,6 @@ parameters:
 		-
 			message: '#^Class App\\Services\\LogService constructor invoked with 0 parameters, 1 required\.$#'
 			identifier: arguments.count
-			count: 1
-			path: app/Http/Controllers/ProjectController.php
-
-		-
-			message: '#^Loose comparison using \=\= between '''' and '''' will always evaluate to true\.$#'
-			identifier: equal.alwaysTrue
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
@@ -247,12 +187,6 @@ parameters:
 			path: app/Http/Controllers/ProjectController.php
 
 		-
-			message: '#^Method App\\Http\\Controllers\\ProjectController\:\:setImage\(\) should return \$this\(App\\Http\\Controllers\\ProjectController\) but returns string\.$#'
-			identifier: return.type
-			count: 1
-			path: app/Http/Controllers/ProjectController.php
-
-		-
 			message: '#^Method App\\Http\\Controllers\\ProjectController\:\:show\(\) should return Illuminate\\Http\\Response but returns Illuminate\\View\\View\.$#'
 			identifier: return.type
 			count: 1
@@ -267,18 +201,6 @@ parameters:
 		-
 			message: '#^Parameter \#1 \$view of function view expects view\-string\|null, string given\.$#'
 			identifier: argument.type
-			count: 1
-			path: app/Http/Controllers/ProjectController.php
-
-		-
-			message: '#^Strict comparison using \!\=\= between \$this\(App\\Http\\Controllers\\ProjectController\) and '''' will always evaluate to true\.$#'
-			identifier: notIdentical.alwaysTrue
-			count: 1
-			path: app/Http/Controllers/ProjectController.php
-
-		-
-			message: '#^Unreachable statement \- code above always terminates\.$#'
-			identifier: deadCode.unreachable
 			count: 1
 			path: app/Http/Controllers/ProjectController.php
 
@@ -377,12 +299,6 @@ parameters:
 			identifier: arguments.count
 			count: 1
 			path: app/Http/Controllers/UserController.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$project\.$#'
-			identifier: property.notFound
-			count: 3
-			path: app/Policies/EntryPolicy.php
 
 		-
 			message: '#^PHPDoc tag @var above a method has no effect\.$#'

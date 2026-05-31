@@ -33,6 +33,11 @@ use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Translatable\HasTranslations;
 
+/**
+ * @property int $id
+ * @property bool $is_translated
+ * @property int|null $media_id Runtime-Zuweisung im ProjectController, nicht DB-Spalte.
+ */
 class Audiovisual extends Model
 {
     use CommentTrait, HasFactory, HasTranslations, LogsActivity, SoftDeletes;

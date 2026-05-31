@@ -23,6 +23,7 @@ If not, see <https://www.gnu.org/licenses/>.
 namespace App\Models;
 
 use App\Traits\CommentTrait;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -35,6 +36,14 @@ use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Translatable\HasTranslations;
 
+/**
+ * @property int $id
+ * @property int $chapter_id
+ * @property bool $is_translated
+ * @property Chapter|null $chapter
+ * @property Collection<int, MediaContent> $mediaContent
+ * @property mixed $media Runtime-Zuweisung in ProjectController::allData (Media-Snapshot je Entry), nicht DB-Spalte.
+ */
 class Entry extends Model
 {
     use CommentTrait, HasFactory, HasTranslations, LogsActivity, SoftDeletes;

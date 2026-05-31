@@ -23,6 +23,7 @@ If not, see <https://www.gnu.org/licenses/>.
 namespace App\Models;
 
 use App\Traits\CommentTrait;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -35,7 +36,10 @@ use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Translatable\HasTranslations;
 
 /**
+ * @property int $id
  * @property Project|null $project
+ * @property Collection<int, Entry> $entries
+ * @property mixed $entry Runtime-Zuweisung in ProjectController::allData (Entry-Snapshot je Chapter), nicht DB-Spalte.
  */
 class Chapter extends Model
 {
