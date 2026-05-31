@@ -52,6 +52,17 @@ jobs:
           cp .env.example .env
           php artisan key:generate
 
+      - name: Cache config
+        # Verriegelt dynamisch die Larastan-Regel "kein env() außerhalb
+        # von config/" — würde irgendwo ein neuer env()-Call in einer
+        # Codestelle landen, die Pest erreicht, ist der Wert nach
+        # config:cache null und der Test bricht. Statisch fängt
+        # Larastan die Stelle bereits, das hier ist defense-in-depth.
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: ':memory:'
+        run: php artisan config:cache
+
       - name: Run Pest
         # SQLite-In-Memory wird hier zur Laufzeit gesetzt, nicht in
         # phpunit.xml — so bleibt der lokale Pest-Lauf (gegen die
@@ -65,13 +76,11 @@ jobs:
   composer-audit:
     name: composer audit
     runs-on: ubuntu-22.04
-    # composer audit läuft weiter als Soft-Fail. Die Phase-3-Major-
-    # Welle hat die meisten Laravel-8-CVEs strukturell entfernt
-    # (CVE-2025-27515 ist mit Laravel 12 weg, vier abandoned-Packages
-    # raus), die Umstellung auf Hard-Fail steht als nächste kleine
-    # CI-Aufgabe an — zwei Zeilen, dann fällt continue-on-error /
-    # `|| true` weg.
-    continue-on-error: true
+    # composer audit auf Hard-Fail. Die Phase-3-Major-Welle hat die
+    # Laravel-8-CVEs strukturell entfernt (CVE-2025-27515 ist mit
+    # Laravel 12 weg, vier abandoned-Packages raus). Ab jetzt soll
+    # ein neuer CVE im Lock den Build brechen statt nur einen Hinweis
+    # im Log zu hinterlassen.
 
     steps:
       - name: Checkout
@@ -85,11 +94,7 @@ jobs:
           coverage: none
 
       - name: Composer audit (production deps only)
-        # || true: erzwingt Exit-Code 0, damit der Job in der UI grün
-        # bleibt. continue-on-error würde den Job weiterhin als "failed"
-        # markieren, nur das Gesamt-Workflow-Ergebnis grün lassen — UI-
-        # Verwirrung. Findings stehen weiter sichtbar im Step-Log.
-        run: composer audit --no-dev --locked --format=plain || true
+        run: composer audit --no-dev --locked --format=plain
 
   npm-audit:
     name: npm audit
