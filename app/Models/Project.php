@@ -49,9 +49,16 @@ class Project extends Model
     /**
      * The attributes that are mass assignable.
      *
+     * F-SEC-010: `user_id` ist hier bewusst raus. Die Spalte trägt
+     * die Eigentümerschaft eines Projects und darf NIEMALS über
+     * Mass-Assignment aus einem Request gesetzt werden — sonst
+     * könnte ein Angreifer beim Anlegen ein Project an einen anderen
+     * User hängen. `ProjectController::store()` setzt `user_id`
+     * explizit über den Property-Setter aus `Auth::user()->id`.
+     *
      * @var array
      */
-    protected $fillable = ['name', 'user_id', 'logo', 'imprint', 'terms', 'status', 'description'];
+    protected $fillable = ['name', 'logo', 'imprint', 'terms', 'status', 'description'];
 
     public $translatable = ['name', 'imprint', 'terms', 'description'];
     /*

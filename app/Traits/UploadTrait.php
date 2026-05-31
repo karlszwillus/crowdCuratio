@@ -27,12 +27,26 @@ use Illuminate\Support\Str;
 
 trait UploadTrait
 {
+    /**
+     * NF-SEC-201: Disk-Whitelist. crowdCuratio kennt aktuell nur die
+     * `public`-Disk für User-Uploads; jeder andere Wert wird hier
+     * abgewiesen. Defensive Schicht für künftige Aufrufer — die
+     * Disk-Wahl darf nie aus Request-Daten kommen.
+     *
+     * Den Trait selbst durch direkte `Storage::disk()`-Aufrufe zu
+     * ersetzen, ist als F-LAR-015 für die Refactoring-Welle
+     * vorgemerkt.
+     */
     public function uploadOne(UploadedFile $uploadedFile, $folder = null, $disk = 'public', $filename = null)
     {
+        if (! in_array($disk, ['public'], true)) {
+            throw new \InvalidArgumentException(
+                "UploadTrait::uploadOne erlaubt nur die `public`-Disk, '{$disk}' wurde übergeben."
+            );
+        }
+
         $name = ! is_null($filename) ? $filename : Str::random(25);
 
-        $file = $uploadedFile->storeAs($folder, $name, $disk);
-
-        return $file;
+        return $uploadedFile->storeAs($folder, $name, $disk);
     }
 }

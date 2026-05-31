@@ -32,6 +32,9 @@ use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Translatable\HasTranslations;
 
+/**
+ * @property \App\Models\Project|null $project
+ */
 class Chapter extends Model
 {
     use CommentTrait, HasFactory, HasTranslations, LogsActivity, SoftDeletes;

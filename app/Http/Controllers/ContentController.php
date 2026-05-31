@@ -22,6 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreImageBlockRequest;
 use App\Models\Audiovisual;
 use App\Models\Comment;
 use App\Models\Gallery;
@@ -121,9 +122,15 @@ class ContentController extends Controller
     /**
      * Save or update image
      *
+     * NF-SEC-201: Signatur auf `StoreImageBlockRequest` umgestellt.
+     * MIME-Whitelist (jpeg/jpg/png/gif/webp) und 4-MB-Limit für
+     * `image` und `newImage` greifen jetzt schon vor dem Methoden-
+     * Body. Inhaltliche Logik (Translation-/Create-/Update-Modus)
+     * bleibt — Zerlegung in dedizierte Endpoints ist Phase-4-Material.
+     *
      * @return RedirectResponse
      */
-    public function saveImage(Request $request)
+    public function saveImage(StoreImageBlockRequest $request)
     {
 
         if (isset($request['translationMode'])) {

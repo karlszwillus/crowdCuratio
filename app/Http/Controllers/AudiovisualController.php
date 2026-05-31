@@ -22,6 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreAudiovisualRequest;
 use App\Models\Audiovisual;
 use App\Models\MediaContent;
 use App\Traits\UploadTrait;
@@ -45,9 +46,13 @@ class AudiovisualController extends Controller
     /**
      * Store or update audiovisual
      *
+     * NF-SEC-201: Signatur auf `StoreAudiovisualRequest`. MIME-
+     * Whitelist (audio/mpeg, audio/mp4, audio/wav, audio/ogg,
+     * audio/x-m4a) und 20-MB-Limit greifen vor dem Methoden-Body.
+     *
      * @return \Illuminate\Http\RedirectResponse
      */
-    public function store(Request $request)
+    public function store(StoreAudiovisualRequest $request)
     {
 
         if ($request->has('audio')) {
@@ -167,33 +172,33 @@ class AudiovisualController extends Controller
     /**
      * Upload audio
      *
+     * NF-SEC-201: Filename ist ab sofort durchgängig Server-generiert
+     * (`Str::random(10)`). Vorher lief der Pfad zuerst über
+     * `getClientOriginalName()` und überschrieb den Namen erst am
+     * Ende — der Zwischenwert war ein Path-Traversal-Vektor (analog
+     * NF-SEC-007 für Logo-Uploads). Kein Client-Input mehr im
+     * Dateinamen, keine Original-Extension (Browser-MIME-Routing
+     * läuft über den Content-Type-Header des Storage-Disks).
+     *
      * @return string
      */
     protected function uploadAudio($request)
     {
-        // Define folder path
         $folder = '/uploads/audio/';
+        $audio = null;
 
         if ($request->has('audio')) {
-            // Get image file
             $audio = $request->file('audio');
-
-            // Make a image name based on user name and current timestamp
-            $name = $request->file('audio')->getClientOriginalName();
-        }
-
-        if ($request->has('newImage')) {
-            // Get image file
+        } elseif ($request->has('newImage')) {
             $audio = $request->file('newImage');
-
-            // Make an image name based on user name and current timestamp
-            $name = $request->file('newImage')->getClientOriginalName();
         }
 
-        if ($name != '' && $audio != '') {
-            $name = Str::random(10);
-            $this->uploadOne($audio, $folder, 'public', $name);
+        if ($audio === null) {
+            return '';
         }
+
+        $name = Str::random(10);
+        $this->uploadOne($audio, $folder, 'public', $name);
 
         return $name;
     }
