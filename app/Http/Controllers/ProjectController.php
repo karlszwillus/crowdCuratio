@@ -146,7 +146,15 @@ class ProjectController extends Controller
         // mapData() arbeitet weiter mit der vollen Request — es liest
         // file('project_image') ab und delegiert an setImage(). Die
         // Validation hat das Feld vorher MIME-geprüft.
-        $new = Project::create($this->mapData($request));
+        //
+        // F-SEC-010: user_id ist nicht mehr in Project::$fillable.
+        // Wir fillen den Mass-Assignment-Block und setzen user_id
+        // anschließend über den Property-Setter aus Auth::user()->id —
+        // ein Request kann keine fremde user_id injizieren.
+        $new = new Project;
+        $new->fill($this->mapData($request));
+        $new->user_id = Auth::user()->id;
+        $new->save();
 
         return redirect()->route('chapters.index', ['id' => $new->id])
             ->with('success', 'Project added successfully');
@@ -161,7 +169,12 @@ class ProjectController extends Controller
     {
 
         $data = [];
-        $data['user_id'] = Auth::user()->id;
+        // F-SEC-010: user_id wird im Controller-Store nach dem fill()
+        // explizit gesetzt. Hier rauszuhalten ist defense-in-depth:
+        // selbst wenn mapData() später schlampig erweitert wird und
+        // direkt $request->all() in $data übernimmt, kann keine fremde
+        // user_id ins Modell durchsickern, weil Project::$fillable
+        // user_id nicht akzeptiert.
         $data['status'] = config('project.status.default');
 
         if (isset($request['name'])) {

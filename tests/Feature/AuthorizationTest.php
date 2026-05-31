@@ -72,14 +72,27 @@ beforeEach(function () {
  */
 function makeProject(User $owner, array $overrides = []): Project
 {
-    return Project::create(array_merge([
-        'user_id' => $owner->id,
+    $data = array_merge([
         'name' => 'Original Name',
         'imprint' => 'Original Impressum',
         'terms' => 'Original AGB',
         'status' => 'draft',
         'description' => 'Original Beschreibung',
-    ], $overrides));
+    ], $overrides);
+
+    // F-SEC-010: user_id ist nicht in Project::$fillable. Beim Test-
+    // Helper setzen wir die Spalte explizit per Property-Setter,
+    // analog zum Controller-Store-Pfad. Tests können den Owner via
+    // $overrides['user_id'] umschreiben (für Stranger-Szenarien).
+    $userId = $overrides['user_id'] ?? $owner->id;
+    unset($data['user_id']);
+
+    $project = new Project();
+    $project->fill($data);
+    $project->user_id = $userId;
+    $project->save();
+
+    return $project;
 }
 
 function makeChapter(Project $project, array $overrides = []): Chapter
@@ -750,4 +763,135 @@ test('NF-SEC-202: Gast wird auf Login umgeleitet (auth-Middleware vor role:Admin
 
     $response->assertRedirect(route('login'));
     expect(User::where('email', 'eve@example.com')->exists())->toBeFalse();
+});
+
+// ----------------------------------------------------------------------
+// NF-SEC-201 / Vor-Phase-3-Härtung — Upload-Pfade in ContentController
+// und AudiovisualController bekommen MIME-Whitelist und Size-Limit
+// über StoreImageBlockRequest und StoreAudiovisualRequest. Vorher
+// liefen beide Routen mit `$request->validate(['image' => 'required'])`
+// bzw. ganz ohne File-Validation.
+// ----------------------------------------------------------------------
+
+test('NF-SEC-201: image.store weist ungültigen MIME ab (.php-Datei)', function () {
+    $owner = User::factory()->create();
+
+    $response = $this->actingAs($owner)
+        ->from(route('chapters.index', ['id' => 1]))
+        ->post(route('image.store'), [
+            'galleryId' => 1,
+            'altText' => 'irrelevant',
+            'copyrightImage' => 'Quelle X',
+            'originImage' => 'Quelle Y',
+            'image' => UploadedFile::fake()->create('exploit.php', 50, 'application/x-php'),
+        ]);
+
+    $response->assertInvalid(['image']);
+});
+
+test('NF-SEC-201: image.store weist zu großes File ab (>4 MB)', function () {
+    $owner = User::factory()->create();
+
+    $response = $this->actingAs($owner)
+        ->from(route('chapters.index', ['id' => 1]))
+        ->post(route('image.store'), [
+            'galleryId' => 1,
+            'altText' => 'irrelevant',
+            'copyrightImage' => 'Quelle X',
+            'originImage' => 'Quelle Y',
+            // 5 MB JPEG — über dem 4 MB Limit aus StoreImageBlockRequest.
+            'image' => UploadedFile::fake()->image('huge.jpg')->size(5 * 1024),
+        ]);
+
+    $response->assertInvalid(['image']);
+});
+
+test('NF-SEC-201: save.audiovisual weist nicht-Audio-MIME ab (.exe)', function () {
+    $owner = User::factory()->create();
+
+    $response = $this->actingAs($owner)
+        ->from(route('dashboard'))
+        ->post(route('save.audiovisual'), [
+            'audio' => UploadedFile::fake()->create('payload.exe', 50, 'application/x-msdownload'),
+        ]);
+
+    $response->assertInvalid(['audio']);
+});
+
+// ----------------------------------------------------------------------
+// F-SEC-010 / Vor-Phase-3-Härtung — Project.user_id ist nicht mehr
+// in $fillable. Ein User darf keine fremde user_id über das
+// Project-Store-Form injizieren.
+// ----------------------------------------------------------------------
+
+test('F-SEC-010: user_id aus Request wird beim Project-Store ignoriert', function () {
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    /** @var User $stranger */
+    $stranger = User::factory()->create();
+    $owner->givePermissionTo(PermissionName::ADD);
+
+    $response = $this->actingAs($owner)
+        ->from(route('projects.create'))
+        ->post(route('projects.store'), [
+            'name' => 'Eigenes Projekt',
+            'imprint' => 'Pflicht-Impressum',
+            // Mass-Assignment-Versuch: User-Owner umlenken.
+            'user_id' => $stranger->id,
+        ]);
+
+    $response->assertRedirect();
+    // Project::name ist translatable und landet als JSON in der DB —
+    // deshalb über user_id suchen, nicht über den Klartext-Namen.
+    $project = Project::where('user_id', $owner->id)->firstOrFail();
+    expect($project->user_id)->toBe($owner->id);
+    expect($project->user_id)->not->toBe($stranger->id);
+});
+
+// ----------------------------------------------------------------------
+// F-API-009 / Vor-Phase-3-Härtung — POST /drag hat jetzt einen
+// Authorization-Gate über ProjectPolicy::update. Vorher konnte jeder
+// eingeloggte User fremde Chapter, Entries und MediaContent
+// umsortieren.
+// ----------------------------------------------------------------------
+
+test('F-API-009: Intruder kann kein chapter-reorder in fremdem Project', function () {
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $project = makeProject($owner);
+    $chapter = makeChapter($project, ['name' => 'Kapitel A', 'position' => 0]);
+
+    $intruder = User::factory()->create();
+
+    $response = $this->actingAs($intruder)
+        ->post(route('chapter.drag'), [
+            'data' => [
+                'element' => 'chapter',
+                'data' => [$chapter->id],
+            ],
+        ]);
+
+    $response->assertForbidden();
+    expect($chapter->fresh()->position)->toBe(0);
+});
+
+test('F-API-009: Owner darf chapter-reorder in eigenem Project', function () {
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $project = makeProject($owner);
+    $a = makeChapter($project, ['name' => 'Kapitel A', 'position' => 0]);
+    $b = makeChapter($project, ['name' => 'Kapitel B', 'position' => 1]);
+
+    $response = $this->actingAs($owner)
+        ->post(route('chapter.drag'), [
+            'data' => [
+                'element' => 'chapter',
+                'data' => [$b->id, $a->id],
+            ],
+        ]);
+
+    $response->assertOk();
+    // Reihenfolge gedreht.
+    expect($b->fresh()->position)->toBe(1);
+    expect($a->fresh()->position)->toBe(2);
 });
