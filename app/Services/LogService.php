@@ -79,7 +79,7 @@ class LogService
         $logs = [];
 
         foreach ($activities as $key => $value) {
-            if (isset($value->changes)) {
+            if ($value->changes->isNotEmpty()) {
                 $firstName = isset($value->causer->name) ? $value->causer->name : null;
                 $lastName = isset($value->causer->last_name) ? $value->causer->last_name : null;
                 $logs[] = [
@@ -109,7 +109,7 @@ class LogService
 
         /** @var Activity $value */
         foreach ($activities as $key => $value) {
-            if (isset($value->changes)) {
+            if ($value->changes->isNotEmpty()) {
                 foreach ($value->properties['old'] as $key => $property) {
                     $highlight = $this->HighlightTextDifference(
                         $property,

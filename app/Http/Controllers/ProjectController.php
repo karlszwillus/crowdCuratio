@@ -297,7 +297,7 @@ class ProjectController extends Controller
     /**
      * Get users that are allowed to work in the current project
      *
-     * @return bool
+     * @return array<int, array<string, mixed>>
      */
     protected function getUsersForThisProject($id)
     {
@@ -345,7 +345,7 @@ class ProjectController extends Controller
         $logs = [];
 
         foreach ($activities as $key => $value) {
-            if (isset($value->changes)) {
+            if ($value->changes->isNotEmpty()) {
                 $firstName = isset($value->causer->name) ? $value->causer->name : null;
                 $lastName = isset($value->causer->last_name) ? $value->causer->last_name : null;
                 $logs[] = [
