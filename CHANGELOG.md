@@ -16,6 +16,12 @@ ist durch, sechs weitere folgen.
 
 ### Geändert
 
+- **PHP 8.2 → 8.3.** `composer.json` `require.php` von `^8.2` auf
+  `^8.3`. Container-Build neu unter `docker/8.3/`. CI-Workflow auf
+  allen vier Jobs auf PHP 8.3. Ubuntu noble und Node 22 bleiben aus
+  dem 8.2-Sprung stehen, ebenso der `chmod 0644`-Fix für die
+  `99-sail.ini` und der `storage:link`-Auto-Setup. Sprung verlief
+  ohne Code-Eingriff, kein Refactor nötig.
 - **PHP 8.1 → 8.2.** `composer.json` `require.php` von `^7.3|^8.0` auf
   `^8.2`. Container-Build neu unter `docker/8.2/`. CI-Workflow auf allen
   vier Jobs (Pest, composer audit, Larastan, Pint) auf PHP 8.2.
