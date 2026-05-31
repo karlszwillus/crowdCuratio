@@ -47,6 +47,7 @@ use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Tests\TestCase;
 
 beforeEach(function () {
     foreach (PermissionName::all() as $name) {
@@ -68,6 +69,7 @@ beforeEach(function () {
 // ----------------------------------------------------------------------
 
 test('Happy-Path: Admin kann ein Project anlegen', function () {
+    /** @var TestCase $this */
     /** @var User $admin */
     $admin = User::factory()->create();
     $admin->assignRole('Admin');
@@ -94,6 +96,7 @@ test('Happy-Path: Admin kann ein Project anlegen', function () {
 // ----------------------------------------------------------------------
 
 test('Happy-Path: Owner kann ein Chapter im eigenen Project anlegen', function () {
+    /** @var TestCase $this */
     /** @var User $owner */
     $owner = User::factory()->create();
     $project = makeProject($owner);
@@ -119,6 +122,7 @@ test('Happy-Path: Owner kann ein Chapter im eigenen Project anlegen', function (
 // ----------------------------------------------------------------------
 
 test('Happy-Path: Owner kann ein Entry im eigenen Chapter anlegen', function () {
+    /** @var TestCase $this */
     /** @var User $owner */
     $owner = User::factory()->create();
     $project = makeProject($owner);
@@ -147,6 +151,7 @@ test('Happy-Path: Owner kann ein Entry im eigenen Chapter anlegen', function () 
 // ----------------------------------------------------------------------
 
 test('Happy-Path: Admin lädt einen neuen User ein und Welcome-Notification wird dispatched', function () {
+    /** @var TestCase $this */
     Notification::fake();
 
     /** @var User $admin */
@@ -176,6 +181,7 @@ test('Happy-Path: Admin lädt einen neuen User ein und Welcome-Notification wird
 // ----------------------------------------------------------------------
 
 test('Happy-Path: Owner kann ein Audio-File hochladen', function () {
+    /** @var TestCase $this */
     Storage::fake('public');
 
     /** @var User $owner */
@@ -211,6 +217,7 @@ test('Happy-Path: Owner kann ein Audio-File hochladen', function () {
 // ----------------------------------------------------------------------
 
 test('Happy-Path: Owner kann einen Text-Block anlegen', function () {
+    /** @var TestCase $this */
     /** @var User $owner */
     $owner = User::factory()->create();
     $project = makeProject($owner);
@@ -243,6 +250,7 @@ test('Happy-Path: Owner kann einen Text-Block anlegen', function () {
 // ----------------------------------------------------------------------
 
 test('Happy-Path: Owner kann ein Bild in eine Gallery hochladen', function () {
+    /** @var TestCase $this */
     Storage::fake('public');
 
     /** @var User $owner */
@@ -282,6 +290,7 @@ test('Happy-Path: Owner kann ein Bild in eine Gallery hochladen', function () {
 // ----------------------------------------------------------------------
 
 test('Happy-Path: Editor-Rolle bringt add-Permission und Project-Anlage über Route durch', function () {
+    /** @var TestCase $this */
     /** @var User $editor */
     $editor = User::factory()->create();
     // Editor-Rolle hat add/view/edit/delete/publish/comment (siehe

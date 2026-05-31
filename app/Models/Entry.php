@@ -137,19 +137,19 @@ class Entry extends Model
     }
 
     /**
-     * Get media attributes
+     * Get media attributes as Eloquent-Collection.
      *
-     * @return HasMany
+     * Laravel-11-Sprung: vorher iterierte die Methode über den
+     * Relation-Builder direkt (`foreach ($this->mediaContent() as ...)`)
+     * und gab `$this->mediaContent()` zurück. Larastan v2 + Laravel 11
+     * meldet das als ungültigen Iterator-Type. Inhaltlich hat die
+     * Schleife nichts getan (das `$data` wurde nicht returned), die
+     * Methode lieferte einen Builder zurück. Vereinfacht auf den
+     * Property-Access, der die geladene Collection gibt.
      */
     public function getAllMediaAttribute()
     {
-        $data = [];
-
-        foreach ($this->mediaContent() as $media) {
-            $data[] = $media;
-        }
-
-        return $this->mediaContent();
+        return $this->mediaContent;
     }
 
     /**

@@ -16,6 +16,42 @@ ist durch, sechs weitere folgen.
 
 ### Geändert
 
+- **Laravel 10 → 11.** `composer.json` `laravel/framework` auf
+  `^11.0`. Mit ziehen: `nunomaduro/collision ^8`, `laravel/breeze ^2`,
+  `pestphp/pest ^3`, `pestphp/pest-plugin-laravel ^3`,
+  `phpunit/phpunit ^11`. Spatie-Pakete (`permission ^6`,
+  `activitylog ^4`, `translatable ^6`, `welcome-notification ^2.5`,
+  `ignition ^2`) bleiben — alle Laravel-11-kompatibel mit den
+  Laravel-10-Versionen.
+- **`laravelcollective/html` (abandoned) raus, native Blade-Forms.**
+  Die Library wurde nur in zwei Templates (`roles/create.blade.php`,
+  `roles/edit.blade.php`) genutzt — acht `Form::*`-Aufrufe. Umstellung
+  auf natives `<form>` mit `@csrf`, `@method('PATCH')`, `@checked` und
+  `old('field', $model->field)`-Fallback. Eine Dependency weniger, kein
+  externes Form-Builder-Paket mehr im Stack. ADR-0003 hatte das schon
+  vor dem Laravel-9-Sprung empfohlen, hier akut geworden weil
+  `laravelcollective/html` ^6.4 nicht Laravel-11-kompatibel ist.
+- **Pest-3-Inferenz für Larastan.** Pest 3 hat die Test-Case-Bindung
+  intern geändert, Larastan v2 sah `$this` in Pest-Closures nur noch
+  als PHPUnit-Default. 45 `/** @var \Tests\TestCase $this */`-Hints
+  in `AuthorizationTest.php` und `HappyPathTest.php` ergänzt, damit
+  `$this->actingAs(...)`, `$this->post(...)` etc. wieder als Laravel-
+  Methoden inferiert werden.
+- **Carbon v3 in `MyCustomWelcomeNotification`.** Methodennamen-
+  Wechsel: `diffInRealMinutes()` ist in v3 weg, ersetzt durch
+  `diffInMinutes(absolute: true)`. Plus Int-Cast für die Translation-
+  String-Interpolation.
+- **`Entry::getAllMediaAttribute()` aufgeräumt.** Vorher iterierte die
+  Methode über einen Relation-Builder direkt und gab den gleichen
+  Builder zurück — der `foreach`-Loop war toter Code, hat `$data`
+  befüllt und wegfallen lassen. Laravel-11-strict-Inferenz wirft das
+  jetzt sichtbar. Vereinfacht auf `return $this->mediaContent;`
+  (Property-Access auf die geladene Collection).
+- **`MediaContent`-PHPDoc-Returns** korrigiert. Drei Methoden
+  (`image()`, `text()`, `audiovisual()`) deklarierten `MorphToMany`
+  als Return-Type, gaben aber `BelongsTo` zurück (Bestands-Bug aus
+  der alten Larastan-Baseline). Doc-Strings angepasst. Die eigentliche
+  Schema-/Relation-Entscheidung wartet auf ADR-0012 in Phase 4.
 - **Laravel 9 → 10.** `composer.json` `laravel/framework` auf `^10.0`.
   Mit ziehen: `spatie/laravel-permission ^6`, `spatie/laravel-translatable
   ^6`, `spatie/laravel-ignition ^2`, `nunomaduro/collision ^7`,
