@@ -10,9 +10,26 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
-Major-Upgrade-Pfad läuft (PHP 8.1 → 8.4, Laravel 8 → 12). PHP-Sprünge
-laufen zuerst und einzeln; Laravel-Sprünge folgen danach. Erster Sprung
-ist durch, sechs weitere folgen.
+**Phase 3 — Major-Upgrade-Welle abgeschlossen (2026-05-31).** Sieben
+sequenzielle Sprünge nach ADR-0003: PHP 8.1 → 8.2 → 8.3 → 8.4 in drei
+Schritten (mit verschränktem PHP-8.4-+-Laravel-9-Sprung wegen
+Larastan-v1-PHPStan-Inkompatibilität), Laravel 8 → 9 → 10 → 11 → 12 in
+vier Schritten. Spatie-Pakete in den jeweils kompatiblen Majors
+(Permission ^6, Activitylog ^4, Translatable ^6, Welcome-Notification
+^2.5, Ignition ^2). Tooling-Wellen: Larastan v1 → v2 → v3 (mit
+PHPStan v2, Repo-Move `nunomaduro/larastan` → `larastan/larastan`),
+Pest v1 → v2 → v3, PHPUnit 9 → 10 → 11, Carbon v3. Vier
+abandoned-Packages strukturell durch Major-Sprünge eliminiert
+(`swiftmailer/swiftmailer`, `facade/ignition`, `laravelcollective/html`,
+`fideloper/proxy`). Pest **58 grüne Tests** (vor Phase 3 waren es 40),
+Larastan-Baseline auf **15 Items** geschmolzen (Phase-2-Ende 198 v1;
+im Verlauf v2-130 → v3-15 nach PHPDoc-Welle und vier Smell-Fixes im
+`ProjectController`). Quick-Smoke Pfad 4 nach jedem Sprung grün.
+CVE-2025-27515 (Laravel File-Validation-Bypass) strukturell zu
+(Laravel 12 ≫ 10.48.29). Coverage 26,68 %, CI-Schwelle 25 %.
+
+Die einzelnen Sprünge werden unten in Block-G-zu-Block-B-Reihenfolge
+beschrieben.
 
 ### Geändert
 
