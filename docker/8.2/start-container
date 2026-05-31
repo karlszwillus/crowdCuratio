@@ -10,6 +10,16 @@ fi
 
 chmod -R ugo+rw /.composer
 
+# Storage-Symlink idempotent prüfen. Beim Image-Rebuild im
+# .:/var/www/html-Mount geht der Symlink public/storage → ../storage/
+# app/public manchmal verloren (Composer hat keinen post-install-Hook,
+# der storage:link rufen würde, weil das eine Artisan-Console braucht).
+# Ohne den Symlink bricht jeder File-Upload mit „The project image
+# failed to upload" — sichtbar nach dem PHP-8.2-Sprung.
+if [ -d /var/www/html/public ] && [ ! -e /var/www/html/public/storage ]; then
+    gosu "${WWWUSER:-sail}" php /var/www/html/artisan storage:link 2>/dev/null || true
+fi
+
 if [ $# -gt 0 ];then
     exec gosu $WWWUSER "$@"
 else

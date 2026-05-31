@@ -27,6 +27,13 @@ ist durch, sechs weitere folgen.
 - **Node 20 LTS → Node 22 LTS.** NodeSource-Setup-Script auf
   `setup_22.x`. Node 20 ist seit Oktober 2025 in Maintenance, Node 22
   ist die aktive LTS bis Oktober 2027.
+- **`storage:link` läuft automatisch beim Container-Start.**
+  `docker/8.2/start-container` prüft idempotent, ob
+  `public/storage` als Symlink existiert, und legt ihn sonst an.
+  Ohne den Symlink bricht jeder File-Upload mit „failed to upload" —
+  beim PHP-8.2-Image-Rebuild verschwand der Symlink stillschweigend,
+  weil Composer keinen Post-Install-Hook für `storage:link` rufen
+  kann. Ab jetzt selbstreparierend.
 
 ### Anmerkung zur Verifikation
 
