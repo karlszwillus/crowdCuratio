@@ -57,6 +57,6 @@ class MyCustomWelcomeNotification extends WelcomeNotification
             ->subject('Willkommen im Crowd Curatio')
             ->line($this->settingsContent)
             ->action(Lang::get('Set initial password'), $this->showWelcomeFormUrl)
-            ->line(Lang::get('This welcome link will expire in :count minutes.', ['count' => $this->validUntil->diffInRealMinutes()]));
+            ->line(Lang::get('This welcome link will expire in :count minutes.', ['count' => (int) $this->validUntil->diffInMinutes(absolute: true)]));
     }
 }

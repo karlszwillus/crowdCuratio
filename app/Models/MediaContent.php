@@ -29,7 +29,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Lang;
 use Spatie\Activitylog\LogOptions;
@@ -90,7 +89,7 @@ class MediaContent extends Model
     /**
      * Get image
      *
-     * @return MorphToMany
+     * @return BelongsTo
      */
     public function image()
     {
@@ -100,7 +99,7 @@ class MediaContent extends Model
     /**
      * Get text
      *
-     * @return MorphToMany
+     * @return BelongsTo
      */
     public function text()
     {
@@ -140,7 +139,7 @@ class MediaContent extends Model
     /**
      * Get Audiovisual
      *
-     * @return MorphToMany
+     * @return BelongsTo
      */
     public function audiovisual()
     {

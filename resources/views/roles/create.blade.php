@@ -42,33 +42,41 @@ If not, see <https://www.gnu.org/licenses/>. -->
         </div>
     @endif
 
-    {!! Form::open(array('route' => 'roles.store','method'=>'POST')) !!}
-    <div class="row mt-7">
-        <div class="col-xs-12 col-sm-12 col-md-12">
-            <div class="form-group">
-                <strong>{{__('name')}}:</strong>
-                {!! Form::text('name', null, array('placeholder' => 'Name','class' => 'form-control')) !!}
+    <form action="{{ route('roles.store') }}" method="POST">
+        @csrf
+        <div class="row mt-7">
+            <div class="col-xs-12 col-sm-12 col-md-12">
+                <div class="form-group">
+                    <strong>{{__('name')}}:</strong>
+                    <input type="text" name="name" placeholder="Name" class="form-control"
+                           value="{{ old('name') }}">
+                </div>
             </div>
-        </div>
-        <div class="col-xs-12 col-sm-12 col-md-12">
-            <div class="form-group">
-                <strong>{{__('permission')}}:</strong>
-                <br/>
-                @foreach($permission as $value)
-                    <label>{{ Form::checkbox('permission[]', $value->permission_id, false, array('class' => 'description')) }}
-                        {!! $value->description !!}</label>
+            <div class="col-xs-12 col-sm-12 col-md-12">
+                <div class="form-group">
+                    <strong>{{__('permission')}}:</strong>
                     <br/>
-                @endforeach
+                    @foreach($permission as $value)
+                        <label>
+                            <input type="checkbox"
+                                   name="permission[]"
+                                   value="{{ $value->permission_id }}"
+                                   class="description"
+                                   @checked(is_array(old('permission')) && in_array($value->permission_id, old('permission')))>
+                            {!! $value->description !!}
+                        </label>
+                        <br/>
+                    @endforeach
+                </div>
             </div>
-        </div>
 
-    </div>
+        </div>
 
 
 @endsection
 @section('sidebar')
     <button type="submit" class="btn btn-secondary btn-lg btn-block text-left">{{__('submit')}}</button>
     <a class="btn btn-secondary btn-lg btn-block text-left" href="{{ route('roles.index') }}"> {{__('back')}}</a>
-    {!! Form::close() !!}
+    </form>
 
 @endsection
