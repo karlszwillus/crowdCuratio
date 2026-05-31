@@ -11,10 +11,60 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 ## [Unreleased]
 
 Nächste Welle: Major-Upgrade-Pfad (PHP 8.1 → 8.4, Laravel 8 → 12) und
-Server-Migration. Vor dem Upgrade-Sweep werden die letzten offenen
-Sicherheits-Pfade geschlossen — Upload-Validation in `UploadTrait`
-und in den Audio-/Image-Upload-Routen, Mass-Assignment-Schutz für
-`Project.user_id`, Owner-Check vor der Drag&Drop-Reorder-Route.
+Server-Migration. Vor dem Upgrade-Sweep wurden die letzten offenen
+Sicherheits-Pfade geschlossen.
+
+### Hinzugefügt
+
+- `app/Http/Requests/StoreImageBlockRequest.php` und
+  `app/Http/Requests/StoreAudiovisualRequest.php` als dedizierte
+  FormRequests für die Image- und Audio-/Video-Upload-Routen.
+- Sechs neue Pest-Tests in `tests/Feature/AuthorizationTest.php`
+  decken die Upload-Härtung, den Mass-Assignment-Schutz auf
+  `Project.user_id` und den Owner-Check vor Drag&Drop ab. Suite
+  jetzt 46 grün.
+
+### Geändert
+
+- **Upload-Routen** in `ContentController::saveImage` und
+  `AudiovisualController::store` laufen über die neuen
+  FormRequests mit MIME-Whitelist (jpeg, jpg, png, gif, webp für
+  Bilder; mp3, mp4, wav, ogg, m4a für Audio) und Size-Limit (4 MB
+  für Bilder, 20 MB für Audio).
+- **`AudiovisualController::uploadAudio()`** generiert den
+  Dateinamen jetzt durchgängig per `Str::random(10)`. Der
+  vorherige `getClientOriginalName()`-Zwischenwert war ein
+  Path-Traversal-Vektor.
+- **`UploadTrait::uploadOne()`** prüft den `disk`-Parameter
+  gegen eine Whitelist (`public`). Defensive Schicht für künftige
+  Aufrufer — die Disk-Wahl darf nie aus Request-Daten kommen.
+- **Drag&Drop-Reorder-Route** (`POST /drag`) prüft jetzt via
+  Project-Policy, ob der eingeloggte User Owner oder Admin des
+  Ziel-Projekts ist. Routen-Layout sonst unverändert; die
+  Zerlegung in drei dedizierte Reorder-Endpunkte (chapter,
+  entry, content) bleibt Refactoring-Material.
+
+### Sicherheit
+
+- **Upload-Härtung in den Image- und Audio-Routen**
+  ([`3b69353`](https://github.com/berlinHistory/crowdCuratio/commit/3b69353)).
+  Vorher liefen `POST /image/store` und `POST /save-audiovisual`
+  ohne MIME- oder Size-Validation. Ein eingeloggter User konnte
+  beliebige Dateitypen hochladen — ausführbare Dateien wären als
+  zufällig benannte Files in der `public`-Disk gelandet, mit
+  potenzieller Wirkung je nach Web-Server-Konfiguration.
+- **Mass-Assignment-Schutz für `Project.user_id`**
+  ([`3b69353`](https://github.com/berlinHistory/crowdCuratio/commit/3b69353)).
+  Die Spalte ist nicht mehr in `Project::$fillable` — auch wenn
+  ein Request `user_id` mitsenden würde, kann sie nicht über
+  Mass-Assignment ins Modell wandern. Der Controller setzt
+  `user_id` ausschließlich aus `Auth::user()->id`.
+- **Owner-Check vor Drag&Drop-Reorder**
+  ([`3b69353`](https://github.com/berlinHistory/crowdCuratio/commit/3b69353)).
+  Bis zum Fix konnte jeder eingeloggte User Chapter, Entries und
+  MediaContent in fremden Projekten umsortieren oder zwischen
+  Chaptern verschieben — die Route war nur durch
+  `auth`-Middleware geschützt, ohne Project-Eigentums-Check.
 
 ## [0.9.0] — 2026-05-30 — Sicherheitsnetz
 
