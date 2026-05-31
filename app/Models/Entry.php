@@ -42,7 +42,7 @@ use Spatie\Translatable\HasTranslations;
  * @property bool $is_translated
  * @property Chapter|null $chapter
  * @property Collection<int, MediaContent> $mediaContent
- * @property mixed $media  Runtime-Zuweisung in ProjectController::allData (Media-Snapshot je Entry), nicht DB-Spalte.
+ * @property mixed $media Runtime-Zuweisung in ProjectController::allData (Media-Snapshot je Entry), nicht DB-Spalte.
  */
 class Entry extends Model
 {
