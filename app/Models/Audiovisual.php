@@ -40,7 +40,7 @@ class Audiovisual extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $fillable = ['link', 'source', 'copyright', 'type', 'is_translated'];
 

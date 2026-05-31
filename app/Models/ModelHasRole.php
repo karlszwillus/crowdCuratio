@@ -33,7 +33,7 @@ class ModelHasRole extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array<int, string>
+     * @var list<string>
      */
     protected $fillable = ['role_id', 'model_id'];
 
