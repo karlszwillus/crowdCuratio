@@ -16,6 +16,73 @@ ist durch, sechs weitere folgen.
 
 ### Geändert
 
+- **Laravel 11 → 12.** `composer.json` `laravel/framework` auf
+  `^12.0`. Spatie-Pakete (`permission ^6`, `activitylog ^4`,
+  `translatable ^6`, `welcome-notification ^2.5`,
+  `ignition ^2`) bleiben — alle Laravel-12-kompatibel mit den
+  Laravel-11-Versionen. Einziger erzwungener Begleitsprung:
+  Larastan (siehe folgender Punkt).
+- **`nunomaduro/larastan` → `larastan/larastan ^3`.** Repo-Move
+  beim v3-Major: das Paket lebt nicht mehr unter
+  `nunomaduro/larastan`, sondern unter `larastan/larastan`.
+  Composer-Constraint und der `include`-Pfad in `phpstan.neon`
+  (`./vendor/nunomaduro/larastan/extension.neon` →
+  `./vendor/larastan/larastan/extension.neon`) entsprechend
+  angepasst. v3 bringt PHPStan v2 mit — strengere Kovarianz-
+  Regeln auf überschriebenen PHPDoc-Property-Types und eine
+  neue Regel `larastan.noEnvCallsOutsideOfConfig`. Beides hat
+  in unserem Code Folgearbeiten ausgelöst (siehe folgende Punkte).
+- **`$fillable`-PHPDoc in 18 Modellen** von
+  `@var array<int, string>` auf `@var list<string>` umgestellt.
+  Eloquent-`Model::$fillable` ist im Basis-PHPDoc seit Längerem
+  als `list<string>` getypt; PHPStan v2 verlangt jetzt Kovarianz
+  und schimpft bei der älteren Form. Mechanische Welle in
+  `Audiovisual`, `Chapter`, `Comment`, `Entry`, `Gallery`,
+  `Image`, `Invitation`, `MediaContent`, `ModelHasPermission`,
+  `ModelHasRole`, `Permission`, `PermissionDescription`,
+  `Project`, `Role`, `Source`, `Text`, `User`
+  (zusätzlich `$hidden`), `UserHasPermission`.
+- **`CreateAdminUserSeeder` von `env()` auf `config()` umgestellt.**
+  Larastan v3 verbietet `env()`-Calls außerhalb des `config/`-
+  Verzeichnisses (`larastan.noEnvCallsOutsideOfConfig`), weil
+  sie nach `php artisan config:cache` `null` zurückgeben. Die
+  vier Stellen im Seeder (`ADMIN_EMAIL`, `ADMIN_PASSWORD`,
+  `ADMIN_NAME`, `ADMIN_LAST_NAME`) lesen jetzt aus
+  `config('admin.*')`; die ENV-Variablen werden in der neuen
+  `config/admin.php` einmalig gelesen. Inhaltlich keine
+  Änderung — Aufruf-Indirektion eine Schicht tiefer.
+- **`isset()` auf nicht-nullable Collection durch `isNotEmpty()`
+  ersetzt.** Drei Stellen in `ProjectController::history` und
+  `LogService::history` / `LogService::textLog` prüften
+  `isset($activity->changes)` als Heuristik für
+  „Activity-Eintrag hat Property-Diff". Spatie-Activity-`changes`
+  ist seit v4 eine Collection (nicht nullable) — `isset()`
+  liefert dort immer `true`, und PHPStan v2 sieht das jetzt
+  präzise genug, um zu meckern. Umgestellt auf
+  `$activity->changes->isNotEmpty()`, was die ursprüngliche
+  Absicht direkt ausdrückt.
+- **`ProjectController::getUsersForThisProject()` PHPDoc-Return
+  korrigiert.** Doc-Block sagte `@return bool`, die Methode gab
+  aber seit jeher ein indiziertes Array zurück. Auf
+  `@return array<int, array<string, mixed>>` angepasst — Bestands-
+  Bug aus der alten Baseline.
+- **Larastan-Baseline auf v3 regeneriert.** Vorher 130 v2-Einträge,
+  jetzt 15 v3-Einträge. Was bleibt: 11 Magic-Property-Accesses auf
+  Eloquent-Relations (`$entry->chapter->project`, `$activity->changes`-
+  ähnliche Inferenz-Lücken in vier Dateien), plus vier echte
+  Smell-Befunde in `ProjectController` (`setImage()`-Return-Typ-
+  Tippfehler, zwei `== ''`-Pfade mit toter Bedingung, ein
+  `view()`-Argument-Typ-Mismatch). Beides Phase-4-Hygiene:
+  `@property`-Annotationen am Class-Level der Models lösen den
+  Großteil ohne Code-Eingriff.
+
+### Anmerkung zur Verifikation (Block G)
+
+Pest grün auf PHP 8.4 + Laravel 12, Larastan v3 stabil (15 Items
+in Baseline, keine Bypass-Errors), Pint grün, Quick-Smoke Pfad 4
+(Login → Project anlegen → Bild-Upload → PDF-Export) grün. Spatie-
+Pakete unverändert — kein erzwungener Major-Bump in Block G.
+
 - **Laravel 10 → 11.** `composer.json` `laravel/framework` auf
   `^11.0`. Mit ziehen: `nunomaduro/collision ^8`, `laravel/breeze ^2`,
   `pestphp/pest ^3`, `pestphp/pest-plugin-laravel ^3`,
