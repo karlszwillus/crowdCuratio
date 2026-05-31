@@ -33,6 +33,63 @@ beschrieben.
 
 ### Geändert
 
+- **Eloquent Strict-Mode voll aktiviert.** `Model::shouldBeStrict()`
+  im `AppServiceProvider` bündelt jetzt drei Schutzschichten in
+  einem Aufruf statt nur `preventLazyLoading`: zusätzlich
+  `preventAccessingMissingAttributes` (wirft beim Zugriff auf
+  nicht-geladene oder nicht-existierende Spalten) und
+  `preventSilentlyDiscardingAttributes` (wirft, wenn `fill()` /
+  `create()` Felder erhält, die nicht in `$fillable` stehen). Weiter
+  nur außerhalb von Production aktiv (Sail-Dev, CI-Pest), damit
+  Live-User keine späte Regression erleben.
+- **`@property`-Annotationen an sieben Modellen.** Class-Level-
+  PHPDoc auf `Audiovisual`, `Chapter`, `Entry`, `Gallery`, `Project`,
+  `Source` und `Text` mit den jeweiligen DB-Feldern, Relations und
+  den Runtime-Snapshots (`$media_id`, `$image_list`, `$media`,
+  `$entry`), die in `ProjectController::allData()` dynamisch
+  zugewiesen werden. Voraussetzung für den Strict-Mode-Switch und
+  für den `@property`-getriebenen PHPStan-Inferenz-Pfad.
+- **`ProjectController::setImage()`** PHPDoc-Return `@return $this`
+  → `@return string`. Die Methode gab seit jeher den generierten
+  Filename als String zurück; der falsche Doc-Hint hatte den
+  Aufrufer-Check `if ($logo !== '')` zum stillen statischen
+  Phantom-Befund gemacht.
+- **`ProjectController::getSource()` + `ContentController::getSource()`
+  refaktoriert.** Die `$id = ''`-Variable und der unerreichbare
+  `return $this` am Methodenende sind raus, Early-Return aus der
+  Schleife, klarer `@return int`. Die Methode bleibt vorerst in
+  beiden Controllers dupliziert — Zusammenführung in einen
+  `SourceService` wandert in Phase 4.
+- **Redundante `'created_at' => now()`-Zuweisungen entfernt** in
+  vier Eloquent-Mass-Assignment-Pfaden: `Image::firstOrCreate`
+  (`ContentController::saveImage`), `Invitation::firstOrCreate`
+  (`ProjectController::setPermissionForUserOnProject`),
+  `UserHasPermission::create` + `Invitation::create`
+  (`RegisteredUserController::store`). Eloquent setzt Timestamps
+  automatisch — das manuelle Setzen war Cargo und wird unter
+  `preventSilentlyDiscardingAttributes` als
+  `MassAssignmentException` sichtbar. Query-Builder-Pfade
+  (`Source::insertGetId`, `Text::insertGetId`) behalten ihr
+  `'created_at'`, weil der Query Builder keine Timestamps
+  automatisch setzt.
+
+### Behoben
+
+- **Blade-Expressions in HTML-Kommentaren werden jetzt nicht mehr
+  ausgewertet.** Vier Stellen in drei Blade-Templates
+  (`chapters/index.blade.php` Z. 409 + 475, `auth/register.blade.php`
+  Z. 102, `projects/description.blade.php` Z. 148) hatten
+  auskommentierten HTML-Code, in dem `{{ ... }}`-Expressions
+  stehengeblieben sind. Blade interpretiert solche Expressions auch
+  innerhalb von HTML-Kommentaren — der Kommentar versteckt nur das
+  gerenderte HTML, nicht die PHP-Auswertung. Im
+  `chapters/index.blade.php`-Fall hat das beim Quick-Smoke eine
+  `MissingAttributeException` auf `$item->alt` ausgelöst
+  (`$item` ist ein `MediaContent`, hat kein `alt`-Property). Fix:
+  HTML-Kommentare `<!-- ... -->` durch Blade-Kommentare
+  `{{-- ... --}}` ersetzt; Blade überspringt den Block jetzt
+  komplett.
+
 - **Laravel 11 → 12.** `composer.json` `laravel/framework` auf
   `^12.0`. Spatie-Pakete (`permission ^6`, `activitylog ^4`,
   `translatable ^6`, `welcome-notification ^2.5`,
