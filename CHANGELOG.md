@@ -55,6 +55,14 @@ Sicherheits-Pfade geschlossen.
 - Test-Helper `makeProject`, `makeChapter`, `makeEntry` liegen
   zentral in `tests/Pest.php` und sind über Feature-Suites
   hinweg verfügbar.
+- **PCOV** als Coverage-Driver im PHP-Container (`php8.1-pcov`
+  im Dockerfile, `pcov.directory = /var/www/html/app` in der
+  `php.ini`). Aktiv nur bei `--coverage` — kein Overhead im
+  normalen App-Lauf. Composer-Script `composer test-coverage`
+  läuft `pest --coverage --min=25` und schlägt fehl, wenn die
+  Coverage unter 25 % fällt. Aktueller Stand: **26.68 %** — die
+  Schwelle ist eng angesetzt, damit Coverage-Verlust durch
+  Phase-3-Refactorings im CI sofort sichtbar wird.
 
 ### Sicherheit
 
