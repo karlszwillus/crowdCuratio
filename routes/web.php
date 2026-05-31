@@ -19,11 +19,17 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>.
  */
+use App\Http\Controllers\AudiovisualController;
+use App\Http\Controllers\Auth\MyWelcomeController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\ChapterController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\EntryController;
+use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\PublicController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\SettingController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use Spatie\WelcomeNotification\WelcomesNewUsers;
@@ -49,17 +55,17 @@ Route::get(
 Route::group(
     ['middleware' => ['web', WelcomesNewUsers::class/* ProtectAgainstSpam::class, */]],
     function () {
-        Route::get('welcome/{user}', [App\Http\Controllers\Auth\MyWelcomeController::class, 'showWelcomeForm'])->name(
+        Route::get('welcome/{user}', [MyWelcomeController::class, 'showWelcomeForm'])->name(
             'welcome'
         );
-        Route::post('welcome/{user}', [App\Http\Controllers\Auth\MyWelcomeController::class, 'savePassword']);
+        Route::post('welcome/{user}', [MyWelcomeController::class, 'savePassword']);
     }
 );
 
 Route::group(
     ['middleware' => ['admin']],
     function () {
-        Route::resource('/settings', \App\Http\Controllers\SettingController::class);
+        Route::resource('/settings', SettingController::class);
     }
 );
 
@@ -70,8 +76,8 @@ Route::get(
     }
 )->middleware(['auth'])->name('dashboard');
 
-Route::get('auth.policy', [\App\Http\Controllers\PublicController::class, 'projectPolicy'])->name('auth.policy');
-Route::get('auth.terms', [\App\Http\Controllers\PublicController::class, 'projectTerms'])->name('auth.terms');
+Route::get('auth.policy', [PublicController::class, 'projectPolicy'])->name('auth.policy');
+Route::get('auth.terms', [PublicController::class, 'projectTerms'])->name('auth.terms');
 
 Route::group(
     ['middleware' => ['auth']],
@@ -80,7 +86,7 @@ Route::group(
         Route::delete('/user/{userId}/project/{projectId}', [ProjectController::class, 'deleteUserFromProject'])->name(
             'project.user_delete'
         );
-        Route::resource('/roles', \App\Http\Controllers\RoleController::class);
+        Route::resource('/roles', RoleController::class);
         Route::resource('/chapters', ChapterController::class);
         Route::resource('/entries', EntryController::class);
         // Route::resource('/contents', \App\Http\Controllers\ContentController::class);
@@ -93,7 +99,7 @@ Route::group(
         Route::get('/user/{id}/project/{projectId}/info', [ProjectController::class, 'inviteUserForProject'])->name('user.info');
         Route::get(
             '/user/{id}/invitation',
-            [\App\Http\Controllers\UserController::class, 'resendInvitation']
+            [UserController::class, 'resendInvitation']
         )->name(
             'resend.invitation'
         );
@@ -239,13 +245,13 @@ Route::group(
         );
         Route::get(
             '/role/check/{id}/',
-            [\App\Http\Controllers\RoleController::class, 'roleHasUsers']
+            [RoleController::class, 'roleHasUsers']
         )->name(
             'role.check'
         );
         Route::post(
             '/role/{id}/alt/{alt}/',
-            [\App\Http\Controllers\RoleController::class, 'customizedDelete']
+            [RoleController::class, 'customizedDelete']
         )->name(
             'customizedDelete'
         );
@@ -278,17 +284,17 @@ Route::group(
                 // sucht Storage::response auf der Default-Disk ('local',
                 // storage/app/) und liefert nichts — siehe Finding F-LAR-010
                 // bzw. AM-B-1.
-                return \Storage::disk('public')->response('uploads/images/'.$file);
+                return Storage::disk('public')->response('uploads/images/'.$file);
             }
         )->name('image');
         Route::get(
             '/audio/{file}',
             function ($file) {
-                return \Storage::disk('public')->response('uploads/audio/'.$file);
+                return Storage::disk('public')->response('uploads/audio/'.$file);
             }
         )->name('audio');
 
-        Route::get('lang/{lang}', [\App\Http\Controllers\LanguageController::class, 'switchLang'])->name('lang.switch');
+        Route::get('lang/{lang}', [LanguageController::class, 'switchLang'])->name('lang.switch');
 
         Route::get(
             '/project/{projectId}/log/{id}/',
@@ -359,38 +365,38 @@ Route::group(
 
         Route::post(
             '/save-audiovisual',
-            [\App\Http\Controllers\AudiovisualController::class, 'store']
+            [AudiovisualController::class, 'store']
         )->name(
             'save.audiovisual'
         );
 
-        Route::delete('/delete/{id}/audiovisual', [\App\Http\Controllers\AudiovisualController::class, 'delete'])->name(
+        Route::delete('/delete/{id}/audiovisual', [AudiovisualController::class, 'delete'])->name(
             'audiovisual.delete'
         );
 
         Route::post(
             '/comment/{id}/audiovisual',
-            [\App\Http\Controllers\AudiovisualController::class, 'commentAudiovisual']
+            [AudiovisualController::class, 'commentAudiovisual']
         )->name(
             'comment.audiovisual'
         );
 
-        Route::post('/comment/audiovisual', [\App\Http\Controllers\AudiovisualController::class, 'audiovisualCommentSave'])->name(
+        Route::post('/comment/audiovisual', [AudiovisualController::class, 'audiovisualCommentSave'])->name(
             'comment.audiovisual.save'
         );
 
         Route::post(
             '/comment/{id}/gallery',
-            [\App\Http\Controllers\ContentController::class, 'commentGallery']
+            [ContentController::class, 'commentGallery']
         )->name(
             'comment.gallery.save'
         );
 
-        Route::post('/comment/gallery', [\App\Http\Controllers\ContentController::class, 'galleryCommentSave'])->name(
+        Route::post('/comment/gallery', [ContentController::class, 'galleryCommentSave'])->name(
             'comment.gallery'
         );
 
-        Route::get('/preview', [\App\Http\Controllers\ProjectController::class, 'previewProject'])->name(
+        Route::get('/preview', [ProjectController::class, 'previewProject'])->name(
             'preview'
         );
 
@@ -401,11 +407,11 @@ Route::group(
         // /image/{file} (disk `public`, /uploads/images/) der saubere
         // Ersatz, nicht eine Wiederauferstehung dieser Route.
 
-        Route::get('/preview/download', [\App\Http\Controllers\ProjectController::class, 'downloadPreview'])->name(
+        Route::get('/preview/download', [ProjectController::class, 'downloadPreview'])->name(
             'download'
         );
 
-        Route::get('/copyright', [\App\Http\Controllers\ProjectController::class, 'projectMetadata'])->name(
+        Route::get('/copyright', [ProjectController::class, 'projectMetadata'])->name(
             'preview.metadata'
         );
 

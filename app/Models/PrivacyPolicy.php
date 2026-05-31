@@ -24,6 +24,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Translatable\HasTranslations;
 
@@ -31,13 +32,17 @@ class PrivacyPolicy extends Model
 {
     use HasFactory, HasTranslations, LogsActivity;
 
-    protected static $logFillable = true;
-
-    protected static $submitEmptyLogs = false;
-
     public $table = 'privacy_policy';
 
     public $translatable = ['privacy_policy'];
 
     protected $fillable = ['privacy_policy'];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('PrivacyPolicy')
+            ->logFillable()
+            ->dontSubmitEmptyLogs();
+    }
 }

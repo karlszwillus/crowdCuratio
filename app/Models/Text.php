@@ -25,9 +25,11 @@ namespace App\Models;
 use App\Traits\CommentTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Lang;
+use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Translatable\HasTranslations;
@@ -36,18 +38,10 @@ class Text extends Model
 {
     use CommentTrait, HasFactory, HasTranslations, LogsActivity,SoftDeletes;
 
-    protected static $logName = 'Text';
-
-    protected static $logFillable = true;
-
-    protected static $logOnlyDirty = true;
-
-    protected static $submitEmptyLogs = false;
-
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var array<int, string>
      */
     protected $fillable = ['id', 'text', 'origin', 'copyright', 'position'];
 
@@ -56,7 +50,7 @@ class Text extends Model
     /**
      * Get text origin
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function originText()
     {
@@ -66,7 +60,7 @@ class Text extends Model
     /**
      * Get text copyright
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function copyrightText()
     {
@@ -106,5 +100,14 @@ class Text extends Model
         $activity->properties = $activity->properties->merge([
             'language' => Lang::getLocale(),
         ]);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('Text')
+            ->logFillable()
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs();
     }
 }

@@ -25,20 +25,20 @@ namespace App\Models;
 use App\Traits\CommentTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Lang;
+use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Traits\LogsActivity;
 
 class MediaContent extends Model
 {
     use CommentTrait, HasFactory,LogsActivity,SoftDeletes;
-
-    protected static $logName = 'MediaContent';
-
-    protected static $logFillable = true;
-
-    protected static $logOnlyDirty = true;
 
     public $timestamps = false;
 
@@ -47,7 +47,7 @@ class MediaContent extends Model
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var array<int, string>
      */
     protected $fillable = ['media_content_id', 'media_contentable_id', 'media_contentable_type', 'position'];
 
@@ -80,7 +80,7 @@ class MediaContent extends Model
     /**
      * Get media
      *
-     * @return \Illuminate\Database\Eloquent\Relations\MorphTo
+     * @return MorphTo
      */
     public function media()
     {
@@ -90,7 +90,7 @@ class MediaContent extends Model
     /**
      * Get image
      *
-     * @return \Illuminate\Database\Eloquent\Relations\MorphToMany
+     * @return MorphToMany
      */
     public function image()
     {
@@ -100,7 +100,7 @@ class MediaContent extends Model
     /**
      * Get text
      *
-     * @return \Illuminate\Database\Eloquent\Relations\MorphToMany
+     * @return MorphToMany
      */
     public function text()
     {
@@ -110,7 +110,7 @@ class MediaContent extends Model
     /**
      * Get entry
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * @return BelongsToMany
      */
     public function entry()
     {
@@ -120,7 +120,7 @@ class MediaContent extends Model
     /**
      * Get all comments
      *
-     * @return \Illuminate\Database\Eloquent\Relations\MorphMany
+     * @return MorphMany
      */
     public function comments()
     {
@@ -130,7 +130,7 @@ class MediaContent extends Model
     /**
      * Get gallery
      *
-     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @return BelongsTo
      */
     public function gallery()
     {
@@ -140,7 +140,7 @@ class MediaContent extends Model
     /**
      * Get Audiovisual
      *
-     * @return \Illuminate\Database\Eloquent\Relations\MorphToMany
+     * @return MorphToMany
      */
     public function audiovisual()
     {
@@ -155,5 +155,13 @@ class MediaContent extends Model
         $activity->properties = $activity->properties->merge([
             'language' => Lang::getLocale(),
         ]);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('MediaContent')
+            ->logFillable()
+            ->logOnlyDirty();
     }
 }

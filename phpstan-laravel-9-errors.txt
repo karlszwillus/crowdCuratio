@@ -1,0 +1,553 @@
+Note: Using configuration file /var/www/html/phpstan.neon.
+ ------ ---------------------------------------------------------------- 
+  Line   app/Http/Controllers/Auth/VerifyEmailController.php             
+ ------ ---------------------------------------------------------------- 
+  44     Parameter #1 $user of class Illuminate\Auth\Events\Verified     
+         constructor expects Illuminate\Contracts\Auth\MustVerifyEmail,  
+         App\Models\User|null given.                                     
+ ------ ---------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------- 
+  Line   app/Http/Controllers/ContentController.php                          
+ ------ -------------------------------------------------------------------- 
+  221    Negated boolean expression is always true.                          
+         💡 Because the type is coming from a PHPDoc, you can turn off this  
+            check by setting treatPhpDocTypesAsCertain: false in your        
+            phpstan.neon.                                                    
+  617    Relation 'user' is not found in App\Models\Comment model.           
+ ------ -------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------- 
+  Line   app/Http/Controllers/ProjectController.php                                
+ ------ -------------------------------------------------------------------------- 
+  324    Method                                                                    
+         App\Http\Controllers\ProjectController::getUsersForThisProject()          
+         should return bool but returns array<int, array<string,                   
+         array|string>>.                                                           
+  695    Negated boolean expression is always true.                                
+         💡 Because the type is coming from a PHPDoc, you can turn off this        
+            check by setting treatPhpDocTypesAsCertain: false in your              
+            phpstan.neon.                                                          
+  795    Access to an undefined property                                           
+         App\Models\Project|Illuminate\Database\Eloquent\Collection<int,           
+         App\Models\Project>::$chapters.                                           
+         💡 Learn more:                                                            
+            https://phpstan.org/blog/solving-phpstan-access-to-undefined-property  
+  822    Access to an undefined property                                           
+         App\Models\Text|Illuminate\Database\Eloquent\Collection<int,              
+         App\Models\Text>::$media_id.                                              
+         💡 Learn more:                                                            
+            https://phpstan.org/blog/solving-phpstan-access-to-undefined-property  
+  842    Access to an undefined property                                           
+         App\Models\Audiovisual|Illuminate\Database\Eloquent\Collection<int,       
+         App\Models\Audiovisual>::$media_id.                                       
+         💡 Learn more:                                                            
+            https://phpstan.org/blog/solving-phpstan-access-to-undefined-property  
+  854    Access to an undefined property                                           
+         App\Models\Gallery|Illuminate\Database\Eloquent\Collection<int,           
+         App\Models\Gallery>::$media_id.                                           
+         💡 Learn more:                                                            
+            https://phpstan.org/blog/solving-phpstan-access-to-undefined-property  
+  855    Access to an undefined property                                           
+         App\Models\Gallery|Illuminate\Database\Eloquent\Collection<int,           
+         App\Models\Gallery>::$image_list.                                         
+         💡 Learn more:                                                            
+            https://phpstan.org/blog/solving-phpstan-access-to-undefined-property  
+ ------ -------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------- 
+  Line   app/Http/Controllers/SettingController.php                          
+ ------ -------------------------------------------------------------------- 
+  76     Negated boolean expression is always true.                          
+         💡 Because the type is coming from a PHPDoc, you can turn off this  
+            check by setting treatPhpDocTypesAsCertain: false in your        
+            phpstan.neon.                                                    
+  92     Negated boolean expression is always true.                          
+         💡 Because the type is coming from a PHPDoc, you can turn off this  
+            check by setting treatPhpDocTypesAsCertain: false in your        
+            phpstan.neon.                                                    
+  104    Negated boolean expression is always true.                          
+         💡 Because the type is coming from a PHPDoc, you can turn off this  
+            check by setting treatPhpDocTypesAsCertain: false in your        
+            phpstan.neon.                                                    
+ ------ -------------------------------------------------------------------- 
+
+ ------ ---------------------------------------------------------------------- 
+  Line   app/Http/Kernel.php                                                   
+ ------ ---------------------------------------------------------------------- 
+  37     PHPDoc type array of property App\Http\Kernel::$middleware is not     
+         covariant with PHPDoc type array<int, string> of overridden property  
+         Illuminate\Foundation\Http\Kernel::$middleware.                       
+         💡 You can fix 3rd party PHPDoc types with stub files:                
+         💡 https://phpstan.org/user-guide/stub-files                          
+                                                                               
+  51     PHPDoc type array of property App\Http\Kernel::$middlewareGroups is   
+         not covariant with PHPDoc type array<string, array<int, string>> of   
+         overridden property                                                   
+         Illuminate\Foundation\Http\Kernel::$middlewareGroups.                 
+         💡 You can fix 3rd party PHPDoc types with stub files:                
+         💡 https://phpstan.org/user-guide/stub-files                          
+                                                                               
+  76     PHPDoc type array of property App\Http\Kernel::$routeMiddleware is    
+         not covariant with PHPDoc type array<string, string> of overridden    
+         property Illuminate\Foundation\Http\Kernel::$routeMiddleware.         
+         💡 You can fix 3rd party PHPDoc types with stub files:                
+         💡 https://phpstan.org/user-guide/stub-files                          
+                                                                               
+ ------ ---------------------------------------------------------------------- 
+
+ ------ ------------------------------------------------------------------- 
+  Line   app/Http/Middleware/EncryptCookies.php                             
+ ------ ------------------------------------------------------------------- 
+  34     PHPDoc type array of property                                      
+         App\Http\Middleware\EncryptCookies::$except is not covariant with  
+         PHPDoc type array<int, string> of overridden property              
+         Illuminate\Cookie\Middleware\EncryptCookies::$except.              
+         💡 You can fix 3rd party PHPDoc types with stub files:             
+         💡 https://phpstan.org/user-guide/stub-files                       
+                                                                            
+ ------ ------------------------------------------------------------------- 
+
+ ------ ---------------------------------------------------------------------------------- 
+  Line   app/Http/Middleware/PreventRequestsDuringMaintenance.php                          
+ ------ ---------------------------------------------------------------------------------- 
+  34     PHPDoc type array of property                                                     
+         App\Http\Middleware\PreventRequestsDuringMaintenance::$except is not              
+         covariant with PHPDoc type array<int, string> of overridden property              
+         Illuminate\Foundation\Http\Middleware\PreventRequestsDuringMaintenance::$except.  
+         💡 You can fix 3rd party PHPDoc types with stub files:                            
+         💡 https://phpstan.org/user-guide/stub-files                                      
+                                                                                           
+ ------ ---------------------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   app/Http/Middleware/TrimStrings.php                                    
+ ------ ----------------------------------------------------------------------- 
+  34     PHPDoc type array of property                                          
+         App\Http\Middleware\TrimStrings::$except is not covariant with PHPDoc  
+         type array<int, string> of overridden property                         
+         Illuminate\Foundation\Http\Middleware\TrimStrings::$except.            
+         💡 You can fix 3rd party PHPDoc types with stub files:                 
+         💡 https://phpstan.org/user-guide/stub-files                           
+                                                                                
+ ------ ----------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------- 
+  Line   app/Http/Middleware/VerifyCsrfToken.php                             
+ ------ -------------------------------------------------------------------- 
+  34     PHPDoc type array of property                                       
+         App\Http\Middleware\VerifyCsrfToken::$except is not covariant with  
+         PHPDoc type array<int, string> of overridden property               
+         Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::$except.     
+         💡 You can fix 3rd party PHPDoc types with stub files:              
+         💡 https://phpstan.org/user-guide/stub-files                        
+                                                                             
+ ------ -------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------- 
+  Line   app/Models/Audiovisual.php                                          
+ ------ -------------------------------------------------------------------- 
+  45     PHPDoc type array of property App\Models\Audiovisual::$fillable is  
+         not covariant with PHPDoc type array<int, string> of overridden     
+         property Illuminate\Database\Eloquent\Model::$fillable.             
+         💡 You can fix 3rd party PHPDoc types with stub files:              
+         💡 https://phpstan.org/user-guide/stub-files                        
+                                                                             
+ ------ -------------------------------------------------------------------- 
+
+ ------ ---------------------------------------------------------------------- 
+  Line   app/Models/Chapter.php                                                
+ ------ ---------------------------------------------------------------------- 
+  48     PHPDoc type array of property App\Models\Chapter::$fillable is not    
+         covariant with PHPDoc type array<int, string> of overridden property  
+         Illuminate\Database\Eloquent\Model::$fillable.                        
+         💡 You can fix 3rd party PHPDoc types with stub files:                
+         💡 https://phpstan.org/user-guide/stub-files                          
+                                                                               
+ ------ ---------------------------------------------------------------------- 
+
+ ------ ---------------------------------------------------------------------- 
+  Line   app/Models/Comment.php                                                
+ ------ ---------------------------------------------------------------------- 
+  45     PHPDoc type array of property App\Models\Comment::$fillable is not    
+         covariant with PHPDoc type array<int, string> of overridden property  
+         Illuminate\Database\Eloquent\Model::$fillable.                        
+         💡 You can fix 3rd party PHPDoc types with stub files:                
+         💡 https://phpstan.org/user-guide/stub-files                          
+                                                                               
+ ------ ---------------------------------------------------------------------- 
+
+ ------ ---------------------------------------------------------------------- 
+  Line   app/Models/Entry.php                                                  
+ ------ ---------------------------------------------------------------------- 
+  44     PHPDoc type array of property App\Models\Entry::$fillable is not      
+         covariant with PHPDoc type array<int, string> of overridden property  
+         Illuminate\Database\Eloquent\Model::$fillable.                        
+         💡 You can fix 3rd party PHPDoc types with stub files:                
+         💡 https://phpstan.org/user-guide/stub-files                          
+                                                                               
+ ------ ---------------------------------------------------------------------- 
+
+ ------ ---------------------------------------------------------------------- 
+  Line   app/Models/Gallery.php                                                
+ ------ ---------------------------------------------------------------------- 
+  63     PHPDoc type array of property App\Models\Gallery::$fillable is not    
+         covariant with PHPDoc type array<int, string> of overridden property  
+         Illuminate\Database\Eloquent\Model::$fillable.                        
+         💡 You can fix 3rd party PHPDoc types with stub files:                
+         💡 https://phpstan.org/user-guide/stub-files                          
+                                                                               
+ ------ ---------------------------------------------------------------------- 
+
+ ------ ---------------------------------------------------------------------- 
+  Line   app/Models/Image.php                                                  
+ ------ ---------------------------------------------------------------------- 
+  44     PHPDoc type array of property App\Models\Image::$fillable is not      
+         covariant with PHPDoc type array<int, string> of overridden property  
+         Illuminate\Database\Eloquent\Model::$fillable.                        
+         💡 You can fix 3rd party PHPDoc types with stub files:                
+         💡 https://phpstan.org/user-guide/stub-files                          
+                                                                               
+ ------ ---------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   app/Models/Invitation.php                                              
+ ------ ----------------------------------------------------------------------- 
+  39     PHPDoc type array of property App\Models\Invitation::$fillable is not  
+         covariant with PHPDoc type array<int, string> of overridden property   
+         Illuminate\Database\Eloquent\Model::$fillable.                         
+         💡 You can fix 3rd party PHPDoc types with stub files:                 
+         💡 https://phpstan.org/user-guide/stub-files                           
+                                                                                
+ ------ ----------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------- 
+  Line   app/Models/MediaContent.php                                               
+ ------ -------------------------------------------------------------------------- 
+  47     PHPDoc type array of property App\Models\MediaContent::$fillable is       
+         not covariant with PHPDoc type array<int, string> of overridden           
+         property Illuminate\Database\Eloquent\Model::$fillable.                   
+         💡 You can fix 3rd party PHPDoc types with stub files:                    
+         💡 https://phpstan.org/user-guide/stub-files                              
+                                                                                   
+  92     Method App\Models\MediaContent::image() should return                     
+         Illuminate\Database\Eloquent\Relations\MorphToMany but returns            
+         Illuminate\Database\Eloquent\Relations\BelongsTo<App\Models\Image,        
+         App\Models\MediaContent>.                                                 
+  102    Method App\Models\MediaContent::text() should return                      
+         Illuminate\Database\Eloquent\Relations\MorphToMany but returns            
+         Illuminate\Database\Eloquent\Relations\BelongsTo<App\Models\Text,         
+         App\Models\MediaContent>.                                                 
+  142    Method App\Models\MediaContent::audiovisual() should return               
+         Illuminate\Database\Eloquent\Relations\MorphToMany but returns            
+         Illuminate\Database\Eloquent\Relations\BelongsTo<App\Models\Audiovisual,  
+         App\Models\MediaContent>.                                                 
+ ------ -------------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   app/Models/ModelHasPermission.php                                      
+ ------ ----------------------------------------------------------------------- 
+  39     PHPDoc type array of property                                          
+         App\Models\ModelHasPermission::$fillable is not covariant with PHPDoc  
+         type array<int, string> of overridden property                         
+         Illuminate\Database\Eloquent\Model::$fillable.                         
+         💡 You can fix 3rd party PHPDoc types with stub files:                 
+         💡 https://phpstan.org/user-guide/stub-files                           
+                                                                                
+ ------ ----------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------- 
+  Line   app/Models/ModelHasRole.php                                          
+ ------ --------------------------------------------------------------------- 
+  38     PHPDoc type array of property App\Models\ModelHasRole::$fillable is  
+         not covariant with PHPDoc type array<int, string> of overridden      
+         property Illuminate\Database\Eloquent\Model::$fillable.              
+         💡 You can fix 3rd party PHPDoc types with stub files:               
+         💡 https://phpstan.org/user-guide/stub-files                         
+                                                                              
+ ------ --------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   app/Models/Permission.php                                              
+ ------ ----------------------------------------------------------------------- 
+  39     PHPDoc type array of property App\Models\Permission::$fillable is not  
+         covariant with PHPDoc type array<int, string> of overridden property   
+         Illuminate\Database\Eloquent\Model::$fillable.                         
+         💡 You can fix 3rd party PHPDoc types with stub files:                 
+         💡 https://phpstan.org/user-guide/stub-files                           
+                                                                                
+ ------ ----------------------------------------------------------------------- 
+
+ ------ ------------------------------------------------------------------- 
+  Line   app/Models/PermissionDescription.php                               
+ ------ ------------------------------------------------------------------- 
+  38     PHPDoc type array of property                                      
+         App\Models\PermissionDescription::$fillable is not covariant with  
+         PHPDoc type array<int, string> of overridden property              
+         Illuminate\Database\Eloquent\Model::$fillable.                     
+         💡 You can fix 3rd party PHPDoc types with stub files:             
+         💡 https://phpstan.org/user-guide/stub-files                       
+                                                                            
+ ------ ------------------------------------------------------------------- 
+
+ ------ ---------------------------------------------------------------------- 
+  Line   app/Models/Project.php                                                
+ ------ ---------------------------------------------------------------------- 
+  54     PHPDoc type array of property App\Models\Project::$fillable is not    
+         covariant with PHPDoc type array<int, string> of overridden property  
+         Illuminate\Database\Eloquent\Model::$fillable.                        
+         💡 You can fix 3rd party PHPDoc types with stub files:                
+         💡 https://phpstan.org/user-guide/stub-files                          
+                                                                               
+ ------ ---------------------------------------------------------------------- 
+
+ ------ ---------------------------------------------------------------------- 
+  Line   app/Models/Role.php                                                   
+ ------ ---------------------------------------------------------------------- 
+  42     PHPDoc type array of property App\Models\Role::$fillable is not       
+         covariant with PHPDoc type array<int, string> of overridden property  
+         Illuminate\Database\Eloquent\Model::$fillable.                        
+         💡 You can fix 3rd party PHPDoc types with stub files:                
+         💡 https://phpstan.org/user-guide/stub-files                          
+                                                                               
+ ------ ---------------------------------------------------------------------- 
+
+ ------ ---------------------------------------------------------------------- 
+  Line   app/Models/Source.php                                                 
+ ------ ---------------------------------------------------------------------- 
+  39     PHPDoc type array of property App\Models\Source::$fillable is not     
+         covariant with PHPDoc type array<int, string> of overridden property  
+         Illuminate\Database\Eloquent\Model::$fillable.                        
+         💡 You can fix 3rd party PHPDoc types with stub files:                
+         💡 https://phpstan.org/user-guide/stub-files                          
+                                                                               
+ ------ ---------------------------------------------------------------------- 
+
+ ------ ---------------------------------------------------------------------- 
+  Line   app/Models/Text.php                                                   
+ ------ ---------------------------------------------------------------------- 
+  45     PHPDoc type array of property App\Models\Text::$fillable is not       
+         covariant with PHPDoc type array<int, string> of overridden property  
+         Illuminate\Database\Eloquent\Model::$fillable.                        
+         💡 You can fix 3rd party PHPDoc types with stub files:                
+         💡 https://phpstan.org/user-guide/stub-files                          
+                                                                               
+ ------ ---------------------------------------------------------------------- 
+
+ ------ ---------------------------------------------------------------------- 
+  Line   app/Models/User.php                                                   
+ ------ ---------------------------------------------------------------------- 
+  55     PHPDoc type array of property App\Models\User::$fillable is not       
+         covariant with PHPDoc type array<int, string> of overridden property  
+         Illuminate\Database\Eloquent\Model::$fillable.                        
+         💡 You can fix 3rd party PHPDoc types with stub files:                
+         💡 https://phpstan.org/user-guide/stub-files                          
+                                                                               
+  67     PHPDoc type array of property App\Models\User::$hidden is not         
+         covariant with PHPDoc type array<int, string> of overridden property  
+         Illuminate\Database\Eloquent\Model::$hidden.                          
+         💡 You can fix 3rd party PHPDoc types with stub files:                
+         💡 https://phpstan.org/user-guide/stub-files                          
+                                                                               
+  77     PHPDoc type array of property App\Models\User::$casts is not          
+         covariant with PHPDoc type array<string, string> of overridden        
+         property Illuminate\Database\Eloquent\Model::$casts.                  
+         💡 You can fix 3rd party PHPDoc types with stub files:                
+         💡 https://phpstan.org/user-guide/stub-files                          
+                                                                               
+ ------ ---------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------- 
+  Line   app/Models/UserHasPermission.php                                       
+ ------ ----------------------------------------------------------------------- 
+  39     PHPDoc type array of property App\Models\UserHasPermission::$fillable  
+         is not covariant with PHPDoc type array<int, string> of overridden     
+         property Illuminate\Database\Eloquent\Model::$fillable.                
+         💡 You can fix 3rd party PHPDoc types with stub files:                 
+         💡 https://phpstan.org/user-guide/stub-files                           
+                                                                                
+ ------ ----------------------------------------------------------------------- 
+
+ ------ ------------------------------------------------------------------------- 
+  Line   app/Providers/AuthServiceProvider.php                                    
+ ------ ------------------------------------------------------------------------- 
+  34     PHPDoc type array of property                                            
+         App\Providers\AuthServiceProvider::$policies is not covariant with       
+         PHPDoc type array<class-string, class-string> of overridden property     
+         Illuminate\Foundation\Support\Providers\AuthServiceProvider::$policies.  
+         💡 You can fix 3rd party PHPDoc types with stub files:                   
+         💡 https://phpstan.org/user-guide/stub-files                             
+                                                                                  
+ ------ ------------------------------------------------------------------------- 
+
+ ------ ------------------------------------------------------------------------ 
+  Line   app/Providers/EventServiceProvider.php                                  
+ ------ ------------------------------------------------------------------------ 
+  37     PHPDoc type array of property                                           
+         App\Providers\EventServiceProvider::$listen is not covariant with       
+         PHPDoc type array<string, array<int, string>> of overridden property    
+         Illuminate\Foundation\Support\Providers\EventServiceProvider::$listen.  
+         💡 You can fix 3rd party PHPDoc types with stub files:                  
+         💡 https://phpstan.org/user-guide/stub-files                            
+                                                                                 
+ ------ ------------------------------------------------------------------------ 
+
+ ------ -------------------------------------------------------------------------- 
+  Line   tests/Feature/AuthenticationTest.php                                      
+ ------ -------------------------------------------------------------------------- 
+  28     Access to an undefined property                                           
+         Illuminate\Database\Eloquent\Model::$email.                               
+         💡 Learn more:                                                            
+            https://phpstan.org/blog/solving-phpstan-access-to-undefined-property  
+  44     Access to an undefined property                                           
+         Illuminate\Database\Eloquent\Model::$email.                               
+         💡 Learn more:                                                            
+            https://phpstan.org/blog/solving-phpstan-access-to-undefined-property  
+ ------ -------------------------------------------------------------------------- 
+
+ ------ ---------------------------------------------------------------------- 
+  Line   tests/Feature/AuthorizationTest.php                                   
+ ------ ---------------------------------------------------------------------- 
+  75     Parameter #1 $owner of function makeProject expects App\Models\User,  
+         Illuminate\Database\Eloquent\Model given.                             
+  91     Call to an undefined method                                           
+         Illuminate\Database\Eloquent\Model::assignRole().                     
+  94     Parameter #1 $owner of function makeProject expects App\Models\User,  
+         Illuminate\Database\Eloquent\Model given.                             
+  116    Parameter #1 $owner of function makeProject expects App\Models\User,  
+         Illuminate\Database\Eloquent\Model given.                             
+  142    Parameter #1 $owner of function makeProject expects App\Models\User,  
+         Illuminate\Database\Eloquent\Model given.                             
+  161    Parameter #1 $owner of function makeProject expects App\Models\User,  
+         Illuminate\Database\Eloquent\Model given.                             
+  177    Parameter #1 $owner of function makeProject expects App\Models\User,  
+         Illuminate\Database\Eloquent\Model given.                             
+  195    Call to an undefined method                                           
+         Illuminate\Database\Eloquent\Model::assignRole().                     
+  198    Parameter #1 $owner of function makeProject expects App\Models\User,  
+         Illuminate\Database\Eloquent\Model given.                             
+  216    Parameter #1 $owner of function makeProject expects App\Models\User,  
+         Illuminate\Database\Eloquent\Model given.                             
+  236    Parameter #1 $owner of function makeProject expects App\Models\User,  
+         Illuminate\Database\Eloquent\Model given.                             
+  256    Parameter #1 $owner of function makeProject expects App\Models\User,  
+         Illuminate\Database\Eloquent\Model given.                             
+  274    Call to an undefined method                                           
+         Illuminate\Database\Eloquent\Model::assignRole().                     
+  277    Parameter #1 $owner of function makeProject expects App\Models\User,  
+         Illuminate\Database\Eloquent\Model given.                             
+  295    Parameter #1 $owner of function makeProject expects App\Models\User,  
+         Illuminate\Database\Eloquent\Model given.                             
+  315    Parameter #1 $owner of function makeProject expects App\Models\User,  
+         Illuminate\Database\Eloquent\Model given.                             
+  341    Parameter #1 $owner of function makeProject expects App\Models\User,  
+         Illuminate\Database\Eloquent\Model given.                             
+  361    Call to an undefined method                                           
+         Illuminate\Database\Eloquent\Model::assignRole().                     
+  364    Parameter #1 $owner of function makeProject expects App\Models\User,  
+         Illuminate\Database\Eloquent\Model given.                             
+  382    Parameter #1 $owner of function makeProject expects App\Models\User,  
+         Illuminate\Database\Eloquent\Model given.                             
+  402    Call to an undefined method                                           
+         Illuminate\Database\Eloquent\Model::assignRole().                     
+  405    Parameter #1 $owner of function makeProject expects App\Models\User,  
+         Illuminate\Database\Eloquent\Model given.                             
+  431    Parameter #1 $owner of function makeProject expects App\Models\User,  
+         Illuminate\Database\Eloquent\Model given.                             
+  448    Parameter #1 $owner of function makeProject expects App\Models\User,  
+         Illuminate\Database\Eloquent\Model given.                             
+  464    Parameter #1 $owner of function makeProject expects App\Models\User,  
+         Illuminate\Database\Eloquent\Model given.                             
+  480    Parameter #1 $owner of function makeProject expects App\Models\User,  
+         Illuminate\Database\Eloquent\Model given.                             
+  504    Parameter #1 $owner of function makeProject expects App\Models\User,  
+         Illuminate\Database\Eloquent\Model given.                             
+  519    Parameter #1 $owner of function makeProject expects App\Models\User,  
+         Illuminate\Database\Eloquent\Model given.                             
+  542    Call to an undefined method                                           
+         Illuminate\Database\Eloquent\Model::givePermissionTo().               
+  560    Parameter #1 $owner of function makeProject expects App\Models\User,  
+         Illuminate\Database\Eloquent\Model given.                             
+  578    Parameter #1 $owner of function makeProject expects App\Models\User,  
+         Illuminate\Database\Eloquent\Model given.                             
+  611    Call to an undefined method                                           
+         Illuminate\Database\Eloquent\Model::assignRole().                     
+  666    Call to an undefined method                                           
+         Illuminate\Database\Eloquent\Model::assignRole().                     
+  687    Call to an undefined method                                           
+         Illuminate\Database\Eloquent\Model::assignRole().                     
+ ------ ---------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------- 
+  Line   tests/Feature/EmailVerificationTest.php                                   
+ ------ -------------------------------------------------------------------------- 
+  25     Parameter #1 $user of method                                              
+         Illuminate\Foundation\Testing\TestCase::actingAs() expects                
+         Illuminate\Contracts\Auth\Authenticatable,                                
+         Illuminate\Database\Eloquent\Model given.                                 
+  43     Access to an undefined property                                           
+         Illuminate\Database\Eloquent\Model::$email.                               
+         💡 Learn more:                                                            
+            https://phpstan.org/blog/solving-phpstan-access-to-undefined-property  
+  43     Access to an undefined property                                           
+         Illuminate\Database\Eloquent\Model::$id.                                  
+         💡 Learn more:                                                            
+            https://phpstan.org/blog/solving-phpstan-access-to-undefined-property  
+  46     Parameter #1 $user of method                                              
+         Illuminate\Foundation\Testing\TestCase::actingAs() expects                
+         Illuminate\Contracts\Auth\Authenticatable,                                
+         Illuminate\Database\Eloquent\Model given.                                 
+  49     Call to an undefined method                                               
+         Illuminate\Database\Eloquent\Model::hasVerifiedEmail().                   
+  64     Access to an undefined property                                           
+         Illuminate\Database\Eloquent\Model::$id.                                  
+         💡 Learn more:                                                            
+            https://phpstan.org/blog/solving-phpstan-access-to-undefined-property  
+  67     Parameter #1 $user of method                                              
+         Illuminate\Foundation\Testing\TestCase::actingAs() expects                
+         Illuminate\Contracts\Auth\Authenticatable,                                
+         Illuminate\Database\Eloquent\Model given.                                 
+  69     Call to an undefined method                                               
+         Illuminate\Database\Eloquent\Model::hasVerifiedEmail().                   
+ ------ -------------------------------------------------------------------------- 
+
+ ------ ------------------------------------------------------------ 
+  Line   tests/Feature/PasswordConfirmationTest.php                  
+ ------ ------------------------------------------------------------ 
+  17     Parameter #1 $user of method                                
+         Illuminate\Foundation\Testing\TestCase::actingAs() expects  
+         Illuminate\Contracts\Auth\Authenticatable,                  
+         Illuminate\Database\Eloquent\Model given.                   
+  26     Parameter #1 $user of method                                
+         Illuminate\Foundation\Testing\TestCase::actingAs() expects  
+         Illuminate\Contracts\Auth\Authenticatable,                  
+         Illuminate\Database\Eloquent\Model given.                   
+  41     Parameter #1 $user of method                                
+         Illuminate\Foundation\Testing\TestCase::actingAs() expects  
+         Illuminate\Contracts\Auth\Authenticatable,                  
+         Illuminate\Database\Eloquent\Model given.                   
+ ------ ------------------------------------------------------------ 
+
+ ------ -------------------------------------------------------------------------- 
+  Line   tests/Feature/PasswordResetTest.php                                       
+ ------ -------------------------------------------------------------------------- 
+  28     Access to an undefined property                                           
+         Illuminate\Database\Eloquent\Model::$email.                               
+         💡 Learn more:                                                            
+            https://phpstan.org/blog/solving-phpstan-access-to-undefined-property  
+  39     Access to an undefined property                                           
+         Illuminate\Database\Eloquent\Model::$email.                               
+         💡 Learn more:                                                            
+            https://phpstan.org/blog/solving-phpstan-access-to-undefined-property  
+  60     Access to an undefined property                                           
+         Illuminate\Database\Eloquent\Model::$email.                               
+         💡 Learn more:                                                            
+            https://phpstan.org/blog/solving-phpstan-access-to-undefined-property  
+  70     Access to an undefined property                                           
+         Illuminate\Database\Eloquent\Model::$email.                               
+         💡 Learn more:                                                            
+            https://phpstan.org/blog/solving-phpstan-access-to-undefined-property  
+ ------ -------------------------------------------------------------------------- 
+
+ [ERROR] Found 96 errors                                                        
+

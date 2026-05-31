@@ -22,6 +22,12 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Providers;
 
+use App\Models\Chapter;
+use App\Models\Entry;
+use App\Models\Project;
+use App\Policies\ChapterPolicy;
+use App\Policies\EntryPolicy;
+use App\Policies\ProjectPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -29,12 +35,12 @@ class AuthServiceProvider extends ServiceProvider
     /**
      * The policy mappings for the application.
      *
-     * @var array
+     * @var array<class-string, class-string>
      */
     protected $policies = [
-        \App\Models\Project::class => \App\Policies\ProjectPolicy::class,
-        \App\Models\Chapter::class => \App\Policies\ChapterPolicy::class,
-        \App\Models\Entry::class => \App\Policies\EntryPolicy::class,
+        Project::class => ProjectPolicy::class,
+        Chapter::class => ChapterPolicy::class,
+        Entry::class => EntryPolicy::class,
         // Text, Image, Gallery, Comment kommen in Phase 4 zusammen mit
         // ADR-0012 (media_content vs. direct entry binding) und der
         // CommentTrait-Auflösung (F-ARCH-002).

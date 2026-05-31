@@ -28,6 +28,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Lang;
+use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Translatable\HasTranslations;
@@ -36,16 +37,10 @@ class Audiovisual extends Model
 {
     use CommentTrait, HasFactory, HasTranslations, LogsActivity, SoftDeletes;
 
-    protected static $logName = 'MediaContent';
-
-    protected static $logFillable = true;
-
-    protected static $logOnlyDirty = true;
-
     /**
      * The attributes that are mass assignable.
      *
-     * @var array
+     * @var array<int, string>
      */
     protected $fillable = ['link', 'source', 'copyright', 'type', 'is_translated'];
 
@@ -69,5 +64,13 @@ class Audiovisual extends Model
         $activity->properties = $activity->properties->merge([
             'language' => Lang::getLocale(),
         ]);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('MediaContent')
+            ->logFillable()
+            ->logOnlyDirty();
     }
 }

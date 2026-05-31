@@ -24,11 +24,12 @@ namespace App\Http\Controllers;
 
 use App\Models\PrivacyPolicy;
 use App\Models\TermsConditions;
+use Illuminate\Http\JsonResponse;
 
 class PublicController extends Controller
 {
     /**
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function projectPolicy()
     {
@@ -40,7 +41,7 @@ class PublicController extends Controller
     }
 
     /**
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function projectTerms()
     {

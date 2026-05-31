@@ -24,6 +24,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Translatable\HasTranslations;
 
@@ -31,9 +32,14 @@ class TermsConditions extends Model
 {
     use HasFactory, HasTranslations, LogsActivity;
 
-    protected static $logFillable = true;
-
     public $translatable = ['terms_conditions'];
 
     protected $fillable = ['terms_conditions'];
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->useLogName('TermsConditions')
+            ->logFillable();
+    }
 }
