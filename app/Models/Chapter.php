@@ -35,7 +35,10 @@ use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Translatable\HasTranslations;
 
 /**
+ * @property int $id
  * @property Project|null $project
+ * @property \Illuminate\Database\Eloquent\Collection<int, Entry> $entries
+ * @property mixed $entry  Runtime-Zuweisung in ProjectController::allData (Entry-Snapshot je Chapter), nicht DB-Spalte.
  */
 class Chapter extends Model
 {

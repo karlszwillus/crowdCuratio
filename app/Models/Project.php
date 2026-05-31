@@ -23,6 +23,7 @@ If not, see <https://www.gnu.org/licenses/>.
 namespace App\Models;
 
 use App\Traits\CommentTrait;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -35,6 +36,13 @@ use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Permission\Traits\HasPermissions;
 use Spatie\Translatable\HasTranslations;
 
+/**
+ * @property int $id
+ * @property int $user_id
+ * @property string $logo
+ * @property Collection<int, Chapter> $chapters
+ * @property User|null $user
+ */
 class Project extends Model
 {
     use CommentTrait, HasFactory, HasPermissions, HasTranslations,LogsActivity, SoftDeletes;

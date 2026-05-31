@@ -23,6 +23,7 @@ If not, see <https://www.gnu.org/licenses/>.
 namespace App\Models;
 
 use App\Traits\CommentTrait;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -34,6 +35,13 @@ use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Translatable\HasTranslations;
 
+/**
+ * @property int $id
+ * @property bool $is_translated
+ * @property int|null $media_id Runtime-Zuweisung im ProjectController, nicht DB-Spalte.
+ * @property Collection<int, Image> $images
+ * @property Collection<int, Image>|null $image_list Runtime-Snapshot der images-Relation für den Preview-Render.
+ */
 class Gallery extends Model
 {
     use CommentTrait, HasFactory, HasTranslations, LogsActivity, SoftDeletes;

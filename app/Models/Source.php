@@ -27,6 +27,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Translatable\HasTranslations;
 
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $type
+ * @property bool $is_translated
+ */
 class Source extends Model
 {
     use HasFactory, HasTranslations, SoftDeletes;
