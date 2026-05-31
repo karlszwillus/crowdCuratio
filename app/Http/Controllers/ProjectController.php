@@ -199,9 +199,12 @@ class ProjectController extends Controller
     }
 
     /**
-     * Save image
+     * Save image.
      *
-     * @return $this
+     * Returns the generated filename if an image was uploaded, or an
+     * empty string if the request carried no `project_image`.
+     *
+     * @return string
      */
     protected function setImage($request)
     {
@@ -545,9 +548,8 @@ class ProjectController extends Controller
         Invitation::firstOrCreate([
             'user_id' => Auth::user()->id,
             'guest_id' => $request['user'],
-            'project_id' => $request['project']], [
-                'created_at' => now(),
-            ]);
+            'project_id' => $request['project'],
+        ]);
 
         return redirect()->back()->with(['error_code' => $error_code, 'user' => $user, 'permissions' => $permissions]);
     }
@@ -742,31 +744,27 @@ class ProjectController extends Controller
     }
 
     /**
-     * Get source of content
+     * Get or create a Source row of the given type for the given value.
      *
-     * @return mixed
+     * Returns the id of a matching Source if one exists, otherwise
+     * inserts a new row (with the translated `name` payload) and
+     * returns the new id.
+     *
+     * @return int
      */
     protected function getSource($value, $type)
     {
-        $source = Source::where('type', $type)->get();
-        $id = '';
-        foreach ($source as $key => $v) {
-            if ($v->name == $value) {
-                $id = $v->id;
+        $sources = Source::where('type', $type)->get();
 
-                return $id;
+        foreach ($sources as $source) {
+            if ($source->name == $value) {
+                return $source->id;
             }
         }
 
-        if ($id == '') {
-            $id = Source::insertGetId(
-                ['name' => json_encode([app()->getLocale() => $value]), 'type' => $type, 'created_at' => now()]
-            );
-
-            return $id;
-        }
-
-        return $this;
+        return Source::insertGetId(
+            ['name' => json_encode([app()->getLocale() => $value]), 'type' => $type, 'created_at' => now()]
+        );
     }
 
     /**

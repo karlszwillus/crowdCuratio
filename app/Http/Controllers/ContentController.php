@@ -189,7 +189,6 @@ class ContentController extends Controller
                     'copyright' => $copyright,
                     'url' => Storage::path($name),
                     'alt' => $request['altText'],
-                    'created_at' => now(),
                 ]
             );
 
@@ -258,30 +257,28 @@ class ContentController extends Controller
     }
 
     /**
-     * Get source of content
+     * Get or create a Source row of the given type for the given value.
      *
-     * @return mixed
+     * Returns the id of a matching Source if one exists, otherwise
+     * inserts a new row (with the translated `name` payload) and
+     * returns the new id.
+     *
+     * Duplicate of ProjectController::getSource — both will be lifted
+     * into a Source service in the Phase-4 refactor.
+     *
+     * @return int
      */
     protected function getSource($value, $type)
     {
-        $source = Source::where('type', $type)->get();
-        $id = '';
-        foreach ($source as $key => $v) {
-            if ($v->name == $value) {
-                $id = $v->id;
+        $sources = Source::where('type', $type)->get();
 
-                return $id;
+        foreach ($sources as $source) {
+            if ($source->name == $value) {
+                return $source->id;
             }
         }
 
-        if ($id == '') {
-            $id = Source::insertGetId(['name' => json_encode([app()->getLocale() => $value]), 'type' => $type, 'created_at' => now()]);
-
-            return $id;
-        }
-
-        return $this;
-
+        return Source::insertGetId(['name' => json_encode([app()->getLocale() => $value]), 'type' => $type, 'created_at' => now()]);
     }
 
     /**

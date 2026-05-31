@@ -146,7 +146,6 @@ class RegisteredUserController extends Controller
                         'project_id' => $request->projectId,
                         'permission_id' => $permission,
                         'user_id' => $user->id,
-                        'created_at' => now(),
                     ]);
                 }
 
@@ -154,7 +153,6 @@ class RegisteredUserController extends Controller
                     'user_id' => Auth::user()->id,
                     'guest_id' => $user->id,
                     'project_id' => $request->projectId,
-                    'created_at' => now(),
                 ]);
 
                 return Redirect()->back()->with('success', 'User added successful');
