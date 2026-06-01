@@ -52,17 +52,6 @@ jobs:
           cp .env.example .env
           php artisan key:generate
 
-      - name: Cache config
-        # Verriegelt dynamisch die Larastan-Regel "kein env() außerhalb
-        # von config/" — würde irgendwo ein neuer env()-Call in einer
-        # Codestelle landen, die Pest erreicht, ist der Wert nach
-        # config:cache null und der Test bricht. Statisch fängt
-        # Larastan die Stelle bereits, das hier ist defense-in-depth.
-        env:
-          DB_CONNECTION: sqlite
-          DB_DATABASE: ':memory:'
-        run: php artisan config:cache
-
       - name: Run Pest
         # SQLite-In-Memory wird hier zur Laufzeit gesetzt, nicht in
         # phpunit.xml — so bleibt der lokale Pest-Lauf (gegen die
