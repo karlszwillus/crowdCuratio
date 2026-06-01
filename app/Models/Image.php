@@ -22,7 +22,6 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Models;
 
-use App\Traits\CommentTrait;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -36,7 +35,7 @@ use Spatie\Translatable\HasTranslations;
 
 class Image extends Model
 {
-    use CommentTrait, HasFactory, HasTranslations, LogsActivity, SoftDeletes;
+    use HasFactory, HasTranslations, LogsActivity, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.

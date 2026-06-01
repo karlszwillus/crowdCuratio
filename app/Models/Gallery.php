@@ -22,7 +22,6 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Models;
 
-use App\Traits\CommentTrait;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -44,7 +43,7 @@ use Spatie\Translatable\HasTranslations;
  */
 class Gallery extends Model
 {
-    use CommentTrait, HasFactory, HasTranslations, LogsActivity, SoftDeletes;
+    use HasFactory, HasTranslations, LogsActivity, SoftDeletes;
 
     /**
      * Override parent boot and Call deleting event
