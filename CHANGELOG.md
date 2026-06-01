@@ -33,6 +33,14 @@ beschrieben.
 
 ### Hinzugefügt
 
+- **Bootstrap-Charakterisierungs-Tests** in `tests/Feature/Refactor/`.
+  Drei Pest-Tests fixieren das beobachtbare Verhalten des Kernel-
+  Bootstraps an den drei Schichten, an denen der Switch greift:
+  Web-Stack-Middleware (Auth-Redirect auf einer geschützten
+  Resource-Route), Route-Middleware-Alias (`role:Admin` lehnt einen
+  Reader auf der Register-Route mit 403 ab), Exception-Rendering
+  (unbekannte Route → 404). Test-First-Doktrin in Aktion: erst die
+  Tests grün gegen den alten Kernel-Stil, dann der Refactor.
 - **Coverage-Vorlauf vor dem Refactor-Block.** Achtzehn neue
   Pest-Tests in vier Files füllen die größten ungetesteten
   Service-Pfade: fünf Konstruktor-Tests in
@@ -48,6 +56,47 @@ beschrieben.
 - **CI-Coverage-Schwelle auf 30 angehoben.** `composer.json`
   `test-coverage --min` von 25 auf 30. Erster Schritt der
   Coverage-Trajektorie auf 55 % bis Ende der Refactor-Welle.
+
+### Geändert (Bootstrap-Migration)
+
+- **Application-Bootstrap auf Laravel-11+-Closure-API umgestellt.**
+  `bootstrap/app.php` ist jetzt
+  `Application::configure(basePath: ...)
+   ->withRouting(...)
+   ->withMiddleware(...)
+   ->withExceptions(...)
+   ->create()`. Die `web`-Group bekommt `Language` per
+  `$middleware->web(append: [...])` angehängt, die Custom-Aliase
+  (`role`, `permission`, `role_or_permission`, `admin`, `guest`)
+  werden im `$middleware->alias(...)`-Block registriert,
+  `TrimStrings`-Ausnahmen und der Guest-Redirect zur
+  `route('login')` werden direkt im Bootstrap-Closure gesetzt. Der
+  alte `bootstrap/app.php`-Application-Singleton-Stil mit drei
+  expliziten Kernel-Bindings entfällt.
+
+### Entfernt (Bootstrap-Migration)
+
+- **`app/Http/Kernel.php` und `app/Console/Kernel.php` gelöscht.**
+  Die Verantwortlichkeiten beider Klassen (Middleware-Stack,
+  Middleware-Groups, Route-Middleware-Aliase, Schedule, Commands)
+  wandern in die `bootstrap/app.php`-Closures. Custom-Commands
+  unter `app/Console/Commands/` werden in Laravel 11+ automatisch
+  geladen — der `$this->load(__DIR__.'/Commands')`-Aufruf war
+  nicht mehr nötig.
+- **`app/Exceptions/Handler.php` gelöscht** (60 LoC, ausschließlich
+  Boilerplate ohne Custom-Verhalten). `$dontFlash` für Passwort-
+  Felder wandert in den `withExceptions(function (Exceptions
+  $exceptions) { … })`-Closure. Das `app/Exceptions/`-Verzeichnis
+  ist damit weg.
+- **Sechs Stock-Middleware-Subklassen aus `app/Http/Middleware/`
+  gelöscht** — alle waren 1:1-Subklassen der Framework-Defaults
+  ohne projekt-spezifische Logik: `Authenticate` (Redirect-zur-
+  Login-Route wandert in `$middleware->redirectGuestsTo(...)`),
+  `EncryptCookies` (leere `$except`-Liste), `PreventRequestsDuringMaintenance`
+  (leere `$except`-Liste), `TrimStrings` (Passwort-Felder wandern
+  in `$middleware->trimStrings(except: [...])`), `TrustProxies`
+  (extends-Base ohne Override), `VerifyCsrfToken` (leere
+  `$except`-Liste).
 
 ### Behoben
 
