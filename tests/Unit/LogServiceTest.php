@@ -20,6 +20,7 @@ along with this program in the file LICENSE.
 If not, see <https://www.gnu.org/licenses/>.
  */
 
+use App\Models\Gallery;
 use App\Services\LogService;
 
 /*
@@ -138,7 +139,7 @@ it('belegt für \'chapter\' das Chapter-Model, die chapters-Tabelle und name als
 it('belegt für \'gallery\' den Gallery::class-Konstanten-Wert, die galleries-Tabelle und name als Property', function () use ($readPrivate) {
     $service = new LogService('gallery');
 
-    expect($readPrivate($service, 'model'))->toBe(\App\Models\Gallery::class);
+    expect($readPrivate($service, 'model'))->toBe(Gallery::class);
     expect($readPrivate($service, 'table'))->toBe('galleries');
     expect($readPrivate($service, 'property'))->toBe('name');
 });
