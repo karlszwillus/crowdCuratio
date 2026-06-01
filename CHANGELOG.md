@@ -43,6 +43,31 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
   sieben Controller-Methoden raus und liegen einmal im Service
   als `dispatchSaveAction`.
 
+### Geändert (Comment-Naming-Sweep)
+
+- **`setStatus*`-Method-Names auf `setCommentStatus*` umbenannt**
+  (Project, Chapter, Entry, Text, Image). Die Methoden setzen
+  einen Comment-Status, nicht den Status des jeweiligen Models —
+  der alte Name war historisch und irreführend. Plus
+  `ContentController::updateStatus` → `updateCommentStatus`. Die
+  passenden Route-Namen sind jetzt konsistent als
+  `comment.<model>.status` (vorher `<model>.status`, plus zwei
+  unbenannte Routes); die `update.status`-Route heißt jetzt
+  `comment.update.status`.
+- **Gallery- und Audiovisual-Method-Names entwirrt.** Die
+  Methoden waren paarweise vertauscht — `commentGallery` und
+  `commentAudiovisual` machten den Save-Switch, während
+  `galleryCommentSave` und `audiovisualCommentSave` den
+  Neu-Kommentar anlegten. Nach dem Sweep heißen Methoden, die
+  einen neuen Kommentar anlegen, `comment<Model>`, und Methoden,
+  die eine save-Submission routen, `saveComment<Model>` —
+  symmetrisch zu Project/Chapter/Entry/Text/Image. Bei
+  Audiovisual sind zusätzlich die Route-Namen vertauscht und der
+  `pathReply` / `pathComment`-Eintrag in `CommentRetrieve`
+  mit-korrigiert.
+- **Blade-Stelle in `chapters/index.blade.php`** auf die neuen
+  Route-Namen umgestellt (`comment.<model>.status`).
+
 ### Entfernt (CommentService-Extraktion)
 
 - **`app/Traits/CommentTrait.php` gelöscht.** Die fünf
