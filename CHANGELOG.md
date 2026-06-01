@@ -108,6 +108,17 @@ beschrieben.
   chapterDescription) auf die Modell-Feldnamen und kapselt die
   Translation-Flags (`translationChapter`, `isTranslated`), die
   der `UpdateChapterRequest` zusätzlich trägt.
+- **`EntryService`** in `app/Services/`. Strukturell parallel zu
+  `ChapterService`: `create(EntryData, int $chapterId)` mit
+  Position-Calculation und `update(Entry, EntryData)` mit
+  Translation-Verzweigung. Fünf Pest-Tests in
+  `tests/Feature/Services/EntryServiceTest.php` decken die beiden
+  Pfade ab.
+- **`EntryData`-DTO** in `app/Data/`. Spiegelung von
+  `ChapterData` für die Entry-Mutations — normalisiert die
+  Frontend-Feldnamen (entryTitle / entrySubtitle /
+  entryDescription) und kapselt die Translation-Flags
+  (`translationEntry`, `isTranslated`).
 
 ### Geändert (Service-Layer-Pilot)
 
@@ -131,6 +142,11 @@ beschrieben.
   delegieren jetzt und sind nur noch HTTP-Mapping — der
   Controller-Body schrumpft entsprechend. Die
   `resolveDragTargetProject`-`protected`-Helper-Methode entfällt.
+- **`EntryController` per Constructor-Injection auf den
+  `EntryService` umgestellt.** `store()` und `update()` arbeiten
+  jetzt gegen das `EntryData`-DTO und delegieren Position-
+  Calculation und Translation-Verzweigung an den Service. Der
+  Controller-Body schrumpft entsprechend.
 
 ### Entfernt (Service-Layer-Pilot)
 
