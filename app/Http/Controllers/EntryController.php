@@ -167,8 +167,12 @@ class EntryController extends Controller
 
     /**
      * Routet eine save-Submission (Edit/Delete/Reply).
+     *
+     * Route hat {id} (nicht {entry}), Laravel kann Entry deshalb
+     * nicht aus dem Route-Parameter binden — wir laden es
+     * explizit (siehe ChapterController::saveComment).
      */
-    public function saveCommentEntry(Request $request, Entry $entry): RedirectResponse
+    public function saveCommentEntry(Request $request): RedirectResponse
     {
         if (isset($request['name']) && $request['name'] === 'edit') {
             $this->comments->editComment((int) $request['pk'], (string) $request['value']);
@@ -176,6 +180,7 @@ class EntryController extends Controller
             return redirect()->back()->with('success', 'Comment edited successfully');
         }
 
+        $entry = Entry::findOrFail($request->route('id'));
         $this->comments->dispatchSaveAction($entry, $request);
 
         return redirect()->back()->with('success', 'Comment-Aktion ausgeführt');

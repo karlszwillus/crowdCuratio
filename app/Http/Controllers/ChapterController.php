@@ -179,8 +179,14 @@ class ChapterController extends Controller
      * Akzeptiert zusätzlich den name=edit-Legacy-Pfad — eine
      * zweite Edit-Submission, die das Frontend in einem alten
      * Modal-Flow verwendet.
+     *
+     * Route hat {id} (nicht {chapter}), Laravel kann Chapter
+     * deshalb nicht aus dem Route-Parameter binden — wir laden
+     * es explizit. Der Reply-Pfad braucht ein echtes Chapter
+     * (commentable_id darf nicht null werden), Edit und Delete
+     * arbeiten nur auf dem Comment selbst.
      */
-    public function saveComment(Request $request, Chapter $chapter): RedirectResponse
+    public function saveComment(Request $request): RedirectResponse
     {
         if (isset($request['name']) && $request['name'] === 'edit') {
             $this->comments->editComment((int) $request['pk'], (string) $request['value']);
@@ -188,6 +194,7 @@ class ChapterController extends Controller
             return redirect()->back()->with('success', 'Comment edited successfully');
         }
 
+        $chapter = Chapter::findOrFail($request->route('id'));
         $this->comments->dispatchSaveAction($chapter, $request);
 
         return redirect()->back()->with('success', 'Comment-Aktion ausgeführt');
