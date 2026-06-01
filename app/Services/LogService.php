@@ -71,10 +71,11 @@ class LogService
      */
     public function history($id)
     {
-        $activities = Activity::where('subject_id', '=', $id)->where('subject_type', '=', $this->model)->orderBy(
-            'updated_at',
-            'desc'
-        )->get();
+        $activities = Activity::with('causer')
+            ->where('subject_id', '=', $id)
+            ->where('subject_type', '=', $this->model)
+            ->orderBy('updated_at', 'desc')
+            ->get();
 
         $changes = [];
         $logs = [];
@@ -101,10 +102,11 @@ class LogService
      */
     public function textLog($id)
     {
-        $activities = Activity::where('subject_id', '=', $id)->where('subject_type', '=', $this->model)->orderBy(
-            'updated_at',
-            'desc'
-        )->get();
+        $activities = Activity::with('causer')
+            ->where('subject_id', '=', $id)
+            ->where('subject_type', '=', $this->model)
+            ->orderBy('updated_at', 'desc')
+            ->get();
 
         $changes = [];
 
