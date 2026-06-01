@@ -83,3 +83,62 @@ it('behandelt einen leeren Alt-String, sodass der gesamte Neu-String als Diff ma
         ->toContain('Komplett neuer Text')
         ->toContain('<span');
 });
+
+/*
+|--------------------------------------------------------------------------
+| LogService — Konstruktor-Switch
+|--------------------------------------------------------------------------
+|
+| Der Konstruktor mappt einen String-Selektor ('text', 'image',
+| 'entry', 'chapter', 'gallery') auf das jeweilige Model, die
+| zugehörige Tabelle und das Display-Property. Reine Switch-Logik,
+| Reflexion macht die protected-Properties testbar.
+*/
+
+$readPrivate = function (LogService $service, string $name) {
+    $reflection = new ReflectionObject($service);
+    $property = $reflection->getProperty($name);
+    $property->setAccessible(true);
+
+    return $property->getValue($service);
+};
+
+it('belegt für \'text\' das Text-Model, die texts-Tabelle und text als Property', function () use ($readPrivate) {
+    $service = new LogService('text');
+
+    expect($readPrivate($service, 'model'))->toBe('App\\Models\\Text');
+    expect($readPrivate($service, 'table'))->toBe('texts');
+    expect($readPrivate($service, 'property'))->toBe('text');
+});
+
+it('belegt für \'image\' das Image-Model, die images-Tabelle und name als Property', function () use ($readPrivate) {
+    $service = new LogService('image');
+
+    expect($readPrivate($service, 'model'))->toBe('App\\Models\\Image');
+    expect($readPrivate($service, 'table'))->toBe('images');
+    expect($readPrivate($service, 'property'))->toBe('name');
+});
+
+it('belegt für \'entry\' das Entry-Model, die entries-Tabelle und name als Property', function () use ($readPrivate) {
+    $service = new LogService('entry');
+
+    expect($readPrivate($service, 'model'))->toBe('App\\Models\\Entry');
+    expect($readPrivate($service, 'table'))->toBe('entries');
+    expect($readPrivate($service, 'property'))->toBe('name');
+});
+
+it('belegt für \'chapter\' das Chapter-Model, die chapters-Tabelle und name als Property', function () use ($readPrivate) {
+    $service = new LogService('chapter');
+
+    expect($readPrivate($service, 'model'))->toBe('App\\Models\\Chapter');
+    expect($readPrivate($service, 'table'))->toBe('chapters');
+    expect($readPrivate($service, 'property'))->toBe('name');
+});
+
+it('belegt für \'gallery\' den Gallery::class-Konstanten-Wert, die galleries-Tabelle und name als Property', function () use ($readPrivate) {
+    $service = new LogService('gallery');
+
+    expect($readPrivate($service, 'model'))->toBe(\App\Models\Gallery::class);
+    expect($readPrivate($service, 'table'))->toBe('galleries');
+    expect($readPrivate($service, 'property'))->toBe('name');
+});
