@@ -42,14 +42,14 @@ Route::get('/login', [AuthenticatedSessionController::class, 'create'])
     ->name('login');
 
 Route::post('/login', [AuthenticatedSessionController::class, 'store'])
-    ->middleware('guest');
+    ->middleware(['guest', 'throttle:6,1']);
 
 Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])
     ->middleware('guest')
     ->name('password.request');
 
 Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])
-    ->middleware('guest')
+    ->middleware(['guest', 'throttle:6,1'])
     ->name('password.email');
 
 Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])
@@ -57,7 +57,7 @@ Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])
     ->name('password.reset');
 
 Route::post('/reset-password', [NewPasswordController::class, 'store'])
-    ->middleware('guest')
+    ->middleware(['guest', 'throttle:6,1'])
     ->name('password.update');
 
 Route::get('/verify-email', [EmailVerificationPromptController::class, '__invoke'])

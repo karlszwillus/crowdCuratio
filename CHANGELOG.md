@@ -31,7 +31,64 @@ CVE-2025-27515 (Laravel File-Validation-Bypass) strukturell zu
 Die einzelnen Sprünge werden unten in Block-G-zu-Block-B-Reihenfolge
 beschrieben.
 
+### Hinzugefügt
+
+- **Rate-Limit-Tests für die Guest-Auth-Routen.** Drei Pest-Feature-
+  Tests in `tests/Feature/AuthRateLimitTest.php` decken den neuen
+  `throttle:6,1`-Limiter auf `POST /login`,
+  `POST /forgot-password` und `POST /reset-password` ab — jeder
+  Test feuert sieben Requests aus derselben Session und verifiziert,
+  dass der siebte mit HTTP 429 abgelehnt wird.
+- **Erster Unit-Test-Slot im Projekt** (`tests/Unit/`). Drei Tests
+  für `LogService::highlightTextDifference` in
+  `tests/Unit/LogServiceTest.php` decken die größte ungetestete
+  Service-Methode ab (identische Strings, leerer Alt-String,
+  Diff-Markup-Verifikation) und liefern eine Vorlage für weitere
+  Unit-Tests in Phase 4.
+
 ### Geändert
+
+- **Rate-Limit auf den Guest-Auth-Routen.** `POST /login`,
+  `POST /forgot-password` und `POST /reset-password` tragen jetzt
+  `throttle:6,1` als zusätzliche Middleware. Konsistent mit den
+  `verification.*`-Routen, die schon seit Breeze gedrosselt sind.
+  Verhindert Credential-Stuffing auf Login und Spam auf den
+  Password-Reset-Endpunkten.
+- **`composer audit` im CI auf Hard-Fail.** Der Soft-Fail-Übergang
+  aus Phase 2 ist abgeschlossen — die Laravel-8-CVEs sind durch
+  Phase 3 strukturell weg. Ein neuer CVE im Lock bricht ab jetzt
+  den Build statt nur einen Hinweis im Log zu hinterlassen.
+  `continue-on-error: true` und `|| true` raus.
+- **`php artisan config:cache` läuft im CI-Pest-Job vor der Suite.**
+  Defense-in-depth gegen versehentliche `env()`-Calls außerhalb von
+  `config/`: Larastan fängt das statisch, der zusätzliche Cache-
+  Step fängt es dynamisch.
+- **`MyCustomWelcomeNotification`-Konstruktor** auf
+  `Carbon $validUntil` statt `CarbonInterface $validUntil`. Die
+  Eltern-Klasse `Spatie\WelcomeNotification\WelcomeNotification`
+  typed die Property selbst als `Carbon`; die redundante
+  `$this->validUntil = $validUntil`-Zuweisung nach
+  `parent::__construct()` ist mit raus.
+- **`LogService::highlightTextDifference` und
+  `ProjectController::highlightTextDifference`** von PascalCase
+  auf camelCase umbenannt (sechs Aufrufer in zwei Dateien).
+  Konsistent mit Laravel- und PSR-12-Standard für Methodennamen.
+- **`LogService::__construct`: `'App\Models\gallery'` → `Gallery::class`.**
+  Der kleine `g` war ein Tippfehler aus der Phase-1-
+  Bestandsaufnahme, der auf einem case-sensitive Linux-Filesystem
+  einen `ClassNotFoundException` ausgelöst hätte. `::class` macht
+  solche Fallen strukturell unmöglich.
+- **`Text::$fillable` bereinigt** — `'id'` und `'position'` raus.
+  Die `texts.position`-Spalte ist seit der Migration
+  `2021_07_28_163554_drop_foreign_key_table` nicht mehr in der DB,
+  die Mass-Assignment-Liste hatte sie aber nie verloren — unter
+  Strict-Mode hat Spatie-Activitylog beim `save()` über
+  `$fillable` iteriert und auf das nicht-hydratisierte Attribut
+  zugegriffen, was eine `MissingAttributeException` ausgelöst hat.
+  `'id'` gehört grundsätzlich nicht in `$fillable` — Primary Key
+  wird von Eloquent verwaltet. Die Schema-Bereinigung der toten
+  `position`-Spalte selbst wandert in den Phase-4-Schema-Refactor
+  (ADR-0012).
 
 - **Eloquent Strict-Mode voll aktiviert.** `Model::shouldBeStrict()`
   im `AppServiceProvider` bündelt jetzt drei Schutzschichten in
@@ -72,6 +129,14 @@ beschrieben.
   (`Source::insertGetId`, `Text::insertGetId`) behalten ihr
   `'created_at'`, weil der Query Builder keine Timestamps
   automatisch setzt.
+
+### Entfernt
+
+- **Auskommentierter Switch-Case-Block in `CommentTrait::commentAsUser`.**
+  Zweiundzwanzig Zeilen toter Code in einem `/* ... */`-Kommentar,
+  die seit der ersten Bestandsaufnahme in der Datei standen. Plus
+  den dazugehörigen `} else {` / `// }`-Marker, der den aktiven
+  Pfad eingerahmt hatte.
 
 ### Behoben
 

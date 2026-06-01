@@ -22,6 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Services;
 
+use App\Models\Gallery;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Spatie\Activitylog\Models\Activity;
@@ -58,7 +59,7 @@ class LogService
                 $this->property = 'name';
                 break;
             case 'gallery':
-                $this->model = 'App\Models\gallery';
+                $this->model = Gallery::class;
                 $this->table = 'galleries';
                 $this->property = 'name';
                 break;
@@ -111,7 +112,7 @@ class LogService
         foreach ($activities as $key => $value) {
             if ($value->changes->isNotEmpty()) {
                 foreach ($value->properties['old'] as $key => $property) {
-                    $highlight = $this->HighlightTextDifference(
+                    $highlight = $this->highlightTextDifference(
                         $property,
                         $value->properties['attributes'][$key]
                     );
@@ -140,7 +141,7 @@ class LogService
      *
      * @return string[]
      */
-    public function HighlightTextDifference($old, $new)
+    public function highlightTextDifference($old, $new)
     {
         $from_start = strspn($old ^ $new, "\0");
         $from_end = strspn(strrev($old) ^ strrev($new), "\0");

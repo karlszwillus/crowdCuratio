@@ -598,7 +598,7 @@ class ProjectController extends Controller
                         $old = Source::where('id', $property)->where('type', $k)->first();
                         $new = Source::where('id', $value->changes['attributes'][$k])->where('type', $k)->first();
 
-                        $highlight = $this->HighlightTextDifference(
+                        $highlight = $this->highlightTextDifference(
                             $old->name,
                             $new->name
                         );
@@ -616,7 +616,7 @@ class ProjectController extends Controller
                             ];
                         } else {
 
-                            $highlight = $this->HighlightTextDifference(
+                            $highlight = $this->highlightTextDifference(
                                 $property,
                                 $value->changes['attributes'][$k]
                             );
@@ -643,7 +643,7 @@ class ProjectController extends Controller
      *
      * @return string[]
      */
-    public function HighlightTextDifference($old, $new)
+    public function highlightTextDifference($old, $new)
     {
         $from_start = is_null($old) ? strspn($new, "\0") : strspn($old ^ $new, "\0");
         $from_end = is_null($old) ? strspn(strrev($new), "\0") : strspn(strrev($old) ^ strrev($new), "\0");

@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Http\Controllers\Auth;
 
-use Carbon\CarbonInterface;
+use Carbon\Carbon;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Lang;
 use Spatie\WelcomeNotification\WelcomeNotification;
@@ -39,10 +39,9 @@ class MyCustomWelcomeNotification extends WelcomeNotification
      */
     private $settingsContent;
 
-    public function __construct(CarbonInterface $validUntil, $firstName, $settingsContent)
+    public function __construct(Carbon $validUntil, $firstName, $settingsContent)
     {
         parent::__construct($validUntil);
-        $this->validUntil = $validUntil;
         $this->firstName = $firstName;
         $this->settingsContent = $settingsContent;
     }
