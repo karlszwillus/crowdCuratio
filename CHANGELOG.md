@@ -85,6 +85,29 @@ beschrieben.
   Logo-Dateiname wird beim Bauen des DTOs vom
   `ProjectImageService` reingereicht, nicht aus dem Request
   rückgeführt — strukturelle Verstärkung der NF-SEC-007-Härtung.
+- **`ChapterService`** in `app/Services/`. Kapselt die zwei
+  Schreibpfade auf Chapter: `create(ChapterData, int $projectId)`
+  mit Position-Calculation (`max(position) + 1`, leere Projects
+  starten bei 1) und `update(Chapter, ChapterData)` mit
+  Translation-Verzweigung (direkter Schreibpfad vs.
+  `setTranslation('en', ...)`). Fünf Pest-Tests in
+  `tests/Feature/Services/ChapterServiceTest.php` decken die
+  Position-Logik und beide Update-Pfade ab, inkl. des
+  `'undefined'`-Sentinels für die Translation-Description.
+- **`ContentReorderService`** in `app/Services/`. Zentralisiert
+  die drei Drag-and-Drop-Schreibpfade über Chapter / Entry /
+  MediaContent plus `resolveProject(...)` für den Authorize-Gate
+  im Controller. Wird vom `ChapterController::saveDragAndDrop`
+  konsumiert und steht für den `EntryController` bereit. Sieben
+  Pest-Tests in
+  `tests/Feature/Services/ContentReorderServiceTest.php` decken
+  die Reorder-Operationen und alle Project-Resolution-Pfade ab.
+- **`ChapterData`-DTO** in `app/Data/`. Readonly-Klasse mit
+  `fromRequest(FormRequest)`-Factory. Normalisiert die
+  Frontend-Feldnamen (chapterTitle / chapterSubtitle /
+  chapterDescription) auf die Modell-Feldnamen und kapselt die
+  Translation-Flags (`translationChapter`, `isTranslated`), die
+  der `UpdateChapterRequest` zusätzlich trägt.
 
 ### Geändert (Service-Layer-Pilot)
 
@@ -99,6 +122,15 @@ beschrieben.
   `editMetaData` delegieren an den Permission-Service —
   `UserHasPermission`-, `Invitation`- und `ModelHasRole`-Reads
   liegen nicht mehr im Controller.
+- **`ChapterController` per Constructor-Injection auf zwei
+  Services umgestellt.** `ChapterService` übernimmt
+  Position-Calculation in `store()` und die
+  Translation-Verzweigung in `update()`; `ContentReorderService`
+  übernimmt den `saveDragAndDrop`-Schreibpfad mitsamt der
+  Project-Auflösung für den Authorize-Gate. Beide Methoden
+  delegieren jetzt und sind nur noch HTTP-Mapping — der
+  Controller-Body schrumpft entsprechend. Die
+  `resolveDragTargetProject`-`protected`-Helper-Methode entfällt.
 
 ### Entfernt (Service-Layer-Pilot)
 
