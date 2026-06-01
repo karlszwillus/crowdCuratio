@@ -39,9 +39,8 @@ use Tests\TestCase;
 */
 
 beforeEach(function () {
-    /** @var TestCase $this */
-    foreach (PermissionName::all() as $name) {
-        Permission::firstOrCreate(['name' => $name, 'guard_name' => 'web']);
+    foreach (PermissionName::all() as $permissionName) {
+        Permission::firstOrCreate(['name' => $permissionName, 'guard_name' => 'web']);
     }
 
     Role::firstOrCreate(['name' => 'Admin', 'guard_name' => 'web'])
@@ -50,6 +49,7 @@ beforeEach(function () {
 
 it('history liefert eine leere Liste, wenn keine Activities für das Subject existieren', function () {
     /** @var TestCase $this */
+    /** @var User $owner */
     $owner = User::factory()->create();
     $owner->assignRole('Admin');
     $project = makeProject($owner);
@@ -69,6 +69,7 @@ it('history liefert eine leere Liste, wenn keine Activities für das Subject exi
 
 it('history liefert pro Activity einen Eintrag mit id, userName und created_at, wenn changes nicht leer sind', function () {
     /** @var TestCase $this */
+    /** @var User $owner */
     $owner = User::factory()->create(['name' => 'Anna', 'last_name' => 'Beispiel']);
     $owner->assignRole('Admin');
     $project = makeProject($owner);
@@ -112,6 +113,7 @@ it('history liefert pro Activity einen Eintrag mit id, userName und created_at, 
 
 it('history filtert Activities ohne changes-Diff aus', function () {
     /** @var TestCase $this */
+    /** @var User $owner */
     $owner = User::factory()->create();
     $owner->assignRole('Admin');
     $project = makeProject($owner);
@@ -152,6 +154,7 @@ it('textLog liefert ein leeres Array, wenn keine Activities mit Property-Diff ex
     // hier testen wir den äußeren Pfad (leere Activities → leeres
     // Resultat), den wir robust grün halten können.
     //
+    /** @var User $owner */
     $owner = User::factory()->create();
     $owner->assignRole('Admin');
     $project = makeProject($owner);
@@ -169,6 +172,7 @@ it('textLog liefert ein leeres Array, wenn keine Activities mit Property-Diff ex
 
 it('getParentText liefert für entries den chapter_name und entry_name als Join-Ergebnis', function () {
     /** @var TestCase $this */
+    /** @var User $owner */
     $owner = User::factory()->create();
     $owner->assignRole('Admin');
     $project = makeProject($owner);

@@ -44,9 +44,8 @@ use Tests\TestCase;
 */
 
 beforeEach(function () {
-    /** @var TestCase $this */
-    foreach (PermissionName::all() as $name) {
-        Permission::firstOrCreate(['name' => $name, 'guard_name' => 'web']);
+    foreach (PermissionName::all() as $permissionName) {
+        Permission::firstOrCreate(['name' => $permissionName, 'guard_name' => 'web']);
     }
 
     Role::firstOrCreate(['name' => 'Admin', 'guard_name' => 'web'])
@@ -58,6 +57,7 @@ beforeEach(function () {
 
 it('liefert die globalen Permissions, wenn keine project-scoped Overrides vorhanden sind', function () {
     /** @var TestCase $this */
+    /** @var User $user */
     $user = User::factory()->create();
     $user->assignRole('Admin');
 
@@ -78,6 +78,7 @@ it('liefert die globalen Permissions, wenn keine project-scoped Overrides vorhan
 
 it('liefert die project-scoped Overrides, sobald welche vorhanden sind', function () {
     /** @var TestCase $this */
+    /** @var User $user */
     $user = User::factory()->create();
     $user->assignRole('Admin');
 
@@ -96,15 +97,14 @@ it('liefert die project-scoped Overrides, sobald welche vorhanden sind', functio
     $permissions = $service->getAllUsers($project->id);
 
     // Override gewinnt: nur 'view' zurück, nicht die volle Admin-Liste.
-    expect($permissions)
-        ->toBeArray()
-        ->toContain('view')
-        ->not->toContain('delete')
-        ->not->toContain('edit');
+    expect($permissions)->toBeArray()->toContain('view');
+    expect($permissions)->not->toContain('delete');
+    expect($permissions)->not->toContain('edit');
 });
 
 it('liefert eine leere Liste zurück, wenn weder Overrides noch globale Permissions vorliegen', function () {
     /** @var TestCase $this */
+    /** @var User $user */
     $user = User::factory()->create();
     // Keine Rolle, keine project-scoped Permissions.
 
@@ -122,6 +122,7 @@ it('liefert eine leere Liste zurück, wenn weder Overrides noch globale Permissi
 
 it('unterscheidet Overrides verschiedener Projects strikt voneinander', function () {
     /** @var TestCase $this */
+    /** @var User $user */
     $user = User::factory()->create();
     $user->assignRole('Reader');
 
@@ -143,7 +144,9 @@ it('unterscheidet Overrides verschiedener Projects strikt voneinander', function
     $b = $service->getAllUsers($projectB->id);
 
     // Project A: Override greift, Reader-Default ('view') taucht nicht auf.
-    expect($a)->toContain('edit')->not->toContain('view');
+    expect($a)->toContain('edit');
+    expect($a)->not->toContain('view');
     // Project B: kein Override, Reader-Default ('view') gewinnt.
-    expect($b)->toContain('view')->not->toContain('edit');
+    expect($b)->toContain('view');
+    expect($b)->not->toContain('edit');
 });

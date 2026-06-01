@@ -42,9 +42,8 @@ use Tests\TestCase;
 */
 
 beforeEach(function () {
-    /** @var TestCase $this */
-    foreach (PermissionName::all() as $name) {
-        Permission::firstOrCreate(['name' => $name, 'guard_name' => 'web']);
+    foreach (PermissionName::all() as $permissionName) {
+        Permission::firstOrCreate(['name' => $permissionName, 'guard_name' => 'web']);
     }
 
     Role::firstOrCreate(['name' => 'Admin', 'guard_name' => 'web'])
@@ -53,6 +52,7 @@ beforeEach(function () {
 
 it('liefert für ein Project ohne Kommentare ein leeres comment-Bucket mit pathComment ""', function () {
     /** @var TestCase $this */
+    /** @var User $user */
     $user = User::factory()->create();
     $user->assignRole('Admin');
     $this->actingAs($user);
@@ -73,6 +73,7 @@ it('liefert für ein Project ohne Kommentare ein leeres comment-Bucket mit pathC
 
 it('liefert für ein Chapter mit einem Kommentar den richtigen pathComment und Owner-Flag', function () {
     /** @var TestCase $this */
+    /** @var User $owner */
     $owner = User::factory()->create();
     $owner->assignRole('Admin');
     $this->actingAs($owner);
@@ -114,7 +115,9 @@ it('liefert für ein Chapter mit einem Kommentar den richtigen pathComment und O
 
 it('markiert ein Comment von einem anderen User als nicht-Owner', function () {
     /** @var TestCase $this */
+    /** @var User $owner */
     $owner = User::factory()->create();
+    /** @var User $other */
     $other = User::factory()->create();
     $owner->assignRole('Admin');
 
@@ -143,6 +146,7 @@ it('markiert ein Comment von einem anderen User als nicht-Owner', function () {
 
 it('rollt für ein Entry mit Reply den Reply-Block korrekt aus', function () {
     /** @var TestCase $this */
+    /** @var User $owner */
     $owner = User::factory()->create();
     $owner->assignRole('Admin');
     $this->actingAs($owner);
