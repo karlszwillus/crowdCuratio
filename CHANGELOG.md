@@ -57,6 +57,70 @@ beschrieben.
   `test-coverage --min` von 25 auf 30. Erster Schritt der
   Coverage-Trajektorie auf 55 % bis Ende der Refactor-Welle.
 
+- **`ProjectImageService`** in `app/Services/`. Kapselt das Logo-
+  Upload für Projects: `store(?UploadedFile $image): ?string` legt
+  das Bild unter `/uploads/images/` auf der `public`-Disk ab und
+  liefert den generierten Dateinamen zurück (oder `null`, wenn
+  kein File übergeben wurde). Wird vom `ProjectController` per
+  Constructor-Injection genutzt; die `UploadTrait`-Klassen-Bindung
+  im Controller entfällt. Drei Pest-Tests in
+  `tests/Feature/Services/ProjectImageServiceTest.php` decken
+  null-Input, Happy-Path mit `Storage::fake('public')` und das
+  Dateinamen-Muster `YYYYMMDD_<unix-ts>.<ext>` ab.
+- **`ProjectPermissionService`** in `app/Services/`. Zentralisiert
+  die zehn project-scoped Permission-Operationen, die vorher als
+  `protected`-Helper über den `ProjectController` verteilt waren:
+  Listing der berechtigten User, Lesen der globalen Spatie-
+  Permissions und der project-scoped Pivot-Einträge, Set-Semantik
+  beim Setzen neuer Permissions (alte werden vorher gelöscht,
+  Invitation wird aufgeräumt und neu aufgesetzt), vollständiges
+  Entfernen eines Users aus einem Project. Sechs Pest-Tests in
+  `tests/Feature/Services/ProjectPermissionServiceTest.php` decken
+  die fünf Kern-Methoden ab.
+- **`ProjectData`-DTO** in `app/Data/`. Readonly-Klasse mit
+  Constructor-Property-Promotion und einer `fromRequest(FormRequest,
+  ?string $logo)`-Factory. Ersetzt das `mapData()`-Cargo im
+  `ProjectController`, das die `FormRequest`-Validation umgangen
+  und mit `isset($request[...])` wieder selbst gelesen hat. Der
+  Logo-Dateiname wird beim Bauen des DTOs vom
+  `ProjectImageService` reingereicht, nicht aus dem Request
+  rückgeführt — strukturelle Verstärkung der NF-SEC-007-Härtung.
+
+### Geändert (Service-Layer-Pilot)
+
+- **`ProjectController` per Constructor-Injection auf zwei
+  Services umgestellt.** Statt `use UploadTrait;` und zehn
+  privaten Helper-Methoden konsumiert der Controller jetzt
+  `ProjectImageService` und `ProjectPermissionService` über
+  readonly-Properties. `store()` und `update()` arbeiten gegen
+  das `ProjectData`-DTO statt gegen `$request[...]`-Reads.
+  `setPermissionForUserOnProject`, `givePermissionToUser`,
+  `inviteUserForProject`, `deleteUserFromProject` und
+  `editMetaData` delegieren an den Permission-Service —
+  `UserHasPermission`-, `Invitation`- und `ModelHasRole`-Reads
+  liegen nicht mehr im Controller.
+
+### Entfernt (Service-Layer-Pilot)
+
+- **`ProjectController::mapData()` (32 LoC) entfällt.** Wird
+  durch `ProjectData::fromRequest()` ersetzt; der
+  `status`-Default kommt jetzt im `store()` als expliziter
+  `array_merge`-Eintrag dazu, nicht mehr aus einer
+  Helper-Methode.
+- **Fünf `protected`-Helper aus `ProjectController` entfallen**
+  — Body und Verantwortung wandern in den
+  `ProjectPermissionService`: `getUsersForThisProject`,
+  `getCurrentUsersPermissions`, `getSelectedPermissionUser`,
+  `getSelectedPermissionUserPluck` und `getRoleSelectedUser`.
+  Die letzten beiden waren ohnehin tot (keine Aufrufer im
+  Controller, keine Route-Bindings).
+- **Tote Imports im `ProjectController` aufgeräumt.**
+  `App\Models\Image` und `Mpdf\Pdf` waren als `use`-Statements
+  vorhanden, aber im Klassen-Body nicht referenziert. Plus die
+  jetzt obsoleten Imports `App\Models\Invitation`,
+  `App\Models\ModelHasRole`, `App\Models\UserHasPermission`
+  (wandern alle in den Permission-Service).
+
 ### Geändert (Bootstrap-Migration)
 
 - **Application-Bootstrap auf Laravel-11+-Closure-API umgestellt.**
