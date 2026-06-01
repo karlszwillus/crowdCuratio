@@ -461,11 +461,15 @@ class ContentController extends Controller
 
     /**
      * Comment Text — neuer Top-Level-Kommentar.
+     *
+     * Route hat kein {text} in der URL, deshalb laden wir das
+     * Modell explizit aus $request->id (siehe ProjectController).
      */
-    public function commentText(Request $request, Text $text): RedirectResponse
+    public function commentText(Request $request): RedirectResponse
     {
         $request->validate(['comment' => 'required']);
 
+        $text = Text::findOrFail($request->id);
         $this->comments->addComment($text, $request);
 
         return redirect()->back()->with('success', 'Reply to comment added successfully');
@@ -502,11 +506,15 @@ class ContentController extends Controller
 
     /**
      * Comment Image — neuer Top-Level-Kommentar.
+     *
+     * Route hat kein {image} in der URL, deshalb laden wir das
+     * Modell explizit aus $request->id (siehe ProjectController).
      */
-    public function commentImage(Request $request, Image $image): RedirectResponse
+    public function commentImage(Request $request): RedirectResponse
     {
         $request->validate(['comment' => 'required']);
 
+        $image = Image::findOrFail($request->id);
         $this->comments->addComment($image, $request);
 
         return redirect()->back()->with('success', 'Reply to comment added successfully');
@@ -767,11 +775,15 @@ class ContentController extends Controller
      * Neuer Top-Level-Kommentar auf einer Gallery. Auch hier ist
      * der Method-Name historisch — `galleryCommentSave` macht das
      * Add, nicht das Save. Naming-Sweep folgt.
+     *
+     * Route hat kein {gallery} in der URL, deshalb laden wir das
+     * Modell explizit aus $request->id (siehe ProjectController).
      */
-    public function galleryCommentSave(Request $request, Gallery $gallery): RedirectResponse
+    public function galleryCommentSave(Request $request): RedirectResponse
     {
         $request->validate(['comment' => 'required']);
 
+        $gallery = Gallery::findOrFail($request->id);
         $this->comments->addComment($gallery, $request);
 
         return redirect()->back()->with('success', 'Reply to comment added successfully');

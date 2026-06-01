@@ -145,11 +145,16 @@ class ChapterController extends Controller
 
     /**
      * Comment chapter — neuer Top-Level-Kommentar.
+     *
+     * Route hat kein {chapter} in der URL, deshalb laden wir das
+     * Modell explizit aus $request->id (siehe Hinweis im
+     * ProjectController::commentProject).
      */
-    public function commentChapter(Request $request, Chapter $chapter): RedirectResponse
+    public function commentChapter(Request $request): RedirectResponse
     {
         $request->validate(['comment' => 'required']);
 
+        $chapter = Chapter::findOrFail($request->id);
         $this->comments->addComment($chapter, $request);
 
         return redirect()->back()->with('success', 'Reply to comment added successfully');

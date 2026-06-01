@@ -60,7 +60,7 @@ it('addComment legt einen Comment am commentable an', function () {
 
     expect($comment)->not->toBeNull();
     expect($comment->comment)->toBe('Test-Body');
-    expect($comment->status)->toBe(1);
+    expect((int) $comment->status)->toBe(1);
     expect($comment->user_id)->toBe($owner->id);
 });
 
@@ -156,7 +156,7 @@ it('setCommentStatus aktualisiert den status-Wert', function () {
 
     $comment->refresh();
 
-    expect($comment->status)->toBe(3);
+    expect((int) $comment->status)->toBe(3);
 });
 
 it('dispatchSaveAction routet btn_submit=Edit an editComment', function () {

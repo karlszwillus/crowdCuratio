@@ -94,14 +94,14 @@ it('setStatusProject setzt den Status eines bestehenden Comments', function () {
         'status' => 1,
     ]);
 
-    $this->post(route('comment.project.status', $project), [
+    $this->post(route('project.status'), [
         'id' => $comment->id,
         'status' => 3,
     ]);
 
     $comment->refresh();
 
-    expect($comment->status)->toBe(3);
+    expect((int) $comment->status)->toBe(3);
 });
 
 // ---------- ChapterController ----------
@@ -268,12 +268,12 @@ it('setStatusEntry setzt den Status eines Comments', function () {
 
     $comment->refresh();
 
-    expect($comment->status)->toBe(2);
+    expect((int) $comment->status)->toBe(2);
 });
 
 // ---------- updateStatus (ContentController shared Endpoint) ----------
 
-it('updateStatus per GET-Route setzt einen Comment-Status', function () {
+it('updateStatus per POST-Route setzt einen Comment-Status', function () {
     /** @var TestCase $this */
     /** @var User $owner */
     $owner = User::factory()->create();
@@ -290,9 +290,9 @@ it('updateStatus per GET-Route setzt einen Comment-Status', function () {
         'status' => 1,
     ]);
 
-    $this->get("/comment/{$comment->id}/update/4");
+    $this->post("/comment/{$comment->id}/update/4");
 
     $comment->refresh();
 
-    expect($comment->status)->toBe('4');
+    expect($comment->status)->toBe(4);
 });

@@ -138,11 +138,16 @@ class EntryController extends Controller
 
     /**
      * Comment entry — neuer Top-Level-Kommentar.
+     *
+     * Route hat kein {entry} in der URL, deshalb laden wir das
+     * Modell explizit aus $request->id (siehe Hinweis im
+     * ProjectController::commentProject).
      */
-    public function commentEntry(Request $request, Entry $entry): RedirectResponse
+    public function commentEntry(Request $request): RedirectResponse
     {
         $request->validate(['comment' => 'required']);
 
+        $entry = Entry::findOrFail($request->id);
         $this->comments->addComment($entry, $request);
 
         return redirect()->back()->with('success', 'Reply to comment added successfully');

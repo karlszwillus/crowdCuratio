@@ -227,11 +227,15 @@ class AudiovisualController extends Controller
      * Neuer Top-Level-Kommentar auf einem Audiovisual. Auch hier
      * lügt der Method-Name — `audiovisualCommentSave` macht den
      * Add, nicht den Save. Naming-Sweep folgt.
+     *
+     * Route hat kein {audiovisual} in der URL, deshalb laden wir
+     * das Modell explizit aus $request->id (siehe ProjectController).
      */
-    public function audiovisualCommentSave(Request $request, Audiovisual $audiovisual): RedirectResponse
+    public function audiovisualCommentSave(Request $request): RedirectResponse
     {
         $request->validate(['comment' => 'required']);
 
+        $audiovisual = Audiovisual::findOrFail($request->id);
         $this->comments->addComment($audiovisual, $request);
 
         return redirect()->back()->with('success', 'Reply to comment added successfully');

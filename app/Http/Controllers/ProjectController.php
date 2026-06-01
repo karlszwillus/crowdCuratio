@@ -340,11 +340,16 @@ class ProjectController extends Controller
 
     /**
      * Comment project — neuer Top-Level-Kommentar.
+     *
+     * Route hat kein {project} in der URL, deshalb resolved Laravel
+     * das Project-Argument nicht — wir laden es explizit aus
+     * $request->id, wie der alte CommentTrait das auch tat.
      */
-    public function commentProject(Request $request, Project $project): RedirectResponse
+    public function commentProject(Request $request): RedirectResponse
     {
         $request->validate(['comment' => 'required']);
 
+        $project = Project::findOrFail($request->id);
         $this->comments->addComment($project, $request);
 
         return redirect()->back()->with('success', 'Reply to comment added successfully');
