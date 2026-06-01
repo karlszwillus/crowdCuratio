@@ -33,6 +33,34 @@ beschrieben.
 
 ### Hinzugefügt
 
+- **Coverage-Vorlauf vor dem Refactor-Block.** Achtzehn neue
+  Pest-Tests in vier Files füllen die größten ungetesteten
+  Service-Pfade: fünf Konstruktor-Tests in
+  `tests/Unit/LogServiceTest.php` (Switch-Cases per Reflection),
+  vier Tests in `tests/Feature/Services/UserServiceTest.php`
+  (globale vs. project-scoped Permissions, Projekt-Isolation),
+  vier Tests in `tests/Feature/Services/CommentRetrieveTest.php`
+  (Comment-Render je commentable_type, Owner-Flag, Reply-
+  Schachtelung), fünf Tests in
+  `tests/Feature/Services/LogServiceTest.php` (history,
+  getParentText, textLog-Boundary). Coverage steigt von 26,68 %
+  auf 35 %.
+- **CI-Coverage-Schwelle auf 30 angehoben.** `composer.json`
+  `test-coverage --min` von 25 auf 30. Erster Schritt der
+  Coverage-Trajektorie auf 55 % bis Ende der Refactor-Welle.
+
+### Behoben
+
+- **Latente LazyLoading-Verletzung in `LogService::history` und
+  `LogService::textLog`.** Beide Methoden griffen auf
+  `$activity->causer->name` zu, ohne die `causer`-Relation
+  eager-zu-laden. Unter `Model::shouldBeStrict()` wirft das eine
+  `LazyLoadingViolationException`. Im realen Produktivpfad lief
+  das durch Glück: entweder wurden die Methoden nie über eine
+  Strict-Mode-getestete Route getriggert, oder Spatie's
+  LogsActivity-Hook hatte den `causer` schon im Hydrations-
+  Cache. Fix: `->with('causer')` in beiden Methoden ergänzt.
+
 - **Rate-Limit-Tests für die Guest-Auth-Routen.** Drei Pest-Feature-
   Tests in `tests/Feature/AuthRateLimitTest.php` decken den neuen
   `throttle:6,1`-Limiter auf `POST /login`,
