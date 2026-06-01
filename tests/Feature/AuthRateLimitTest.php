@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 /**
@@ -36,7 +38,25 @@ If not, see <https://www.gnu.org/licenses/>.
 | Tests senden je sieben Requests aus derselben fingierten Session;
 | der siebte Request muss mit HTTP 429 (Too Many Requests)
 | abgelehnt werden.
+|
+| beforeEach deaktiviert VerifyCsrfToken, weil Pest-POST-Requests
+| keinen CSRF-Token mitschicken — sonst würden alle Requests mit
+| HTTP 419 (Page Expired) aus der CSRF-Middleware abgelehnt, bevor
+| die Throttle-Middleware überhaupt zählen kann. Plus: Rate-Limiter
+| wird vor jedem Test geleert, damit Tests sich nicht über die
+| Cache-Counter gegenseitig beeinflussen.
 */
+
+beforeEach(function () {
+    /** @var TestCase $this */
+    $this->withoutMiddleware(VerifyCsrfToken::class);
+
+    // Throttle-Buckets liegen im Cache. RefreshDatabase leert nur die
+    // DB, nicht den Cache — ein voller Cache::flush() vor jedem Test
+    // verhindert, dass die sechs Requests aus dem vorigen Test die
+    // sechs Requests aus dem aktuellen Test bereits verbraucht haben.
+    Cache::flush();
+});
 
 it('drosselt POST /login nach sechs Versuchen pro Minute', function () {
     /** @var TestCase $this */
