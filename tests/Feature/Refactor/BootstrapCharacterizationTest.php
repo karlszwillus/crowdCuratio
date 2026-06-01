@@ -106,7 +106,7 @@ it('rendert eine unbekannte Route mit HTTP 404', function () {
     // geben — der Test fixiert das HTTP-Verhalten unabhängig vom
     // konkreten Response-Body (HTML vs. JSON), den Laravel je nach
     // Accept-Header zurückliefert.
-    $response = $this->get('/this-route-does-not-exist-' . uniqid());
+    $response = $this->get('/this-route-does-not-exist-'.uniqid());
 
     $response->assertStatus(404);
 });
