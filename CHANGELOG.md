@@ -10,6 +10,53 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Hinzugefügt (CommentService-Extraktion)
+
+- **`CommentService`** in `app/Services/`. Kapselt die fünf
+  Schreibpfade auf Comments — `addComment`, `replyToComment`,
+  `editComment`, `deleteComment`, `setCommentStatus` — plus
+  `dispatchSaveAction`, der die `btn_submit`-Switch-Logik
+  (Edit/Delete/Reply) zentralisiert, die heute in sieben
+  Controller-Methoden über die fünf Comment-tragenden Controller
+  dupliziert war. Acht Pest-Tests in
+  `tests/Feature/Services/CommentServiceTest.php` decken die fünf
+  Methoden plus die vier dispatch-Switch-Pfade ab.
+- **Comment-Charakterisierungs-Tests** in
+  `tests/Feature/Refactor/CommentPfadeCharacterizationTest.php`.
+  Zehn Pest-Tests fixieren das beobachtbare Verhalten der
+  Comment-Endpunkte vor der Extraktion: Project / Chapter /
+  Entry für add, save-Switch (Edit/Delete/Reply) und
+  setStatus, plus der gemeinsame `updateStatus`-GET-Endpoint.
+  Content (Text/Image/Gallery) und Audiovisual sind strukturell
+  identisch, brauchen aber Source-/Audiovisual-Test-Factories,
+  die noch nicht existieren — Refactor läuft trotzdem über alle
+  fünf Controller, Smoke deckt sie ab.
+
+### Geändert (CommentService-Extraktion)
+
+- **Fünf Controller per Constructor-Injection auf
+  `CommentService`** umgestellt. `ProjectController`,
+  `ChapterController`, `EntryController`, `ContentController`
+  und `AudiovisualController` konsumieren den Service jetzt
+  über readonly-Properties. Alle 15 Comment-Endpunkt-Methoden
+  delegieren — die switch-cases auf `btn_submit` sind aus den
+  sieben Controller-Methoden raus und liegen einmal im Service
+  als `dispatchSaveAction`.
+
+### Entfernt (CommentService-Extraktion)
+
+- **`app/Traits/CommentTrait.php` gelöscht.** Die fünf
+  Trait-Methoden (`commentAsUser`, `replyAsUser`, `editAsUser`,
+  `deleteAsUser`, `status`) wandern in den `CommentService`.
+  Die `comments()`-MorphMany-Relation lebte schon direkt in den
+  acht Modellen (Project, Chapter, Entry, MediaContent, Text,
+  Image, Gallery, Audiovisual) — der Trait war nur noch
+  Methoden-Container, jetzt ersatzlos weg.
+- **`use CommentTrait;`-Aufrufe aus acht Modellen entfernt.**
+  Modell-Bodies sind dadurch dünner; mit dem Eloquent-Strict-
+  Mode passt die explizite Relation-Definition pro Modell
+  besser zu der Codebase als die implizite Trait-Aufklebung.
+
 **Phase 3 — Major-Upgrade-Welle abgeschlossen (2026-05-31).** Sieben
 sequenzielle Sprünge nach ADR-0003: PHP 8.1 → 8.2 → 8.3 → 8.4 in drei
 Schritten (mit verschränktem PHP-8.4-+-Laravel-9-Sprung wegen
