@@ -22,15 +22,16 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Http\Controllers;
 
+use App\Data\ChapterData;
 use App\Http\Requests\StoreChapterRequest;
 use App\Http\Requests\UpdateChapterRequest;
 use App\Models\Chapter;
-use App\Models\Entry;
-use App\Models\MediaContent;
 use App\Models\Permission;
 use App\Models\Project;
 use App\Models\Role;
+use App\Services\ChapterService;
 use App\Services\CommentRetrieve;
+use App\Services\ContentReorderService;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
@@ -45,8 +46,10 @@ class ChapterController extends Controller
     /**
      * Instantiate a new ChapterController instance.
      */
-    public function __construct()
-    {
+    public function __construct(
+        private readonly ChapterService $chapters,
+        private readonly ContentReorderService $reorder,
+    ) {
         $this->middleware('auth');
     }
 
@@ -81,27 +84,16 @@ class ChapterController extends Controller
     /**
      * Store a newly created chapter (POST /chapters).
      *
-     * Authorization + Validation kommen aus StoreChapterRequest.
-     * Update läuft jetzt über PATCH /chapters/{chapter}; die alte
-     * isset($chapterId)-Verzweigung ist entfallen (Phase 2 / D.4).
+     * Authorization + Validation kommen aus StoreChapterRequest,
+     * Position-Calculation aus ChapterService::create.
      */
     public function store(StoreChapterRequest $request): RedirectResponse
     {
-        $data = $request->validated();
+        $projectId = (int) $request->validated()['projectId'];
 
-        $pos = Chapter::where('project_id', $data['projectId'])
-            ->orderBy('position', 'desc')
-            ->first();
+        $this->chapters->create(ChapterData::fromRequest($request), $projectId);
 
-        Chapter::create([
-            'project_id' => $data['projectId'],
-            'name' => $data['chapterTitle'],
-            'subtitle' => $data['chapterSubtitle'] ?? null,
-            'description' => $data['chapterDescription'] ?? null,
-            'position' => ($pos->position ?? 0) + 1,
-        ]);
-
-        return redirect()->route('projects.edit', $data['projectId'])
+        return redirect()->route('projects.edit', $projectId)
             ->with('success', __('message_add_chapter_success'));
     }
 
@@ -109,27 +101,13 @@ class ChapterController extends Controller
      * Update an existing chapter (PATCH /chapters/{chapter}).
      *
      * Route-Model-Binding über $chapter; Authorization + Validation
-     * kommen aus UpdateChapterRequest. Phase 2 / D.4, ADR-0017.
+     * kommen aus UpdateChapterRequest. Die Verzweigung
+     * "Translation vs. Direktschreiben" liegt im DTO und im
+     * ChapterService.
      */
     public function update(UpdateChapterRequest $request, Chapter $chapter): RedirectResponse
     {
-        $data = $request->validated();
-
-        if ($request->boolean('translationChapter')) {
-            $chapter->setTranslation('name', 'en', $data['chapterTitle']);
-            $chapter->setTranslation('subtitle', 'en', $data['chapterSubtitle'] ?? '');
-            if (($data['chapterDescription'] ?? '') !== 'undefined') {
-                $chapter->setTranslation('description', 'en', $data['chapterDescription'] ?? '');
-            }
-        } else {
-            $chapter->name = $data['chapterTitle'];
-            $chapter->subtitle = $data['chapterSubtitle'] ?? null;
-            $chapter->description = $data['chapterDescription'] ?? null;
-        }
-
-        $chapter->is_translated = $request->boolean('isTranslated');
-
-        $chapter->save();
+        $this->chapters->update($chapter, ChapterData::fromRequest($request));
 
         return back();
     }
@@ -230,14 +208,15 @@ class ChapterController extends Controller
     /**
      * Update position and relationship through drag and drop.
      *
-     * F-API-009: Authorization-Gate vor dem Schreibpfad. Vorher war
-     * die Route nur durch `middleware('auth')` geschützt — jeder
-     * eingeloggte User konnte fremde Chapter, Entries und
-     * MediaContent umsortieren oder zwischen Chaptern verschieben.
-     * Wir lesen aus dem Payload das Ziel-Project und prüfen
-     * `ProjectPolicy::update`. Die volle Zerlegung in drei
-     * dedizierte PATCH-Endpunkte (chapter.reorder, entry.reorder,
-     * content.reorder) bleibt Refactoring-Material.
+     * F-API-009: Authorization-Gate vor dem Schreibpfad. Wir lesen
+     * aus dem Payload das Ziel-Project (über
+     * ContentReorderService::resolveProject) und prüfen
+     * `ProjectPolicy::update`. Der eigentliche Reorder wandert
+     * danach in den ContentReorderService.
+     *
+     * Die volle Zerlegung in drei dedizierte PATCH-Endpunkte
+     * (chapter.reorder, entry.reorder, content.reorder) bleibt
+     * Refactoring-Material.
      *
      * @return JsonResponse
      */
@@ -250,7 +229,9 @@ class ChapterController extends Controller
             return response()->json('Nothing to update');
         }
 
-        $project = $this->resolveDragTargetProject($payload, $data);
+        $element = $payload['element'] ?? null;
+        $project = $this->reorder->resolveProject($element, $payload, $data);
+
         if ($project === null) {
             // Ziel nicht auflösbar: leere oder bösartige IDs. Kein
             // Schreibpfad ausgeführt.
@@ -260,67 +241,25 @@ class ChapterController extends Controller
         $this->authorize('update', $project);
 
         Log::info($payload);
-        switch ($payload['element']) {
+
+        switch ($element) {
             case 'chapter':
-                foreach ($data as $key => $value) {
-                    Chapter::where('id', $value)->update(['position' => $key + 1]);
-                }
+                $this->reorder->reorderChapters($data);
                 break;
+
             case 'entry':
-                foreach ($data as $key => $value) {
-                    if (is_null($value)) {
-                        continue;
-                    }
-                    Entry::where('id', $value)->update(['chapter_id' => $payload['chapter'], 'position' => $key + 1]);
-                }
-
+                $this->reorder->reorderEntries((int) $payload['chapter'], $data);
                 break;
+
             case 'content':
-                foreach ($data as $key => $value) {
-                    if ($payload['entry']) {
-                        MediaContent::where('id', $value)->update(['media_contentable_id' => $payload['entry'], 'position' => $key + 1]);
-                    } else {
-                        MediaContent::where('id', $value)->update(['position' => $key + 1]);
-                    }
-
-                }
-
+                $targetEntry = $payload['entry'] ?? null;
+                $this->reorder->reorderContent(
+                    $targetEntry !== null ? (int) $targetEntry : null,
+                    $data,
+                );
                 break;
         }
 
         return response()->json('Updated successfully');
-    }
-
-    /**
-     * Resolve the project that owns the drag-and-drop target.
-     *
-     * Je nach Element-Typ liegt die Project-Referenz an einer
-     * anderen Stelle im Payload:
-     *  - chapter: erstes Element aus `data` → Chapter::project.
-     *  - entry: `payload.chapter` → Chapter::project.
-     *  - content: `payload.entry` → Entry::chapter::project.
-     */
-    protected function resolveDragTargetProject(array $payload, array $data): ?Project
-    {
-        switch ($payload['element'] ?? null) {
-            case 'chapter':
-                $firstId = reset($data);
-                /** @var Chapter|null $chapter */
-                $chapter = Chapter::find($firstId);
-
-                return $chapter?->project;
-            case 'entry':
-                /** @var Chapter|null $chapter */
-                $chapter = Chapter::find($payload['chapter'] ?? null);
-
-                return $chapter?->project;
-            case 'content':
-                /** @var Entry|null $entry */
-                $entry = Entry::find($payload['entry'] ?? null);
-
-                return $entry?->chapter?->project;
-            default:
-                return null;
-        }
     }
 }
