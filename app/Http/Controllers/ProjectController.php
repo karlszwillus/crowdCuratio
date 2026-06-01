@@ -378,12 +378,9 @@ class ProjectController extends Controller
     }
 
     /**
-     * Setzt den Status eines Comments. Methoden-Name ist historisch
-     * irreführend (sieht nach "Project-Status setzen" aus) —
-     * funktional setzt der Endpoint einen Comment-Status. Wird im
-     * Naming-Sweep der Folge-Welle korrigiert.
+     * Setzt den Status eines Comments auf einem Project.
      */
-    public function setStatusProject(Request $request, Project $project): JsonResponse
+    public function setCommentStatusProject(Request $request, Project $project): JsonResponse
     {
         $this->comments->setCommentStatus((int) $request['id'], (int) $request['status']);
 

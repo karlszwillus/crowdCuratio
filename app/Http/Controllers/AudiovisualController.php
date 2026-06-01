@@ -208,11 +208,9 @@ class AudiovisualController extends Controller
 
     /**
      * Routet eine save-Submission auf einem Audiovisual
-     * (Edit/Delete/Reply). Method-Name `commentAudiovisual` ist
-     * historisch und irreführend — der Add-Pfad sitzt in
-     * audiovisualCommentSave. Naming-Sweep folgt.
+     * (Edit/Delete/Reply).
      */
-    public function commentAudiovisual(Request $request, Audiovisual $audiovisual): RedirectResponse
+    public function saveCommentAudiovisual(Request $request, Audiovisual $audiovisual): RedirectResponse
     {
         $commentable = isset($request['question'])
             ? (Audiovisual::find($request['question']) ?? $audiovisual)
@@ -224,14 +222,12 @@ class AudiovisualController extends Controller
     }
 
     /**
-     * Neuer Top-Level-Kommentar auf einem Audiovisual. Auch hier
-     * lügt der Method-Name — `audiovisualCommentSave` macht den
-     * Add, nicht den Save. Naming-Sweep folgt.
+     * Neuer Top-Level-Kommentar auf einem Audiovisual.
      *
      * Route hat kein {audiovisual} in der URL, deshalb laden wir
      * das Modell explizit aus $request->id (siehe ProjectController).
      */
-    public function audiovisualCommentSave(Request $request): RedirectResponse
+    public function commentAudiovisual(Request $request): RedirectResponse
     {
         $request->validate(['comment' => 'required']);
 

@@ -109,12 +109,7 @@ class CommentService
     }
 
     /**
-     * Setzt den Status eines bestehenden Comments. Trotz des in
-     * den Controller-Method-Names (`setStatusProject`, `setStatus`,
-     * `setStatusEntry`, `setStatusText`, `setStatusImage`)
-     * implizierten Bezugs zum Project/Chapter/Entry/Text/Image
-     * setzt diese Methode den Comment-Status — der irreführende
-     * Name ist Erblast.
+     * Setzt den Status eines bestehenden Comments.
      */
     public function setCommentStatus(int $commentId, int $status): void
     {

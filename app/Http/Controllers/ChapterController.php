@@ -201,10 +201,9 @@ class ChapterController extends Controller
     }
 
     /**
-     * Setzt den Status eines Comments. Method-Name ist
-     * historisch irreführend — siehe ProjectController::setStatusProject.
+     * Setzt den Status eines Comments auf einem Chapter.
      */
-    public function setStatus(Request $request, Chapter $chapter): JsonResponse
+    public function setCommentStatusChapter(Request $request, Chapter $chapter): JsonResponse
     {
         $this->comments->setCommentStatus((int) $request['id'], (int) $request['status']);
 

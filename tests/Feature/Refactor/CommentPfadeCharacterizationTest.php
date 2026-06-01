@@ -94,7 +94,7 @@ it('setStatusProject setzt den Status eines bestehenden Comments', function () {
         'status' => 1,
     ]);
 
-    $this->post(route('project.status'), [
+    $this->post(route('comment.project.status'), [
         'id' => $comment->id,
         'status' => 3,
     ]);
@@ -261,7 +261,7 @@ it('setStatusEntry setzt den Status eines Comments', function () {
         'status' => 1,
     ]);
 
-    $this->post(route('entry.status', $entry), [
+    $this->post(route('comment.entry.status', $entry), [
         'id' => $comment->id,
         'status' => 2,
     ]);

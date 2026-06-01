@@ -553,10 +553,9 @@ class ContentController extends Controller
     }
 
     /**
-     * Setzt den Status eines Comments auf einem Text. Method-Name
-     * irreführend — siehe ProjectController::setStatusProject.
+     * Setzt den Status eines Comments auf einem Text.
      */
-    public function setStatusText(Request $request, Text $text): JsonResponse
+    public function setCommentStatusText(Request $request, Text $text): JsonResponse
     {
         $this->comments->setCommentStatus((int) $request['id'], (int) $request['status']);
 
@@ -564,10 +563,9 @@ class ContentController extends Controller
     }
 
     /**
-     * Setzt den Status eines Comments auf einem Image. Method-Name
-     * irreführend — siehe ProjectController::setStatusProject.
+     * Setzt den Status eines Comments auf einem Image.
      */
-    public function setStatusImage(Request $request, Image $image): JsonResponse
+    public function setCommentStatusImage(Request $request, Image $image): JsonResponse
     {
         $this->comments->setCommentStatus((int) $request['id'], (int) $request['status']);
 
@@ -648,12 +646,12 @@ class ContentController extends Controller
     }
 
     /**
-     * Update status — GET-Endpoint, der einen Comment-Status
-     * direkt aus der URL setzt. Funktional identisch zu den
-     * setStatus*-POST-Endpunkten der anderen Controller, nur dass
-     * das Frontend hier per Link-Klick statt Form arbeitet.
+     * Setzt einen Comment-Status direkt aus der URL. Funktional
+     * identisch zu den setCommentStatus*-POST-Endpunkten der
+     * anderen Controller, nur dass das Frontend hier per
+     * Link-Klick statt Form arbeitet.
      */
-    public function updateStatus($id, $status): RedirectResponse
+    public function updateCommentStatus($id, $status): RedirectResponse
     {
         $this->comments->setCommentStatus((int) $id, (int) $status);
 
@@ -754,13 +752,8 @@ class ContentController extends Controller
 
     /**
      * Routet eine save-Submission auf einer Gallery (Edit/Delete/Reply).
-     *
-     * Achtung — der Method-Name ist Erblast und irreführend:
-     * trotz `commentGallery` macht die Methode den Save-Switch,
-     * nicht den Neu-Kommentar (das macht galleryCommentSave).
-     * Wird im Naming-Sweep der Folge-Welle korrigiert.
      */
-    public function commentGallery(Request $request, Gallery $gallery): RedirectResponse
+    public function saveCommentGallery(Request $request, Gallery $gallery): RedirectResponse
     {
         $commentable = isset($request['question'])
             ? (Gallery::find($request['question']) ?? $gallery)
@@ -772,14 +765,12 @@ class ContentController extends Controller
     }
 
     /**
-     * Neuer Top-Level-Kommentar auf einer Gallery. Auch hier ist
-     * der Method-Name historisch — `galleryCommentSave` macht das
-     * Add, nicht das Save. Naming-Sweep folgt.
+     * Neuer Top-Level-Kommentar auf einer Gallery.
      *
      * Route hat kein {gallery} in der URL, deshalb laden wir das
      * Modell explizit aus $request->id (siehe ProjectController).
      */
-    public function galleryCommentSave(Request $request): RedirectResponse
+    public function commentGallery(Request $request): RedirectResponse
     {
         $request->validate(['comment' => 'required']);
 

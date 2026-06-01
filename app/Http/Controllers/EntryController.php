@@ -187,10 +187,9 @@ class EntryController extends Controller
     }
 
     /**
-     * Setzt den Status eines Comments. Method-Name ist historisch
-     * irreführend — siehe ProjectController::setStatusProject.
+     * Setzt den Status eines Comments auf einem Entry.
      */
-    public function setStatusEntry(Request $request, Entry $entry): JsonResponse
+    public function setCommentStatusEntry(Request $request, Entry $entry): JsonResponse
     {
         $this->comments->setCommentStatus((int) $request['id'], (int) $request['status']);
 
