@@ -1,0 +1,189 @@
+<?php
+
+/**
+crowdCuratio - Curating together virtually
+Copyright (C)2026 - berlinHistory e.V.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program in the file LICENSE.
+
+If not, see <https://www.gnu.org/licenses/>.
+ */
+
+namespace App\Services;
+
+use App\Models\Invitation;
+use App\Models\ModelHasRole;
+use App\Models\User;
+use App\Models\UserHasPermission;
+use Illuminate\Support\Collection;
+use Spatie\Permission\Models\Permission;
+
+/**
+ * Kapselt die project-scoped Permission-Operationen, die vorher in
+ * zehn Methoden über den ProjectController verteilt waren.
+ *
+ * Phase 4 / Block C — Pilot-Extraktion. Block D / ADR-0005 wird die
+ * Permission-Welt insgesamt harmonisieren (Spatie + UserHasPermission
+ * + PermissionName auf einen Pfad); bis dahin hält dieser Service
+ * die existierende Drei-Welten-Logik gekapselt.
+ */
+class ProjectPermissionService
+{
+    /**
+     * Liste der für ein Project berechtigten User mit ihren
+     * project-scoped Permissions.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function getUsersForThisProject(int $projectId): array
+    {
+        $users = User::all();
+
+        $userList = [];
+        foreach ($users as $user) {
+            $userList[$user->id] = ['name' => $user->name, 'lastName' => $user->last_name];
+        }
+
+        $pivots = UserHasPermission::where('project_id', $projectId)->get();
+
+        $listGrantedUsers = [];
+
+        foreach ($pivots as $pivot) {
+            if (! array_key_exists($pivot->user_id, $listGrantedUsers)
+                && array_key_exists($pivot->user_id, $userList)
+            ) {
+                $listGrantedUsers[$pivot->user_id]['name'] = $userList[$pivot->user_id]['name'].' '.$userList[$pivot->user_id]['lastName'];
+                $listGrantedUsers[$pivot->user_id]['permission'] = $this->getSelectedPermissionUser($pivot->user_id, $projectId);
+            }
+        }
+
+        return $listGrantedUsers;
+    }
+
+    /**
+     * Globale Spatie-Permissions eines Users (über Rolle vererbt).
+     *
+     * @return array<int, string>
+     */
+    public function getCurrentUsersPermissions(int $userId): array
+    {
+        return User::query()
+            ->join('model_has_roles', 'model_has_roles.model_id', '=', 'users.id')
+            ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+            ->join('role_has_permissions', 'role_has_permissions.role_id', '=', 'roles.id')
+            ->join('permissions', 'permissions.id', '=', 'role_has_permissions.permission_id')
+            ->where('users.id', '=', $userId)
+            ->pluck('permissions.name', 'permissions.id')->toArray();
+    }
+
+    /**
+     * Project-scoped Permissions eines Users als Name-Array,
+     * gekeyed by Permission-ID.
+     *
+     * @return array<int, string>
+     */
+    public function getSelectedPermissionUser(int $userId, int $projectId): array
+    {
+        return Permission::query()
+            ->join('user_has_permissions', 'user_has_permissions.permission_id', '=', 'permissions.id')
+            ->where('user_has_permissions.user_id', $userId)
+            ->where('user_has_permissions.project_id', $projectId)
+            ->pluck('permissions.name', 'permissions.id')->toArray();
+    }
+
+    /**
+     * Project-scoped Permissions als Collection (für pluck-/keyBy-
+     * Pfade in Views).
+     */
+    public function getSelectedPermissionUserPluck(int $userId, int $projectId): Collection
+    {
+        return Permission::query()
+            ->join('user_has_permissions', 'user_has_permissions.permission_id', '=', 'permissions.id')
+            ->where('user_has_permissions.user_id', $userId)
+            ->where('user_has_permissions.project_id', $projectId)
+            ->pluck('permissions.name', 'permissions.id');
+    }
+
+    /**
+     * Spatie-Rollen-Namen eines Users.
+     */
+    public function getRoleSelectedUser(int $userId): Collection
+    {
+        return ModelHasRole::query()
+            ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+            ->where('model_has_roles.model_id', $userId)
+            ->pluck('roles.name');
+    }
+
+    /**
+     * Setzt für einen User auf einem Project die übergebenen
+     * Permissions. Bestehende Einträge werden vorher gelöscht
+     * (Set-Semantik), Invitations zwischen den beteiligten Usern
+     * werden ebenfalls aufgeräumt und neu aufgesetzt.
+     *
+     * @param  array<int>  $permissionIds
+     */
+    public function setForUserOnProject(int $userId, int $projectId, array $permissionIds, int $invitedByUserId): void
+    {
+        UserHasPermission::where('project_id', $projectId)
+            ->where('user_id', $userId)
+            ->delete();
+
+        Invitation::where('project_id', $projectId)
+            ->where('guest_id', $userId)
+            ->delete();
+
+        foreach ($permissionIds as $permissionId) {
+            UserHasPermission::firstOrCreate([
+                'project_id' => $projectId,
+                'permission_id' => $permissionId,
+                'user_id' => $userId,
+            ]);
+        }
+
+        Invitation::firstOrCreate([
+            'user_id' => $invitedByUserId,
+            'guest_id' => $userId,
+            'project_id' => $projectId,
+        ]);
+    }
+
+    /**
+     * Entfernt einen User vollständig aus einem Project — sowohl
+     * dessen project-scoped Permissions als auch eine offene
+     * Invitation.
+     */
+    public function removeUserFromProject(int $userId, int $projectId): void
+    {
+        UserHasPermission::where('project_id', $projectId)
+            ->where('user_id', $userId)
+            ->delete();
+
+        Invitation::where('project_id', $projectId)
+            ->where('guest_id', $userId)
+            ->delete();
+    }
+
+    /**
+     * Liefert die aktuell gesetzten Permission-IDs für einen User
+     * auf einem Project. Wird vom `givePermissionToUser`-Endpoint
+     * als JSON für das Frontend gebraucht.
+     */
+    public function getPermissionIdsForUserOnProject(int $userId, int $projectId): Collection
+    {
+        return UserHasPermission::where('user_id', $userId)
+            ->where('project_id', $projectId)
+            ->pluck('permission_id');
+    }
+}

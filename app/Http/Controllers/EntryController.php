@@ -22,10 +22,12 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Http\Controllers;
 
+use App\Data\EntryData;
 use App\Http\Requests\StoreEntryRequest;
 use App\Http\Requests\UpdateEntryRequest;
 use App\Models\Entry;
 use App\Services\CommentRetrieve;
+use App\Services\EntryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,8 +38,9 @@ class EntryController extends Controller
     /**
      * Instantiate a new EntryController instance.
      */
-    public function __construct()
-    {
+    public function __construct(
+        private readonly EntryService $entries,
+    ) {
         $this->middleware('auth');
     }
 
@@ -64,24 +67,14 @@ class EntryController extends Controller
     /**
      * Store a newly created entry (POST /entries).
      *
-     * Authorization + Validation kommen aus StoreEntryRequest.
-     * Update läuft jetzt über PATCH /entries/{entry} (Phase 2 / D.5).
+     * Authorization + Validation kommen aus StoreEntryRequest,
+     * Position-Calculation aus EntryService::create.
      */
     public function store(StoreEntryRequest $request): RedirectResponse
     {
-        $data = $request->validated();
+        $chapterId = (int) $request->validated()['chapterId'];
 
-        $pos = Entry::where('chapter_id', $data['chapterId'])
-            ->orderBy('position', 'desc')
-            ->first();
-
-        Entry::create([
-            'chapter_id' => $data['chapterId'],
-            'name' => $data['entryTitle'],
-            'subtitle' => $data['entrySubtitle'] ?? null,
-            'description' => $data['entryDescription'] ?? null,
-            'position' => ($pos->position ?? 0) + 1,
-        ]);
+        $this->entries->create(EntryData::fromRequest($request), $chapterId);
 
         return redirect()->back()->with('success', __('message_add_entry_success'));
     }
@@ -89,27 +82,13 @@ class EntryController extends Controller
     /**
      * Update an existing entry (PATCH /entries/{entry}).
      *
-     * Route-Model-Binding über $entry. Phase 2 / D.5, ADR-0017.
+     * Route-Model-Binding über $entry; Authorization + Validation
+     * kommen aus UpdateEntryRequest. Translation-Verzweigung liegt
+     * im DTO und im EntryService.
      */
     public function update(UpdateEntryRequest $request, Entry $entry): RedirectResponse
     {
-        $data = $request->validated();
-
-        if ($request->boolean('translationEntry')) {
-            $entry->setTranslation('name', 'en', $data['entryTitle']);
-            $entry->setTranslation('subtitle', 'en', $data['entrySubtitle'] ?? '');
-            if (($data['entryDescription'] ?? '') !== 'undefined') {
-                $entry->setTranslation('description', 'en', $data['entryDescription'] ?? '');
-            }
-        } else {
-            $entry->name = $data['entryTitle'];
-            $entry->subtitle = $data['entrySubtitle'] ?? null;
-            $entry->description = $data['entryDescription'] ?? null;
-        }
-
-        $entry->is_translated = $request->boolean('isTranslated');
-
-        $entry->save();
+        $this->entries->update($entry, EntryData::fromRequest($request));
 
         return back();
     }

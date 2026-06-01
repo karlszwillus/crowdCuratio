@@ -22,24 +22,22 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Http\Controllers;
 
+use App\Data\ProjectData;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Audiovisual;
 use App\Models\Gallery;
-use App\Models\Image;
-use App\Models\Invitation;
-use App\Models\ModelHasRole;
 use App\Models\Permission;
 use App\Models\Project;
 use App\Models\Role;
 use App\Models\Source;
 use App\Models\Text;
 use App\Models\User;
-use App\Models\UserHasPermission;
 use App\Services\CommentRetrieve;
 use App\Services\LogService;
+use App\Services\ProjectImageService;
+use App\Services\ProjectPermissionService;
 use App\Services\UserService;
-use App\Traits\UploadTrait;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Illuminate\Contracts\Foundation\Application;
@@ -56,18 +54,17 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Storage;
-use Mpdf\Pdf;
 use Spatie\Activitylog\Models\Activity;
 
 class ProjectController extends Controller
 {
-    use UploadTrait;
-
     /**
      * Instantiate a new ProjectController instance.
      */
-    public function __construct()
-    {
+    public function __construct(
+        private readonly ProjectImageService $images,
+        private readonly ProjectPermissionService $permissions,
+    ) {
         $this->middleware('auth');
         $this->middleware('permission:add', ['only' => ['create', 'store']]);
         $this->middleware('permission:view', ['only' => ['index']]);
@@ -140,88 +137,28 @@ class ProjectController extends Controller
 
     /**
      * Store a newly created resource in storage.
+     *
+     * F-SEC-010: user_id ist nicht in Project::$fillable. Wir fillen
+     * den Mass-Assignment-Block über das DTO und setzen user_id
+     * anschließend explizit aus Auth::user()->id — ein Request kann
+     * keine fremde user_id injizieren. Der Status-Default kommt aus
+     * der App-Config, nicht aus dem Request.
      */
     public function store(StoreProjectRequest $request): RedirectResponse
     {
-        // mapData() arbeitet weiter mit der vollen Request — es liest
-        // file('project_image') ab und delegiert an setImage(). Die
-        // Validation hat das Feld vorher MIME-geprüft.
-        //
-        // F-SEC-010: user_id ist nicht mehr in Project::$fillable.
-        // Wir fillen den Mass-Assignment-Block und setzen user_id
-        // anschließend über den Property-Setter aus Auth::user()->id —
-        // ein Request kann keine fremde user_id injizieren.
-        $new = new Project;
-        $new->fill($this->mapData($request));
-        $new->user_id = Auth::user()->id;
-        $new->save();
+        $logo = $this->images->store($request->file('project_image'));
+        $data = ProjectData::fromRequest($request, $logo);
 
-        return redirect()->route('chapters.index', ['id' => $new->id])
+        $project = new Project;
+        $project->fill(array_merge(
+            ['status' => config('project.status.default')],
+            $data->toArray(),
+        ));
+        $project->user_id = Auth::user()->id;
+        $project->save();
+
+        return redirect()->route('chapters.index', ['id' => $project->id])
             ->with('success', 'Project added successfully');
-    }
-
-    /**
-     * Map data
-     *
-     * @return array
-     */
-    protected function mapData($request)
-    {
-
-        $data = [];
-        // F-SEC-010: user_id wird im Controller-Store nach dem fill()
-        // explizit gesetzt. Hier rauszuhalten ist defense-in-depth:
-        // selbst wenn mapData() später schlampig erweitert wird und
-        // direkt $request->all() in $data übernimmt, kann keine fremde
-        // user_id ins Modell durchsickern, weil Project::$fillable
-        // user_id nicht akzeptiert.
-        $data['status'] = config('project.status.default');
-
-        if (isset($request['name'])) {
-            $data['name'] = $request['name'];
-        }
-        if (isset($request['imprint'])) {
-            $data['imprint'] = $request['imprint'];
-        }
-        if (isset($request['terms'])) {
-            $data['terms'] = $request['terms'];
-        }
-        if (isset($request['description'])) {
-            $data['description'] = $request['description'];
-        }
-
-        $logo = $this->setImage($request);
-        if ($logo != '') {
-            $data['logo'] = $logo;
-        }
-
-        return $data;
-    }
-
-    /**
-     * Save image.
-     *
-     * Returns the generated filename if an image was uploaded, or an
-     * empty string if the request carried no `project_image`.
-     *
-     * @return string
-     */
-    protected function setImage($request)
-    {
-        $name = '';
-        // Check if an image should be uploaded
-        if ($request->has('project_image')) {
-            // Get image file
-            $image = $request->file('project_image');
-            // Make a image name based on user name and current timestamp
-            $name = date('Ymd').'_'.time().'.'.$request->file('project_image')->extension();
-            // Define folder path
-            $folder = '/uploads/images/';
-            // Upload image
-            $this->uploadOne($image, $folder, 'public', $name);
-        }
-
-        return $name;
     }
 
     /**
@@ -266,12 +203,12 @@ class ProjectController extends Controller
         $userService = new UserService;
         $listPermissions = $userService->getAllUsers($project->id);
         $allPermissions = Permission::pluck('name', 'id');
-        $currentUserPermissions = $this->getCurrentUsersPermissions(Auth::user()->id);
+        $currentUserPermissions = $this->permissions->getCurrentUsersPermissions(Auth::user()->id);
 
         // withEditTree() lädt die volle Hierarchie für die in
         // projects/edit eingeschlossene View chapters/index eager.
         $data = Project::withEditTree()->findOrFail($project->id);
-        $listGrantedUsers = $this->getUsersForThisProject($project->id);
+        $listGrantedUsers = $this->permissions->getUsersForThisProject($project->id);
 
         $links = session()->has('links') ? session('links') : [];
         $currentLink = request()->path();
@@ -295,36 +232,6 @@ class ProjectController extends Controller
                 'isComment'
             )
         );
-    }
-
-    /**
-     * Get users that are allowed to work in the current project
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    protected function getUsersForThisProject($id)
-    {
-        // F-DB-014: SoftDeletes-Scope greift implizit.
-        $users = User::all();
-
-        $userList = [];
-        foreach ($users as $key => $user) {
-            $userList[$user->id] = ['name' => $user->name, 'lastName' => $user->last_name];
-        }
-
-        $listUsersPermissions = UserHasPermission::where('project_id', $id)->get();
-
-        $listGrantedUsers = [];
-
-        foreach ($listUsersPermissions as $key => $value) {
-            if (! array_key_exists($value->user_id, $listGrantedUsers) && array_key_exists($value->user_id, $userList)) {
-                $listGrantedUsers[$value->user_id]['name'] = $userList[$value->user_id]['name'].' '.$userList[$value->user_id]['lastName'];
-                $userPermission = $this->getSelectedPermissionUser($value->user_id, $id);
-                $listGrantedUsers[$value->user_id]['permission'] = $userPermission;
-            }
-        }
-
-        return $listGrantedUsers;
     }
 
     /**
@@ -363,57 +270,30 @@ class ProjectController extends Controller
     }
 
     /**
-     * Get current permission of this user
-     *
-     * @return array
-     */
-    protected function getCurrentUsersPermissions($id)
-    {
-        return User::query()
-            ->join('model_has_roles', 'model_has_roles.model_id', '=', 'users.id')
-            ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
-            ->join('role_has_permissions', 'role_has_permissions.role_id', '=', 'roles.id')
-            ->join('permissions', 'permissions.id', '=', 'role_has_permissions.permission_id')
-            ->where('users.id', '=', $id)
-            ->pluck('permissions.name', 'permissions.id')->toArray();
-    }
-
-    /**
-     * Get permissions for the selected user as array
-     *
-     * @return array
-     */
-    protected function getSelectedPermissionUser($userId, $projectId)
-    {
-        return Permission::query()
-            ->join('user_has_permissions', 'user_has_permissions.permission_id', '=', 'permissions.id')
-            ->where('user_has_permissions.user_id', $userId)
-            ->where('user_has_permissions.project_id', $projectId)
-            ->pluck('permissions.name', 'permissions.id')->toArray();
-    }
-
-    /**
      * Update the specified resource in storage.
+     *
+     * NF-SEC-007: Logo-Filename kommt ausschließlich aus dem
+     * ProjectImageService, nie aus dem Request-`logo`-Feld.
+     * UpdateProjectRequest hat den File vorher MIME-validiert.
      */
     public function update(UpdateProjectRequest $request, Project $project): RedirectResponse
     {
-        $data = $request->validated();
+        $logo = $this->images->store($request->file('project_image'));
+        $data = ProjectData::fromRequest($request, $logo);
 
+        // terms/description sind nullable und MÜSSEN als null
+        // durchschlagen, wenn das Frontend sie leer schickt —
+        // daher hier nicht über $data->toArray() (das filtert
+        // null), sondern explizit auflisten.
         $project->update([
-            'name' => $data['name'],
-            'imprint' => $data['imprint'],
-            'terms' => $data['terms'] ?? null,
-            'description' => $data['description'] ?? null,
+            'name' => $data->name,
+            'imprint' => $data->imprint,
+            'terms' => $data->terms,
+            'description' => $data->description,
         ]);
 
-        // NF-SEC-007: Logo-Filename kommt ausschließlich aus setImage(),
-        // nie aus $request['logo']. UpdateProjectRequest hat den File
-        // vorher MIME-validiert.
-        if ($request->hasFile('project_image')) {
-            $logo = $this->setImage($request);
-            if ($logo !== '') {
-                $project->update(['logo' => $logo]);
-            }
+        if ($data->logo !== null) {
+            $project->update(['logo' => $data->logo]);
         }
 
         return redirect()->back()->with('success', __('message_edit_project_success'));
@@ -516,55 +396,38 @@ class ProjectController extends Controller
 
     /**
      * Set permission for user on project
-     *
-     * @return RedirectResponse
      */
-    public function setPermissionForUserOnProject(Request $request)
+    public function setPermissionForUserOnProject(Request $request): RedirectResponse
     {
-        // delete old permissions
-        UserHasPermission::where('project_id', $request['project'])
-            ->where('user_id', $request['user'])->delete();
+        $userId = (int) $request['user'];
+        $projectId = (int) $request['project'];
+        $permissionIds = (array) ($request['permissions'] ?? []);
 
-        Invitation::where('project_id', $request['project'])
-            ->where('guest_id', $request['user'])->delete();
+        $this->permissions->setForUserOnProject(
+            $userId,
+            $projectId,
+            $permissionIds,
+            (int) Auth::user()->id,
+        );
 
-        // save new permission
-        if (isset($request['permissions']) && count($request['permissions']) > 0) {
-            foreach ($request['permissions'] as $key => $permission) {
-                UserHasPermission::firstOrCreate(
-                    [
-                        'project_id' => $request['project'],
-                        'permission_id' => $permission,
-                        'user_id' => $request['user'],
-                    ]
-                );
-            }
-        }
+        $user = User::findOrFail($userId);
+        $permissions = $this->permissions->getCurrentUsersPermissions($userId);
 
-        $user = User::findOrFail($request['user']);
-        $permissions = $this->getCurrentUsersPermissions($request['user']);
-        $error_code = 5;
-
-        Invitation::firstOrCreate([
-            'user_id' => Auth::user()->id,
-            'guest_id' => $request['user'],
-            'project_id' => $request['project'],
+        return redirect()->back()->with([
+            'error_code' => 5,
+            'user' => $user,
+            'permissions' => $permissions,
         ]);
-
-        return redirect()->back()->with(['error_code' => $error_code, 'user' => $user, 'permissions' => $permissions]);
     }
 
     /**
      * ajax retrieve user's permission
-     *
-     * @return JsonResponse
      */
-    public function givePermissionToUser($id)
+    public function givePermissionToUser($id): JsonResponse
     {
-        $ids = explode('_', $id);
-        $data = UserHasPermission::where('user_id', $ids[0])
-            ->where('project_id', $ids[1])
-            ->pluck('permission_id');
+        [$userId, $projectId] = array_map('intval', explode('_', $id));
+
+        $data = $this->permissions->getPermissionIdsForUserOnProject($userId, $projectId);
 
         return response()->json($data);
     }
@@ -883,11 +746,11 @@ class ProjectController extends Controller
      */
     public function inviteUserForProject($id, $projectId)
     {
-        $permissions = $this->getCurrentUsersPermissions($id);
+        $permissions = $this->permissions->getCurrentUsersPermissions($id);
 
         $user = User::findOrFail($id);
         $role = isset($user->role->userRole->name) ? $user->role->userRole->name : '';
-        $permissionForProject = $this->getSelectedPermissionUser($id, $projectId);
+        $permissionForProject = $this->permissions->getSelectedPermissionUser($id, $projectId);
         $listAllPermissions = Permission::orderBy('id', 'ASC')->pluck('name', 'id');
 
         return \view(
@@ -938,45 +801,11 @@ class ProjectController extends Controller
     }
 
     /**
-     * Get permissions for the selected user
-     *
-     * @return Collection
-     */
-    protected function getSelectedPermissionUserPluck($userId, $projectId)
-    {
-        return Permission::query()
-            ->join('user_has_permissions', 'user_has_permissions.permission_id', '=', 'permissions.id')
-            ->where('user_has_permissions.user_id', $userId)
-            ->where('user_has_permissions.project_id', $projectId)
-            ->pluck('permissions.name', 'permissions.id');
-    }
-
-    /**
-     * Get role of user
-     *
-     * @return Collection
-     */
-    protected function getRoleSelectedUser($userId)
-    {
-        return ModelHasRole::query()
-            ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
-            ->where('model_has_roles.model_id', $userId)
-            ->pluck('roles.name');
-    }
-
-    /**
      * Delete user from single project
-     *
-     * @return RedirectResponse
      */
-    protected function deleteUserFromProject($userId, $projectId)
+    protected function deleteUserFromProject($userId, $projectId): RedirectResponse
     {
-
-        UserHasPermission::where('project_id', $projectId)
-            ->where('user_id', $userId)->delete();
-
-        Invitation::where('project_id', $projectId)
-            ->where('guest_id', $userId)->delete();
+        $this->permissions->removeUserFromProject((int) $userId, (int) $projectId);
 
         return redirect()->back()->with('success', __('message_edit_project_success'));
     }
@@ -988,16 +817,14 @@ class ProjectController extends Controller
      */
     public function editMetaData($projectId)
     {
-
         $project = Project::findOrFail($projectId);
-        $listGrantedUsers = $this->getUsersForThisProject($projectId);
+        $listGrantedUsers = $this->permissions->getUsersForThisProject((int) $projectId);
         // F-DB-013: vorher Role::where('id', 'not like', '1').
         $listRole = Role::where('name', '!=', 'Admin')->pluck('name', 'id');
         $permissions = Permission::all();
         asort($listGrantedUsers);
 
         return \view('projects.create', compact('project', 'listGrantedUsers', 'listRole', 'permissions'));
-
     }
 
     /**
