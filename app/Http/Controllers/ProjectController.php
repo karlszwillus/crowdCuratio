@@ -34,6 +34,7 @@ use App\Models\Source;
 use App\Models\Text;
 use App\Models\User;
 use App\Services\CommentRetrieve;
+use App\Services\CommentService;
 use App\Services\LogService;
 use App\Services\ProjectImageService;
 use App\Services\ProjectPermissionService;
@@ -64,6 +65,7 @@ class ProjectController extends Controller
     public function __construct(
         private readonly ProjectImageService $images,
         private readonly ProjectPermissionService $permissions,
+        private readonly CommentService $comments,
     ) {
         $this->middleware('auth');
         $this->middleware('permission:add', ['only' => ['create', 'store']]);
@@ -337,23 +339,19 @@ class ProjectController extends Controller
     }
 
     /**
-     * Comment project
-     *
-     * @return RedirectResponse
+     * Comment project — neuer Top-Level-Kommentar.
      */
-    public function commentProject(Request $request, Project $project)
+    public function commentProject(Request $request, Project $project): RedirectResponse
     {
-        $request->validate(
-            [
-                'comment' => 'required',
-            ]
-        );
+        $request->validate(['comment' => 'required']);
 
-        return $project->commentAsUser($request);
+        $this->comments->addComment($project, $request);
+
+        return redirect()->back()->with('success', 'Reply to comment added successfully');
     }
 
     /**
-     * Retrieve all comment of current entry
+     * Retrieve all comment of current project
      *
      * @return JsonResponse
      */
@@ -365,33 +363,26 @@ class ProjectController extends Controller
     }
 
     /**
-     * Save current entry
-     *
-     * @return RedirectResponse
+     * Routet eine save-Submission (Edit/Delete/Reply).
      */
-    public function saveCommentProject(Request $request, Project $project)
+    public function saveCommentProject(Request $request, Project $project): RedirectResponse
     {
-        if (isset($request['btn_submit'])) {
-            if ($request['btn_submit'] == 'Edit') {
-                return $project->editAsUser($request);
-            } elseif ($request['btn_submit'] == 'delete') {
-                return $project->deleteAsUser($request['id']);
-            } else {
-                return $project->replyAsUser($request);
-            }
-        }
+        $this->comments->dispatchSaveAction($project, $request);
+
+        return redirect()->back()->with('success', 'Comment-Aktion ausgeführt');
     }
 
     /**
-     * Set status project
-     *
-     * @return JsonResponse
+     * Setzt den Status eines Comments. Methoden-Name ist historisch
+     * irreführend (sieht nach "Project-Status setzen" aus) —
+     * funktional setzt der Endpoint einen Comment-Status. Wird im
+     * Naming-Sweep der Folge-Welle korrigiert.
      */
-    public function setStatusProject(Request $request, Project $project)
+    public function setStatusProject(Request $request, Project $project): JsonResponse
     {
-        $data = $project->status($request);
+        $this->comments->setCommentStatus((int) $request['id'], (int) $request['status']);
 
-        return response()->json($data);
+        return response()->json(['success' => true]);
     }
 
     /**

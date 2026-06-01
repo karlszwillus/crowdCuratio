@@ -27,6 +27,7 @@ use App\Http\Requests\StoreEntryRequest;
 use App\Http\Requests\UpdateEntryRequest;
 use App\Models\Entry;
 use App\Services\CommentRetrieve;
+use App\Services\CommentService;
 use App\Services\EntryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -40,6 +41,7 @@ class EntryController extends Controller
      */
     public function __construct(
         private readonly EntryService $entries,
+        private readonly CommentService $comments,
     ) {
         $this->middleware('auth');
     }
@@ -135,19 +137,15 @@ class EntryController extends Controller
     }
 
     /**
-     * Comment entry
-     *
-     * @return RedirectResponse
+     * Comment entry — neuer Top-Level-Kommentar.
      */
-    public function commentEntry(Request $request, Entry $entry)
+    public function commentEntry(Request $request, Entry $entry): RedirectResponse
     {
-        $request->validate(
-            [
-                'comment' => 'required',
-            ]
-        );
+        $request->validate(['comment' => 'required']);
 
-        return $entry->commentAsUser($request, 'App\Models\Entry');
+        $this->comments->addComment($entry, $request);
+
+        return redirect()->back()->with('success', 'Reply to comment added successfully');
     }
 
     /**
@@ -163,36 +161,29 @@ class EntryController extends Controller
     }
 
     /**
-     * Save current entry
-     *
-     * @return RedirectResponse
+     * Routet eine save-Submission (Edit/Delete/Reply).
      */
-    public function saveCommentEntry(Request $request, Entry $entry)
+    public function saveCommentEntry(Request $request, Entry $entry): RedirectResponse
     {
-        if (isset($request['name']) && $request['name'] == 'edit') {
-            return $entry->editAsUser($request);
+        if (isset($request['name']) && $request['name'] === 'edit') {
+            $this->comments->editComment((int) $request['pk'], (string) $request['value']);
+
+            return redirect()->back()->with('success', 'Comment edited successfully');
         }
 
-        if (isset($request['btn_submit'])) {
-            if ($request['btn_submit'] == 'Edit') {
-                return $entry->editAsUser($request);
-            } elseif ($request['btn_submit'] == 'delete') {
-                return $entry->deleteAsUser($request['id']);
-            } else {
-                return $entry->replyAsUser($request);
-            }
-        }
+        $this->comments->dispatchSaveAction($entry, $request);
+
+        return redirect()->back()->with('success', 'Comment-Aktion ausgeführt');
     }
 
     /**
-     * Set status entry
-     *
-     * @return JsonResponse
+     * Setzt den Status eines Comments. Method-Name ist historisch
+     * irreführend — siehe ProjectController::setStatusProject.
      */
-    public function setStatusEntry(Request $request, Entry $entry)
+    public function setStatusEntry(Request $request, Entry $entry): JsonResponse
     {
-        $data = $entry->status($request);
+        $this->comments->setCommentStatus((int) $request['id'], (int) $request['status']);
 
-        return response()->json($data);
+        return response()->json(['success' => true]);
     }
 }

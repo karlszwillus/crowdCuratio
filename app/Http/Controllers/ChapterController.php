@@ -31,6 +31,7 @@ use App\Models\Project;
 use App\Models\Role;
 use App\Services\ChapterService;
 use App\Services\CommentRetrieve;
+use App\Services\CommentService;
 use App\Services\ContentReorderService;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
@@ -49,6 +50,7 @@ class ChapterController extends Controller
     public function __construct(
         private readonly ChapterService $chapters,
         private readonly ContentReorderService $reorder,
+        private readonly CommentService $comments,
     ) {
         $this->middleware('auth');
     }
@@ -142,25 +144,21 @@ class ChapterController extends Controller
     }
 
     /**
-     * Comment chapter
-     *
-     * @return RedirectResponse
+     * Comment chapter — neuer Top-Level-Kommentar.
      */
-    public function commentChapter(Request $request, Chapter $chapter)
+    public function commentChapter(Request $request, Chapter $chapter): RedirectResponse
     {
-        $request->validate(
-            [
-                'comment' => 'required',
-            ]
-        );
+        $request->validate(['comment' => 'required']);
 
-        return $chapter->commentAsUser($request);
+        $this->comments->addComment($chapter, $request);
+
+        return redirect()->back()->with('success', 'Reply to comment added successfully');
     }
 
     /**
      * Retrieve all comment of current chapter
      *
-     * @return JsonResponse
+     * @return RedirectResponse
      */
     public function getChapterComment($id)
     {
@@ -171,38 +169,34 @@ class ChapterController extends Controller
     }
 
     /**
-     * Save current comment
+     * Routet eine save-Submission (Edit/Delete/Reply).
      *
-     * @return RedirectResponse
+     * Akzeptiert zusätzlich den name=edit-Legacy-Pfad — eine
+     * zweite Edit-Submission, die das Frontend in einem alten
+     * Modal-Flow verwendet.
      */
-    public function saveComment(Request $request, Chapter $chapter)
+    public function saveComment(Request $request, Chapter $chapter): RedirectResponse
     {
+        if (isset($request['name']) && $request['name'] === 'edit') {
+            $this->comments->editComment((int) $request['pk'], (string) $request['value']);
 
-        if (isset($request['name']) && $request['name'] == 'edit') {
-            return $chapter->editAsUser($request);
+            return redirect()->back()->with('success', 'Comment edited successfully');
         }
 
-        if (isset($request['btn_submit'])) {
-            if ($request['btn_submit'] == 'Edit') {
-                return $chapter->editAsUser($request);
-            } elseif ($request['btn_submit'] == 'delete') {
-                return $chapter->deleteAsUser($request['id']);
-            } else {
-                return $chapter->replyAsUser($request);
-            }
-        }
+        $this->comments->dispatchSaveAction($chapter, $request);
+
+        return redirect()->back()->with('success', 'Comment-Aktion ausgeführt');
     }
 
     /**
-     * Set status
-     *
-     * @return JsonResponse
+     * Setzt den Status eines Comments. Method-Name ist
+     * historisch irreführend — siehe ProjectController::setStatusProject.
      */
-    public function setStatus(Request $request, Chapter $chapter)
+    public function setStatus(Request $request, Chapter $chapter): JsonResponse
     {
-        $data = $chapter->status($request);
+        $this->comments->setCommentStatus((int) $request['id'], (int) $request['status']);
 
-        return response()->json($data);
+        return response()->json(['success' => true]);
     }
 
     /**

@@ -25,6 +25,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreAudiovisualRequest;
 use App\Models\Audiovisual;
 use App\Models\MediaContent;
+use App\Services\CommentService;
 use App\Traits\UploadTrait;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -37,8 +38,9 @@ class AudiovisualController extends Controller
     /**
      * Instantiate a new AudioVisualController instance.
      */
-    public function __construct()
-    {
+    public function __construct(
+        private readonly CommentService $comments,
+    ) {
         $this->middleware('auth');
     }
 
@@ -205,43 +207,34 @@ class AudiovisualController extends Controller
     }
 
     /**
-     * Comment or reply on audiovisual
-     *
-     * @return $this|RedirectResponse
+     * Routet eine save-Submission auf einem Audiovisual
+     * (Edit/Delete/Reply). Method-Name `commentAudiovisual` ist
+     * historisch und irreführend — der Add-Pfad sitzt in
+     * audiovisualCommentSave. Naming-Sweep folgt.
      */
-    public function commentAudiovisual(Request $request, Audiovisual $audiovisual)
+    public function commentAudiovisual(Request $request, Audiovisual $audiovisual): RedirectResponse
     {
+        $commentable = isset($request['question'])
+            ? (Audiovisual::find($request['question']) ?? $audiovisual)
+            : $audiovisual;
 
-        if (isset($request['btn_submit'])) {
-            if ($request['btn_submit'] == 'Edit') {
-                return $audiovisual->editAsUser($request);
-            } elseif ($request['btn_submit'] == 'delete') {
-                return $audiovisual->deleteAsUser($request['id']);
-            } else {
-                $model = Audiovisual::findOrFail($request['question']);
+        $this->comments->dispatchSaveAction($commentable, $request);
 
-                return $model->replyAsUser($request);
-            }
-        }
-
-        return $this;
+        return redirect()->back()->with('success', 'Comment-Aktion ausgeführt');
     }
 
     /**
-     * New comment on audiovisual
-     *
-     * @return RedirectResponse
+     * Neuer Top-Level-Kommentar auf einem Audiovisual. Auch hier
+     * lügt der Method-Name — `audiovisualCommentSave` macht den
+     * Add, nicht den Save. Naming-Sweep folgt.
      */
-    public function audiovisualCommentSave(Request $request, Audiovisual $audiovisual)
+    public function audiovisualCommentSave(Request $request, Audiovisual $audiovisual): RedirectResponse
     {
+        $request->validate(['comment' => 'required']);
 
-        $request->validate(
-            [
-                'comment' => 'required',
-            ]
-        );
+        $this->comments->addComment($audiovisual, $request);
 
-        return $audiovisual->commentAsUser($request, 'App\Models\Audiovisual');
+        return redirect()->back()->with('success', 'Reply to comment added successfully');
     }
 
     /**
