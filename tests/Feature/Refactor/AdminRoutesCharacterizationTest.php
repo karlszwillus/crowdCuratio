@@ -161,3 +161,62 @@ it('Reader darf eine Rolle nicht editieren — 403', function () {
 
     $response->assertStatus(403);
 });
+
+// ---------- D.4: ProjectController unter Policy (statt Permission-Middleware) ----------
+//
+// Vorher liefen `permission:add` / `permission:view` / `permission:comment`
+// als Route-Middleware. Jetzt geht alles über ProjectPolicy.
+// Diese Tests fixieren das umgestellte Verhalten.
+
+it('Admin darf /projects (index) aufrufen', function () {
+    /** @var TestCase $this */
+    /** @var User $admin */
+    $admin = User::factory()->create();
+    $admin->assignRole('Admin');
+    $this->actingAs($admin);
+
+    $response = $this->get('/projects');
+
+    expect($response->status())->toBeIn([200, 302]);
+});
+
+it('Reader darf /projects (index) aufrufen — vorher permission:view-Middleware, jetzt Policy::viewAny', function () {
+    /** @var TestCase $this */
+    /** @var User $reader */
+    $reader = User::factory()->create();
+    $reader->assignRole('Reader');
+    $this->actingAs($reader);
+
+    $response = $this->get('/projects');
+
+    // Vor D.4: `permission:view`-Middleware ließ Reader durch.
+    // Nach D.4: `Policy::viewAny` lässt jeden eingeloggten User
+    // durch — die Filterung passiert weiterhin im Controller
+    // (siehe `getAllProjects()`). Hinweis: das ist heute zu
+    // liberal und wird in PR 2 nachgezogen.
+    expect($response->status())->toBeIn([200, 302]);
+});
+
+it('Reader ohne add-Permission darf /projects/create nicht aufrufen — 403', function () {
+    /** @var TestCase $this */
+    /** @var User $reader */
+    $reader = User::factory()->create();
+    $reader->assignRole('Reader');
+    $this->actingAs($reader);
+
+    $response = $this->get('/projects/create');
+
+    $response->assertStatus(403);
+});
+
+it('Admin darf /projects/create aufrufen', function () {
+    /** @var TestCase $this */
+    /** @var User $admin */
+    $admin = User::factory()->create();
+    $admin->assignRole('Admin');
+    $this->actingAs($admin);
+
+    $response = $this->get('/projects/create');
+
+    expect($response->status())->toBeIn([200, 302]);
+});

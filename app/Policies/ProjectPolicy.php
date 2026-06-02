@@ -124,4 +124,20 @@ class ProjectPolicy
     {
         return $user->id === (int) $project->user_id;
     }
+
+    /**
+     * Kommentieren auf einem Project. Vorher abgedeckt durch
+     * `permission:comment`-Middleware auf den Routes
+     * `commentProject` / `getProjectComment` — Block D / D.4 hat
+     * die Middleware aufgelöst, Policy übernimmt jetzt die
+     * Authorization. Heute: jeder User mit der globalen
+     * `comment`-Permission darf — die feinere project-scoped
+     * Logik (Eingeladener mit Comment-Recht) wird in Block D /
+     * D.5 nachgezogen, wenn `ProjectPermissionService` den
+     * Lookup kapselt.
+     */
+    public function comment(User $user, Project $project): bool
+    {
+        return $user->can(PermissionName::COMMENT);
+    }
 }

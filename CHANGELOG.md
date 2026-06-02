@@ -12,6 +12,19 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ### Geändert (Permission-Harmonisierung — Block D, PR 1)
 
+- **`ProjectController`: Drei-Wege-Authorization auf einen Pfad
+  konsolidiert.** Die drei `middleware('permission:add|view|comment')`-
+  Aufrufe im Konstruktor sind raus; Authorization läuft jetzt
+  durchgehend über die `ProjectPolicy`. `index()` und `create()`
+  rufen `$this->authorize(...)` als erstes Statement; `commentProject`
+  und `getProjectComment` `authorize('comment', $project)` nach
+  dem `findOrFail`. `StoreProjectRequest::authorize()` delegiert
+  an `ProjectPolicy::create`. Neue Policy-Methode `comment()`
+  übernimmt die Prüfung der `comment`-Permission. Die heute
+  zu liberalen Defaults (`viewAny` lässt jeden Auth-User durch;
+  Filterung passiert im Controller) bleiben bewusst gleich —
+  Verschärfung kommt mit PR 2, wenn `ProjectPermissionService`
+  den project-scoped Lookup kapselt.
 - **`PermissionName` Final-Class → Backed-Enum** (PHP 8.1+).
   Sieben Cases (`VIEW`, `ADD`, `EDIT`, `DELETE`, `PUBLISH`,
   `COMMENT`, `INVITE`) mit den unveränderten String-Werten.
@@ -34,7 +47,14 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
   Spatie's `RoleMiddleware` per `role:Admin`-Alias. Plus
   `'admin'`-Alias-Registrierung in `bootstrap/app.php`
   entfernt. Erste Welle der Drei-Welten-Auflösung aus ADR-0005
-  (NF-ARCH-017).
+  (NF-ARCH-017). Settings-Route-Group in `routes/web.php`
+  nachgezogen — der `'admin'`-Alias war hier vergessen worden
+  und wäre nach dem Alias-Drop rot geworden (`auth + role:Admin`
+  jetzt direkt im Group-Array).
+- **`permission:add` / `permission:view` / `permission:comment`-
+  Middleware aus `ProjectController::__construct` entfernt.**
+  Authorization läuft durchgehend über `ProjectPolicy` (siehe
+  oben).
 
 ### Hinzugefügt (Permission-Harmonisierung — Block D, PR 1)
 
@@ -45,7 +65,12 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
   Role-Controller-`index`/`edit`-Pfade je einmal mit
   Admin-Rolle (200/302) und einmal mit Reader-Rolle (403).
   Charakterisierung vor dem Middleware-Wechsel, dadurch
-  abgesichert nach dem Wechsel.
+  abgesichert nach dem Wechsel. Ergänzt um vier weitere Tests
+  für `ProjectController::index`/`create` (Admin 200/302,
+  Auth-User ohne `add`-Permission 403 bei `create`, jeder
+  Auth-User darf `index` — Policy::viewAny erlaubt das bewusst).
+- **`ProjectPolicy::comment()`** ergänzt. Spiegelt das Verhalten
+  der bisherigen `permission:comment`-Middleware (`$user->can(COMMENT)`).
 
 
 ### Geändert
