@@ -601,7 +601,14 @@ class ContentController extends Controller
             // Eager-Load-Bug — Spatie/Eloquent hat den Aufruf still
             // ignoriert, ohne dass jemand das gemerkt hätte. Korrekter
             // Pfad ist `user()`, definiert in Comment.php.
-            $comments = Comment::with('user')->whereNotNull('project_id')->get();
+            //
+            // Strict-Mode: project, user und content müssen eager
+            // geladen sein, weil contents.comment.blade.php auf
+            // $comment->project->name, $comment->user->name und
+            // $comment->content->media_contentable_type zugreift.
+            $comments = Comment::with(['user', 'project', 'content'])
+                ->whereNotNull('project_id')
+                ->get();
 
             return view('contents.comment', compact('comments'));
         }
@@ -619,7 +626,10 @@ class ContentController extends Controller
             ->whereNotNull('project_id')
             ->pluck('projects.id')->toArray();
 
-        $comments = Comment::whereIn('project_id', $projects)->whereNotNull('project_id')->get();
+        $comments = Comment::with(['user', 'project', 'content'])
+            ->whereIn('project_id', $projects)
+            ->whereNotNull('project_id')
+            ->get();
 
         return view('contents.comment', compact('comments'));
     }

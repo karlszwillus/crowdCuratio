@@ -78,6 +78,18 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
   verifizieren. Die acht Modelle bekommen `: MorphMany` als
   expliziten Return-Type auf der `comments()`-Methode.
 
+### Behoben
+
+- **Strict-Mode-Lazy-Loading-Verletzung in
+  `ContentController::listComments` (`/allComments`).** Die View
+  `contents.comment` greift auf `$comment->project->name`,
+  `$comment->user->name` und
+  `$comment->content->media_contentable_type` zu, das Controller-
+  Statement lud aber nur `user` (und das auch nur im Admin-Pfad)
+  eager — unter `Model::shouldBeStrict()` wirft das eine
+  `LazyLoadingViolationException`. Fix: beide Pfade laden jetzt
+  `user`, `project` und `content` mit `->with([...])` eager.
+
 ### Entfernt (CommentService-Extraktion)
 
 - **`app/Traits/CommentTrait.php` gelöscht.** Die fünf
