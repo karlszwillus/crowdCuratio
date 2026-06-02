@@ -26,6 +26,9 @@ use App\Models\Source;
 use App\Models\Text;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
+/**
+ * @extends Factory<Text>
+ */
 class TextFactory extends Factory
 {
     protected $model = Text::class;

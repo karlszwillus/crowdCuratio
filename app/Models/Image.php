@@ -34,6 +34,19 @@ use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Translatable\HasTranslations;
 
+/**
+ * @property int $id
+ * @property int|null $gallery_id
+ * @property string $image
+ * @property int $origin
+ * @property int $copyright
+ * @property string|null $url
+ * @property string|null $alt
+ * @property int $position
+ * @property bool $is_translated
+ * @property Source|null $originImage
+ * @property Source|null $copyrightImage
+ */
 class Image extends Model implements HasComments
 {
     use HasFactory, HasTranslations, LogsActivity, SoftDeletes;
@@ -52,7 +65,7 @@ class Image extends Model implements HasComments
      *
      * @return BelongsTo
      */
-    public function originImage()
+    public function originImage(): BelongsTo
     {
         return $this->belongsTo(Source::class, 'origin');
     }
@@ -62,7 +75,7 @@ class Image extends Model implements HasComments
      *
      * @return BelongsTo
      */
-    public function copyrightImage()
+    public function copyrightImage(): BelongsTo
     {
         return $this->belongsTo(Source::class, 'copyright');
     }

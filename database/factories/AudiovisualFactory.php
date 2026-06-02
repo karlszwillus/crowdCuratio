@@ -25,6 +25,9 @@ namespace Database\Factories;
 use App\Models\Audiovisual;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
+/**
+ * @extends Factory<Audiovisual>
+ */
 class AudiovisualFactory extends Factory
 {
     protected $model = Audiovisual::class;

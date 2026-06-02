@@ -26,6 +26,9 @@ use App\Models\Image;
 use App\Models\Source;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
+/**
+ * @extends Factory<Image>
+ */
 class ImageFactory extends Factory
 {
     protected $model = Image::class;
