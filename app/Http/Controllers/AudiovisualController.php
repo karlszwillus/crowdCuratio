@@ -118,5 +118,4 @@ class AudiovisualController extends Controller
 
         return redirect()->back()->with('success', 'Reply to comment added successfully');
     }
-
 }
