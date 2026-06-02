@@ -38,9 +38,15 @@ use App\Services\TextService;
 | (Soft-Delete + Comment-/MediaContent-Detach).
 */
 
-beforeEach(function () {
-    $this->service = new TextService(new SourceService);
-});
+/**
+ * Lokaler Helper — Service-Instanz pro Test bauen. Vorher gab es
+ * ein `beforeEach`-Setup auf `$this->service`; dynamische
+ * Test-Properties sind aber für Larastan nicht erkennbar.
+ */
+function textService(): TextService
+{
+    return new TextService(new SourceService);
+}
 
 it('create legt einen Text mit Source-Refs und MediaContent-Eintrag an', function () {
     /** @var User $owner */
@@ -55,7 +61,7 @@ it('create legt einen Text mit Source-Refs und MediaContent-Eintrag an', functio
         copyrightName: 'Test-Copyright',
     );
 
-    $text = $this->service->create($data, $entry->id);
+    $text = textService()->create($data, $entry->id);
 
     expect($text->id)->toBeInt();
     expect($text->originText->name)->toBe('Test-Origin');
@@ -81,7 +87,7 @@ it('create filtert script-Tags aus dem Body', function () {
         copyrightName: 'C',
     );
 
-    $text = $this->service->create($data, $entry->id);
+    $text = textService()->create($data, $entry->id);
 
     expect($text->text)->not->toContain('<script>');
     expect($text->text)->not->toContain('</script>');
@@ -99,7 +105,7 @@ it('update aktualisiert Body, Source-IDs und is_translated', function () {
         isTranslated: true,
     );
 
-    $updated = $this->service->update($text, $data);
+    $updated = textService()->update($text, $data);
 
     $updated->refresh();
 
@@ -126,7 +132,7 @@ it('update wiederverwendet bestehende Source-Zeilen statt neuer Duplikate', func
         copyrightName: 'C',
     );
 
-    $this->service->update($text, $data);
+    textService()->update($text, $data);
 
     $text->refresh();
 
@@ -142,9 +148,9 @@ it('destroy soft-deleted Text plus zugehörige MediaContent', function () {
     $entry = makeEntry($chapter);
 
     $data = new TextData(body: '<p>X</p>', originName: 'O', copyrightName: 'C');
-    $text = $this->service->create($data, $entry->id);
+    $text = textService()->create($data, $entry->id);
 
-    $this->service->destroy($text);
+    textService()->destroy($text);
 
     expect(Text::find($text->id))->toBeNull();
     expect(Text::withTrashed()->find($text->id))->not->toBeNull();

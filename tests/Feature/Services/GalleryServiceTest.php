@@ -41,9 +41,10 @@ use App\Services\GalleryService;
 | das nicht-existente $request['title'].
 */
 
-beforeEach(function () {
-    $this->service = new GalleryService;
-});
+function galleryService(): GalleryService
+{
+    return new GalleryService;
+}
 
 it('create legt Gallery mit MediaContent-Attach an Entry an', function () {
     /** @var User $owner */
@@ -58,7 +59,7 @@ it('create legt Gallery mit MediaContent-Attach an Entry an', function () {
         description: 'Test-Beschreibung',
     );
 
-    $gallery = $this->service->create($data, $entry->id);
+    $gallery = galleryService()->create($data, $entry->id);
 
     expect($gallery->id)->toBeInt();
     expect($gallery->title)->toBe('Test-Gallery');
@@ -80,7 +81,7 @@ it('update im direkten Pfad schreibt title/subtitle/description aus dem DTO', fu
         isTranslation: false,
     );
 
-    $this->service->update($gallery, $data);
+    galleryService()->update($gallery, $data);
     $gallery->refresh();
 
     expect($gallery->title)->toBe('Neuer Titel');
@@ -99,7 +100,7 @@ it('update im Translation-Pfad schreibt setTranslation(en, ...) ohne DE zu über
         isTranslated: true,
     );
 
-    $this->service->update($gallery, $data);
+    galleryService()->update($gallery, $data);
     $gallery->refresh();
 
     expect($gallery->getTranslation('title', 'en'))->toBe('EN-Title');
@@ -113,7 +114,7 @@ it('destroy soft-deleted Gallery und ihre Images', function () {
     $gallery = makeGallery();
     $image = makeImage(['gallery_id' => $gallery->id]);
 
-    $this->service->destroy($gallery);
+    galleryService()->destroy($gallery);
 
     expect(Gallery::find($gallery->id))->toBeNull();
     expect(Gallery::withTrashed()->find($gallery->id))->not->toBeNull();

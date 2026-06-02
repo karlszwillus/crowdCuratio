@@ -39,8 +39,12 @@ use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
     Storage::fake('public');
-    $this->service = new ImageService(new SourceService);
 });
+
+function imageService(): ImageService
+{
+    return new ImageService(new SourceService);
+}
 
 it('create lädt das File hoch und legt ein Image in der Gallery an', function () {
     $gallery = makeGallery();
@@ -52,7 +56,7 @@ it('create lädt das File hoch und legt ein Image in der Gallery an', function (
         altText: 'Mein Alt-Text',
     );
 
-    $image = $this->service->create($data, $file, $gallery->id);
+    $image = imageService()->create($data, $file, $gallery->id);
 
     expect($image->id)->toBeInt();
     expect($image->gallery_id)->toBe($gallery->id);
@@ -71,7 +75,7 @@ it('create setzt position als max+1 innerhalb der Gallery', function () {
     $file = UploadedFile::fake()->image('next.jpg');
     $data = new ImageData(originName: 'O', copyrightName: 'C');
 
-    $next = $this->service->create($data, $file, $gallery->id);
+    $next = imageService()->create($data, $file, $gallery->id);
 
     expect($next->position)->toBe(5);
 });
@@ -86,7 +90,7 @@ it('update aktualisiert nur Source-Refs ohne neuen File', function () {
         altText: 'Neuer Alt',
     );
 
-    $updated = $this->service->update($image, $data);
+    $updated = imageService()->update($image, $data);
     $updated->refresh();
 
     expect($updated->image)->toBe($originalImageName);
@@ -101,7 +105,7 @@ it('update überschreibt image und url, wenn ein neuer File übergeben wird', fu
     $newFile = UploadedFile::fake()->image('new.png');
     $data = new ImageData(originName: 'O', copyrightName: 'C');
 
-    $updated = $this->service->update($image, $data, $newFile);
+    $updated = imageService()->update($image, $data, $newFile);
     $updated->refresh();
 
     expect($updated->image)->not->toBe('original.jpg');
@@ -111,7 +115,7 @@ it('update überschreibt image und url, wenn ein neuer File übergeben wird', fu
 it('destroy soft-deleted das Image', function () {
     $image = makeImage();
 
-    $this->service->destroy($image);
+    imageService()->destroy($image);
 
     expect(Image::find($image->id))->toBeNull();
     expect(Image::withTrashed()->find($image->id))->not->toBeNull();

@@ -40,11 +40,15 @@ use Illuminate\Support\Facades\Storage;
 
 beforeEach(function () {
     Storage::fake('public');
-    $this->service = new AudiovisualService;
 });
 
+function audiovisualService(): AudiovisualService
+{
+    return new AudiovisualService;
+}
+
 it('resolveLink wandelt eine YouTube-URL in den embed-Pfad', function () {
-    $link = $this->service->resolveLink('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+    $link = audiovisualService()->resolveLink('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
 
     expect($link)->toBe('https://www.youtube.com/embed/dQw4w9WgXcQ');
 });
@@ -52,7 +56,7 @@ it('resolveLink wandelt eine YouTube-URL in den embed-Pfad', function () {
 it('resolveLink lädt Audio hoch und liefert den generierten Dateinamen', function () {
     $file = UploadedFile::fake()->create('test.mp3', 100, 'audio/mpeg');
 
-    $link = $this->service->resolveLink(null, $file);
+    $link = audiovisualService()->resolveLink(null, $file);
 
     expect($link)->toBeString();
     expect(strlen($link))->toBe(10); // Str::random(10)
@@ -60,7 +64,7 @@ it('resolveLink lädt Audio hoch und liefert den generierten Dateinamen', functi
 });
 
 it('resolveLink lässt andere URLs unverändert durch', function () {
-    $link = $this->service->resolveLink('https://example.com/audio.mp3');
+    $link = audiovisualService()->resolveLink('https://example.com/audio.mp3');
 
     expect($link)->toBe('https://example.com/audio.mp3');
 });
@@ -79,7 +83,7 @@ it('create legt Audiovisual mit MediaContent-Attach an Entry an', function () {
         type: 'video',
     );
 
-    $av = $this->service->create($data, $entry->id);
+    $av = audiovisualService()->create($data, $entry->id);
 
     expect($av->id)->toBeInt();
     expect($av->link)->toBe('https://www.youtube.com/embed/abc12345678');
@@ -101,7 +105,7 @@ it('update im direkten Pfad aktualisiert nicht-null-Felder', function () {
         type: 'audio',
     );
 
-    $this->service->update($av, $data);
+    audiovisualService()->update($av, $data);
     $av->refresh();
 
     expect($av->link)->toBe('neuer-link');
@@ -121,7 +125,7 @@ it('update im Translation-Pfad schreibt en-Übersetzungen', function () {
         isTranslated: true,
     );
 
-    $this->service->update($av, $data);
+    audiovisualService()->update($av, $data);
     $av->refresh();
 
     expect($av->getTranslation('link', 'en'))->toBe('EN-link');
@@ -139,9 +143,9 @@ it('destroy soft-deleted Audiovisual und seinen MediaContent', function () {
     $entry = makeEntry($chapter);
 
     $data = new AudiovisualData(link: 'X', source: 'O', copyright: 'C', type: 'video');
-    $av = $this->service->create($data, $entry->id);
+    $av = audiovisualService()->create($data, $entry->id);
 
-    $this->service->destroy($av);
+    audiovisualService()->destroy($av);
 
     expect(Audiovisual::find($av->id))->toBeNull();
     expect(Audiovisual::withTrashed()->find($av->id))->not->toBeNull();
