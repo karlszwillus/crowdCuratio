@@ -22,24 +22,22 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Http\Controllers;
 
+use App\Data\AudiovisualData;
 use App\Http\Requests\StoreAudiovisualRequest;
 use App\Models\Audiovisual;
-use App\Models\MediaContent;
+use App\Services\AudiovisualService;
 use App\Services\CommentService;
-use App\Traits\UploadTrait;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class AudiovisualController extends Controller
 {
-    use UploadTrait;
-
     /**
      * Instantiate a new AudioVisualController instance.
      */
     public function __construct(
         private readonly CommentService $comments,
+        private readonly AudiovisualService $audiovisuals,
     ) {
         $this->middleware('auth');
     }
@@ -57,153 +55,37 @@ class AudiovisualController extends Controller
      */
     public function store(StoreAudiovisualRequest $request)
     {
+        // Audio-Upload oder YouTube-URL-Konversion vor dem
+        // DTO-Bau — der Service normalisiert beides auf einen
+        // String, der direkt in `link` gespeichert wird.
+        $normalizedLink = $this->audiovisuals->resolveLink(
+            $request['link'] ?? null,
+            $request->file('audio'),
+        );
 
-        if ($request->has('audio')) {
-            $request['link'] = $this->uploadAudio($request);
-        } else {
-            $request['link'] = ($this->youtubeID($request['link'])) ? 'https://www.youtube.com/embed/'.$this->youtubeID($request['link']) : $request['link'];
-        }
+        $data = AudiovisualData::fromRequest($request, $normalizedLink);
 
-        if (isset($request['audiovisualId']) && $request['audiovisualId'] != '') {
-            $model = Audiovisual::findOrFail($request['audiovisualId']);
-
-            if ($request['translationMode']) {
-                if (! is_null($request['link'])) {
-                    $model->setTranslation('link', 'en', $request['link']);
-                }
-                $model->setTranslation('copyright', 'en', $request['copyright']);
-                $model->setTranslation('source', 'en', $request['source']);
-                $model->is_translated = isset($request['isTranslated']) ? 1 : 0;
-
-            } else {
-
-                if (! is_null($request['link'])) {
-                    $model->link = $request['link'];
-                }
-                if (! is_null($request['type'])) {
-                    $model->type = $request['type'];
-                }
-                if (! is_null($request['copyright'])) {
-                    $model->copyright = $request['copyright'];
-                }
-                if (! is_null($request['source'])) {
-                    $model->source = $request['source'];
-                }
-            }
-
-            $model->save();
+        if (isset($request['audiovisualId']) && $request['audiovisualId'] !== '') {
+            $audiovisual = Audiovisual::findOrFail($request['audiovisualId']);
+            $this->audiovisuals->update($audiovisual, $data);
 
             return redirect()->back()->with('success', __('message_update_success'));
         }
 
-        $item = Audiovisual::create($this->mapData($request));
-        $this->attachMedia($item->id, $request['entryId'], 'App\Models\Audiovisual');
+        $this->audiovisuals->create($data, (int) $request['entryId']);
 
         return redirect()->back()->with('success', __('message_add_success'));
     }
 
     /**
      * Delete audiovisual
-     *
-     * @return RedirectResponse
      */
-    public function delete(Request $request, $id)
+    public function delete(Request $request, $id): RedirectResponse
     {
-
-        // Detach from media content
-        MediaContent::where('media_content_id', $id)->where('media_contentable_type', 'App\Models\Audiovisual')->delete();
-
-        // delete content
-        Audiovisual::where('id', $id)->delete();
+        $audiovisual = Audiovisual::findOrFail($id);
+        $this->audiovisuals->destroy($audiovisual);
 
         return redirect('projects/'.$request->project.'/edit')->with('success', __('message_delete_success'));
-
-    }
-
-    /**
-     * Map incoming data
-     *
-     * @return array
-     */
-    protected function mapData($request)
-    {
-
-        $data = [];
-
-        if (isset($request['link'])) {
-            $data['link'] = $request['link'];
-        }
-        if (isset($request['source'])) {
-            $data['source'] = $request['source'];
-        }
-        if (isset($request['copyright'])) {
-            $data['copyright'] = $request['copyright'];
-        }
-        if (isset($request['type'])) {
-            $data['type'] = $request['type'];
-        }
-
-        return $data;
-
-    }
-
-    /**
-     * Attach audiovisual to media content
-     *
-     * @return mixed
-     */
-    public function attachMedia($id, $entry, $type)
-    {
-        // get last position
-        $position = MediaContent::where('media_contentable_id', $entry)->orderBy('position', 'desc')->first();
-
-        $pos = 0;
-        if (! empty($position->position)) {
-            $pos = $position->position;
-        }
-
-        return MediaContent::create(
-            [
-                'position' => $pos + 1,
-                'media_content_id' => $id,
-                'media_contentable_id' => $entry,
-                'media_contentable_type' => $type,
-            ]
-        );
-    }
-
-    /**
-     * Upload audio
-     *
-     * NF-SEC-201: Filename ist ab sofort durchgängig Server-generiert
-     * (`Str::random(10)`). Vorher lief der Pfad zuerst über
-     * `getClientOriginalName()` und überschrieb den Namen erst am
-     * Ende — der Zwischenwert war ein Path-Traversal-Vektor (analog
-     * NF-SEC-007 für Logo-Uploads). Kein Client-Input mehr im
-     * Dateinamen, keine Original-Extension (Browser-MIME-Routing
-     * läuft über den Content-Type-Header des Storage-Disks).
-     *
-     * @return string
-     */
-    protected function uploadAudio($request)
-    {
-        $folder = '/uploads/audio/';
-        $audio = null;
-
-        if ($request->has('audio')) {
-            $audio = $request->file('audio');
-        } elseif ($request->has('newImage')) {
-            $audio = $request->file('newImage');
-        }
-
-        if ($audio === null) {
-            return '';
-        }
-
-        $name = Str::random(10);
-        $this->uploadOne($audio, $folder, 'public', $name);
-
-        return $name;
     }
 
     /**
@@ -235,23 +117,5 @@ class AudiovisualController extends Controller
         $this->comments->addComment($audiovisual, $request);
 
         return redirect()->back()->with('success', 'Reply to comment added successfully');
-    }
-
-    /**
-     * Get youtube video ID
-     *
-     * @return false|mixed
-     */
-    protected function youtubeID($url)
-    {
-        if (strlen($url) > 11) {
-            if (preg_match('%(?:youtube(?:-nocookie)?\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/ ]{11})%i', $url, $match)) {
-                return $match[1];
-            } else {
-                return false;
-            }
-        }
-
-        return $url;
     }
 }
