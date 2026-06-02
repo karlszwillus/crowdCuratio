@@ -30,10 +30,12 @@ use App\Models\MediaContent;
 use App\Models\Project;
 use App\Models\Source;
 use App\Models\Text;
+use App\Data\GalleryData;
 use App\Data\ImageData;
 use App\Data\TextData;
 use App\Services\CommentRetrieve;
 use App\Services\CommentService;
+use App\Services\GalleryService;
 use App\Services\ImageService;
 use App\Services\SourceService;
 use App\Services\TextService;
@@ -60,6 +62,7 @@ class ContentController extends Controller
         private readonly SourceService $sources,
         private readonly TextService $texts,
         private readonly ImageService $images,
+        private readonly GalleryService $galleries,
     ) {
         $this->middleware('auth');
     }
@@ -505,62 +508,18 @@ class ContentController extends Controller
 
     public function saveGallery(Request $request)
     {
+        $data = GalleryData::fromRequest($request);
 
-        if (isset($request['galleryId']) && $request['galleryId'] != '') {
+        if (isset($request['galleryId']) && $request['galleryId'] !== '') {
             $gallery = Gallery::findOrFail($request['galleryId']);
-
-            if (isset($request['translationGallery'])) {
-                $gallery->setTranslation('title', 'en', $request['galleryTitle']);
-                $gallery->setTranslation('subtitle', 'en', $request['gallerySubtitle']);
-                $gallery->setTranslation('description', 'en', $request['galleryDescription']);
-            } else {
-
-                $gallery->title = $request['title'];
-                $gallery->subtitle = $request['subtitle'];
-                $gallery->description = $request['description'];
-
-            }
-
-            $gallery->is_translated = isset($request['isTranslated']) ? 1 : 0;
-            $gallery->save();
+            $this->galleries->update($gallery, $data);
 
             return redirect()->back()->with('success', __('message_update_success'));
         }
 
-        $gallery = Gallery::create($this->mapData($request));
-        $this->attachMedia($gallery->id, $request['entryId'], 'App\Models\Image');
+        $this->galleries->create($data, (int) $request['entryId']);
 
         return redirect()->back()->with('success', __('message_gallery_success'));
-
-    }
-
-    /**
-     * Mapping request
-     *
-     * @return array
-     */
-    protected function mapData($data)
-    {
-
-        $result = [];
-
-        if (isset($data['entryId']) && $data['entryId'] != '') {
-
-            $result['entryId'] = $data['entryId'];
-
-        }
-
-        if (isset($data['title'])) {
-            $result['title'] = $data['title'];
-        }
-        if (isset($data['subtitle'])) {
-            $result['subtitle'] = $data['subtitle'];
-        }
-        if (isset($data['description'])) {
-            $result['description'] = $data['description'];
-        }
-
-        return $result;
     }
 
     /**
@@ -583,14 +542,8 @@ class ContentController extends Controller
      */
     public function destroyGallery(Request $request, $id)
     {
-
-        // Detach media
-        $this->detachMedia($id, 'App\Models\Gallery');
-
-        // delete from image
-        DB::table('images')->where('gallery_id', '=', $id)->update(['deleted_at' => now()]);
-
-        DB::table('galleries')->where('id', '=', $id)->update(['deleted_at' => now()]);
+        $gallery = Gallery::findOrFail($id);
+        $this->galleries->destroy($gallery);
 
         return redirect('projects/'.$request->project.'/edit')->with('success', __('message_delete_text_success'));
     }
