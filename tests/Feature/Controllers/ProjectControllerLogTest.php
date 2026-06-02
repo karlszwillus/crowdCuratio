@@ -83,13 +83,13 @@ it('allData zählt Chapters/Entries und deren Übersetzungs-Status', function ()
     // unter Strict-Mode wirft Mass-Assignment. Property-Setter
     // statt Factory-Override.
     $chapter1 = makeChapter($project);
-    $chapter1->is_translated = 1;
+    $chapter1->is_translated = true;
     $chapter1->save();
 
     makeChapter($project); // is_translated=0 ist Default
 
     $entry1 = makeEntry($chapter1);
-    $entry1->is_translated = 1;
+    $entry1->is_translated = true;
     $entry1->save();
 
     makeEntry($chapter1);
@@ -142,6 +142,7 @@ it('history liefert für ein Chapter mit Update-Activity einen Log-Eintrag', fun
 
     $logs = $controller->history('Chapter', $chapter->id);
 
-    expect($logs)->toBeArray()->not->toBeEmpty();
+    expect($logs)->toBeArray();
+    expect(count($logs))->toBeGreaterThan(0);
     expect($logs[0])->toHaveKeys(['id', 'userName', 'created_at']);
 });
