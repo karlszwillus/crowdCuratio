@@ -30,9 +30,11 @@ use App\Models\MediaContent;
 use App\Models\Project;
 use App\Models\Source;
 use App\Models\Text;
+use App\Data\ImageData;
 use App\Data\TextData;
 use App\Services\CommentRetrieve;
 use App\Services\CommentService;
+use App\Services\ImageService;
 use App\Services\SourceService;
 use App\Services\TextService;
 use App\Traits\UploadTrait;
@@ -57,6 +59,7 @@ class ContentController extends Controller
         private readonly CommentService $comments,
         private readonly SourceService $sources,
         private readonly TextService $texts,
+        private readonly ImageService $images,
     ) {
         $this->middleware('auth');
     }
@@ -97,8 +100,8 @@ class ContentController extends Controller
      */
     public function destroyImage(Request $request, $id)
     {
-        $image = Image::find($id);
-        $image->delete();
+        $image = Image::findOrFail($id);
+        $this->images->destroy($image);
 
         return redirect('projects/'.$request->project.'/edit')->with('success', __('message_delete_image_success'));
     }
@@ -135,16 +138,16 @@ class ContentController extends Controller
      */
     public function saveImage(StoreImageBlockRequest $request)
     {
-
+        // Translation-Pfad: setzt alt-Übersetzung + delegiert
+        // Source-Übersetzungen via translateField. Bleibt vorerst
+        // inline (Translation-Refactor späterer Block).
         if (isset($request['translationMode'])) {
             if (isset($request['originId'])) {
                 $this->translateField($request['originId'], $request['originField'], $request['isTranslated']);
             }
-
             if (isset($request['copyrightId'])) {
                 $this->translateField($request['copyrightId'], $request['copyrightField'], $request['isTranslated']);
             }
-
             if (isset($request['altField'])) {
                 $image = Image::findOrFail($request['imageId']);
                 $image->setTranslation('alt', 'en', $request['altField']);
@@ -154,90 +157,26 @@ class ContentController extends Controller
             return redirect()->back()->with('success', __('message_edit_image_success'));
         }
 
-        $request->validate(
-            [
-                'copyrightImage' => 'required',
-                'originImage' => 'required',
-            ]
-        );
+        $request->validate([
+            'copyrightImage' => 'required',
+            'originImage' => 'required',
+        ]);
 
-        if (isset($request['imageId']) && $request['imageId'] != '') {
-            $this->updateImage($request);
+        $data = ImageData::fromRequest($request);
+
+        if (isset($request['imageId']) && $request['imageId'] !== '') {
+            $image = Image::findOrFail($request['imageId']);
+            $newFile = $request->hasFile('newImage') ? $request->file('newImage') : null;
+            $this->images->update($image, $data, $newFile);
 
             return redirect()->back()->with('success', __('message_edit_image_success'));
-        } else {
-            $request->validate(
-                [
-                    'image' => 'required',
-                ]
-            );
-
-            $name = '';
-            // Check if an image should be uploaded
-            $name = $this->setImage($request);
-            $position = Image::where('gallery_id', $request['galleryId'])->orderBy('position', 'desc')->pluck('position')->first();
-
-            // Set copyright value
-            $copyright = $this->sources->findOrCreateId($request['copyrightImage'], 'Copyright');
-
-            // Set origin value
-            $origin = $this->sources->findOrCreateId($request['originImage'], 'Origin');
-
-            $im = Image::firstOrCreate(
-                [
-                    'gallery_id' => $request['galleryId'],
-                    'image' => $name,
-                    'position' => $position + 1,
-                    'origin' => $origin,
-                    'copyright' => $copyright,
-                    'url' => Storage::path($name),
-                    'alt' => $request['altText'],
-                ]
-            );
-
-            // Attach image to gallery
-            // $this->attachMedia($im->id, $request['entryId'], 'App\Models\Image');
-
-            // Attach gallery to entry
-            // $this->attachMedia($im->id, $request['entryId'], 'App\Models\Image');
-
-            return redirect()->back()->with('success', __('message_add_image_success'));
-        }
-    }
-
-    /**
-     * Update image
-     *
-     * @return $this
-     */
-    public function updateImage(Request $request)
-    {
-        $image = Image::find($request['imageId']);
-
-        // Set copyright value
-        $copyright = $this->sources->findOrCreateId($request['copyrightImage'], 'Copyright');
-
-        // Set origin value
-        $origin = $this->sources->findOrCreateId($request['originImage'], 'Origin');
-
-        if (isset($request['newImage']) && ! is_null($request['newImage'])) {
-            // Check if an image should be uploaded
-            $name = $this->setImage($request);
-            $image->image = $name;
-            $image->url = Storage::path($name);
         }
 
-        $image->origin = $origin;
-        $image->copyright = $copyright;
-        $image->updated_at = now();
+        $request->validate(['image' => 'required']);
 
-        if (isset($request['altText'])) {
-            $image->alt = $request['altText'];
-        }
+        $this->images->create($data, $request->file('image'), (int) $request['galleryId']);
 
-        $image->save();
-
-        return $this;
+        return redirect()->back()->with('success', __('message_add_image_success'));
     }
 
     /**
@@ -257,54 +196,6 @@ class ContentController extends Controller
 
         return $this;
 
-    }
-
-    /**
-     * Get or create a Source row of the given type for the given value.
-     *
-     * Returns the id of a matching Source if one exists, otherwise
-     * inserts a new row (with the translated `name` payload) and
-     * returns the new id.
-     *
-     * Duplicate of ProjectController::getSource — both will be lifted
-     * into a Source service in the Phase-4 refactor.
-     *
-     * @return int
-     */
-    /**
-     * Set Image
-     *
-     * @return string
-     */
-    protected function setImage(Request $request)
-    {
-        $name = '';
-        $image = '';
-
-        // Define folder path
-        $folder = '/uploads/images/';
-
-        if ($request->has('image')) {
-            // Get image file
-            $image = $request->file('image');
-
-            // Make a image name based on user name and current timestamp
-            $name = date('Ymd').'_'.time().'.'.$request->file('image')->extension();
-        }
-
-        if ($request->has('newImage')) {
-            // Get image file
-            $image = $request->file('newImage');
-
-            // Make a image name based on user name and current timestamp
-            $name = date('Ymd').'_'.time().'.'.$request->file('newImage')->extension();
-        }
-
-        if ($name != '' && $image != '') {
-            $this->uploadOne($image, $folder, 'public', $name);
-        }
-
-        return $name;
     }
 
     /**
