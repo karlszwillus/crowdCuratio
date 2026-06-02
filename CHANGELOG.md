@@ -10,6 +10,33 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Hinzugefügt (Permission-Harmonisierung — Block D, PR 2 / Welle 2c)
+
+- **`UserControllerTest`** in `tests/Feature/Http/` — neun
+  Pest-Tests fixieren das Verhalten der `users.*`-Routen unter
+  `role:Admin`: Index/Edit/Destroy mit Admin- und Reader-Boundaries,
+  Update inkl. Rollen-Sync und Password-Change-Pfad mit
+  Validierung des alten Passworts, plus Resend-Invitation und
+  Profile.
+- **`RoleControllerTest`** in `tests/Feature/Http/` — elf Tests
+  für Index/Show/Create/Store/Update/Destroy und die zwei
+  Custom-Routes (`customizedDelete` mit User-Reassignment und
+  `roleHasUsers`-JSON), inkl. Admin/Reader-Authorization.
+- **`RegisteredUserControllerCharacterizationTest`** erweitert
+  um sechs Tests: Create-Form-Authorization (Admin sieht Form,
+  Reader 403), Project-Permission-Pfad (Pivot-Eintrag wird
+  geschrieben), Reaktivierung soft-deletetes User, Admin-Invite
+  mit `adminUser=true` (Spatie-Admin-Rolle wird gesetzt), und
+  NF-SEC-202-Schutz gegen Privilege-Escalation durch Reader.
+- **`ProjectPermissionServiceTest`** erweitert um zwei Tests
+  für `getSelectedPermissionUserPluck` und `getRoleSelectedUser`.
+
+Coverage damit von **55 %** (Block-H-Schwelle) auf **66,9 %**.
+Schwerpunkte: User-, Role- und Register-Controller waren
+heute unter 20 % abgedeckt — die Kombination aus
+Authorization-, Service- und Custom-Route-Tests bringt sie auf
+~80 %+.
+
 ### Geändert (Permission-Harmonisierung — Block D, PR 2 / Welle 2b)
 
 - **Pivot-Tabelle umbenannt: `user_has_permissions` →

@@ -354,6 +354,53 @@ it('listProjectsForUser liefert für einen Admin alle nicht-gelöschten Projects
 
 // ---------- Bestand ----------
 
+it('getSelectedPermissionUserPluck liefert eine Collection der project-scoped Permission-Namen', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole('Admin');
+    /** @var User $invitee */
+    $invitee = User::factory()->create();
+    $invitee->assignRole('Reader');
+
+    $project = makeProject($owner);
+    $viewPermission = Permission::where('name', 'view')->first();
+    $commentPermission = Permission::where('name', 'comment')->first();
+
+    ProjectUserPermission::create([
+        'user_id' => $invitee->id,
+        'project_id' => $project->id,
+        'permission_id' => $viewPermission->id,
+    ]);
+    ProjectUserPermission::create([
+        'user_id' => $invitee->id,
+        'project_id' => $project->id,
+        'permission_id' => $commentPermission->id,
+    ]);
+
+    $service = new ProjectPermissionService;
+
+    $result = $service->getSelectedPermissionUserPluck($invitee->id, $project->id);
+
+    expect($result->toArray())->toBe([
+        $viewPermission->id => 'view',
+        $commentPermission->id => 'comment',
+    ]);
+});
+
+it('getRoleSelectedUser liefert die Rollen-Namen eines Users als Collection', function () {
+    /** @var TestCase $this */
+    /** @var User $user */
+    $user = User::factory()->create();
+    $user->assignRole('Reader');
+
+    $service = new ProjectPermissionService;
+
+    $result = $service->getRoleSelectedUser($user->id);
+
+    expect($result->toArray())->toBe(['Reader']);
+});
+
 it('getPermissionIdsForUserOnProject liefert die Pivot-IDs als Collection', function () {
     /** @var TestCase $this */
     /** @var User $owner */
