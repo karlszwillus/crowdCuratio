@@ -30,9 +30,11 @@ use App\Models\MediaContent;
 use App\Models\Project;
 use App\Models\Source;
 use App\Models\Text;
+use App\Data\TextData;
 use App\Services\CommentRetrieve;
 use App\Services\CommentService;
 use App\Services\SourceService;
+use App\Services\TextService;
 use App\Traits\UploadTrait;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
@@ -54,6 +56,7 @@ class ContentController extends Controller
     public function __construct(
         private readonly CommentService $comments,
         private readonly SourceService $sources,
+        private readonly TextService $texts,
     ) {
         $this->middleware('auth');
     }
@@ -65,11 +68,8 @@ class ContentController extends Controller
      */
     public function destroyText(Request $request, $id)
     {
-        // Detach media
-        $this->detachMedia($id, 'App\Models\Text');
-
-        $text = Text::find($id);
-        $text->delete();
+        $text = Text::findOrFail($id);
+        $this->texts->destroy($text);
 
         return redirect('projects/'.$request->project.'/edit')->with('success', __('message_delete_text_success'));
     }
@@ -352,7 +352,10 @@ class ContentController extends Controller
      */
     public function saveText(Request $request)
     {
-
+        // Translation-Pfad: schreibt Übersetzungen in den Body und
+        // die Source-Namen, kein Body-Update via TextService. Bleibt
+        // bis zur Translation-Refaktorierung (späterer Block) auf
+        // den Inline-Aufrufen.
         if (isset($request['translationMode'])) {
             if (isset($request['textId'])) {
                 $this->saveTranslatedText($request);
@@ -360,7 +363,6 @@ class ContentController extends Controller
             if (isset($request['originId'])) {
                 $this->translateField($request['originId'], $request['originField'], $request['isTranslated']);
             }
-
             if (isset($request['copyrightId'])) {
                 $this->translateField($request['copyrightId'], $request['copyrightField'], $request['isTranslated']);
             }
@@ -368,70 +370,24 @@ class ContentController extends Controller
             return redirect()->back()->with('success', __('message_edit_text_success'));
         }
 
-        $request->validate(
-            [
-                'contentText' => 'required',
-                'copyrightText' => 'required',
-                'originText' => 'required',
-            ]
-        );
+        $request->validate([
+            'contentText' => 'required',
+            'copyrightText' => 'required',
+            'originText' => 'required',
+        ]);
 
-        if (isset($request['textId']) && $request['textId'] != '') {
-            $this->updateText($request);
+        $data = TextData::fromRequest($request);
+
+        if (isset($request['textId']) && $request['textId'] !== '') {
+            $text = Text::findOrFail($request['textId']);
+            $this->texts->update($text, $data);
 
             return redirect()->back()->with('success', __('message_edit_text_success'));
-        } else {
-            // Set copyright value
-            $copyright = $this->sources->findOrCreateId($request['copyrightText'], 'Copyright');
-
-            // Set origin value
-            $origin = $this->sources->findOrCreateId($request['originText'], 'Origin');
-
-            // filter text before saving
-            $strClean = str_replace(['<script>', '</script>'], ['', ''], $request['contentText']);
-
-            $id = Text::insertGetId(
-                [
-                    'text' => json_encode([app()->getLocale() => $strClean]),
-                    'origin' => $origin,
-                    'copyright' => $copyright,
-                    'created_at' => now(),
-                ]
-
-            );
-
-            // Attach text to entry
-            $this->attachMedia($id, $request['entryId'], 'App\Models\Text');
-
-            return redirect()->back()->with('success', __('message_add_text_success'));
         }
-    }
 
-    /**
-     * Update text
-     *
-     * @return $this
-     */
-    public function updateText(Request $request)
-    {
-        // Set copyright value
-        $copyright = $this->sources->findOrCreateId($request['copyrightText'], 'Copyright');
+        $this->texts->create($data, (int) $request['entryId']);
 
-        // Set origin value
-        $origin = $this->sources->findOrCreateId($request['originText'], 'Origin');
-
-        // filter text before saving
-        $strClean = str_replace(['<script>', '</script>'], ['', ''], $request['contentText']);
-
-        $text = Text::find($request['textId']);
-        $text->text = $strClean;
-        $text->origin = $origin;
-        $text->copyright = $copyright;
-        $text->updated_at = now();
-        $text->is_translated = isset($request['isTranslatedText']) ? 1 : 0;
-        $text->save();
-
-        return $this;
+        return redirect()->back()->with('success', __('message_add_text_success'));
     }
 
     /**
