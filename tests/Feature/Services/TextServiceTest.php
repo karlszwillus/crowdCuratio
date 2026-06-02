@@ -106,12 +106,18 @@ it('update aktualisiert Body, Source-IDs und is_translated', function () {
     expect($updated->text)->toContain('Neuer Body');
     expect($updated->originText->name)->toBe('Neue Quelle');
     expect($updated->copyrightText->name)->toBe('Neues Copyright');
-    expect($updated->is_translated)->toBeTrue();
+    expect((bool) $updated->is_translated)->toBeTrue();
     expect($updated->origin)->not->toBe($originalOriginId);
 });
 
 it('update wiederverwendet bestehende Source-Zeilen statt neuer Duplikate', function () {
-    $existing = Source::factory()->origin()->create(['name' => 'Bestehende Quelle']);
+    // Source::name ist Spatie-translatable (JSON in DB). Bestehende
+    // Source via SourceService anlegen statt via Factory-Override,
+    // damit das JSON-Format mit dem im update-Pfad geschriebenen
+    // übereinstimmt.
+    $sourceService = new SourceService;
+    $existingId = $sourceService->findOrCreateId('Bestehende Quelle', 'Origin');
+
     $text = makeText();
 
     $data = new TextData(
@@ -124,8 +130,8 @@ it('update wiederverwendet bestehende Source-Zeilen statt neuer Duplikate', func
 
     $text->refresh();
 
-    expect($text->origin)->toBe($existing->id);
-    expect(Source::where('name', 'Bestehende Quelle')->count())->toBe(1);
+    expect($text->origin)->toBe($existingId);
+    expect(Source::where('type', 'Origin')->count())->toBe(2); // 1 von makeText + 1 'Bestehende Quelle'
 });
 
 it('destroy soft-deleted Text plus zugehörige MediaContent', function () {

@@ -45,24 +45,26 @@ it('findOrCreateId legt eine neue Source an, wenn keine mit dem Namen existiert'
 });
 
 it('findOrCreateId liefert die ID einer bestehenden Source statt eine neue anzulegen', function () {
-    $existing = Source::factory()->origin()->create(['name' => 'Bestehende Quelle']);
-
     $service = new SourceService;
 
-    $id = $service->findOrCreateId('Bestehende Quelle', 'Origin');
+    // Setup via Service, weil Source::name ein Spatie-translatable
+    // Feld ist — Factory-Overrides als Plain-String und
+    // where('name', '...')-Queries laufen am JSON-Spalteninhalt
+    // vorbei. Über findOrCreateId ist der Pfad konsistent.
+    $firstId = $service->findOrCreateId('Bestehende Quelle', 'Origin');
+    $secondId = $service->findOrCreateId('Bestehende Quelle', 'Origin');
 
-    expect($id)->toBe($existing->id);
-    expect(Source::where('name', 'Bestehende Quelle')->count())->toBe(1);
+    expect($firstId)->toBe($secondId);
+    expect(Source::where('type', 'Origin')->count())->toBe(1);
 });
 
 it('findOrCreateId unterscheidet zwischen Type Origin und Type Copyright', function () {
-    Source::factory()->origin()->create(['name' => 'Gleiche Bezeichnung']);
-
     $service = new SourceService;
 
+    $originId = $service->findOrCreateId('Gleiche Bezeichnung', 'Origin');
     $copyrightId = $service->findOrCreateId('Gleiche Bezeichnung', 'Copyright');
 
-    $copyright = Source::find($copyrightId);
-    expect($copyright->type)->toBe('Copyright');
-    expect(Source::where('name', 'Gleiche Bezeichnung')->count())->toBe(2);
+    expect($originId)->not->toBe($copyrightId);
+    expect(Source::where('type', 'Origin')->count())->toBe(1);
+    expect(Source::where('type', 'Copyright')->count())->toBe(1);
 });
