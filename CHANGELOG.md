@@ -10,6 +10,13 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Geändert
+
+- **CI-Coverage-Schwelle auf 55 % angehoben.** `composer.json`
+  `test-coverage --min` von 30 auf 55. Sichert die durch die
+  Content-Service-Welle erreichte Coverage gegen Rückrutsch —
+  jeder folgende Service-Schnitt muss die 55 % halten.
+
 ### Hinzugefügt (Coverage-Push)
 
 - **`CommentRetrieveTest` ergänzt** um die fehlenden
