@@ -20,11 +20,16 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
   und `getProjectComment` `authorize('comment', $project)` nach
   dem `findOrFail`. `StoreProjectRequest::authorize()` delegiert
   an `ProjectPolicy::create`. Neue Policy-Methode `comment()`
-  übernimmt die Prüfung der `comment`-Permission. Die heute
-  zu liberalen Defaults (`viewAny` lässt jeden Auth-User durch;
-  Filterung passiert im Controller) bleiben bewusst gleich —
-  Verschärfung kommt mit PR 2, wenn `ProjectPermissionService`
-  den project-scoped Lookup kapselt.
+  übernimmt die Prüfung der `comment`-Permission.
+- **`ProjectPolicy::viewAny` verschärft auf `$user->can(VIEW)`.**
+  Reproduziert die Semantik der früheren `permission:view`-Route-
+  Middleware exakt. Initial-Version der D.4-Auflösung ließ jeden
+  Auth-User durch, was eine funktionale Regression war
+  (`getAllProjects()` macht im Anschluss Annahmen über die
+  User-Rolle und crasht 500 ohne sie). Die feinere, project-scoped
+  Sicht (User sieht nur Projects, in denen er Owner oder
+  eingeladen ist) wandert mit einem späteren PR in den
+  `ProjectPermissionService`.
 - **`PermissionName` Final-Class → Backed-Enum** (PHP 8.1+).
   Sieben Cases (`VIEW`, `ADD`, `EDIT`, `DELETE`, `PUBLISH`,
   `COMMENT`, `INVITE`) mit den unveränderten String-Werten.
@@ -66,9 +71,9 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
   Admin-Rolle (200/302) und einmal mit Reader-Rolle (403).
   Charakterisierung vor dem Middleware-Wechsel, dadurch
   abgesichert nach dem Wechsel. Ergänzt um vier weitere Tests
-  für `ProjectController::index`/`create` (Admin 200/302,
-  Auth-User ohne `add`-Permission 403 bei `create`, jeder
-  Auth-User darf `index` — Policy::viewAny erlaubt das bewusst).
+  für `ProjectController::index`/`create` (Admin und Reader
+  dürfen `index`, Reader darf `create` nicht — 403, Admin darf
+  `create`).
 - **`ProjectPolicy::comment()`** ergänzt. Spiegelt das Verhalten
   der bisherigen `permission:comment`-Middleware (`$user->can(COMMENT)`).
 

@@ -53,13 +53,23 @@ class ProjectPolicy
     }
 
     /**
-     * Jeder eingeloggte User darf die Project-Liste sehen.
-     * Die Liste selbst wird über Spatie-Permission-Middleware bzw.
-     * im ProjectController gefiltert (Owner / Eingeladene).
+     * Block D / D.4-Hotfix: User braucht die `view`-Permission, um
+     * die Project-Liste aufzurufen. Reproduziert die Semantik der
+     * früheren `permission:view`-Route-Middleware exakt — vor dem
+     * Hotfix ließ die Methode jeden Auth-User durch, was eine
+     * Regression war (`ProjectController::index` läuft anschließend
+     * in `getAllProjects()`, das Annahmen über die User-Rolle
+     * trifft und sonst 500 läuft).
+     *
+     * Die feinere, project-scoped Sicht (User darf nur Projects in
+     * der Liste sehen, in denen er Owner oder eingeladen ist) macht
+     * heute weiterhin `getAllProjects()` per Query. Das wandert in
+     * Block D / PR 2 in einen `ProjectPermissionService` — siehe
+     * `.werkbank/04-plan/phase-4-block-d.md` und ADR-0005.
      */
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->can(PermissionName::VIEW);
     }
 
     /**

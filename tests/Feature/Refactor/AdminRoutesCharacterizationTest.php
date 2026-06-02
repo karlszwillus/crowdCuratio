@@ -190,11 +190,27 @@ it('Reader darf /projects (index) aufrufen — vorher permission:view-Middleware
     $response = $this->get('/projects');
 
     // Vor D.4: `permission:view`-Middleware ließ Reader durch.
-    // Nach D.4: `Policy::viewAny` lässt jeden eingeloggten User
-    // durch — die Filterung passiert weiterhin im Controller
-    // (siehe `getAllProjects()`). Hinweis: das ist heute zu
-    // liberal und wird in PR 2 nachgezogen.
+    // Nach D.4 (+ Hotfix): `Policy::viewAny` prüft jetzt
+    // `$user->can(PermissionName::VIEW)` — reproduziert die
+    // Middleware-Semantik exakt. Reader hat view, kommt durch.
     expect($response->status())->toBeIn([200, 302]);
+});
+
+it('User ohne view-Permission darf /projects nicht aufrufen — 403', function () {
+    /** @var TestCase $this */
+    /** @var User $user */
+    $user = User::factory()->create();
+    // Bewusst keine Rolle — User hat damit auch keine view-Permission.
+    $this->actingAs($user);
+
+    $response = $this->get('/projects');
+
+    // Vor D.4: 403 durch `permission:view`-Middleware.
+    // Nach D.4 (Initial): wäre 500 gewesen, weil `viewAny` jeden
+    // Auth-User durchließ und `getAllProjects()` ohne Rolle crasht.
+    // Nach Hotfix: 403 durch `Policy::viewAny` — Parität wieder
+    // hergestellt.
+    $response->assertStatus(403);
 });
 
 it('Reader ohne add-Permission darf /projects/create nicht aufrufen — 403', function () {
