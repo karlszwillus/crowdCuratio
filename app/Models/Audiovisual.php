@@ -22,9 +22,9 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Models;
 
+use App\Contracts\HasComments;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Contracts\HasComments;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Lang;
@@ -53,8 +53,6 @@ class Audiovisual extends Model implements HasComments
 
     /**
      * Get all comments
-     *
-     * @return MorphMany
      */
     public function comments(): MorphMany
     {

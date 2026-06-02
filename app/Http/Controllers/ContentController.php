@@ -23,7 +23,6 @@ If not, see <https://www.gnu.org/licenses/>.
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreImageBlockRequest;
-use App\Models\Audiovisual;
 use App\Models\Comment;
 use App\Models\Gallery;
 use App\Models\Image;

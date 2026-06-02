@@ -22,10 +22,10 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Models;
 
+use App\Contracts\HasComments;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Contracts\HasComments;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -91,8 +91,6 @@ class Project extends Model implements HasComments
 
     /**
      * Get comments
-     *
-     * @return MorphMany
      */
     public function comments(): MorphMany
     {
