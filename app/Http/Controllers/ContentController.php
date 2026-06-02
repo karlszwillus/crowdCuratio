@@ -29,7 +29,6 @@ use App\Http\Requests\StoreImageBlockRequest;
 use App\Models\Comment;
 use App\Models\Gallery;
 use App\Models\Image;
-use App\Models\MediaContent;
 use App\Models\Project;
 use App\Models\Source;
 use App\Models\Text;
@@ -176,36 +175,6 @@ class ContentController extends Controller
 
         return $this;
 
-    }
-
-    /**
-     * Attach media to entry
-     *
-     * @deprecated F.7 — keine Aufrufer mehr; bleibt vorerst stehen
-     * für Frontend-API-Kompatibilität (manchmal direkt
-     * dispatched). Wird in einem Folge-Block ganz entfernt, wenn
-     * verifiziert ist, dass keine externen Callers existieren.
-     *
-     * @return mixed
-     */
-    public function attachMedia($id, $entry, $type)
-    {
-        // get last position
-        $position = MediaContent::where('media_contentable_id', $entry)->orderBy('position', 'desc')->first();
-
-        $pos = 0;
-        if (! empty($position->position)) {
-            $pos = $position->position;
-        }
-
-        return MediaContent::create(
-            [
-                'position' => $pos + 1,
-                'media_content_id' => $id,
-                'media_contentable_id' => $entry,
-                'media_contentable_type' => $type,
-            ]
-        );
     }
 
     /**
