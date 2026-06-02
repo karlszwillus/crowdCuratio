@@ -167,9 +167,9 @@ Route::group(
         );
         Route::post(
             '/comment/chapter/status',
-            [ChapterController::class, 'setStatus']
+            [ChapterController::class, 'setCommentStatusChapter']
         )->name(
-            'chapter.status'
+            'comment.chapter.status'
         );
         Route::get('/comment/entry/{id}/', [EntryController::class, 'getEntryComment'])->name(
             'comment.entry.show'
@@ -182,9 +182,9 @@ Route::group(
         );
         Route::post(
             '/comment/entry/status',
-            [EntryController::class, 'setStatusEntry']
+            [EntryController::class, 'setCommentStatusEntry']
         )->name(
-            'entry.status'
+            'comment.entry.status'
         );
         Route::post('/comment/text', [ContentController::class, 'commentText'])->name(
             'comment.text'
@@ -200,9 +200,9 @@ Route::group(
         );
         Route::post(
             '/comment/text/status',
-            [ContentController::class, 'setStatusText']
+            [ContentController::class, 'setCommentStatusText']
         )->name(
-            'text.status'
+            'comment.text.status'
         );
         Route::post(
             '/text/reset',
@@ -224,9 +224,9 @@ Route::group(
         );
         Route::post(
             '/comment/image/status',
-            [ContentController::class, 'setStatusImage']
+            [ContentController::class, 'setCommentStatusImage']
         )->name(
-            'image.status'
+            'comment.image.status'
         );
         Route::post('/comment/project', [ProjectController::class, 'commentProject'])->name(
             'comment.project'
@@ -263,9 +263,9 @@ Route::group(
         );
         Route::post(
             '/comment/project/status',
-            [ProjectController::class, 'setStatusProject']
+            [ProjectController::class, 'setCommentStatusProject']
         )->name(
-            'project.status'
+            'comment.project.status'
         );
         Route::post(
             '/project/permission',
@@ -340,9 +340,9 @@ Route::group(
 
         Route::post(
             '/comment/{id}/update/{status}',
-            [ContentController::class, 'updateStatus']
+            [ContentController::class, 'updateCommentStatus']
         )->name(
-            'update.status'
+            'comment.update.status'
         );
 
         Route::post(
@@ -376,23 +376,23 @@ Route::group(
 
         Route::post(
             '/comment/{id}/audiovisual',
-            [AudiovisualController::class, 'commentAudiovisual']
+            [AudiovisualController::class, 'saveCommentAudiovisual']
         )->name(
-            'comment.audiovisual'
+            'comment.audiovisual.save'
         );
 
-        Route::post('/comment/audiovisual', [AudiovisualController::class, 'audiovisualCommentSave'])->name(
-            'comment.audiovisual.save'
+        Route::post('/comment/audiovisual', [AudiovisualController::class, 'commentAudiovisual'])->name(
+            'comment.audiovisual'
         );
 
         Route::post(
             '/comment/{id}/gallery',
-            [ContentController::class, 'commentGallery']
+            [ContentController::class, 'saveCommentGallery']
         )->name(
             'comment.gallery.save'
         );
 
-        Route::post('/comment/gallery', [ContentController::class, 'galleryCommentSave'])->name(
+        Route::post('/comment/gallery', [ContentController::class, 'commentGallery'])->name(
             'comment.gallery'
         );
 

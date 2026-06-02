@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Models;
 
-use App\Traits\CommentTrait;
+use App\Contracts\HasComments;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -35,9 +35,9 @@ use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Traits\LogsActivity;
 
-class MediaContent extends Model
+class MediaContent extends Model implements HasComments
 {
-    use CommentTrait, HasFactory,LogsActivity,SoftDeletes;
+    use HasFactory,LogsActivity,SoftDeletes;
 
     public $timestamps = false;
 
@@ -118,10 +118,8 @@ class MediaContent extends Model
 
     /**
      * Get all comments
-     *
-     * @return MorphMany
      */
-    public function comments()
+    public function comments(): MorphMany
     {
         return $this->morphMany(Comment::class, 'commentable')->whereNull('parent_id');
     }

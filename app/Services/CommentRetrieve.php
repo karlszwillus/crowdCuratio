@@ -61,8 +61,8 @@ class CommentRetrieve
                 $data['id'] = $id;
                 break;
             case 'App\Models\Audiovisual':
-                $pathReply = 'comment.audiovisual';
-                $data['pathComment'] = 'comment.audiovisual.save';
+                $pathReply = 'comment.audiovisual.save';
+                $data['pathComment'] = 'comment.audiovisual';
                 $data['id'] = $id;
                 break;
             case 'App\Models\Image':

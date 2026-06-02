@@ -41,9 +41,10 @@ class AuthServiceProvider extends ServiceProvider
         Project::class => ProjectPolicy::class,
         Chapter::class => ChapterPolicy::class,
         Entry::class => EntryPolicy::class,
-        // Text, Image, Gallery, Comment kommen in Phase 4 zusammen mit
-        // ADR-0012 (media_content vs. direct entry binding) und der
-        // CommentTrait-Auflösung (F-ARCH-002).
+        // Text, Image, Gallery, Comment-Policies stehen noch aus —
+        // gehören mit ADR-0012 zusammen (media_content vs. direct
+        // entry binding). Der CommentTrait wurde mit der
+        // CommentService-Extraktion bereits ersatzlos abgelöst.
     ];
 
     /**

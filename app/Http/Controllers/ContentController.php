@@ -23,7 +23,6 @@ If not, see <https://www.gnu.org/licenses/>.
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreImageBlockRequest;
-use App\Models\Audiovisual;
 use App\Models\Comment;
 use App\Models\Gallery;
 use App\Models\Image;
@@ -32,6 +31,7 @@ use App\Models\Project;
 use App\Models\Source;
 use App\Models\Text;
 use App\Services\CommentRetrieve;
+use App\Services\CommentService;
 use App\Traits\UploadTrait;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
@@ -50,8 +50,9 @@ class ContentController extends Controller
     /**
      * Instantiate a new ContentController instance.
      */
-    public function __construct()
-    {
+    public function __construct(
+        private readonly CommentService $comments,
+    ) {
         $this->middleware('auth');
     }
 
@@ -458,20 +459,19 @@ class ContentController extends Controller
     }
 
     /**
-     * Comment Text
+     * Comment Text — neuer Top-Level-Kommentar.
      *
-     * @return RedirectResponse
+     * Route hat kein {text} in der URL, deshalb laden wir das
+     * Modell explizit aus $request->id (siehe ProjectController).
      */
-    public function commentText(Request $request, Text $text)
+    public function commentText(Request $request): RedirectResponse
     {
+        $request->validate(['comment' => 'required']);
 
-        $request->validate(
-            [
-                'comment' => 'required',
-            ]
-        );
+        $text = Text::findOrFail($request->id);
+        $this->comments->addComment($text, $request);
 
-        return $text->commentAsUser($request);
+        return redirect()->back()->with('success', 'Reply to comment added successfully');
     }
 
     /**
@@ -487,39 +487,36 @@ class ContentController extends Controller
     }
 
     /**
-     * Save current text
-     *
-     * @return RedirectResponse
+     * Routet eine save-Submission auf einem Text (Edit/Delete/Reply).
      */
-    public function saveCommentText(Request $request, Text $text)
+    public function saveCommentText(Request $request, Text $text): RedirectResponse
     {
-        if (isset($request['btn_submit'])) {
-            if ($request['btn_submit'] == 'Edit') {
-                return $text->editAsUser($request);
-            } elseif ($request['btn_submit'] == 'delete') {
-                return $text->deleteAsUser($request['id']);
-            } else {
-                $model = Text::findOrFail($request['question']);
+        // Reply hängt sich an das Text-Modell, das `question` referenziert.
+        // Bei Edit und Delete ist das egal, der Helper greift nur bei Reply
+        // auf das commentable-Modell zu.
+        $commentable = isset($request['question'])
+            ? (Text::find($request['question']) ?? $text)
+            : $text;
 
-                return $model->replyAsUser($request);
-            }
-        }
+        $this->comments->dispatchSaveAction($commentable, $request);
+
+        return redirect()->back()->with('success', 'Comment-Aktion ausgeführt');
     }
 
     /**
-     * Comment Image
+     * Comment Image — neuer Top-Level-Kommentar.
      *
-     * @return RedirectResponse
+     * Route hat kein {image} in der URL, deshalb laden wir das
+     * Modell explizit aus $request->id (siehe ProjectController).
      */
-    public function commentImage(Request $request, Image $image)
+    public function commentImage(Request $request): RedirectResponse
     {
-        $request->validate(
-            [
-                'comment' => 'required',
-            ]
-        );
+        $request->validate(['comment' => 'required']);
 
-        return $image->commentAsUser($request);
+        $image = Image::findOrFail($request->id);
+        $this->comments->addComment($image, $request);
+
+        return redirect()->back()->with('success', 'Reply to comment added successfully');
     }
 
     /**
@@ -535,51 +532,43 @@ class ContentController extends Controller
     }
 
     /**
-     * Save current image
-     *
-     * @return RedirectResponse
+     * Routet eine save-Submission auf einem Image (Edit/Delete/Reply).
      */
-    public function saveCommentImage(Request $request, Image $image)
+    public function saveCommentImage(Request $request, Image $image): RedirectResponse
     {
-        if (isset($request['name']) && $request['name'] == 'edit') {
-            return $image->editAsUser($request);
+        if (isset($request['name']) && $request['name'] === 'edit') {
+            $this->comments->editComment((int) $request['pk'], (string) $request['value']);
+
+            return redirect()->back()->with('success', 'Comment edited successfully');
         }
 
-        if (isset($request['btn_submit'])) {
-            if ($request['btn_submit'] == 'Edit') {
-                return $image->editAsUser($request);
-            } elseif ($request['btn_submit'] == 'delete') {
-                return $image->deleteAsUser($request['id']);
-            } else {
-                $model = Image::findOrFail($request['question']);
+        $commentable = isset($request['question'])
+            ? (Image::find($request['question']) ?? $image)
+            : $image;
 
-                return $model->replyAsUser($request);
-            }
-        }
+        $this->comments->dispatchSaveAction($commentable, $request);
+
+        return redirect()->back()->with('success', 'Comment-Aktion ausgeführt');
     }
 
     /**
-     * Set status text
-     *
-     * @return JsonResponse
+     * Setzt den Status eines Comments auf einem Text.
      */
-    public function setStatusText(Request $request, Text $text)
+    public function setCommentStatusText(Request $request, Text $text): JsonResponse
     {
-        $data = $text->status($request);
+        $this->comments->setCommentStatus((int) $request['id'], (int) $request['status']);
 
-        return response()->json($data);
+        return response()->json(['success' => true]);
     }
 
     /**
-     * Set status image
-     *
-     * @return JsonResponse
+     * Setzt den Status eines Comments auf einem Image.
      */
-    public function setStatusImage(Request $request, Image $image)
+    public function setCommentStatusImage(Request $request, Image $image): JsonResponse
     {
-        $data = $image->status($request);
+        $this->comments->setCommentStatus((int) $request['id'], (int) $request['status']);
 
-        return response()->json($data);
+        return response()->json(['success' => true]);
     }
 
     /**
@@ -611,7 +600,14 @@ class ContentController extends Controller
             // Eager-Load-Bug — Spatie/Eloquent hat den Aufruf still
             // ignoriert, ohne dass jemand das gemerkt hätte. Korrekter
             // Pfad ist `user()`, definiert in Comment.php.
-            $comments = Comment::with('user')->whereNotNull('project_id')->get();
+            //
+            // Strict-Mode: project, user und content müssen eager
+            // geladen sein, weil contents.comment.blade.php auf
+            // $comment->project->name, $comment->user->name und
+            // $comment->content->media_contentable_type zugreift.
+            $comments = Comment::with(['user', 'project', 'content'])
+                ->whereNotNull('project_id')
+                ->get();
 
             return view('contents.comment', compact('comments'));
         }
@@ -629,7 +625,10 @@ class ContentController extends Controller
             ->whereNotNull('project_id')
             ->pluck('projects.id')->toArray();
 
-        $comments = Comment::whereIn('project_id', $projects)->whereNotNull('project_id')->get();
+        $comments = Comment::with(['user', 'project', 'content'])
+            ->whereIn('project_id', $projects)
+            ->whereNotNull('project_id')
+            ->get();
 
         return view('contents.comment', compact('comments'));
     }
@@ -656,14 +655,14 @@ class ContentController extends Controller
     }
 
     /**
-     * Update status
-     *
-     * @return RedirectResponse
+     * Setzt einen Comment-Status direkt aus der URL. Funktional
+     * identisch zu den setCommentStatus*-POST-Endpunkten der
+     * anderen Controller, nur dass das Frontend hier per
+     * Link-Klick statt Form arbeitet.
      */
-    public function updateStatus($id, $status)
+    public function updateCommentStatus($id, $status): RedirectResponse
     {
-
-        Comment::where('id', $id)->update(['status' => $status]);
+        $this->comments->setCommentStatus((int) $id, (int) $status);
 
         return redirect()->back()->with('success', __('message_status_success'));
     }
@@ -761,42 +760,32 @@ class ContentController extends Controller
     }
 
     /**
-     * Comment or reply on gallery
-     *
-     * @return $this|RedirectResponse
+     * Routet eine save-Submission auf einer Gallery (Edit/Delete/Reply).
      */
-    public function commentGallery(Request $request, Gallery $gallery)
+    public function saveCommentGallery(Request $request, Gallery $gallery): RedirectResponse
     {
+        $commentable = isset($request['question'])
+            ? (Gallery::find($request['question']) ?? $gallery)
+            : $gallery;
 
-        if (isset($request['btn_submit'])) {
-            if ($request['btn_submit'] == 'Edit') {
-                return $gallery->editAsUser($request);
-            } elseif ($request['btn_submit'] == 'delete') {
-                return $gallery->deleteAsUser($request['id']);
-            } else {
-                $model = Gallery::findOrFail($request['question']);
+        $this->comments->dispatchSaveAction($commentable, $request);
 
-                return $model->replyAsUser($request);
-            }
-        }
-
-        return $this;
+        return redirect()->back()->with('success', 'Comment-Aktion ausgeführt');
     }
 
     /**
-     * New comment on audiovisual
+     * Neuer Top-Level-Kommentar auf einer Gallery.
      *
-     * @return RedirectResponse
+     * Route hat kein {gallery} in der URL, deshalb laden wir das
+     * Modell explizit aus $request->id (siehe ProjectController).
      */
-    public function galleryCommentSave(Request $request, Gallery $gallery)
+    public function commentGallery(Request $request): RedirectResponse
     {
+        $request->validate(['comment' => 'required']);
 
-        $request->validate(
-            [
-                'comment' => 'required',
-            ]
-        );
+        $gallery = Gallery::findOrFail($request->id);
+        $this->comments->addComment($gallery, $request);
 
-        return $gallery->commentAsUser($request, 'App\Models\Gallery');
+        return redirect()->back()->with('success', 'Reply to comment added successfully');
     }
 }

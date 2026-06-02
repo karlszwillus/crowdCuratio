@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Models;
 
-use App\Traits\CommentTrait;
+use App\Contracts\HasComments;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -42,9 +42,9 @@ use Spatie\Translatable\HasTranslations;
  * @property Collection<int, Image> $images
  * @property Collection<int, Image>|null $image_list Runtime-Snapshot der images-Relation für den Preview-Render.
  */
-class Gallery extends Model
+class Gallery extends Model implements HasComments
 {
-    use CommentTrait, HasFactory, HasTranslations, LogsActivity, SoftDeletes;
+    use HasFactory, HasTranslations, LogsActivity, SoftDeletes;
 
     /**
      * Override parent boot and Call deleting event
@@ -85,10 +85,8 @@ class Gallery extends Model
 
     /**
      * Get all comments
-     *
-     * @return MorphMany
      */
-    public function comments()
+    public function comments(): MorphMany
     {
         return $this->morphMany(Comment::class, 'commentable')->whereNull('parent_id');
     }

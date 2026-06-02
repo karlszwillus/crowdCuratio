@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Models;
 
-use App\Traits\CommentTrait;
+use App\Contracts\HasComments;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -41,9 +41,9 @@ use Spatie\Translatable\HasTranslations;
  * @property Collection<int, Entry> $entries
  * @property mixed $entry Runtime-Zuweisung in ProjectController::allData (Entry-Snapshot je Chapter), nicht DB-Spalte.
  */
-class Chapter extends Model
+class Chapter extends Model implements HasComments
 {
-    use CommentTrait, HasFactory, HasTranslations, LogsActivity, SoftDeletes;
+    use HasFactory, HasTranslations, LogsActivity, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -111,10 +111,8 @@ class Chapter extends Model
 
     /**
      * Get all comments
-     *
-     * @return MorphMany
      */
-    public function comments()
+    public function comments(): MorphMany
     {
         return $this->morphMany(Comment::class, 'commentable')->whereNull('parent_id');
     }

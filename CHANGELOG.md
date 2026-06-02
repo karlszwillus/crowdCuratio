@@ -10,6 +10,100 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Hinzugefügt (CommentService-Extraktion)
+
+- **`CommentService`** in `app/Services/`. Kapselt die fünf
+  Schreibpfade auf Comments — `addComment`, `replyToComment`,
+  `editComment`, `deleteComment`, `setCommentStatus` — plus
+  `dispatchSaveAction`, der die `btn_submit`-Switch-Logik
+  (Edit/Delete/Reply) zentralisiert, die heute in sieben
+  Controller-Methoden über die fünf Comment-tragenden Controller
+  dupliziert war. Acht Pest-Tests in
+  `tests/Feature/Services/CommentServiceTest.php` decken die fünf
+  Methoden plus die vier dispatch-Switch-Pfade ab.
+- **Comment-Charakterisierungs-Tests** in
+  `tests/Feature/Refactor/CommentPfadeCharacterizationTest.php`.
+  Zehn Pest-Tests fixieren das beobachtbare Verhalten der
+  Comment-Endpunkte vor der Extraktion: Project / Chapter /
+  Entry für add, save-Switch (Edit/Delete/Reply) und
+  setStatus, plus der gemeinsame `updateStatus`-GET-Endpoint.
+  Content (Text/Image/Gallery) und Audiovisual sind strukturell
+  identisch, brauchen aber Source-/Audiovisual-Test-Factories,
+  die noch nicht existieren — Refactor läuft trotzdem über alle
+  fünf Controller, Smoke deckt sie ab.
+
+### Geändert (CommentService-Extraktion)
+
+- **Fünf Controller per Constructor-Injection auf
+  `CommentService`** umgestellt. `ProjectController`,
+  `ChapterController`, `EntryController`, `ContentController`
+  und `AudiovisualController` konsumieren den Service jetzt
+  über readonly-Properties. Alle 15 Comment-Endpunkt-Methoden
+  delegieren — die switch-cases auf `btn_submit` sind aus den
+  sieben Controller-Methoden raus und liegen einmal im Service
+  als `dispatchSaveAction`.
+
+### Geändert (Comment-Naming-Sweep)
+
+- **`setStatus*`-Method-Names auf `setCommentStatus*` umbenannt**
+  (Project, Chapter, Entry, Text, Image). Die Methoden setzen
+  einen Comment-Status, nicht den Status des jeweiligen Models —
+  der alte Name war historisch und irreführend. Plus
+  `ContentController::updateStatus` → `updateCommentStatus`. Die
+  passenden Route-Namen sind jetzt konsistent als
+  `comment.<model>.status` (vorher `<model>.status`, plus zwei
+  unbenannte Routes); die `update.status`-Route heißt jetzt
+  `comment.update.status`.
+- **Gallery- und Audiovisual-Method-Names entwirrt.** Die
+  Methoden waren paarweise vertauscht — `commentGallery` und
+  `commentAudiovisual` machten den Save-Switch, während
+  `galleryCommentSave` und `audiovisualCommentSave` den
+  Neu-Kommentar anlegten. Nach dem Sweep heißen Methoden, die
+  einen neuen Kommentar anlegen, `comment<Model>`, und Methoden,
+  die eine save-Submission routen, `saveComment<Model>` —
+  symmetrisch zu Project/Chapter/Entry/Text/Image. Bei
+  Audiovisual sind zusätzlich die Route-Namen vertauscht und der
+  `pathReply` / `pathComment`-Eintrag in `CommentRetrieve`
+  mit-korrigiert.
+- **Blade-Stelle in `chapters/index.blade.php`** auf die neuen
+  Route-Namen umgestellt (`comment.<model>.status`).
+- **`App\Contracts\HasComments`-Interface** für die acht
+  commentable Modelle (Project, Chapter, Entry, MediaContent,
+  Text, Image, Gallery, Audiovisual). Garantiert das
+  `comments(): MorphMany`-Vertrag im Type-System, der vorher nur
+  durch den entfernten `CommentTrait` implizit war.
+  `CommentService::addComment`/`replyToComment`/`dispatchSaveAction`
+  nehmen jetzt `HasComments $commentable` statt eines generischen
+  `Model` — Larastan kann den `->comments()`-Aufruf statisch
+  verifizieren. Die acht Modelle bekommen `: MorphMany` als
+  expliziten Return-Type auf der `comments()`-Methode.
+
+### Behoben
+
+- **Strict-Mode-Lazy-Loading-Verletzung in
+  `ContentController::listComments` (`/allComments`).** Die View
+  `contents.comment` greift auf `$comment->project->name`,
+  `$comment->user->name` und
+  `$comment->content->media_contentable_type` zu, das Controller-
+  Statement lud aber nur `user` (und das auch nur im Admin-Pfad)
+  eager — unter `Model::shouldBeStrict()` wirft das eine
+  `LazyLoadingViolationException`. Fix: beide Pfade laden jetzt
+  `user`, `project` und `content` mit `->with([...])` eager.
+
+### Entfernt (CommentService-Extraktion)
+
+- **`app/Traits/CommentTrait.php` gelöscht.** Die fünf
+  Trait-Methoden (`commentAsUser`, `replyAsUser`, `editAsUser`,
+  `deleteAsUser`, `status`) wandern in den `CommentService`.
+  Die `comments()`-MorphMany-Relation lebte schon direkt in den
+  acht Modellen (Project, Chapter, Entry, MediaContent, Text,
+  Image, Gallery, Audiovisual) — der Trait war nur noch
+  Methoden-Container, jetzt ersatzlos weg.
+- **`use CommentTrait;`-Aufrufe aus acht Modellen entfernt.**
+  Modell-Bodies sind dadurch dünner; mit dem Eloquent-Strict-
+  Mode passt die explizite Relation-Definition pro Modell
+  besser zu der Codebase als die implizite Trait-Aufklebung.
+
 **Phase 3 — Major-Upgrade-Welle abgeschlossen (2026-05-31).** Sieben
 sequenzielle Sprünge nach ADR-0003: PHP 8.1 → 8.2 → 8.3 → 8.4 in drei
 Schritten (mit verschränktem PHP-8.4-+-Laravel-9-Sprung wegen

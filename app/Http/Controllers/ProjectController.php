@@ -34,6 +34,7 @@ use App\Models\Source;
 use App\Models\Text;
 use App\Models\User;
 use App\Services\CommentRetrieve;
+use App\Services\CommentService;
 use App\Services\LogService;
 use App\Services\ProjectImageService;
 use App\Services\ProjectPermissionService;
@@ -64,6 +65,7 @@ class ProjectController extends Controller
     public function __construct(
         private readonly ProjectImageService $images,
         private readonly ProjectPermissionService $permissions,
+        private readonly CommentService $comments,
     ) {
         $this->middleware('auth');
         $this->middleware('permission:add', ['only' => ['create', 'store']]);
@@ -337,23 +339,24 @@ class ProjectController extends Controller
     }
 
     /**
-     * Comment project
+     * Comment project — neuer Top-Level-Kommentar.
      *
-     * @return RedirectResponse
+     * Route hat kein {project} in der URL, deshalb resolved Laravel
+     * das Project-Argument nicht — wir laden es explizit aus
+     * $request->id, wie der alte CommentTrait das auch tat.
      */
-    public function commentProject(Request $request, Project $project)
+    public function commentProject(Request $request): RedirectResponse
     {
-        $request->validate(
-            [
-                'comment' => 'required',
-            ]
-        );
+        $request->validate(['comment' => 'required']);
 
-        return $project->commentAsUser($request);
+        $project = Project::findOrFail($request->id);
+        $this->comments->addComment($project, $request);
+
+        return redirect()->back()->with('success', 'Reply to comment added successfully');
     }
 
     /**
-     * Retrieve all comment of current entry
+     * Retrieve all comment of current project
      *
      * @return JsonResponse
      */
@@ -365,33 +368,23 @@ class ProjectController extends Controller
     }
 
     /**
-     * Save current entry
-     *
-     * @return RedirectResponse
+     * Routet eine save-Submission (Edit/Delete/Reply).
      */
-    public function saveCommentProject(Request $request, Project $project)
+    public function saveCommentProject(Request $request, Project $project): RedirectResponse
     {
-        if (isset($request['btn_submit'])) {
-            if ($request['btn_submit'] == 'Edit') {
-                return $project->editAsUser($request);
-            } elseif ($request['btn_submit'] == 'delete') {
-                return $project->deleteAsUser($request['id']);
-            } else {
-                return $project->replyAsUser($request);
-            }
-        }
+        $this->comments->dispatchSaveAction($project, $request);
+
+        return redirect()->back()->with('success', 'Comment-Aktion ausgeführt');
     }
 
     /**
-     * Set status project
-     *
-     * @return JsonResponse
+     * Setzt den Status eines Comments auf einem Project.
      */
-    public function setStatusProject(Request $request, Project $project)
+    public function setCommentStatusProject(Request $request, Project $project): JsonResponse
     {
-        $data = $project->status($request);
+        $this->comments->setCommentStatus((int) $request['id'], (int) $request['status']);
 
-        return response()->json($data);
+        return response()->json(['success' => true]);
     }
 
     /**
@@ -648,7 +641,11 @@ class ProjectController extends Controller
      */
     public function allData($id)
     {
-        $project = Project::findOrFail($id);
+        // Strict-Mode: chapters/entries/mediaContent müssen eager
+        // geladen sein, weil die Schleife unten direkt auf
+        // $project->chapters, $chapter->entries und
+        // $entry->mediaContent zugreift.
+        $project = Project::withTranslateTree()->findOrFail($id);
         $data = [];
         $isTranslated = 0;
         $total = 0;
@@ -678,7 +675,11 @@ class ProjectController extends Controller
 
                     foreach ($collection as $item) {
                         if ($item['media_contentable_type'] == 'App\Models\Text') {
-                            $text = Text::find($item['media_content_id']);
+                            // Strict-Mode: originText/copyrightText
+                            // werden unten gleich gelesen, deshalb
+                            // gleich mit-eager-laden.
+                            $text = Text::with(['originText', 'copyrightText'])
+                                ->find($item['media_content_id']);
                             if ($text) {
                                 $text->media_id = $item['id'];
                                 $array[] = $text;
@@ -709,7 +710,9 @@ class ProjectController extends Controller
 
                             }
                         } else {
-                            $gallery = Gallery::find($item['media_content_id']);
+                            // Strict-Mode: images wird unten gleich
+                            // gelesen, deshalb mit-eager-laden.
+                            $gallery = Gallery::with('images')->find($item['media_content_id']);
                             // $image = Image::find($item['media_content_id']);
                             if ($gallery) {
                                 $gallery->media_id = $item['id'];

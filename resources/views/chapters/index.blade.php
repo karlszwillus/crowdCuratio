@@ -717,19 +717,19 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
             switch (model) {
                 case "chapter":
-                    url = "{{ route('chapter.status') }}";
+                    url = "{{ route('comment.chapter.status') }}";
                     break;
                 case "entry":
-                    url = "{{ route('entry.status') }}";
+                    url = "{{ route('comment.entry.status') }}";
                     break;
                 case "text":
-                    url = "{{ route('text.status') }}";
+                    url = "{{ route('comment.text.status') }}";
                     break;
                 case "image":
-                    url = "{{ route('image.status') }}";
+                    url = "{{ route('comment.image.status') }}";
                     break;
                 case "project":
-                    url = "{{ route('project.status') }}";
+                    url = "{{ route('comment.project.status') }}";
                     break;
             }
 

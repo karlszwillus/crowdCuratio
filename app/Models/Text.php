@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Models;
 
-use App\Traits\CommentTrait;
+use App\Contracts\HasComments;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -41,9 +41,9 @@ use Spatie\Translatable\HasTranslations;
  * @property Source|null $originText
  * @property Source|null $copyrightText
  */
-class Text extends Model
+class Text extends Model implements HasComments
 {
-    use CommentTrait, HasFactory, HasTranslations, LogsActivity,SoftDeletes;
+    use HasFactory, HasTranslations, LogsActivity,SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -86,10 +86,8 @@ class Text extends Model
 
     /**
      * Get all comments
-     *
-     * @return MorphMany
      */
-    public function comments()
+    public function comments(): MorphMany
     {
         return $this->morphMany(Comment::class, 'commentable')->whereNull('parent_id');
     }

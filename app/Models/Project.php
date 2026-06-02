@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Models;
 
-use App\Traits\CommentTrait;
+use App\Contracts\HasComments;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -43,9 +43,9 @@ use Spatie\Translatable\HasTranslations;
  * @property Collection<int, Chapter> $chapters
  * @property User|null $user
  */
-class Project extends Model
+class Project extends Model implements HasComments
 {
-    use CommentTrait, HasFactory, HasPermissions, HasTranslations,LogsActivity, SoftDeletes;
+    use HasFactory, HasPermissions, HasTranslations,LogsActivity, SoftDeletes;
 
     protected $guard_name = 'web';
 
@@ -91,10 +91,8 @@ class Project extends Model
 
     /**
      * Get comments
-     *
-     * @return MorphMany
      */
-    public function comments()
+    public function comments(): MorphMany
     {
         return $this->morphMany(Comment::class, 'commentable')->whereNull('parent_id');
     }
@@ -173,6 +171,24 @@ class Project extends Model
             'chapters.entries.mediaContent.text',
             'chapters.entries.mediaContent.gallery.images',
             'chapters.entries.mediaContent.audiovisual',
+        ]);
+    }
+
+    /**
+     * Eager-Loading-Baum für die Translate-Ansicht.
+     *
+     * `ProjectController::allData` iteriert über chapters/entries/
+     * mediaContent und greift dabei auf `$entry->mediaContent` zu —
+     * unter Strict-Mode wirft das ohne Eager-Loading eine
+     * LazyLoadingViolation. Die einzelnen Text/Audiovisual/Gallery-
+     * Modelle werden im Controller anschließend per `Model::find()`
+     * (mit ihren eigenen Eager-Loads) nachgeladen, die brauchen
+     * deshalb nicht zum Scope.
+     */
+    public function scopeWithTranslateTree($query)
+    {
+        return $query->with([
+            'chapters.entries.mediaContent',
         ]);
     }
 
