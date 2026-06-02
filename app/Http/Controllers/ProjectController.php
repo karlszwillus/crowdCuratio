@@ -104,7 +104,7 @@ class ProjectController extends Controller
      * listProjectsForUser`. Vor PR 2 stand hier die Query inline,
      * mit Admin-Pfad via `users.isAdmin()` und Nicht-Admin-Pfad
      * über `invitations.guest_id`. Service nutzt jetzt
-     * `user_has_permissions` als Quelle der Wahrheit für die
+     * `project_user_permissions` als Quelle der Wahrheit für die
      * Eingeladenen-Sicht (siehe Service-Doku).
      */
     public function getAllProjects(): EloquentCollection

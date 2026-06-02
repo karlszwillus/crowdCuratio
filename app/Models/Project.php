@@ -114,7 +114,7 @@ class Project extends Model implements HasComments
      */
     public function grantUserRights()
     {
-        return $this->hasMany(UserHasPermission::class);
+        return $this->hasMany(ProjectUserPermission::class);
     }
 
     /**

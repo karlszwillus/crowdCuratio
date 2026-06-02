@@ -47,7 +47,7 @@ class Permission extends Model
      */
     public function projects()
     {
-        return $this->belongsToMany(Project::class, 'user_has_permissions');
+        return $this->belongsToMany(Project::class, 'project_user_permissions');
     }
 
     /**

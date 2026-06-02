@@ -20,8 +20,8 @@ along with this program in the file LICENSE.
 If not, see <https://www.gnu.org/licenses/>.
  */
 
+use App\Models\ProjectUserPermission;
 use App\Models\User;
-use App\Models\UserHasPermission;
 use App\Support\PermissionName;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -70,7 +70,7 @@ it('Reader sieht in /projects sein eigenes Project und das, in das er eingeladen
     $strangerProject = makeProject($otherOwner, ['name' => 'Fremdes Projekt']);
 
     $viewPermission = Permission::where('name', 'view')->first();
-    UserHasPermission::create([
+    ProjectUserPermission::create([
         'user_id' => $reader->id,
         'project_id' => $sharedProject->id,
         'permission_id' => $viewPermission->id,
@@ -137,7 +137,7 @@ it('Comment: Eingeladener mit comment-Permission darf kommentieren', function ()
     $project = makeProject($owner);
 
     $commentPermission = Permission::where('name', 'comment')->first();
-    UserHasPermission::create([
+    ProjectUserPermission::create([
         'user_id' => $invitee->id,
         'project_id' => $project->id,
         'permission_id' => $commentPermission->id,

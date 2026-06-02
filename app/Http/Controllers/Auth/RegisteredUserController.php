@@ -26,9 +26,9 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\Invitation;
 use App\Models\MailSetting;
+use App\Models\ProjectUserPermission;
 use App\Models\RoleHasPermission;
 use App\Models\User;
-use App\Models\UserHasPermission;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -37,6 +37,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Spatie\Permission\Contracts\Role as RoleContract;
 use Spatie\Permission\Models\Role;
 
 class RegisteredUserController extends Controller
@@ -152,7 +153,7 @@ class RegisteredUserController extends Controller
                 $resolvedRoleIds = collect($resolvedRoles)->pluck('id')->all();
                 $permissions = RoleHasPermission::whereIn('role_id', $resolvedRoleIds)->pluck('permission_id');
                 foreach ($permissions as $permission) {
-                    UserHasPermission::create([
+                    ProjectUserPermission::create([
                         'project_id' => $request->projectId,
                         'permission_id' => $permission,
                         'user_id' => $user->id,
@@ -182,7 +183,7 @@ class RegisteredUserController extends Controller
      * ungültiger Role-Submit ein Form-Bug ist, kein Use-Case.
      *
      * @param  array<int|string, mixed>|string|int|null  $input
-     * @return array<int, Role>
+     * @return array<int, RoleContract>
      */
     private function resolveRoles(array|string|int|null $input): array
     {
@@ -194,7 +195,7 @@ class RegisteredUserController extends Controller
 
         return collect($values)
             ->filter(fn ($value) => $value !== null && $value !== '')
-            ->map(function ($value): Role {
+            ->map(function ($value): RoleContract {
                 if (is_int($value) || (is_string($value) && ctype_digit($value))) {
                     return Role::findById((int) $value, 'web');
                 }

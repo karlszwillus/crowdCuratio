@@ -10,6 +10,32 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Geändert (Permission-Harmonisierung — Block D, PR 2 / Welle 2b)
+
+- **Pivot-Tabelle umbenannt: `user_has_permissions` →
+  `project_user_permissions`.** Die alte Bezeichnung kollidierte
+  semantisch mit Spatie's `user_has_permissions`-Tabelle aus dem
+  Standard-Schema, die eine andere Bedeutung hat (globale
+  Per-User-Permissions). Die neue Bezeichnung macht den Pivot
+  eindeutig zur Projekt-Zuordnung. `Schema::rename` läuft auf
+  MySQL und SQLite identisch, Spalten/Indizes/FKs überleben.
+- **Modell `App\Models\UserHasPermission` → `App\Models\ProjectUserPermission`
+  umbenannt** (Datei und Klasse). Tabellen-Bindung explizit auf
+  `project_user_permissions`. Alle Aufrufer in Controllern,
+  Services, Models und Tests sind nachgezogen.
+
+### Hinzugefügt (Permission-Harmonisierung — Block D, PR 2 / Welle 2b)
+
+- **Migration**
+  `2026_06_02_000000_rename_user_has_permissions_to_project_user_permissions.php`
+  mit reversiblem `down()`.
+- **`PermissionTableRenameTest`** in `tests/Feature/Database/`.
+  Drei Pest-Tests fixieren Endzustand, Migrations-Roundtrip
+  (down/up) und Spalten-Set der neuen Tabelle.
+- **`ProjectUserPermissionTest`** in `tests/Unit/Models/`. Zwei
+  Tests fixieren Tabellen-Bindung und Fillable-Set des neuen
+  Modells.
+
 ### Behoben (Permission-Harmonisierung — Block D, PR 2 / Smoke-Fix)
 
 - **Einladung neuer User auf `/register` brach mit

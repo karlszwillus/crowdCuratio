@@ -21,8 +21,8 @@ If not, see <https://www.gnu.org/licenses/>.
  */
 
 use App\Models\Project;
+use App\Models\ProjectUserPermission;
 use App\Models\User;
-use App\Models\UserHasPermission;
 use App\Services\UserService;
 use App\Support\PermissionName;
 use Spatie\Permission\Models\Permission;
@@ -37,7 +37,7 @@ use Tests\TestCase;
 | Die Methode liefert die effektive Permission-Liste des authenti-
 | fizierten Users für ein konkretes Project. Logik:
 |
-| - Wenn der User in `user_has_permissions` Einträge für das
+| - Wenn der User in `project_user_permissions` Einträge für das
 |   Project hat, gewinnen diese (project-scoped override).
 | - Sonst fallen wir auf die globalen Spatie-Permissions des Users
 |   zurück (über Rolle vererbt).
@@ -85,7 +85,7 @@ it('liefert die project-scoped Overrides, sobald welche vorhanden sind', functio
     $project = makeProject($user);
 
     $viewPermission = Permission::where('name', 'view')->first();
-    UserHasPermission::create([
+    ProjectUserPermission::create([
         'user_id' => $user->id,
         'project_id' => $project->id,
         'permission_id' => $viewPermission->id,
@@ -130,7 +130,7 @@ it('unterscheidet Overrides verschiedener Projects strikt voneinander', function
     $projectB = makeProject($user, ['name' => 'Project B']);
 
     $editPermission = Permission::where('name', 'edit')->first();
-    UserHasPermission::create([
+    ProjectUserPermission::create([
         'user_id' => $user->id,
         'project_id' => $projectA->id,
         'permission_id' => $editPermission->id,

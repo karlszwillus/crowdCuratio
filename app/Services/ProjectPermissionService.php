@@ -25,8 +25,8 @@ namespace App\Services;
 use App\Models\Invitation;
 use App\Models\ModelHasRole;
 use App\Models\Project;
+use App\Models\ProjectUserPermission;
 use App\Models\User;
-use App\Models\UserHasPermission;
 use App\Support\PermissionName;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
@@ -58,7 +58,7 @@ class ProjectPermissionService
             $userList[$user->id] = ['name' => $user->name, 'lastName' => $user->last_name];
         }
 
-        $pivots = UserHasPermission::where('project_id', $projectId)->get();
+        $pivots = ProjectUserPermission::where('project_id', $projectId)->get();
 
         $listGrantedUsers = [];
 
@@ -99,9 +99,9 @@ class ProjectPermissionService
     public function getSelectedPermissionUser(int $userId, int $projectId): array
     {
         return Permission::query()
-            ->join('user_has_permissions', 'user_has_permissions.permission_id', '=', 'permissions.id')
-            ->where('user_has_permissions.user_id', $userId)
-            ->where('user_has_permissions.project_id', $projectId)
+            ->join('project_user_permissions', 'project_user_permissions.permission_id', '=', 'permissions.id')
+            ->where('project_user_permissions.user_id', $userId)
+            ->where('project_user_permissions.project_id', $projectId)
             ->pluck('permissions.name', 'permissions.id')->toArray();
     }
 
@@ -112,9 +112,9 @@ class ProjectPermissionService
     public function getSelectedPermissionUserPluck(int $userId, int $projectId): Collection
     {
         return Permission::query()
-            ->join('user_has_permissions', 'user_has_permissions.permission_id', '=', 'permissions.id')
-            ->where('user_has_permissions.user_id', $userId)
-            ->where('user_has_permissions.project_id', $projectId)
+            ->join('project_user_permissions', 'project_user_permissions.permission_id', '=', 'permissions.id')
+            ->where('project_user_permissions.user_id', $userId)
+            ->where('project_user_permissions.project_id', $projectId)
             ->pluck('permissions.name', 'permissions.id');
     }
 
@@ -139,7 +139,7 @@ class ProjectPermissionService
      */
     public function setForUserOnProject(int $userId, int $projectId, array $permissionIds, int $invitedByUserId): void
     {
-        UserHasPermission::where('project_id', $projectId)
+        ProjectUserPermission::where('project_id', $projectId)
             ->where('user_id', $userId)
             ->delete();
 
@@ -148,7 +148,7 @@ class ProjectPermissionService
             ->delete();
 
         foreach ($permissionIds as $permissionId) {
-            UserHasPermission::firstOrCreate([
+            ProjectUserPermission::firstOrCreate([
                 'project_id' => $projectId,
                 'permission_id' => $permissionId,
                 'user_id' => $userId,
@@ -169,7 +169,7 @@ class ProjectPermissionService
      */
     public function removeUserFromProject(int $userId, int $projectId): void
     {
-        UserHasPermission::where('project_id', $projectId)
+        ProjectUserPermission::where('project_id', $projectId)
             ->where('user_id', $userId)
             ->delete();
 
@@ -185,7 +185,7 @@ class ProjectPermissionService
      */
     public function getPermissionIdsForUserOnProject(int $userId, int $projectId): Collection
     {
-        return UserHasPermission::where('user_id', $userId)
+        return ProjectUserPermission::where('user_id', $userId)
             ->where('project_id', $projectId)
             ->pluck('permission_id');
     }
@@ -196,7 +196,7 @@ class ProjectPermissionService
      * der Project-Owner darf alles auf seinem Project (Admin wird
      * eine Ebene höher über die Policy::before() abgefangen).
      *
-     * Sonst Lookup in `user_has_permissions` (project-scoped Pivot).
+     * Sonst Lookup in `project_user_permissions` (project-scoped Pivot).
      * Die Tabelle wird in Welle 2b auf `project_user_permissions`
      * umbenannt; diese Methode bleibt davon unberührt, weil das
      * Modell `UserHasPermission` (bzw. dessen Nachfolger) die
@@ -216,7 +216,7 @@ class ProjectPermissionService
             return false;
         }
 
-        return UserHasPermission::query()
+        return ProjectUserPermission::query()
             ->where('user_id', $user->id)
             ->where('project_id', $project->id)
             ->where('permission_id', $permissionId)
@@ -228,11 +228,11 @@ class ProjectPermissionService
      * seiner Liste sehen darf. Admin sieht alles (nicht
      * soft-gelöschte Projects bzw. User); Nicht-Admin sieht
      * eigene Projects plus solche, in die er eingeladen ist
-     * (über `user_has_permissions`).
+     * (über `project_user_permissions`).
      *
      * Vor PR 2 lebte diese Query als private `getAllProjects()` im
      * ProjectController — über `invitations.guest_id` statt
-     * `user_has_permissions.user_id`. Funktional äquivalent, weil
+     * `project_user_permissions.user_id`. Funktional äquivalent, weil
      * `setForUserOnProject` immer beides anlegt; mit PR 2 läuft
      * die Sicht einheitlich über die Permission-Welt.
      */
@@ -249,12 +249,12 @@ class ProjectPermissionService
 
         return Project::query()
             ->join('users', 'users.id', '=', 'projects.user_id')
-            ->leftJoin('user_has_permissions', 'user_has_permissions.project_id', '=', 'projects.id')
+            ->leftJoin('project_user_permissions', 'project_user_permissions.project_id', '=', 'projects.id')
             ->select('projects.*', 'users.name as user_name')
             ->distinct()
             ->where(function ($query) use ($user) {
                 $query->where('projects.user_id', $user->id)
-                    ->orWhere('user_has_permissions.user_id', $user->id);
+                    ->orWhere('project_user_permissions.user_id', $user->id);
             })
             ->whereNull('projects.deleted_at')
             ->whereNull('users.deleted_at')

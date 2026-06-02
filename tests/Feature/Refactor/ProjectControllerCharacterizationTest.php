@@ -20,8 +20,8 @@ along with this program in the file LICENSE.
 If not, see <https://www.gnu.org/licenses/>.
  */
 
+use App\Models\ProjectUserPermission;
 use App\Models\User;
-use App\Models\UserHasPermission;
 use App\Support\PermissionName;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -125,7 +125,7 @@ it('setPermissionForUserOnProject legt einen Project-scoped Permission-Eintrag a
 
     expect($response->status())->toBeIn([200, 302]);
 
-    $pivot = UserHasPermission::where('user_id', $invitee->id)
+    $pivot = ProjectUserPermission::where('user_id', $invitee->id)
         ->where('project_id', $project->id)
         ->where('permission_id', $editPermission->id)
         ->first();
@@ -146,7 +146,7 @@ it('deleteUserFromProject entfernt alle Permission-Einträge des Users für das 
     $project = makeProject($owner);
     $editPermission = Permission::where('name', 'edit')->first();
 
-    UserHasPermission::create([
+    ProjectUserPermission::create([
         'user_id' => $invitee->id,
         'project_id' => $project->id,
         'permission_id' => $editPermission->id,
@@ -159,7 +159,7 @@ it('deleteUserFromProject entfernt alle Permission-Einträge des Users für das 
 
     expect($response->status())->toBeIn([200, 302]);
 
-    $remaining = UserHasPermission::where('user_id', $invitee->id)
+    $remaining = ProjectUserPermission::where('user_id', $invitee->id)
         ->where('project_id', $project->id)
         ->count();
 

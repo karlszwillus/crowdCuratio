@@ -21,8 +21,8 @@ If not, see <https://www.gnu.org/licenses/>.
  */
 
 use App\Models\Invitation;
+use App\Models\ProjectUserPermission;
 use App\Models\User;
-use App\Models\UserHasPermission;
 use App\Services\ProjectPermissionService;
 use App\Support\PermissionName;
 use Spatie\Permission\Models\Permission;
@@ -36,7 +36,7 @@ use Tests\TestCase;
 |
 | Der Service kapselt die zehn Permission-Methoden, die vorher
 | direkt im ProjectController lagen. Drei-Welten-Logik
-| (Spatie-Rollen, project-scoped UserHasPermission-Pivot,
+| (Spatie-Rollen, project-scoped ProjectUserPermission-Pivot,
 | Invitations-Tabelle) bleibt unverändert — Block D / ADR-0005
 | wird die Welten dann auf einen einheitlichen Pfad zusammenführen.
 */
@@ -75,7 +75,7 @@ it('setForUserOnProject legt Permission-Einträge an und erstellt die Invitation
         invitedByUserId: $owner->id,
     );
 
-    $pivotCount = UserHasPermission::where('user_id', $invitee->id)
+    $pivotCount = ProjectUserPermission::where('user_id', $invitee->id)
         ->where('project_id', $project->id)
         ->count();
 
@@ -102,7 +102,7 @@ it('setForUserOnProject ersetzt bestehende Permissions (Set-Semantik)', function
     $editPermission = Permission::where('name', 'edit')->first();
     $commentPermission = Permission::where('name', 'comment')->first();
 
-    UserHasPermission::create([
+    ProjectUserPermission::create([
         'user_id' => $invitee->id,
         'project_id' => $project->id,
         'permission_id' => $editPermission->id,
@@ -118,7 +118,7 @@ it('setForUserOnProject ersetzt bestehende Permissions (Set-Semantik)', function
         invitedByUserId: $owner->id,
     );
 
-    $remaining = UserHasPermission::where('user_id', $invitee->id)
+    $remaining = ProjectUserPermission::where('user_id', $invitee->id)
         ->where('project_id', $project->id)
         ->pluck('permission_id')
         ->toArray();
@@ -138,7 +138,7 @@ it('removeUserFromProject löscht Permissions und Invitation vollständig', func
     $project = makeProject($owner);
     $editPermission = Permission::where('name', 'edit')->first();
 
-    UserHasPermission::create([
+    ProjectUserPermission::create([
         'user_id' => $invitee->id,
         'project_id' => $project->id,
         'permission_id' => $editPermission->id,
@@ -154,7 +154,7 @@ it('removeUserFromProject löscht Permissions und Invitation vollständig', func
 
     $service->removeUserFromProject($invitee->id, $project->id);
 
-    $permissionCount = UserHasPermission::where('user_id', $invitee->id)
+    $permissionCount = ProjectUserPermission::where('user_id', $invitee->id)
         ->where('project_id', $project->id)
         ->count();
 
@@ -178,7 +178,7 @@ it('getUsersForThisProject liefert Name und Permissions je berechtigtem User', f
     $project = makeProject($owner);
     $editPermission = Permission::where('name', 'edit')->first();
 
-    UserHasPermission::create([
+    ProjectUserPermission::create([
         'user_id' => $invitee->id,
         'project_id' => $project->id,
         'permission_id' => $editPermission->id,
@@ -243,7 +243,7 @@ it('userHasPermissionOnProject erkennt einen Eingeladenen mit comment-Permission
     $project = makeProject($owner);
     $commentPermission = Permission::where('name', 'comment')->first();
 
-    UserHasPermission::create([
+    ProjectUserPermission::create([
         'user_id' => $invitee->id,
         'project_id' => $project->id,
         'permission_id' => $commentPermission->id,
@@ -267,7 +267,7 @@ it('userHasPermissionOnProject lehnt einen Eingeladenen ohne die geforderte Perm
     // Invitee hat NUR view-Permission, kein comment/edit.
     $viewPermission = Permission::where('name', 'view')->first();
 
-    UserHasPermission::create([
+    ProjectUserPermission::create([
         'user_id' => $invitee->id,
         'project_id' => $project->id,
         'permission_id' => $viewPermission->id,
@@ -315,7 +315,7 @@ it('listProjectsForUser liefert eigene Projects und solche, in die der User eing
     $strangerProject = makeProject($other, ['name' => 'Fremdes Projekt']);
 
     $viewPermission = Permission::where('name', 'view')->first();
-    UserHasPermission::create([
+    ProjectUserPermission::create([
         'user_id' => $invitee->id,
         'project_id' => $sharedProject->id,
         'permission_id' => $viewPermission->id,
@@ -367,12 +367,12 @@ it('getPermissionIdsForUserOnProject liefert die Pivot-IDs als Collection', func
     $editPermission = Permission::where('name', 'edit')->first();
     $commentPermission = Permission::where('name', 'comment')->first();
 
-    UserHasPermission::create([
+    ProjectUserPermission::create([
         'user_id' => $invitee->id,
         'project_id' => $project->id,
         'permission_id' => $editPermission->id,
     ]);
-    UserHasPermission::create([
+    ProjectUserPermission::create([
         'user_id' => $invitee->id,
         'project_id' => $project->id,
         'permission_id' => $commentPermission->id,
