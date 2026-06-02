@@ -1,8 +1,13 @@
 <?php
 
+use App\Models\Audiovisual;
 use App\Models\Chapter;
 use App\Models\Entry;
+use App\Models\Gallery;
+use App\Models\Image;
 use App\Models\Project;
+use App\Models\Source;
+use App\Models\Text;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -97,4 +102,42 @@ function makeEntry(Chapter $chapter, array $overrides = []): Entry
         'description' => 'Original Beschreibung',
         'position' => 0,
     ], $overrides));
+}
+
+/**
+ * Test-Hilfen für die Content-Modelle (Block-F-Vorbereitung).
+ *
+ * Die Factories und Helper hier ermöglichen Charakterisierungs-
+ * und Service-Tests für die ContentController-/AudiovisualController-
+ * Schreibpfade, die vorher mangels Test-Infrastruktur nicht
+ * abgedeckt werden konnten.
+ *
+ * Source-Helper liefert eine Source-Zeile (FK-Ziel für Text und
+ * Image); per State 'Origin' oder 'Copyright'. makeText / makeImage
+ * legen die nötigen Source-Zeilen implizit mit an, makeGallery /
+ * makeAudiovisual sind standalone.
+ */
+function makeSource(array $overrides = []): Source
+{
+    return Source::factory()->create($overrides);
+}
+
+function makeText(array $overrides = []): Text
+{
+    return Text::factory()->create($overrides);
+}
+
+function makeImage(array $overrides = []): Image
+{
+    return Image::factory()->create($overrides);
+}
+
+function makeGallery(array $overrides = []): Gallery
+{
+    return Gallery::factory()->create($overrides);
+}
+
+function makeAudiovisual(array $overrides = []): Audiovisual
+{
+    return Audiovisual::factory()->create($overrides);
 }

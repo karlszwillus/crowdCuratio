@@ -10,6 +10,34 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Hinzugefügt (Block-F-Vorbereitung)
+
+- **Fünf Test-Factories für die Content-Modelle** in
+  `database/factories/`: `SourceFactory` (mit `origin()`-/
+  `copyright()`-States), `TextFactory` (mit zwei Source-Refs für
+  origin/copyright), `ImageFactory` (mit Source-Refs, optional
+  `forGallery(id)`-State), `GalleryFactory`, `AudiovisualFactory`
+  (mit `audio()`-State). Damit sind die Content-Modelle erstmals
+  in Tests setupbar — vorher fehlte das Material, um saveText/
+  saveImage/saveGallery/Audiovisual::store charakterisierungs-
+  fähig zu machen.
+- **Pest-Helper** für die fünf Modelle in `tests/Pest.php`:
+  `makeSource`, `makeText`, `makeImage`, `makeGallery`,
+  `makeAudiovisual`. Konsistent zum bestehenden `makeProject`/
+  `makeChapter`/`makeEntry`-Stil.
+- **Content-Charakterisierungs-Tests** in
+  `tests/Feature/Refactor/ContentCharacterizationTest.php`.
+  13 Pest-Tests fixieren das beobachtbare Verhalten der
+  ContentController- und AudiovisualController-Schreibpfade
+  vor der Service-Extraktion (F.2–F.9): saveText/Image/Gallery
+  im Update-Pfad, editText/editImage als JSON, destroyText/
+  Image/Gallery (Soft-Delete), AudiovisualController::store
+  im Update-Pfad (inkl. YouTube-URL-Konversion), audiovisual.
+  delete (Soft-Delete), plus drei Factory-Smoke-Tests. Die
+  Create-Pfade sind komplex (File-Upload + attachMedia), kommen
+  in einer zweiten Welle wenn die Services da sind.
+
+
 ### Behoben
 
 - **`CommentRetrieve::getComments` initialisiert `$pathReply`
