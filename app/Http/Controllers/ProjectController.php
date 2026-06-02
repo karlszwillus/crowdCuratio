@@ -641,7 +641,11 @@ class ProjectController extends Controller
      */
     public function allData($id)
     {
-        $project = Project::findOrFail($id);
+        // Strict-Mode: chapters/entries/mediaContent müssen eager
+        // geladen sein, weil die Schleife unten direkt auf
+        // $project->chapters, $chapter->entries und
+        // $entry->mediaContent zugreift.
+        $project = Project::withTranslateTree()->findOrFail($id);
         $data = [];
         $isTranslated = 0;
         $total = 0;
@@ -671,7 +675,11 @@ class ProjectController extends Controller
 
                     foreach ($collection as $item) {
                         if ($item['media_contentable_type'] == 'App\Models\Text') {
-                            $text = Text::find($item['media_content_id']);
+                            // Strict-Mode: originText/copyrightText
+                            // werden unten gleich gelesen, deshalb
+                            // gleich mit-eager-laden.
+                            $text = Text::with(['originText', 'copyrightText'])
+                                ->find($item['media_content_id']);
                             if ($text) {
                                 $text->media_id = $item['id'];
                                 $array[] = $text;
@@ -702,7 +710,9 @@ class ProjectController extends Controller
 
                             }
                         } else {
-                            $gallery = Gallery::find($item['media_content_id']);
+                            // Strict-Mode: images wird unten gleich
+                            // gelesen, deshalb mit-eager-laden.
+                            $gallery = Gallery::with('images')->find($item['media_content_id']);
                             // $image = Image::find($item['media_content_id']);
                             if ($gallery) {
                                 $gallery->media_id = $item['id'];

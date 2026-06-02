@@ -177,6 +177,24 @@ class Project extends Model implements HasComments
     }
 
     /**
+     * Eager-Loading-Baum für die Translate-Ansicht.
+     *
+     * `ProjectController::allData` iteriert über chapters/entries/
+     * mediaContent und greift dabei auf `$entry->mediaContent` zu —
+     * unter Strict-Mode wirft das ohne Eager-Loading eine
+     * LazyLoadingViolation. Die einzelnen Text/Audiovisual/Gallery-
+     * Modelle werden im Controller anschließend per `Model::find()`
+     * (mit ihren eigenen Eager-Loads) nachgeladen, die brauchen
+     * deshalb nicht zum Scope.
+     */
+    public function scopeWithTranslateTree($query)
+    {
+        return $query->with([
+            'chapters.entries.mediaContent',
+        ]);
+    }
+
+    /**
      * Eager-Loading-Baum für die copyright-/Impressums-View.
      *
      * Flach — preview/copyright.blade.php rendert nur eine
