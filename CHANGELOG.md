@@ -10,6 +10,22 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Behoben (Permission-Harmonisierung — Block D, PR 2 / Smoke-Fix)
+
+- **Einladung neuer User auf `/register` brach mit
+  `RoleDoesNotExist: no role named '20'`** ab, sobald das Form
+  eine Role-ID als String schickte. Spatie v6 interpretiert
+  Strings, die an `assignRole()` gehen, strikt als Rollen-Namen
+  — ein numerischer String wie `'20'` löste daher den Lookup als
+  Name aus statt als ID. Neuer Helper
+  `RegisteredUserController::resolveRoles()` löst das Input
+  (Single-String, Array, Name, numerische ID) zu konkreten
+  `Role`-Instanzen auf, bevor sie an `assignRole` und die
+  nachfolgende `RoleHasPermission`-Abfrage gehen. Drei
+  Charakterisierungs-Tests in `RegisteredUserControllerCharacterizationTest`
+  fixieren das Verhalten für die drei Eingabewege (Name als Array,
+  ID als Array, Name als Single-String).
+
 ### Geändert (Permission-Harmonisierung — Block D, PR 2 / Welle 2a)
 
 - **`ProjectPolicy::view` und `::comment` sind jetzt project-scoped.**

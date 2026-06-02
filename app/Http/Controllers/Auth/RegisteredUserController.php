@@ -126,11 +126,20 @@ class RegisteredUserController extends Controller
 
             event(new Registered($user));
 
-            if ($isAdminInvite) {
-                $user->assignRole('Admin');
-            } else {
-                $user->assignRole($request->input('roles'));
-            }
+            // Block D PR 2 / Smoke-Fix: das `roles`-Feld kann
+            // verschieden ankommen — als Array (Multi-Select-Form),
+            // als Single-String, als Role-Name oder als Role-ID
+            // (numerisch). Spatie v6 interpretiert Strings strikt
+            // als Namen, was bei einem ID-Submit zu
+            // `RoleDoesNotExist: no role named '20'` führt. Der
+            // Resolver löst beide Pfade in echte `Role`-Instanzen
+            // auf, bevor sie an `assignRole` und an die nachgelagerte
+            // `RoleHasPermission`-Query gehen.
+            $resolvedRoles = $isAdminInvite
+                ? [Role::findByName('Admin', 'web')]
+                : $this->resolveRoles($request->input('roles'));
+
+            $user->assignRole($resolvedRoles);
 
             $expiresAt = now()->addDay(3);
             $invitation = (isset($mail['invitation']) && ! empty(strip_tags($mail['invitation']))) ? strip_tags(
@@ -140,7 +149,8 @@ class RegisteredUserController extends Controller
             $user->sendWelcomeNotification($expiresAt, $request->firstName, $invitation);
 
             if (isset($request->projectId)) {
-                $permissions = RoleHasPermission::where('role_id', $request->input('roles'))->pluck('permission_id');
+                $resolvedRoleIds = collect($resolvedRoles)->pluck('id')->all();
+                $permissions = RoleHasPermission::whereIn('role_id', $resolvedRoleIds)->pluck('permission_id');
                 foreach ($permissions as $permission) {
                     UserHasPermission::create([
                         'project_id' => $request->projectId,
@@ -160,5 +170,38 @@ class RegisteredUserController extends Controller
                 return redirect()->route('users.index')->with('success', 'User added successful');
             }
         }
+    }
+
+    /**
+     * Block D PR 2 / Smoke-Fix: Eingabe für `roles` zu konkreten
+     * `Role`-Instanzen auflösen. Akzeptiert Single-String, Array
+     * und mischt numerische Strings (ID-Lookup) mit Text-Strings
+     * (Name-Lookup). Wirft die Spatie-üblichen
+     * `RoleDoesNotExist`-Exceptions, wenn der referenzierte Wert
+     * nicht auflösbar ist — das bleibt bewusst hart, weil ein
+     * ungültiger Role-Submit ein Form-Bug ist, kein Use-Case.
+     *
+     * @param  array<int|string, mixed>|string|int|null  $input
+     * @return array<int, Role>
+     */
+    private function resolveRoles(array|string|int|null $input): array
+    {
+        if ($input === null || $input === '') {
+            return [];
+        }
+
+        $values = is_array($input) ? $input : [$input];
+
+        return collect($values)
+            ->filter(fn ($value) => $value !== null && $value !== '')
+            ->map(function ($value): Role {
+                if (is_int($value) || (is_string($value) && ctype_digit($value))) {
+                    return Role::findById((int) $value, 'web');
+                }
+
+                return Role::findByName((string) $value, 'web');
+            })
+            ->values()
+            ->all();
     }
 }
