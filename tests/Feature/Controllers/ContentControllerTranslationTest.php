@@ -87,7 +87,10 @@ it('saveTranslatedText schreibt en-Übersetzung auf den Text-Body', function () 
     $owner->assignRole('Admin');
     $this->actingAs($owner);
 
-    $text = makeText(['text' => json_encode(['de' => 'DE-Body'])]);
+    // text ist Spatie-translatable — als Plain-String setzen,
+    // Spatie wickelt das automatisch in den Locale-JSON-Container.
+    // Override mit json_encode würde doppelt verschachteln.
+    $text = makeText(['text' => 'DE-Body']);
 
     $request = new Request;
     $request->merge([

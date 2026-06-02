@@ -78,10 +78,21 @@ it('allData zählt Chapters/Entries und deren Übersetzungs-Status', function ()
     $this->actingAs($owner);
 
     $project = makeProject($owner);
-    $chapter1 = makeChapter($project, ['is_translated' => 1]);
-    $chapter2 = makeChapter($project, ['is_translated' => 0]);
-    makeEntry($chapter1, ['is_translated' => 1]);
-    makeEntry($chapter1, ['is_translated' => 0]);
+
+    // is_translated ist nicht in Chapter/Entry::$fillable —
+    // unter Strict-Mode wirft Mass-Assignment. Property-Setter
+    // statt Factory-Override.
+    $chapter1 = makeChapter($project);
+    $chapter1->is_translated = 1;
+    $chapter1->save();
+
+    makeChapter($project); // is_translated=0 ist Default
+
+    $entry1 = makeEntry($chapter1);
+    $entry1->is_translated = 1;
+    $entry1->save();
+
+    makeEntry($chapter1);
 
     /** @var ProjectController $controller */
     $controller = app(ProjectController::class);
