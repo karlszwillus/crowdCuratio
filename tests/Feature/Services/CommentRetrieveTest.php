@@ -21,6 +21,7 @@ If not, see <https://www.gnu.org/licenses/>.
  */
 
 use App\Models\Comment;
+use App\Models\MediaContent;
 use App\Models\User;
 use App\Services\CommentRetrieve;
 use App\Support\PermissionName;
@@ -272,7 +273,7 @@ it('liefert für unbekannte Class (MediaContent) leeren pathReply ohne Crash', f
     // MediaContent als Fallback-Class — kein Switch-Case, pathReply
     // bleibt leer. Wird von ContentController::getTextComment /
     // getImageComment so durchgereicht.
-    $mediaContent = \App\Models\MediaContent::create([
+    $mediaContent = MediaContent::create([
         'position' => 1,
         'media_content_id' => 1,
         'media_contentable_id' => $entry->id,
