@@ -38,6 +38,7 @@ use App\Services\CommentService;
 use App\Services\LogService;
 use App\Services\ProjectImageService;
 use App\Services\ProjectPermissionService;
+use App\Services\SourceService;
 use App\Services\UserService;
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -66,6 +67,7 @@ class ProjectController extends Controller
         private readonly ProjectImageService $images,
         private readonly ProjectPermissionService $permissions,
         private readonly CommentService $comments,
+        private readonly SourceService $sources,
     ) {
         $this->middleware('auth');
         $this->middleware('permission:add', ['only' => ['create', 'store']]);
@@ -566,11 +568,11 @@ class ProjectController extends Controller
             }
 
             if (isset($request['copyrightReset'])) {
-                $model->copyright = $this->getSource($request['copyrightReset'], 'Copyright');
+                $model->copyright = $this->sources->findOrCreateId($request['copyrightReset'], 'Copyright');
             }
 
             if (isset($request['originReset'])) {
-                $model->copyright = $this->getSource($request['copyrightReset'], 'Origin');
+                $model->copyright = $this->sources->findOrCreateId($request['copyrightReset'], 'Origin');
             }
 
             if (isset($request['textReset'])) {
@@ -597,30 +599,6 @@ class ProjectController extends Controller
         }
 
         return redirect(session('links')[2]);
-    }
-
-    /**
-     * Get or create a Source row of the given type for the given value.
-     *
-     * Returns the id of a matching Source if one exists, otherwise
-     * inserts a new row (with the translated `name` payload) and
-     * returns the new id.
-     *
-     * @return int
-     */
-    protected function getSource($value, $type)
-    {
-        $sources = Source::where('type', $type)->get();
-
-        foreach ($sources as $source) {
-            if ($source->name == $value) {
-                return $source->id;
-            }
-        }
-
-        return Source::insertGetId(
-            ['name' => json_encode([app()->getLocale() => $value]), 'type' => $type, 'created_at' => now()]
-        );
     }
 
     /**

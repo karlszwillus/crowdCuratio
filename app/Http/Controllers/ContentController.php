@@ -32,6 +32,7 @@ use App\Models\Source;
 use App\Models\Text;
 use App\Services\CommentRetrieve;
 use App\Services\CommentService;
+use App\Services\SourceService;
 use App\Traits\UploadTrait;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
@@ -52,6 +53,7 @@ class ContentController extends Controller
      */
     public function __construct(
         private readonly CommentService $comments,
+        private readonly SourceService $sources,
     ) {
         $this->middleware('auth');
     }
@@ -176,10 +178,10 @@ class ContentController extends Controller
             $position = Image::where('gallery_id', $request['galleryId'])->orderBy('position', 'desc')->pluck('position')->first();
 
             // Set copyright value
-            $copyright = $this->getSource($request['copyrightImage'], 'Copyright');
+            $copyright = $this->sources->findOrCreateId($request['copyrightImage'], 'Copyright');
 
             // Set origin value
-            $origin = $this->getSource($request['originImage'], 'Origin');
+            $origin = $this->sources->findOrCreateId($request['originImage'], 'Origin');
 
             $im = Image::firstOrCreate(
                 [
@@ -213,10 +215,10 @@ class ContentController extends Controller
         $image = Image::find($request['imageId']);
 
         // Set copyright value
-        $copyright = $this->getSource($request['copyrightImage'], 'Copyright');
+        $copyright = $this->sources->findOrCreateId($request['copyrightImage'], 'Copyright');
 
         // Set origin value
-        $origin = $this->getSource($request['originImage'], 'Origin');
+        $origin = $this->sources->findOrCreateId($request['originImage'], 'Origin');
 
         if (isset($request['newImage']) && ! is_null($request['newImage'])) {
             // Check if an image should be uploaded
@@ -269,19 +271,6 @@ class ContentController extends Controller
      *
      * @return int
      */
-    protected function getSource($value, $type)
-    {
-        $sources = Source::where('type', $type)->get();
-
-        foreach ($sources as $source) {
-            if ($source->name == $value) {
-                return $source->id;
-            }
-        }
-
-        return Source::insertGetId(['name' => json_encode([app()->getLocale() => $value]), 'type' => $type, 'created_at' => now()]);
-    }
-
     /**
      * Set Image
      *
@@ -393,10 +382,10 @@ class ContentController extends Controller
             return redirect()->back()->with('success', __('message_edit_text_success'));
         } else {
             // Set copyright value
-            $copyright = $this->getSource($request['copyrightText'], 'Copyright');
+            $copyright = $this->sources->findOrCreateId($request['copyrightText'], 'Copyright');
 
             // Set origin value
-            $origin = $this->getSource($request['originText'], 'Origin');
+            $origin = $this->sources->findOrCreateId($request['originText'], 'Origin');
 
             // filter text before saving
             $strClean = str_replace(['<script>', '</script>'], ['', ''], $request['contentText']);
@@ -426,10 +415,10 @@ class ContentController extends Controller
     public function updateText(Request $request)
     {
         // Set copyright value
-        $copyright = $this->getSource($request['copyrightText'], 'Copyright');
+        $copyright = $this->sources->findOrCreateId($request['copyrightText'], 'Copyright');
 
         // Set origin value
-        $origin = $this->getSource($request['originText'], 'Origin');
+        $origin = $this->sources->findOrCreateId($request['originText'], 'Origin');
 
         // filter text before saving
         $strClean = str_replace(['<script>', '</script>'], ['', ''], $request['contentText']);
