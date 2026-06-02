@@ -62,8 +62,6 @@ class Image extends Model implements HasComments
 
     /**
      * Get image origin
-     *
-     * @return BelongsTo
      */
     public function originImage(): BelongsTo
     {
@@ -72,8 +70,6 @@ class Image extends Model implements HasComments
 
     /**
      * Get image copyright
-     *
-     * @return BelongsTo
      */
     public function copyrightImage(): BelongsTo
     {
