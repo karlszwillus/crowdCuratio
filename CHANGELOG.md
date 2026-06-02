@@ -10,6 +10,74 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Geändert (Permission-Harmonisierung — Block D, PR 1)
+
+- **`ProjectController`: Drei-Wege-Authorization auf einen Pfad
+  konsolidiert.** Die drei `middleware('permission:add|view|comment')`-
+  Aufrufe im Konstruktor sind raus; Authorization läuft jetzt
+  durchgehend über die `ProjectPolicy`. `index()` und `create()`
+  rufen `$this->authorize(...)` als erstes Statement; `commentProject`
+  und `getProjectComment` `authorize('comment', $project)` nach
+  dem `findOrFail`. `StoreProjectRequest::authorize()` delegiert
+  an `ProjectPolicy::create`. Neue Policy-Methode `comment()`
+  übernimmt die Prüfung der `comment`-Permission.
+- **`ProjectPolicy::viewAny` verschärft auf `$user->can(VIEW)`.**
+  Reproduziert die Semantik der früheren `permission:view`-Route-
+  Middleware exakt. Initial-Version der D.4-Auflösung ließ jeden
+  Auth-User durch, was eine funktionale Regression war
+  (`getAllProjects()` macht im Anschluss Annahmen über die
+  User-Rolle und crasht 500 ohne sie). Die feinere, project-scoped
+  Sicht (User sieht nur Projects, in denen er Owner oder
+  eingeladen ist) wandert mit einem späteren PR in den
+  `ProjectPermissionService`.
+- **`PermissionName` Final-Class → Backed-Enum** (PHP 8.1+).
+  Sieben Cases (`VIEW`, `ADD`, `EDIT`, `DELETE`, `PUBLISH`,
+  `COMMENT`, `INVITE`) mit den unveränderten String-Werten.
+  `PermissionName::all()` bleibt als String-Array-Helper für die
+  Seeder- und Test-Setup-Pfade kompatibel. Laravel-Gate und
+  Spatie-Permission v6 akzeptieren `BackedEnum` direkt; alle 12
+  Aufrufer (drei Policies, neun Tests) bleiben strukturell wie
+  sie waren — `$user->can(PermissionName::ADD)` ist jetzt
+  typ-sicher statt ein Magic-String.
+- **`role:Admin`-Middleware statt `'admin'`-Alias**: User- und
+  Role-Controller-Methoden (`index`, `edit`, `destroy`) sind
+  jetzt mit `middleware('role:Admin')` geschützt — konsistent mit
+  Spatie-Permission. Vorher liefen sie über die Custom
+  `IsAdmin`-Middleware (`$middleware->alias('admin', IsAdmin::class)`).
+
+### Entfernt (Permission-Harmonisierung — Block D, PR 1)
+
+- **`App\Http\Middleware\IsAdmin` gelöscht**. Custom-Middleware
+  prüfte `auth()->user()->hasRole('Admin')` — exakt das macht
+  Spatie's `RoleMiddleware` per `role:Admin`-Alias. Plus
+  `'admin'`-Alias-Registrierung in `bootstrap/app.php`
+  entfernt. Erste Welle der Drei-Welten-Auflösung aus ADR-0005
+  (NF-ARCH-017). Settings-Route-Group in `routes/web.php`
+  nachgezogen — der `'admin'`-Alias war hier vergessen worden
+  und wäre nach dem Alias-Drop rot geworden (`auth + role:Admin`
+  jetzt direkt im Group-Array).
+- **`permission:add` / `permission:view` / `permission:comment`-
+  Middleware aus `ProjectController::__construct` entfernt.**
+  Authorization läuft durchgehend über `ProjectPolicy` (siehe
+  oben).
+
+### Hinzugefügt (Permission-Harmonisierung — Block D, PR 1)
+
+- **`AdminRoutesCharacterizationTest`** in
+  `tests/Feature/Refactor/`. Acht Pest-Tests fixieren das
+  Authorization-Verhalten der heute mit `IsAdmin` (jetzt
+  `role:Admin`) geschützten Routen: User- und
+  Role-Controller-`index`/`edit`-Pfade je einmal mit
+  Admin-Rolle (200/302) und einmal mit Reader-Rolle (403).
+  Charakterisierung vor dem Middleware-Wechsel, dadurch
+  abgesichert nach dem Wechsel. Ergänzt um vier weitere Tests
+  für `ProjectController::index`/`create` (Admin und Reader
+  dürfen `index`, Reader darf `create` nicht — 403, Admin darf
+  `create`).
+- **`ProjectPolicy::comment()`** ergänzt. Spiegelt das Verhalten
+  der bisherigen `permission:comment`-Middleware (`$user->can(COMMENT)`).
+
+
 ### Geändert
 
 - **CI-Coverage-Schwelle auf 55 % angehoben.** `composer.json`

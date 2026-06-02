@@ -22,6 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Http\Requests;
 
+use App\Models\Project;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -31,15 +32,16 @@ use Illuminate\Foundation\Http\FormRequest;
  * weil project_image als File-Field zusammen mit den Project-
  * Feldern abgeschickt wird — kein separater Endpoint.
  *
- * Authorize() ist hier offen: jeder eingeloggte User darf ein
- * Project anlegen. Sobald wir das ändern wollen (z. B. nur User
- * mit `create_project=true`), wandert die Policy-Logik hier her.
+ * Block D / D.4: Authorize() delegiert an `ProjectPolicy::create`
+ * — vorher war es offen (`user() !== null`), die Permission-Prüfung
+ * lief über `permission:add`-Middleware im Controller. Mit der
+ * Drei-Wege-Authorization-Auflösung wandert die Logik hier her.
  */
 class StoreProjectRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user() !== null;
+        return $this->user()?->can('create', Project::class) === true;
     }
 
     public function rules(): array

@@ -23,62 +23,42 @@ If not, see <https://www.gnu.org/licenses/>.
 namespace App\Support;
 
 /**
- * Permission-Namen als Konstanten — Phase 2 / D.8 (NF-CODE-003).
+ * Permission-Namen als Backed-Enum.
  *
- * Bisher waren die sieben Permission-Strings ('view', 'add', …) als
- * Magic-Strings über Seeder, Policies, Controller und Views verteilt.
- * Diese Klasse zentralisiert sie. Die String-Werte bleiben unverändert,
- * damit Bestandsdaten (Permission-Rows in der DB, Role-Permission-
- * Verknüpfungen) ohne Migration weiterleben.
+ * Hervorgegangen aus der Phase-2 / D.8-Konstanten-Klasse
+ * (NF-CODE-003). Seit Block D / ADR-0005 ist die Klasse zum
+ * Enum gehoben — Laravel-Gate und Spatie-Permission v6
+ * akzeptieren `BackedEnum`-Instanzen direkt
+ * (`$user->can(PermissionName::ADD)`, `$user->givePermissionTo
+ * (PermissionName::EDIT)`).
  *
- * Verwendung in PHP-Code (Seeder, Policies, Controller, FormRequests):
+ * Die String-Werte bleiben unverändert, damit Bestandsdaten
+ * (Permission-Rows in der DB, Role-Permission-Verknüpfungen)
+ * ohne Migration weiterleben.
  *
- *     use App\Support\PermissionName;
- *
- *     $user->can(PermissionName::ADD);
- *     Permission::updateOrCreate(['name' => PermissionName::VIEW]);
- *
- * Blade-Views nutzen weiterhin die String-Form ('add', 'edit', …),
- * weil `@can(PermissionName::ADD, $project)` in Templates schlechter
- * lesbar ist als `@can('add', $project)`. Tradeoff bewusst.
- *
- * Phase 3-Bezug: mit dem Laravel-Upgrade kann diese Klasse in ein
- * Backed-Enum umgewandelt werden, sobald PHP 8.1+ in Prod fix ist.
+ * Blade-Views nutzen weiterhin die String-Form (`@can('add',
+ * $project)`), weil `@can(PermissionName::ADD, $project)` in
+ * Templates schlechter lesbar ist. Tradeoff bewusst.
  */
-final class PermissionName
+enum PermissionName: string
 {
-    public const VIEW = 'view';
-
-    public const ADD = 'add';
-
-    public const EDIT = 'edit';
-
-    public const DELETE = 'delete';
-
-    public const PUBLISH = 'publish';
-
-    public const COMMENT = 'comment';
-
-    public const INVITE = 'invite';
+    case VIEW = 'view';
+    case ADD = 'add';
+    case EDIT = 'edit';
+    case DELETE = 'delete';
+    case PUBLISH = 'publish';
+    case COMMENT = 'comment';
+    case INVITE = 'invite';
 
     /**
-     * Alle Permissions in der kanonischen Reihenfolge.
-     *
-     * Wird vom PermissionTableSeeder durchlaufen — die Reihenfolge
-     * bestimmt die `permission_descriptions.position`.
+     * Alle Permissions als String-Array — kompatibel zur alten
+     * Final-Class-Signatur. Wird vom `PermissionTableSeeder`
+     * durchlaufen, plus in den Test-Setups (beforeEach).
      *
      * @return array<int, string>
      */
     public static function all(): array
     {
-        return [
-            self::VIEW,
-            self::ADD,
-            self::EDIT,
-            self::DELETE,
-            self::PUBLISH,
-            self::COMMENT,
-            self::INVITE,
-        ];
+        return array_map(fn (self $case) => $case->value, self::cases());
     }
 }

@@ -70,16 +70,15 @@ class ProjectController extends Controller
         private readonly SourceService $sources,
     ) {
         $this->middleware('auth');
-        $this->middleware('permission:add', ['only' => ['create', 'store']]);
-        $this->middleware('permission:view', ['only' => ['index']]);
-        // Hinweis: die Permission-Middleware auf 'edit', 'update',
-        // 'destroy' bleibt bewusst aus — sie würde sonst auch den
-        // Project-Owner blocken, weil der heute keine globale
-        // 'edit'/'delete'-Permission besitzt. Die Authorization für
-        // diese Actions läuft über ProjectPolicy mit
-        // $this->authorize(...) (siehe update/destroy unten und
-        // .werkbank/ADR/0013-authorization-strategie.md).
-        $this->middleware('permission:comment', ['only' => ['commentProject', 'getProjectComment']]);
+        // Block D / D.4: Drei-Wege-Authorization in einen Pfad
+        // konsolidiert (ADR-0005). Vorher liefen hier zusätzlich
+        // `permission:add` (für create/store), `permission:view`
+        // (für index) und `permission:comment` (für commentProject/
+        // getProjectComment) parallel zu FormRequest-`authorize()`
+        // und inline `$this->authorize(...)`. Authorization läuft
+        // jetzt durchgehend über die ProjectPolicy — der jeweilige
+        // Action-Body ruft `$this->authorize(...)` oder die
+        // FormRequest-`authorize()`-Methode tut es.
     }
 
     /**
@@ -89,6 +88,8 @@ class ProjectController extends Controller
      */
     public function index()
     {
+        $this->authorize('viewAny', Project::class);
+
         // get all available projects
         $data = $this->getAllProjects();
 
@@ -136,6 +137,8 @@ class ProjectController extends Controller
      */
     public function create()
     {
+        $this->authorize('create', Project::class);
+
         return view('projects.create');
     }
 
@@ -352,6 +355,7 @@ class ProjectController extends Controller
         $request->validate(['comment' => 'required']);
 
         $project = Project::findOrFail($request->id);
+        $this->authorize('comment', $project);
         $this->comments->addComment($project, $request);
 
         return redirect()->back()->with('success', 'Reply to comment added successfully');
@@ -364,6 +368,9 @@ class ProjectController extends Controller
      */
     public function getProjectComment($id)
     {
+        $project = Project::findOrFail($id);
+        $this->authorize('comment', $project);
+
         $comment = new CommentRetrieve;
 
         return $comment->getComments('App\Models\Project', $id);

@@ -20,7 +20,6 @@ along with this program in the file LICENSE.
 If not, see <https://www.gnu.org/licenses/>.
  */
 
-use App\Http\Middleware\IsAdmin;
 use App\Http\Middleware\Language;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use Illuminate\Foundation\Application;
@@ -52,7 +51,6 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => RoleMiddleware::class,
             'permission' => PermissionMiddleware::class,
             'role_or_permission' => RoleOrPermissionMiddleware::class,
-            'admin' => IsAdmin::class,
             'guest' => RedirectIfAuthenticated::class,
         ]);
 

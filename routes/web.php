@@ -63,7 +63,10 @@ Route::group(
 );
 
 Route::group(
-    ['middleware' => ['admin']],
+    // Block D / D.3: 'admin'-Alias entfernt, role:Admin direkt
+    // — der Settings-Bereich war hier vergessen worden, weil
+    // er routenseitig (und nicht controllerseitig) geschützt wird.
+    ['middleware' => ['auth', 'role:Admin']],
     function () {
         Route::resource('/settings', SettingController::class);
     }
