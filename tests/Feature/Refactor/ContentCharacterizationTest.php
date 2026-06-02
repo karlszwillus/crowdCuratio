@@ -191,27 +191,39 @@ it('destroyImage soft-deleted das Image', function () {
 
 // ---------- Gallery ----------
 
-it('saveGallery im Update-Pfad aktualisiert title/subtitle/description', function () {
+it('saveGallery im Translation-Pfad schreibt en-Übersetzungen für title/subtitle/description', function () {
     /** @var TestCase $this */
     /** @var User $owner */
     $owner = User::factory()->create();
     $owner->assignRole('Admin');
     $this->actingAs($owner);
 
-    $gallery = makeGallery(['title' => 'Alter Titel']);
+    // Inkonsistenz im aktuellen ContentController::saveGallery —
+    // der Translation-Pfad (translationGallery gesetzt) liest die
+    // Felder als `galleryTitle`/`gallerySubtitle`/`galleryDescription`
+    // und schreibt sie über setTranslation('en', ...). Der direkte
+    // Pfad (ohne translationGallery) liest dagegen `title`/`subtitle`/
+    // `description` — was das Frontend vermutlich gar nicht schickt.
+    // Beim Service-Refactor in F.5 wird der Direct-Pfad korrigiert,
+    // dieser Test fixiert hier nur den Translation-Pfad, der heute
+    // tatsächlich vom Frontend benutzt wird.
+    $gallery = makeGallery(['title' => 'Alter Titel DE']);
 
     $this->post('/save-gallery', [
         'galleryId' => $gallery->id,
-        'galleryTitle' => 'Neuer Titel',
-        'gallerySubtitle' => 'Neuer Untertitel',
-        'galleryDescription' => 'Neue Beschreibung',
+        'translationGallery' => true,
+        'galleryTitle' => 'Neuer Titel EN',
+        'gallerySubtitle' => 'Neuer Untertitel EN',
+        'galleryDescription' => 'Neue Beschreibung EN',
+        'isTranslated' => true,
     ]);
 
     $gallery->refresh();
 
-    expect($gallery->title)->toBe('Neuer Titel');
-    expect($gallery->subtitle)->toBe('Neuer Untertitel');
-    expect($gallery->description)->toBe('Neue Beschreibung');
+    expect($gallery->getTranslation('title', 'en'))->toBe('Neuer Titel EN');
+    expect($gallery->getTranslation('subtitle', 'en'))->toBe('Neuer Untertitel EN');
+    expect($gallery->getTranslation('description', 'en'))->toBe('Neue Beschreibung EN');
+    expect($gallery->getTranslation('title', 'de'))->toBe('Alter Titel DE');
 });
 
 it('destroyGallery soft-deleted Gallery und ihre Images', function () {
