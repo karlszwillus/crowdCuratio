@@ -45,6 +45,7 @@ use Dompdf\Options;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -97,37 +98,18 @@ class ProjectController extends Controller
     }
 
     /**
-     * Return list of all active projects
+     * Return list of all active projects.
      *
-     * @return Collection
+     * Block D PR 2 / D.5: delegiert an `ProjectPermissionService::
+     * listProjectsForUser`. Vor PR 2 stand hier die Query inline,
+     * mit Admin-Pfad via `users.isAdmin()` und Nicht-Admin-Pfad
+     * über `invitations.guest_id`. Service nutzt jetzt
+     * `user_has_permissions` als Quelle der Wahrheit für die
+     * Eingeladenen-Sicht (siehe Service-Doku).
      */
-    public function getAllProjects()
+    public function getAllProjects(): EloquentCollection
     {
-
-        if (Auth::user()->isAdmin()) {
-
-            return Project::query()
-                ->join('users', 'users.id', '=', 'projects.user_id')
-                ->select('projects.*', 'users.name as user_name')
-                ->whereNull('projects.deleted_at')
-                ->whereNull('users.deleted_at')
-                ->get();
-        } else {
-
-            return Project::query()
-                ->join('users', 'users.id', '=', 'projects.user_id')
-                ->leftJoin('invitations', 'invitations.project_id', '=', 'projects.id')
-                ->select('projects.*', 'users.name as user_name')
-                ->distinct()
-                ->Where(function ($query) {
-                    $query->where('invitations.guest_id', Auth::user()->id)
-                        ->orWhere('projects.user_id', Auth::user()->id);
-                })
-                ->whereNull('projects.deleted_at')
-                ->whereNull('users.deleted_at')
-                ->get();
-        }
-
+        return $this->permissions->listProjectsForUser(Auth::user());
     }
 
     /**

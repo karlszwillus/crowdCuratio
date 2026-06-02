@@ -10,6 +10,41 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Geändert (Permission-Harmonisierung — Block D, PR 2 / Welle 2a)
+
+- **`ProjectPolicy::view` und `::comment` sind jetzt project-scoped.**
+  Vorher prüfte `view` nur Owner-Identität, `comment` nur die
+  globale `comment`-Permission — Eingeladene mit project-scoped
+  Permissions waren außen vor (bei `view`) bzw. globale
+  Comment-Inhaber durften auf jedem fremden Project kommentieren
+  (bei `comment`). Beide Methoden gehen jetzt über
+  `ProjectPermissionService::userHasPermissionOnProject(User,
+  Project, PermissionName)` — Owner-Shortcut, Admin via
+  `before()`, sonst Lookup gegen den project-scoped Pivot.
+- **`ProjectController::getAllProjects` ist auf den Service
+  verschlankt.** Die 25-Zeilen-Query (Admin-Pfad inline + Nicht-
+  Admin-Pfad über `invitations.guest_id`) ist auf einen
+  Service-Call zusammengeschmolzen.
+  `ProjectPermissionService::listProjectsForUser` resolved
+  Eingeladene jetzt über `user_has_permissions` (konsistent mit
+  der Permission-Welt) statt über `invitations`. Funktional
+  äquivalent, weil `setForUserOnProject` beides anlegt.
+
+### Hinzugefügt (Permission-Harmonisierung — Block D, PR 2 / Welle 2a)
+
+- **`ProjectPolicyTest`** in `tests/Feature/Policies/`. Neun
+  Pest-Tests für `view`/`comment`/`viewAny` mit Owner /
+  Eingeladenem-mit-Permission / Eingeladenem-ohne /
+  Fremdem / Admin-via-before, plus `viewAny` mit und ohne
+  `view`-Permission. Fixiert die project-scoped Authorization.
+- **`ProjectControllerAuthorizationTest`** in `tests/Feature/Http/`.
+  Fünf Pest-Tests für die Index-Filterung (Owner / Eingeladener
+  / Fremder, plus Admin sieht alles) und für die `/comment/project`-
+  Route (Owner / Eingeladener-mit-comment / Fremder → 403).
+- **`ProjectPermissionServiceTest`** um sechs Tests erweitert für
+  die neuen Service-Methoden `userHasPermissionOnProject` und
+  `listProjectsForUser`.
+
 ### Geändert (Permission-Harmonisierung — Block D, PR 1)
 
 - **`ProjectController`: Drei-Wege-Authorization auf einen Pfad
