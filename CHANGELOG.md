@@ -10,6 +10,78 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Hinzugefügt (Content-Service-Welle)
+
+- **`SourceService`** in `app/Services/`. Kapselt die
+  find-or-create-Logik für Source-Zeilen
+  (`findOrCreateId(value, type): int`). Löst das `getSource`-
+  Method-Duplikat, das vorher in `ProjectController` und
+  `ContentController` gelebt hat. Drei Pest-Tests in
+  `tests/Feature/Services/SourceServiceTest.php`.
+- **`TextService`** + **`TextData`-DTO** in `app/Services/`
+  und `app/Data/`. Service-Methoden `create(TextData,
+  entryId)`, `update(Text, TextData)` und `destroy(Text)`.
+  Übernimmt Body-Bereinigung (Script-Tag-Filter), Source-
+  Lookups und `MediaContent`-Attach an Entry. Fünf Pest-Tests
+  in `tests/Feature/Services/TextServiceTest.php`.
+- **`ImageService`** + **`ImageData`-DTO**. Methoden `create`
+  (mit File-Upload und Gallery-Positionierung), `update` (mit
+  optionalem neuen File), `destroy`. Upload-Logik (vorher
+  `setImage`-Helper) wandert mit in den Service. Fünf Pest-
+  Tests in `tests/Feature/Services/ImageServiceTest.php`.
+- **`GalleryService`** + **`GalleryData`-DTO`. Methoden
+  `create` (mit `MediaContent`-Attach), `update` (direkter Pfad
+  und Translation-Pfad), `destroy`. Vier Pest-Tests in
+  `tests/Feature/Services/GalleryServiceTest.php`.
+- **`AudiovisualService`** + **`AudiovisualData`-DTO**.
+  Methoden `create` / `update` / `destroy` plus
+  `resolveLink(?string, ?UploadedFile): string` für
+  YouTube-URL-Konversion und Audio-Upload. `youtubeID`- und
+  `uploadAudio`-Helper wandern aus dem Controller in den
+  Service. Sieben Pest-Tests in
+  `tests/Feature/Services/AudiovisualServiceTest.php`.
+
+### Geändert (Content-Service-Welle)
+
+- **`ContentController` und `AudiovisualController` per
+  Constructor-Injection auf die fünf Services umgestellt.**
+  `saveText` / `saveImage` / `saveGallery` und
+  `AudiovisualController::store` reduzieren sich auf
+  HTTP-Mapping und Service-Delegation. Die jeweiligen
+  `destroy*`-Methoden nutzen `Service::destroy(Model)`.
+- **Inkonsistenz-Bug in `saveGallery` mitkorrigiert**: der
+  direkte Update-Pfad las vorher `$request['title']` /
+  `$request['subtitle']` / `$request['description']` — das
+  Frontend schickt aber nur die `galleryTitle`-Variante (das
+  haben wir im F.1-Charakterisierungs-Test dokumentiert).
+  `GalleryData::fromRequest` akzeptiert beide Varianten und
+  priorisiert die `gallery*`-Prefix-Form.
+
+### Behoben (Content-Service-Welle)
+
+- **NF-LAR-009 — Soft-Delete-Bypass in den Content-Schreibpfaden
+  beseitigt.** `destroyText` / `destroyImage` / `destroyGallery`
+  liefen vorher über `DB::table()->update(['deleted_at' => now()])`
+  bzw. `update(['deleted_at' => now()])` direkt auf der DB-Spalte
+  — das umgeht die SoftDeletes-Trait-Hooks (Observer,
+  Activity-Log etc.). Alle vier Stellen auf Eloquent-Builder-
+  `delete()` umgestellt; Verhalten identisch, Trait-Hook-Chain
+  greift jetzt korrekt.
+
+### Entfernt (Content-Service-Welle)
+
+- **Cargo-Methoden aus `ContentController` und
+  `AudiovisualController`**: `mapData` in beiden Controllern,
+  `setImage` (File-Upload-Helper), `attachMedia`, `detachMedia`,
+  `updateText`, `updateImage`, `uploadAudio`, `youtubeID`. Alle
+  wandern als Service-interne Verantwortung in die fünf
+  Content-Services. Toter `protected getSource`-Helper in
+  `ProjectController` und `ContentController` durch
+  `SourceService::findOrCreateId` ersetzt.
+- **Tote Imports** in beiden Controllern (`Storage`-Facade,
+  `UploadTrait`, `MediaContent`, `Str`, `SourceService` nach
+  letzter Refactor-Welle) aufgeräumt.
+
 ### Hinzugefügt (Block-F-Vorbereitung)
 
 - **Fünf Test-Factories für die Content-Modelle** in
