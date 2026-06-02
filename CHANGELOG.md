@@ -10,6 +10,26 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Behoben
+
+- **`CommentRetrieve::getComments` initialisiert `$pathReply`
+  defensiv.** Die Methode setzt im switch-Statement je nach
+  `$class` einen `$pathReply` (Save-Route für die spätere
+  Reply-Submission im Frontend). Für `App\Models\MediaContent`
+  — was `ContentController::getTextComment` /
+  `getImageComment` als Class durchreichen — gibt es keinen
+  Case, sodass `$pathReply` undefined blieb. Bei leerer
+  Comment-Liste fiel das nicht auf (foreach läuft nicht), bei
+  einem MediaContent mit Kommentaren wäre der Aufruf gecrasht.
+  Defensiver Default `$pathReply = '';` am Methoden-Anfang.
+- **`ChapterController::getChapterComment` konsistent zu den
+  anderen `get*Comment`-Methoden.** Project, Entry, Text und
+  Image geben das `getComments`-Array direkt zurück (Laravel
+  serialisiert das als JSON für den AJAX-Aufrufer). Nur
+  Chapter machte `redirect()->back()->with(['comments' => …])`
+  — ein Pattern-Bruch, der unter den Frontend-AJAX-Pfaden für
+  Verwirrung sorgte. Jetzt symmetrisch.
+
 ### Hinzugefügt (CommentService-Extraktion)
 
 - **`CommentService`** in `app/Services/`. Kapselt die fünf

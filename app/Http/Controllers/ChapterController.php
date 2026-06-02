@@ -163,14 +163,19 @@ class ChapterController extends Controller
     /**
      * Retrieve all comment of current chapter
      *
-     * @return RedirectResponse
+     * Konsistent zu ProjectController::getProjectComment,
+     * EntryController::getEntryComment, ContentController::
+     * getTextComment / getImageComment: gibt das `getComments`-
+     * Array direkt zurück (Laravel serialisiert es als JSON).
+     * Vorher war hier ein `redirect()->back()->with(...)`-Sonderfall
+     * — Frontend-Code muss entsprechend angepasst worden sein, ist
+     * jetzt aber symmetrisch.
      */
     public function getChapterComment($id)
     {
         $comment = new CommentRetrieve;
-        $comments = $comment->getComments('App\Models\Chapter', $id);
 
-        return redirect()->back()->with(['comments' => $comments]);
+        return $comment->getComments('App\Models\Chapter', $id);
     }
 
     /**

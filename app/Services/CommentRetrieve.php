@@ -38,6 +38,12 @@ class CommentRetrieve
         $data = [];
         $status = [];
         $data['pathComment'] = '';
+        // Defensiv initialisieren, damit der foreach-Loop unten
+        // auch dann nicht crasht, wenn der switch keinen Case für
+        // $class trifft (z. B. MediaContent — wird heute von
+        // ContentController::getTextComment / getImageComment als
+        // class durchgereicht).
+        $pathReply = '';
 
         switch ($class) {
             case 'App\Models\Project':
