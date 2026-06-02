@@ -85,6 +85,7 @@ it('Admin darf einen User editieren (UserController::edit)', function () {
     $admin->assignRole('Admin');
     /** @var User $target */
     $target = User::factory()->create();
+    $target->assignRole('Reader'); // Target braucht eine Rolle — View rendert sonst rot
     $this->actingAs($admin);
 
     $response = $this->get('/users/'.$target->id.'/edit');
