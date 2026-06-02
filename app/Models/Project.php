@@ -25,6 +25,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Contracts\HasComments;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -42,7 +43,7 @@ use Spatie\Translatable\HasTranslations;
  * @property Collection<int, Chapter> $chapters
  * @property User|null $user
  */
-class Project extends Model
+class Project extends Model implements HasComments
 {
     use HasFactory, HasPermissions, HasTranslations,LogsActivity, SoftDeletes;
 
@@ -93,7 +94,7 @@ class Project extends Model
      *
      * @return MorphMany
      */
-    public function comments()
+    public function comments(): MorphMany
     {
         return $this->morphMany(Comment::class, 'commentable')->whereNull('parent_id');
     }

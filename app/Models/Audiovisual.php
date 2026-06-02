@@ -24,6 +24,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Contracts\HasComments;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Lang;
@@ -37,7 +38,7 @@ use Spatie\Translatable\HasTranslations;
  * @property bool $is_translated
  * @property int|null $media_id Runtime-Zuweisung im ProjectController, nicht DB-Spalte.
  */
-class Audiovisual extends Model
+class Audiovisual extends Model implements HasComments
 {
     use HasFactory, HasTranslations, LogsActivity, SoftDeletes;
 
@@ -55,7 +56,7 @@ class Audiovisual extends Model
      *
      * @return MorphMany
      */
-    public function comments()
+    public function comments(): MorphMany
     {
         return $this->morphMany(Comment::class, 'commentable')->whereNull('parent_id');
     }

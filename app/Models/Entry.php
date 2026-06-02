@@ -25,6 +25,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Contracts\HasComments;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -43,7 +44,7 @@ use Spatie\Translatable\HasTranslations;
  * @property Collection<int, MediaContent> $mediaContent
  * @property mixed $media Runtime-Zuweisung in ProjectController::allData (Media-Snapshot je Entry), nicht DB-Spalte.
  */
-class Entry extends Model
+class Entry extends Model implements HasComments
 {
     use HasFactory, HasTranslations, LogsActivity, SoftDeletes;
 
@@ -129,7 +130,7 @@ class Entry extends Model
      *
      * @return MorphMany
      */
-    public function comments()
+    public function comments(): MorphMany
     {
         return $this->morphMany(Comment::class, 'commentable')->whereNull('parent_id');
     }

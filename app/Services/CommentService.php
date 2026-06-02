@@ -22,8 +22,8 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Services;
 
+use App\Contracts\HasComments;
 use App\Models\Comment;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 
 /**
@@ -50,7 +50,7 @@ class CommentService
      *  - comment            (Body)
      *  - IdProjectComment   (Project-FK für Filter-Pfade in der UI)
      */
-    public function addComment(Model $commentable, Request $request): void
+    public function addComment(HasComments $commentable, Request $request): void
     {
         $comment = new Comment;
         $comment->comment = $request->comment;
@@ -71,7 +71,7 @@ class CommentService
      *  - commentId   (Parent)
      *  - question    (commentable-ID — `class::find($question)`)
      */
-    public function replyToComment(Model $commentable, Request $request): void
+    public function replyToComment(HasComments $commentable, Request $request): void
     {
         $reply = new Comment;
         $reply->comment = $request->reply;
@@ -138,7 +138,7 @@ class CommentService
      * Aufrufer kann dann einen leeren Response zurückgeben (das
      * alte Verhalten der `saveComment*`-Methoden).
      */
-    public function dispatchSaveAction(Model $commentable, Request $request): bool
+    public function dispatchSaveAction(HasComments $commentable, Request $request): bool
     {
         if (! isset($request['btn_submit'])) {
             return false;

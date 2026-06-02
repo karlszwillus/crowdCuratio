@@ -67,6 +67,16 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
   mit-korrigiert.
 - **Blade-Stelle in `chapters/index.blade.php`** auf die neuen
   Route-Namen umgestellt (`comment.<model>.status`).
+- **`App\Contracts\HasComments`-Interface** für die acht
+  commentable Modelle (Project, Chapter, Entry, MediaContent,
+  Text, Image, Gallery, Audiovisual). Garantiert das
+  `comments(): MorphMany`-Vertrag im Type-System, der vorher nur
+  durch den entfernten `CommentTrait` implizit war.
+  `CommentService::addComment`/`replyToComment`/`dispatchSaveAction`
+  nehmen jetzt `HasComments $commentable` statt eines generischen
+  `Model` — Larastan kann den `->comments()`-Aufruf statisch
+  verifizieren. Die acht Modelle bekommen `: MorphMany` als
+  expliziten Return-Type auf der `comments()`-Methode.
 
 ### Entfernt (CommentService-Extraktion)
 

@@ -25,6 +25,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Contracts\HasComments;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -40,7 +41,7 @@ use Spatie\Translatable\HasTranslations;
  * @property Collection<int, Entry> $entries
  * @property mixed $entry Runtime-Zuweisung in ProjectController::allData (Entry-Snapshot je Chapter), nicht DB-Spalte.
  */
-class Chapter extends Model
+class Chapter extends Model implements HasComments
 {
     use HasFactory, HasTranslations, LogsActivity, SoftDeletes;
 
@@ -113,7 +114,7 @@ class Chapter extends Model
      *
      * @return MorphMany
      */
-    public function comments()
+    public function comments(): MorphMany
     {
         return $this->morphMany(Comment::class, 'commentable')->whereNull('parent_id');
     }
