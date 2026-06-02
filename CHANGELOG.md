@@ -10,6 +10,44 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Geändert (Permission-Harmonisierung — Block D, PR 1)
+
+- **`PermissionName` Final-Class → Backed-Enum** (PHP 8.1+).
+  Sieben Cases (`VIEW`, `ADD`, `EDIT`, `DELETE`, `PUBLISH`,
+  `COMMENT`, `INVITE`) mit den unveränderten String-Werten.
+  `PermissionName::all()` bleibt als String-Array-Helper für die
+  Seeder- und Test-Setup-Pfade kompatibel. Laravel-Gate und
+  Spatie-Permission v6 akzeptieren `BackedEnum` direkt; alle 12
+  Aufrufer (drei Policies, neun Tests) bleiben strukturell wie
+  sie waren — `$user->can(PermissionName::ADD)` ist jetzt
+  typ-sicher statt ein Magic-String.
+- **`role:Admin`-Middleware statt `'admin'`-Alias**: User- und
+  Role-Controller-Methoden (`index`, `edit`, `destroy`) sind
+  jetzt mit `middleware('role:Admin')` geschützt — konsistent mit
+  Spatie-Permission. Vorher liefen sie über die Custom
+  `IsAdmin`-Middleware (`$middleware->alias('admin', IsAdmin::class)`).
+
+### Entfernt (Permission-Harmonisierung — Block D, PR 1)
+
+- **`App\Http\Middleware\IsAdmin` gelöscht**. Custom-Middleware
+  prüfte `auth()->user()->hasRole('Admin')` — exakt das macht
+  Spatie's `RoleMiddleware` per `role:Admin`-Alias. Plus
+  `'admin'`-Alias-Registrierung in `bootstrap/app.php`
+  entfernt. Erste Welle der Drei-Welten-Auflösung aus ADR-0005
+  (NF-ARCH-017).
+
+### Hinzugefügt (Permission-Harmonisierung — Block D, PR 1)
+
+- **`AdminRoutesCharacterizationTest`** in
+  `tests/Feature/Refactor/`. Acht Pest-Tests fixieren das
+  Authorization-Verhalten der heute mit `IsAdmin` (jetzt
+  `role:Admin`) geschützten Routen: User- und
+  Role-Controller-`index`/`edit`-Pfade je einmal mit
+  Admin-Rolle (200/302) und einmal mit Reader-Rolle (403).
+  Charakterisierung vor dem Middleware-Wechsel, dadurch
+  abgesichert nach dem Wechsel.
+
+
 ### Geändert
 
 - **CI-Coverage-Schwelle auf 55 % angehoben.** `composer.json`
