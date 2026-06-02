@@ -22,6 +22,9 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Http\Controllers;
 
+use App\Data\GalleryData;
+use App\Data\ImageData;
+use App\Data\TextData;
 use App\Http\Requests\StoreImageBlockRequest;
 use App\Models\Comment;
 use App\Models\Gallery;
@@ -30,14 +33,10 @@ use App\Models\MediaContent;
 use App\Models\Project;
 use App\Models\Source;
 use App\Models\Text;
-use App\Data\GalleryData;
-use App\Data\ImageData;
-use App\Data\TextData;
 use App\Services\CommentRetrieve;
 use App\Services\CommentService;
 use App\Services\GalleryService;
 use App\Services\ImageService;
-use App\Services\SourceService;
 use App\Services\TextService;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
@@ -46,17 +45,14 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class ContentController extends Controller
 {
-
     /**
      * Instantiate a new ContentController instance.
      */
     public function __construct(
         private readonly CommentService $comments,
-        private readonly SourceService $sources,
         private readonly TextService $texts,
         private readonly ImageService $images,
         private readonly GalleryService $galleries,
