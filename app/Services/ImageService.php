@@ -136,16 +136,16 @@ class ImageService
 
     /**
      * Soft-deleted Comment- und MediaContent-Einträge eines
-     * Images. F.7 stellt auf Eloquent-SoftDeletes um.
+     * Images via Eloquent (NF-LAR-009-Fix).
      */
     private function detachFromEntries(int $imageId): void
     {
         Comment::where('commentable_id', $imageId)
             ->where('commentable_type', Image::class)
-            ->update(['deleted_at' => now()]);
+            ->delete();
 
         MediaContent::where('media_contentable_id', $imageId)
             ->where('media_contentable_type', Image::class)
-            ->update(['deleted_at' => now()]);
+            ->delete();
     }
 }

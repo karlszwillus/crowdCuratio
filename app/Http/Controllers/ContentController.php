@@ -39,7 +39,6 @@ use App\Services\GalleryService;
 use App\Services\ImageService;
 use App\Services\SourceService;
 use App\Services\TextService;
-use App\Traits\UploadTrait;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
@@ -48,11 +47,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 
 class ContentController extends Controller
 {
-    use UploadTrait;
 
     /**
      * Instantiate a new ContentController instance.
@@ -78,22 +75,6 @@ class ContentController extends Controller
         $this->texts->destroy($text);
 
         return redirect('projects/'.$request->project.'/edit')->with('success', __('message_delete_text_success'));
-    }
-
-    /**
-     * Detach media from entry
-     *
-     *
-     * @return mixed
-     */
-    public function detachMedia($id, $type)
-    {
-
-        Comment::where('commentable_id', $id)->where('commentable_type', $type)->update(['deleted_at' => now()]);
-
-        return MediaContent::where('media_contentable_id', $id)
-            ->where('media_contentable_type', $type)
-            ->update(['deleted_at' => now()]);
     }
 
     /**
@@ -203,6 +184,11 @@ class ContentController extends Controller
 
     /**
      * Attach media to entry
+     *
+     * @deprecated F.7 — keine Aufrufer mehr; bleibt vorerst stehen
+     * für Frontend-API-Kompatibilität (manchmal direkt
+     * dispatched). Wird in einem Folge-Block ganz entfernt, wenn
+     * verifiziert ist, dass keine externen Callers existieren.
      *
      * @return mixed
      */

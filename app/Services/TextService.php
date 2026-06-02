@@ -127,17 +127,18 @@ class TextService
 
     /**
      * Soft-deleted die Comment- und MediaContent-Einträge eines
-     * Texts. Aktuell über Update auf `deleted_at` — F.7 stellt
-     * auf Eloquent-SoftDeletes um.
+     * Texts via Eloquent (NF-LAR-009-Fix: vorher
+     * update(['deleted_at' => now()]) — Bypass der SoftDeletes-
+     * Trait-Hooks).
      */
     private function detachFromEntries(int $textId): void
     {
         Comment::where('commentable_id', $textId)
             ->where('commentable_type', Text::class)
-            ->update(['deleted_at' => now()]);
+            ->delete();
 
         MediaContent::where('media_contentable_id', $textId)
             ->where('media_contentable_type', Text::class)
-            ->update(['deleted_at' => now()]);
+            ->delete();
     }
 }

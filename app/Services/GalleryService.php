@@ -86,16 +86,13 @@ class GalleryService
 
     /**
      * Soft-deleted Gallery + zugehörige Images +
-     * Comment-/MediaContent-Einträge. Aktuell über
-     * `DB::update`-Bypass — F.7 stellt auf Eloquent-SoftDeletes
-     * um.
+     * Comment-/MediaContent-Einträge via Eloquent (NF-LAR-009-Fix).
      */
     public function destroy(Gallery $gallery): void
     {
         $this->detachFromEntries($gallery->id);
 
-        Image::where('gallery_id', $gallery->id)
-            ->update(['deleted_at' => now()]);
+        Image::where('gallery_id', $gallery->id)->delete();
 
         $gallery->delete();
     }
@@ -121,16 +118,16 @@ class GalleryService
 
     /**
      * Soft-deleted Comment- und MediaContent-Einträge einer
-     * Gallery. F.7 stellt auf Eloquent-SoftDeletes um.
+     * Gallery via Eloquent (NF-LAR-009-Fix).
      */
     private function detachFromEntries(int $galleryId): void
     {
         Comment::where('commentable_id', $galleryId)
             ->where('commentable_type', Gallery::class)
-            ->update(['deleted_at' => now()]);
+            ->delete();
 
         MediaContent::where('media_contentable_id', $galleryId)
             ->where('media_contentable_type', Gallery::class)
-            ->update(['deleted_at' => now()]);
+            ->delete();
     }
 }
