@@ -10,6 +10,24 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Hinzugefügt (Coverage-Push)
+
+- **`CommentRetrieveTest` ergänzt** um die fehlenden
+  Class-Switch-Pfade (Text, Image, Gallery, Audiovisual) plus
+  einen MediaContent-Fallback-Test, der den default-leeren
+  `pathReply`-Pfad sichert. Damit ist `CommentRetrieve::getComments`
+  vollständig durch Pest abgedeckt.
+- **`ProjectControllerLogTest`** in
+  `tests/Feature/Controllers/`. Vier Pest-Tests rufen
+  `ProjectController::allData` und `::history` direkt auf
+  (über `app(ProjectController::class)`), decken Translation-
+  Counter (0 % / 50 %) und Activity-Log-Filter ab.
+- **`ContentControllerTranslationTest`**. Vier Pest-Tests für
+  `translateField` (Source-Übersetzung auf `name`-Feld) und
+  `saveTranslatedText` (Text-Body-Übersetzung, `undefined`-
+  Sentinel, Script-Tag-Filter) — beide Methoden waren bislang
+  un-Pest-getested und Translation-Refactor-Material.
+
 ### Hinzugefügt (Content-Service-Welle)
 
 - **`SourceService`** in `app/Services/`. Kapselt die
