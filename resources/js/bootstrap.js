@@ -1,28 +1,14 @@
-window._ = require('lodash');
-
 /**
- * We'll load the axios HTTP library which allows us to easily issue requests
- * to our Laravel back-end. This library automatically handles sending the
- * CSRF token as a header based on the value of the "XSRF" token cookie.
+ * crowdCuratio Frontend-Bootstrap.
+ *
+ * Vor dem npm-audit-Hotfix wurden hier `lodash` und `axios` als
+ * globale Variablen registriert. Beide kamen aus dem Laravel-
+ * Default-Stack, wurden aber im App-Code (Blade-Inline-Scripts)
+ * nirgends verwendet — die AJAX-Aufrufe gehen alle über jQuery
+ * (`$.ajax`/`$.get`). Damit waren beide nur Vehikel für ~25 CVEs,
+ * ohne funktionalen Nutzen.
+ *
+ * Wenn künftig echte AJAX-Calls aus modernem JS hier eingeführt
+ * werden sollen, ist nativ `fetch()` der saubere Pfad — kein
+ * weiteres Frontend-Lib-Setup nötig.
  */
-
-window.axios = require('axios');
-
-window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-
-/**
- * Echo exposes an expressive API for subscribing to channels and listening
- * for events that are broadcast by Laravel. Echo and event broadcasting
- * allows your team to easily build robust real-time web applications.
- */
-
-// import Echo from 'laravel-echo';
-
-// window.Pusher = require('pusher-js');
-
-// window.Echo = new Echo({
-//     broadcaster: 'pusher',
-//     key: process.env.MIX_PUSHER_APP_KEY,
-//     cluster: process.env.MIX_PUSHER_APP_CLUSTER,
-//     forceTLS: true
-// });
