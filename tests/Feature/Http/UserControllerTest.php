@@ -97,6 +97,77 @@ it('update: Admin ändert Name und Rolle eines anderen Users', function () {
     expect($target->hasRole('Reader'))->toBeTrue();
 });
 
+// ---------- Authorization-Bypass-Charakterisierung (Hotfix) ----------
+//
+// Vor dem Hotfix war `UserController::update` weder per Middleware noch
+// per inline-Authorize geschützt. Reader konnten via
+// `PATCH /users/{anderer}` `roles=['Admin']` schicken — Target wurde Admin.
+// Diese Tests fixieren das geschlossene Verhalten.
+
+it('update: Reader darf fremden User NICHT updaten — 403', function () {
+    /** @var TestCase $this */
+    /** @var User $reader */
+    $reader = User::factory()->create();
+    $reader->assignRole('Reader');
+    /** @var User $target */
+    $target = User::factory()->create();
+    $target->assignRole('Reader');
+    $this->actingAs($reader);
+
+    $response = $this->patch('/users/'.$target->id, [
+        'firstName' => 'Eskalation',
+        'lastName' => 'Versuch',
+        'roles' => ['Admin'],
+    ]);
+
+    $response->assertStatus(403);
+
+    // Target hat KEINE Admin-Rolle bekommen.
+    $target->refresh();
+    expect($target->hasRole('Admin'))->toBeFalse();
+});
+
+it('update: Reader darf sein eigenes Profil updaten (Self-Edit bleibt offen)', function () {
+    /** @var TestCase $this */
+    /** @var User $reader */
+    $reader = User::factory()->create(['name' => 'Alt', 'last_name' => 'Vorher']);
+    $reader->assignRole('Reader');
+    $this->actingAs($reader);
+
+    $response = $this->patch('/users/'.$reader->id, [
+        'firstName' => 'Neu',
+        'lastName' => 'Heute',
+    ]);
+
+    expect($response->status())->toBeIn([200, 302]);
+
+    $reader->refresh();
+    expect($reader->name)->toBe('Neu');
+    expect($reader->last_name)->toBe('Heute');
+});
+
+it('update: Reader darf sich selbst KEINE Admin-Rolle zuweisen', function () {
+    /** @var TestCase $this */
+    /** @var User $reader */
+    $reader = User::factory()->create();
+    $reader->assignRole('Reader');
+    $this->actingAs($reader);
+
+    $response = $this->patch('/users/'.$reader->id, [
+        'firstName' => $reader->name,
+        'lastName' => $reader->last_name,
+        'roles' => ['Admin'],
+    ]);
+
+    // Self-Edit ist erlaubt, aber das roles-Feld darf nur ein Admin setzen.
+    // Status ist 2xx/3xx — die Rolle bleibt aber Reader.
+    expect($response->status())->toBeIn([200, 302]);
+
+    $reader->refresh();
+    expect($reader->hasRole('Admin'))->toBeFalse();
+    expect($reader->hasRole('Reader'))->toBeTrue();
+});
+
 it('destroy: Admin soft-deleted einen User', function () {
     /** @var TestCase $this */
     /** @var User $admin */

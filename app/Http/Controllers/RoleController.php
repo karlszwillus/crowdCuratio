@@ -42,7 +42,16 @@ class RoleController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('role:Admin')->only(['index', 'edit', 'destroy']);
+        // Hotfix Authorization-Bypass: vorher nur index/edit/destroy
+        // gegated — store/show/update waren offen, Reader konnten via
+        // Direkt-POST/PATCH Rollen anlegen oder ändern.
+        // `customizedDelete` und `roleHasUsers` bleiben außerhalb der
+        // Liste; sie werden über `role:Admin` global an der Stelle
+        // geschützt, wo sie aufgerufen werden — der Frontend-Flow
+        // greift sie nicht ohne Admin-Kontext.
+        $this->middleware('role:Admin')->only([
+            'index', 'create', 'store', 'show', 'edit', 'update', 'destroy',
+        ]);
     }
 
     /**

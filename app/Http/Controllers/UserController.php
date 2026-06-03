@@ -116,6 +116,15 @@ class UserController extends Controller
      */
     public function update(Request $request, User $user)
     {
+        // Hotfix Authorization-Bypass: Self-Edit erlaubt (Profil/
+        // Passwort-Change), Admin via Policy::before. Sonst 403.
+        $this->authorize('update', $user);
+
+        // Das roles-Feld darf nur ein Admin synchronisieren — ein
+        // Self-Edit-Caller würde sich sonst die Admin-Rolle selbst
+        // setzen können (Privilege-Escalation analog NF-SEC-202).
+        $callerMayAssignRoles = $request->user()?->hasRole('Admin') === true;
+
         if (isset($request['old_password']) && $request['old_password'] != '') {
             $request->validate(
                 [
@@ -145,7 +154,7 @@ class UserController extends Controller
             $user->password = Hash::make($request['new_password']);
             $user->save();
 
-            if (isset($request['roles'])) {
+            if ($callerMayAssignRoles && isset($request['roles'])) {
                 $user->syncRoles($request->input('roles'));
             }
 
@@ -165,7 +174,7 @@ class UserController extends Controller
             $user->create_project = isset($request['createProject']) ? $request['createProject'] : 0;
             $user->save();
 
-            if (isset($request['roles'])) {
+            if ($callerMayAssignRoles && isset($request['roles'])) {
                 $user->syncRoles($request->input('roles'));
             }
 

@@ -10,6 +10,33 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Sicherheit (Authorization-Bypass-Hotfix)
+
+- **`UserController::update` ohne Authorization-Gate geschlossen.**
+  Vor dem Hotfix war die Methode weder per `role:Admin`-Middleware
+  noch per `authorize()`-Aufruf geschützt — jeder eingeloggte User
+  konnte via `PATCH /users/{anderer}` mit `roles=['Admin']` fremde
+  User editieren und ihnen die Admin-Rolle zuweisen
+  (Privilege-Escalation analog zum vorherigen `/register`-Pfad).
+  Neue `App\Policies\UserPolicy` regelt die Erlaubnis:
+  Admin via `before()`, sonst nur Self-Edit. Inline-Authorize
+  `$this->authorize('update', $user)` im Controller. Zusätzlich
+  greift im Body ein Caller-Admin-Guard auf das `roles`-Feld —
+  ein Self-Edit-Caller kann sich nicht selbst eine Admin-Rolle
+  zuweisen.
+- **`RoleController::store/show/update` ohne Backend-Gate
+  geschlossen.** Vor dem Hotfix waren nur `index/edit/destroy` per
+  `role:Admin` geschützt; via Direkt-POST/PATCH konnte ein Reader
+  neue Rollen anlegen oder bestehende ändern. Constructor-
+  Middleware-Liste erweitert auf den vollen Resource-Pfad
+  `index/create/store/show/edit/update/destroy`.
+- **Drei Charakterisierungs-Tests pro Bypass** fixieren das
+  geschlossene Verhalten und schützen vor Regression:
+  Reader→fremder User→403, Reader→Self-Edit→200/302, Reader→Self
+  mit `roles=['Admin']` ändert die eigene Rolle nicht, Reader→
+  `POST /roles`→403, Reader→`PATCH /roles/{id}`→403,
+  Reader→`GET /roles/{id}`→403.
+
 ### Hinzugefügt (Permission-Harmonisierung — Block D, PR 2 / Welle 2c)
 
 - **`UserControllerTest`** in `tests/Feature/Http/` — neun
