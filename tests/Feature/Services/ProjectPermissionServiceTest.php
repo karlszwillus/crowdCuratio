@@ -21,8 +21,8 @@ If not, see <https://www.gnu.org/licenses/>.
  */
 
 use App\Models\Invitation;
+use App\Models\ProjectUserPermission;
 use App\Models\User;
-use App\Models\UserHasPermission;
 use App\Services\ProjectPermissionService;
 use App\Support\PermissionName;
 use Spatie\Permission\Models\Permission;
@@ -36,7 +36,7 @@ use Tests\TestCase;
 |
 | Der Service kapselt die zehn Permission-Methoden, die vorher
 | direkt im ProjectController lagen. Drei-Welten-Logik
-| (Spatie-Rollen, project-scoped UserHasPermission-Pivot,
+| (Spatie-Rollen, project-scoped ProjectUserPermission-Pivot,
 | Invitations-Tabelle) bleibt unverändert — Block D / ADR-0005
 | wird die Welten dann auf einen einheitlichen Pfad zusammenführen.
 */
@@ -75,7 +75,7 @@ it('setForUserOnProject legt Permission-Einträge an und erstellt die Invitation
         invitedByUserId: $owner->id,
     );
 
-    $pivotCount = UserHasPermission::where('user_id', $invitee->id)
+    $pivotCount = ProjectUserPermission::where('user_id', $invitee->id)
         ->where('project_id', $project->id)
         ->count();
 
@@ -102,7 +102,7 @@ it('setForUserOnProject ersetzt bestehende Permissions (Set-Semantik)', function
     $editPermission = Permission::where('name', 'edit')->first();
     $commentPermission = Permission::where('name', 'comment')->first();
 
-    UserHasPermission::create([
+    ProjectUserPermission::create([
         'user_id' => $invitee->id,
         'project_id' => $project->id,
         'permission_id' => $editPermission->id,
@@ -118,7 +118,7 @@ it('setForUserOnProject ersetzt bestehende Permissions (Set-Semantik)', function
         invitedByUserId: $owner->id,
     );
 
-    $remaining = UserHasPermission::where('user_id', $invitee->id)
+    $remaining = ProjectUserPermission::where('user_id', $invitee->id)
         ->where('project_id', $project->id)
         ->pluck('permission_id')
         ->toArray();
@@ -138,7 +138,7 @@ it('removeUserFromProject löscht Permissions und Invitation vollständig', func
     $project = makeProject($owner);
     $editPermission = Permission::where('name', 'edit')->first();
 
-    UserHasPermission::create([
+    ProjectUserPermission::create([
         'user_id' => $invitee->id,
         'project_id' => $project->id,
         'permission_id' => $editPermission->id,
@@ -154,7 +154,7 @@ it('removeUserFromProject löscht Permissions und Invitation vollständig', func
 
     $service->removeUserFromProject($invitee->id, $project->id);
 
-    $permissionCount = UserHasPermission::where('user_id', $invitee->id)
+    $permissionCount = ProjectUserPermission::where('user_id', $invitee->id)
         ->where('project_id', $project->id)
         ->count();
 
@@ -178,7 +178,7 @@ it('getUsersForThisProject liefert Name und Permissions je berechtigtem User', f
     $project = makeProject($owner);
     $editPermission = Permission::where('name', 'edit')->first();
 
-    UserHasPermission::create([
+    ProjectUserPermission::create([
         'user_id' => $invitee->id,
         'project_id' => $project->id,
         'permission_id' => $editPermission->id,
@@ -210,6 +210,197 @@ it('getCurrentUsersPermissions liefert die Spatie-Rollen-Permissions als id=>nam
     expect($result)->toBe([$viewPermission->id => 'view']);
 });
 
+// ---------- Block D PR 2 / D.5 — Policy-relevante Helper ----------
+//
+// Diese Tests beschreiben die neuen Service-Methoden, die die
+// ProjectPolicy in D.6 für die project-scoped Sicht braucht.
+// Stand: noch nicht implementiert → rot, bis D.5 fertig ist.
+
+it('userHasPermissionOnProject erkennt den Project-Owner', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole('Reader');
+
+    $project = makeProject($owner);
+
+    $service = new ProjectPermissionService;
+
+    expect($service->userHasPermissionOnProject($owner, $project, PermissionName::VIEW))->toBeTrue();
+    expect($service->userHasPermissionOnProject($owner, $project, PermissionName::EDIT))->toBeTrue();
+    expect($service->userHasPermissionOnProject($owner, $project, PermissionName::COMMENT))->toBeTrue();
+});
+
+it('userHasPermissionOnProject erkennt einen Eingeladenen mit comment-Permission', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole('Reader');
+    /** @var User $invitee */
+    $invitee = User::factory()->create();
+    $invitee->assignRole('Reader');
+
+    $project = makeProject($owner);
+    $commentPermission = Permission::where('name', 'comment')->first();
+
+    ProjectUserPermission::create([
+        'user_id' => $invitee->id,
+        'project_id' => $project->id,
+        'permission_id' => $commentPermission->id,
+    ]);
+
+    $service = new ProjectPermissionService;
+
+    expect($service->userHasPermissionOnProject($invitee, $project, PermissionName::COMMENT))->toBeTrue();
+});
+
+it('userHasPermissionOnProject lehnt einen Eingeladenen ohne die geforderte Permission ab', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole('Reader');
+    /** @var User $invitee */
+    $invitee = User::factory()->create();
+    $invitee->assignRole('Reader');
+
+    $project = makeProject($owner);
+    // Invitee hat NUR view-Permission, kein comment/edit.
+    $viewPermission = Permission::where('name', 'view')->first();
+
+    ProjectUserPermission::create([
+        'user_id' => $invitee->id,
+        'project_id' => $project->id,
+        'permission_id' => $viewPermission->id,
+    ]);
+
+    $service = new ProjectPermissionService;
+
+    expect($service->userHasPermissionOnProject($invitee, $project, PermissionName::VIEW))->toBeTrue();
+    expect($service->userHasPermissionOnProject($invitee, $project, PermissionName::COMMENT))->toBeFalse();
+    expect($service->userHasPermissionOnProject($invitee, $project, PermissionName::EDIT))->toBeFalse();
+});
+
+it('userHasPermissionOnProject lehnt einen Fremden ohne Einladung ab', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole('Reader');
+    /** @var User $stranger */
+    $stranger = User::factory()->create();
+    $stranger->assignRole('Reader');
+
+    $project = makeProject($owner);
+
+    $service = new ProjectPermissionService;
+
+    expect($service->userHasPermissionOnProject($stranger, $project, PermissionName::VIEW))->toBeFalse();
+    expect($service->userHasPermissionOnProject($stranger, $project, PermissionName::COMMENT))->toBeFalse();
+    expect($service->userHasPermissionOnProject($stranger, $project, PermissionName::EDIT))->toBeFalse();
+});
+
+it('listProjectsForUser liefert eigene Projects und solche, in die der User eingeladen ist', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole('Reader');
+    /** @var User $invitee */
+    $invitee = User::factory()->create();
+    $invitee->assignRole('Reader');
+    /** @var User $other */
+    $other = User::factory()->create();
+    $other->assignRole('Reader');
+
+    $ownProject = makeProject($invitee, ['name' => 'Eigenes Projekt']);
+    $sharedProject = makeProject($owner, ['name' => 'Geteiltes Projekt']);
+    $strangerProject = makeProject($other, ['name' => 'Fremdes Projekt']);
+
+    $viewPermission = Permission::where('name', 'view')->first();
+    ProjectUserPermission::create([
+        'user_id' => $invitee->id,
+        'project_id' => $sharedProject->id,
+        'permission_id' => $viewPermission->id,
+    ]);
+
+    $service = new ProjectPermissionService;
+
+    $projects = $service->listProjectsForUser($invitee);
+
+    $ids = collect($projects)->pluck('id')->all();
+    expect($ids)->toContain($ownProject->id);
+    expect($ids)->toContain($sharedProject->id);
+    expect($ids)->not->toContain($strangerProject->id);
+});
+
+it('listProjectsForUser liefert für einen Admin alle nicht-gelöschten Projects', function () {
+    /** @var TestCase $this */
+    /** @var User $admin */
+    $admin = User::factory()->create();
+    $admin->assignRole('Admin');
+    /** @var User $other */
+    $other = User::factory()->create();
+    $other->assignRole('Reader');
+
+    $projectA = makeProject($other, ['name' => 'A']);
+    $projectB = makeProject($other, ['name' => 'B']);
+
+    $service = new ProjectPermissionService;
+
+    $projects = $service->listProjectsForUser($admin);
+
+    $ids = collect($projects)->pluck('id')->all();
+    expect($ids)->toContain($projectA->id);
+    expect($ids)->toContain($projectB->id);
+});
+
+// ---------- Bestand ----------
+
+it('getSelectedPermissionUserPluck liefert eine Collection der project-scoped Permission-Namen', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole('Admin');
+    /** @var User $invitee */
+    $invitee = User::factory()->create();
+    $invitee->assignRole('Reader');
+
+    $project = makeProject($owner);
+    $viewPermission = Permission::where('name', 'view')->first();
+    $commentPermission = Permission::where('name', 'comment')->first();
+
+    ProjectUserPermission::create([
+        'user_id' => $invitee->id,
+        'project_id' => $project->id,
+        'permission_id' => $viewPermission->id,
+    ]);
+    ProjectUserPermission::create([
+        'user_id' => $invitee->id,
+        'project_id' => $project->id,
+        'permission_id' => $commentPermission->id,
+    ]);
+
+    $service = new ProjectPermissionService;
+
+    $result = $service->getSelectedPermissionUserPluck($invitee->id, $project->id);
+
+    expect($result->toArray())->toBe([
+        $viewPermission->id => 'view',
+        $commentPermission->id => 'comment',
+    ]);
+});
+
+it('getRoleSelectedUser liefert die Rollen-Namen eines Users als Collection', function () {
+    /** @var TestCase $this */
+    /** @var User $user */
+    $user = User::factory()->create();
+    $user->assignRole('Reader');
+
+    $service = new ProjectPermissionService;
+
+    $result = $service->getRoleSelectedUser($user->id);
+
+    expect($result->toArray())->toBe(['Reader']);
+});
+
 it('getPermissionIdsForUserOnProject liefert die Pivot-IDs als Collection', function () {
     /** @var TestCase $this */
     /** @var User $owner */
@@ -223,12 +414,12 @@ it('getPermissionIdsForUserOnProject liefert die Pivot-IDs als Collection', func
     $editPermission = Permission::where('name', 'edit')->first();
     $commentPermission = Permission::where('name', 'comment')->first();
 
-    UserHasPermission::create([
+    ProjectUserPermission::create([
         'user_id' => $invitee->id,
         'project_id' => $project->id,
         'permission_id' => $editPermission->id,
     ]);
-    UserHasPermission::create([
+    ProjectUserPermission::create([
         'user_id' => $invitee->id,
         'project_id' => $project->id,
         'permission_id' => $commentPermission->id,

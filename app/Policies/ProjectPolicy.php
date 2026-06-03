@@ -24,24 +24,28 @@ namespace App\Policies;
 
 use App\Models\Project;
 use App\Models\User;
+use App\Services\ProjectPermissionService;
 use App\Support\PermissionName;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 /**
  * Project-Authorization.
  *
- * Logik: Admin darf alles. Sonst muss der User der Eigentümer des
- * Projects sein (`projects.user_id`). Project-scoped Permissions aus
- * der `user_has_permissions`-Tabelle werden hier noch nicht
- * berücksichtigt — das gehört zu ADR-0005
- * (Spatie-Permission-Modell auf Standard versöhnen) und wird in
- * Phase 3/4 nachgezogen.
+ * Block D PR 2 / D.6: project-scoped via `ProjectPermissionService`.
+ * Owner darf weiterhin alles (über Service), Admin via `before()`,
+ * Eingeladene mit konkreter Permission auf dem Project ebenfalls.
+ * Vor PR 2 prüften `view`/`comment` nur Owner bzw. globale
+ * `can(COMMENT)`-Permission — Eingeladene fielen durch.
  *
- * Referenz: .werkbank/ADR/0013-authorization-strategie.md
+ * Referenz: .werkbank/ADR/0005-permission-modell-harmonisieren.md
  */
 class ProjectPolicy
 {
     use HandlesAuthorization;
+
+    public function __construct(
+        private readonly ProjectPermissionService $permissions,
+    ) {}
 
     /**
      * Admin-Shortcut: ein User mit der Rolle "Admin" darf alles.
@@ -73,13 +77,14 @@ class ProjectPolicy
     }
 
     /**
-     * Owner darf sein Project sehen.
-     * Eingeladene User (user_has_permissions) wird die Logik
-     * mit ADR-0005 nachziehen.
+     * Block D PR 2 / D.6: project-scoped. Owner ODER Eingeladener
+     * mit `view`-Permission auf dem konkreten Project. Admin via
+     * `before()`. Service kapselt die Owner-Check-und-Pivot-Lookup-
+     * Logik.
      */
     public function view(User $user, Project $project): bool
     {
-        return $user->id === (int) $project->user_id;
+        return $this->permissions->userHasPermissionOnProject($user, $project, PermissionName::VIEW);
     }
 
     /**
@@ -136,18 +141,14 @@ class ProjectPolicy
     }
 
     /**
-     * Kommentieren auf einem Project. Vorher abgedeckt durch
-     * `permission:comment`-Middleware auf den Routes
-     * `commentProject` / `getProjectComment` — Block D / D.4 hat
-     * die Middleware aufgelöst, Policy übernimmt jetzt die
-     * Authorization. Heute: jeder User mit der globalen
-     * `comment`-Permission darf — die feinere project-scoped
-     * Logik (Eingeladener mit Comment-Recht) wird in Block D /
-     * D.5 nachgezogen, wenn `ProjectPermissionService` den
-     * Lookup kapselt.
+     * Block D PR 2 / D.6: project-scoped. Owner ODER Eingeladener
+     * mit `comment`-Permission auf dem konkreten Project. Admin
+     * via `before()`. Vor PR 2 war das global (`can(COMMENT)`),
+     * was jeden User mit globaler comment-Permission durch jedes
+     * fremde Project kommentieren ließ.
      */
     public function comment(User $user, Project $project): bool
     {
-        return $user->can(PermissionName::COMMENT);
+        return $this->permissions->userHasPermissionOnProject($user, $project, PermissionName::COMMENT);
     }
 }

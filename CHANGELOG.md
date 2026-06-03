@@ -10,6 +10,110 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Hinzugefügt (Permission-Harmonisierung — Block D, PR 2 / Welle 2c)
+
+- **`UserControllerTest`** in `tests/Feature/Http/` — neun
+  Pest-Tests fixieren das Verhalten der `users.*`-Routen unter
+  `role:Admin`: Index/Edit/Destroy mit Admin- und Reader-Boundaries,
+  Update inkl. Rollen-Sync und Password-Change-Pfad mit
+  Validierung des alten Passworts, plus Resend-Invitation und
+  Profile.
+- **`RoleControllerTest`** in `tests/Feature/Http/` — elf Tests
+  für Index/Show/Create/Store/Update/Destroy und die zwei
+  Custom-Routes (`customizedDelete` mit User-Reassignment und
+  `roleHasUsers`-JSON), inkl. Admin/Reader-Authorization.
+- **`RegisteredUserControllerCharacterizationTest`** erweitert
+  um sechs Tests: Create-Form-Authorization (Admin sieht Form,
+  Reader 403), Project-Permission-Pfad (Pivot-Eintrag wird
+  geschrieben), Reaktivierung soft-deletetes User, Admin-Invite
+  mit `adminUser=true` (Spatie-Admin-Rolle wird gesetzt), und
+  NF-SEC-202-Schutz gegen Privilege-Escalation durch Reader.
+- **`ProjectPermissionServiceTest`** erweitert um zwei Tests
+  für `getSelectedPermissionUserPluck` und `getRoleSelectedUser`.
+
+Coverage damit von **55 %** (Block-H-Schwelle) auf **66,9 %**.
+Schwerpunkte: User-, Role- und Register-Controller waren
+heute unter 20 % abgedeckt — die Kombination aus
+Authorization-, Service- und Custom-Route-Tests bringt sie auf
+~80 %+.
+
+### Geändert (Permission-Harmonisierung — Block D, PR 2 / Welle 2b)
+
+- **Pivot-Tabelle umbenannt: `user_has_permissions` →
+  `project_user_permissions`.** Die alte Bezeichnung kollidierte
+  semantisch mit Spatie's `user_has_permissions`-Tabelle aus dem
+  Standard-Schema, die eine andere Bedeutung hat (globale
+  Per-User-Permissions). Die neue Bezeichnung macht den Pivot
+  eindeutig zur Projekt-Zuordnung. `Schema::rename` läuft auf
+  MySQL und SQLite identisch, Spalten/Indizes/FKs überleben.
+- **Modell `App\Models\UserHasPermission` → `App\Models\ProjectUserPermission`
+  umbenannt** (Datei und Klasse). Tabellen-Bindung explizit auf
+  `project_user_permissions`. Alle Aufrufer in Controllern,
+  Services, Models und Tests sind nachgezogen.
+
+### Hinzugefügt (Permission-Harmonisierung — Block D, PR 2 / Welle 2b)
+
+- **Migration**
+  `2026_06_02_000000_rename_user_has_permissions_to_project_user_permissions.php`
+  mit reversiblem `down()`.
+- **`PermissionTableRenameTest`** in `tests/Feature/Database/`.
+  Drei Pest-Tests fixieren Endzustand, Migrations-Roundtrip
+  (down/up) und Spalten-Set der neuen Tabelle.
+- **`ProjectUserPermissionTest`** in `tests/Unit/Models/`. Zwei
+  Tests fixieren Tabellen-Bindung und Fillable-Set des neuen
+  Modells.
+
+### Behoben (Permission-Harmonisierung — Block D, PR 2 / Smoke-Fix)
+
+- **Einladung neuer User auf `/register` brach mit
+  `RoleDoesNotExist: no role named '20'`** ab, sobald das Form
+  eine Role-ID als String schickte. Spatie v6 interpretiert
+  Strings, die an `assignRole()` gehen, strikt als Rollen-Namen
+  — ein numerischer String wie `'20'` löste daher den Lookup als
+  Name aus statt als ID. Neuer Helper
+  `RegisteredUserController::resolveRoles()` löst das Input
+  (Single-String, Array, Name, numerische ID) zu konkreten
+  `Role`-Instanzen auf, bevor sie an `assignRole` und die
+  nachfolgende `RoleHasPermission`-Abfrage gehen. Drei
+  Charakterisierungs-Tests in `RegisteredUserControllerCharacterizationTest`
+  fixieren das Verhalten für die drei Eingabewege (Name als Array,
+  ID als Array, Name als Single-String).
+
+### Geändert (Permission-Harmonisierung — Block D, PR 2 / Welle 2a)
+
+- **`ProjectPolicy::view` und `::comment` sind jetzt project-scoped.**
+  Vorher prüfte `view` nur Owner-Identität, `comment` nur die
+  globale `comment`-Permission — Eingeladene mit project-scoped
+  Permissions waren außen vor (bei `view`) bzw. globale
+  Comment-Inhaber durften auf jedem fremden Project kommentieren
+  (bei `comment`). Beide Methoden gehen jetzt über
+  `ProjectPermissionService::userHasPermissionOnProject(User,
+  Project, PermissionName)` — Owner-Shortcut, Admin via
+  `before()`, sonst Lookup gegen den project-scoped Pivot.
+- **`ProjectController::getAllProjects` ist auf den Service
+  verschlankt.** Die 25-Zeilen-Query (Admin-Pfad inline + Nicht-
+  Admin-Pfad über `invitations.guest_id`) ist auf einen
+  Service-Call zusammengeschmolzen.
+  `ProjectPermissionService::listProjectsForUser` resolved
+  Eingeladene jetzt über `user_has_permissions` (konsistent mit
+  der Permission-Welt) statt über `invitations`. Funktional
+  äquivalent, weil `setForUserOnProject` beides anlegt.
+
+### Hinzugefügt (Permission-Harmonisierung — Block D, PR 2 / Welle 2a)
+
+- **`ProjectPolicyTest`** in `tests/Feature/Policies/`. Neun
+  Pest-Tests für `view`/`comment`/`viewAny` mit Owner /
+  Eingeladenem-mit-Permission / Eingeladenem-ohne /
+  Fremdem / Admin-via-before, plus `viewAny` mit und ohne
+  `view`-Permission. Fixiert die project-scoped Authorization.
+- **`ProjectControllerAuthorizationTest`** in `tests/Feature/Http/`.
+  Fünf Pest-Tests für die Index-Filterung (Owner / Eingeladener
+  / Fremder, plus Admin sieht alles) und für die `/comment/project`-
+  Route (Owner / Eingeladener-mit-comment / Fremder → 403).
+- **`ProjectPermissionServiceTest`** um sechs Tests erweitert für
+  die neuen Service-Methoden `userHasPermissionOnProject` und
+  `listProjectsForUser`.
+
 ### Geändert (Permission-Harmonisierung — Block D, PR 1)
 
 - **`ProjectController`: Drei-Wege-Authorization auf einen Pfad

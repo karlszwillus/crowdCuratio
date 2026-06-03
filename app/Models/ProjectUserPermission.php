@@ -2,7 +2,7 @@
 
 /**
 crowdCuratio - Curating together virtually
-Copyright (C)2022 - berlinHistory e.V.
+Copyright (C)2022, 2026 - berlinHistory e.V.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -27,9 +27,21 @@ use Illuminate\Database\Eloquent\Model;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
-class UserHasPermission extends Model
+/**
+ * Project-scoped Permission-Pivot zwischen User und Project.
+ *
+ * Block D PR 2 / D.8: vorher `App\Models\UserHasPermission` →
+ * `project_user_permissions`. Der frühere Name kollidierte
+ * semantisch mit Spatie's `user_has_permissions`-Tabelle aus dem
+ * Standard-Schema (die hat eine andere Bedeutung: globale
+ * Per-User-Permissions). Die neue Bezeichnung macht den Pivot
+ * eindeutig zur Projekt-Zuordnung.
+ */
+class ProjectUserPermission extends Model
 {
-    use HasFactory,LogsActivity;
+    use HasFactory, LogsActivity;
+
+    protected $table = 'project_user_permissions';
 
     /**
      * The attributes that are mass assignable.

@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Services;
 
-use App\Models\UserHasPermission;
+use App\Models\ProjectUserPermission;
 use Illuminate\Support\Facades\Auth;
 
 class UserService
@@ -44,8 +44,8 @@ class UserService
          */
         $userDefaultPermissions = Auth::user()->getAllPermissions()->pluck('name')->toArray();
 
-        $userCurrentPermissions = UserHasPermission::where('project_id', $id)
-            ->join('permissions', 'permissions.id', '=', 'user_has_permissions.permission_id')
+        $userCurrentPermissions = ProjectUserPermission::where('project_id', $id)
+            ->join('permissions', 'permissions.id', '=', 'project_user_permissions.permission_id')
             ->where('user_id', Auth::user()->id)->pluck('permissions.name')->toArray();
 
         if (count($userCurrentPermissions) > 0) {
