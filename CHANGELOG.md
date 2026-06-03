@@ -10,6 +10,32 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Sicherheit (npm-audit-Hotfix Frontend)
+
+- **`axios` komplett aus dem Frontend-Stack entfernt** — schließt
+  17 CVEs (CSRF, SSRF, Prototype-Pollution mit Auth-Bypass-
+  Implikationen, mehrere DoS-Pfade). Das Paket war Laravel-Default-
+  Setup, wurde aber im App-Code nirgends genutzt — alle AJAX-Calls
+  laufen über jQuery (`$.ajax`/`$.get`).
+- **`lodash` aus den `devDependencies` entfernt.** Die transitive
+  Version aus Laravel-Mix (4.17.21, gepatcht) bleibt aktiv —
+  vorher hing eine veraltete 4.17.19 mit drei Prototype-Pollution-
+  CVEs direkt in der dependency-Liste.
+- **`alpinejs` von 2.7.3 auf 3.15.12 gehoben.** 2.x ist EOL. Drei
+  Template-Stellen (`navigation.blade.php`, `dropdown.blade.php`)
+  sind syntaktisch zwischen 2 und 3 identisch; `Alpine.start()` in
+  `resources/js/app.js` explizit aufgerufen (in 3.x Pflicht, in
+  2.x lief das automatisch).
+- **`resources/js/bootstrap.js` aufgeräumt** — `window.axios`- und
+  `window._`-Globale entfernt. Kommentar erklärt den Grund und den
+  empfohlenen Pfad für künftige AJAX-Calls (`fetch()` statt
+  externer Lib).
+
+Verbleibende ~106 npm-Vulnerabilities liegen im Laravel-Mix-Stack
+(Webpack/Babel/PostCSS-Dependencies). Mix ist deprecated und wird
+in Phase 5 durch Vite ersetzt — das löst den Rest strukturell auf.
+Ein Major-Bump-Fix ohne Mix→Vite-Migration würde den Build brechen.
+
 ### Sicherheit (Authorization-Bypass-Hotfix)
 
 - **`UserController::update` ohne Authorization-Gate geschlossen.**
