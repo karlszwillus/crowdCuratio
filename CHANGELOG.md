@@ -10,6 +10,19 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Behoben (Permission-Welt nachschärfen — Block E, Welle E.2)
+
+- **`PermissionTableSeeder` Strict-Mode-fest gemacht.** Vorher
+  schickte der Seeder `permission_id` und `position` durch ein
+  `updateOrCreate`-Array an `PermissionDescription`, dessen
+  `$fillable = ['description']` beides nicht zulässt. In Production
+  lief das still durch (Strict-Mode dort aus), in Dev/CI war es
+  eine latente `MassAssignmentException` — entdeckt im
+  Architecture-Review nach Block D. Pfad jetzt über expliziten
+  Query plus Property-Setter, identisch zum Test-Setup-Pattern.
+  Zwei Pest-Tests in `PermissionTableSeederStrictModeTest`
+  fixieren den Erst- und den Re-Run unter aktivem `shouldBeStrict()`.
+
 ### Geändert (Permission-Welt nachschärfen — Block E, Welle E.1)
 
 - **`App\Models\Role` gelöscht.** Custom-Modell parallel zu Spatie's
