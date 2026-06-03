@@ -27,8 +27,8 @@ use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\Invitation;
 use App\Models\MailSetting;
 use App\Models\ProjectUserPermission;
-use App\Models\RoleHasPermission;
 use App\Models\User;
+use App\Support\RoleName;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -59,7 +59,7 @@ class RegisteredUserController extends Controller
     {
         // F-DB-013: vorher Role::where('id', 'not like', '1') —
         // LIKE auf INT-Spalte mit hartkodierter Admin-ID.
-        $roles = Role::where('name', '!=', 'Admin')->pluck('name', 'name')->all();
+        $roles = Role::where('name', '!=', RoleName::ADMIN->value)->pluck('name', 'name')->all();
 
         return view('auth.register', compact('roles'));
     }
@@ -101,7 +101,7 @@ class RegisteredUserController extends Controller
             // Phase 4 mit ADR-0005 (Permission-Mehrgleisigkeit)
             // aufgelöst wird.
             $caller = Auth::user();
-            $callerIsAdmin = $caller?->hasRole('Admin') === true;
+            $callerIsAdmin = $caller?->hasRole(RoleName::ADMIN->value) === true;
             $isAdminInvite = $callerIsAdmin && $request->boolean('adminUser');
             $grantCreateProject = $callerIsAdmin && $request->boolean('createProject');
 
@@ -137,7 +137,7 @@ class RegisteredUserController extends Controller
             // auf, bevor sie an `assignRole` und an die nachgelagerte
             // `RoleHasPermission`-Query gehen.
             $resolvedRoles = $isAdminInvite
-                ? [Role::findByName('Admin', 'web')]
+                ? [Role::findByName(RoleName::ADMIN->value, 'web')]
                 : $this->resolveRoles($request->input('roles'));
 
             $user->assignRole($resolvedRoles);
@@ -150,8 +150,22 @@ class RegisteredUserController extends Controller
             $user->sendWelcomeNotification($expiresAt, $request->firstName, $invitation);
 
             if (isset($request->projectId)) {
+                // Block E / Welle E.1: vorher Lookup via `App\Models\RoleHasPermission`-
+                // Wrapper. Heute über Spatie's `permissions()`-Relation am
+                // Role-Modell — kein Custom-Modell mehr nötig, FK-/Pivot-
+                // Pfad bleibt funktional identisch. Re-Query lädt die
+                // konkreten `Role`-Instanzen mit eager-loaded permissions,
+                // weil `RoleContract` aus dem Resolver die Relation nicht
+                // typisiert garantiert.
                 $resolvedRoleIds = collect($resolvedRoles)->pluck('id')->all();
-                $permissions = RoleHasPermission::whereIn('role_id', $resolvedRoleIds)->pluck('permission_id');
+                $permissions = Role::query()
+                    ->whereIn('id', $resolvedRoleIds)
+                    ->with('permissions')
+                    ->get()
+                    ->flatMap(fn (Role $role) => $role->permissions)
+                    ->pluck('id')
+                    ->unique()
+                    ->values();
                 foreach ($permissions as $permission) {
                     ProjectUserPermission::create([
                         'project_id' => $request->projectId,

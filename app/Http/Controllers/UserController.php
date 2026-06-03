@@ -24,6 +24,7 @@ namespace App\Http\Controllers;
 
 use App\Models\MailSetting;
 use App\Models\User;
+use App\Support\RoleName;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
@@ -123,7 +124,7 @@ class UserController extends Controller
         // Das roles-Feld darf nur ein Admin synchronisieren — ein
         // Self-Edit-Caller würde sich sonst die Admin-Rolle selbst
         // setzen können (Privilege-Escalation analog NF-SEC-202).
-        $callerMayAssignRoles = $request->user()?->hasRole('Admin') === true;
+        $callerMayAssignRoles = $request->user()?->hasRole(RoleName::ADMIN->value) === true;
 
         if (isset($request['old_password']) && $request['old_password'] != '') {
             $request->validate(

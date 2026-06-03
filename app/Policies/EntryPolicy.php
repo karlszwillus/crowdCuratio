@@ -26,6 +26,7 @@ use App\Models\Chapter;
 use App\Models\Entry;
 use App\Models\User;
 use App\Support\PermissionName;
+use App\Support\RoleName;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 /**
@@ -41,7 +42,7 @@ class EntryPolicy
 
     public function before(User $user, string $ability): ?bool
     {
-        return $user->hasRole('Admin') ? true : null;
+        return $user->hasRole(RoleName::ADMIN->value) ? true : null;
     }
 
     public function view(User $user, Entry $entry): bool

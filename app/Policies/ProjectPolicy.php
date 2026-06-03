@@ -26,6 +26,7 @@ use App\Models\Project;
 use App\Models\User;
 use App\Services\ProjectPermissionService;
 use App\Support\PermissionName;
+use App\Support\RoleName;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 /**
@@ -53,7 +54,7 @@ class ProjectPolicy
      */
     public function before(User $user, string $ability): ?bool
     {
-        return $user->hasRole('Admin') ? true : null;
+        return $user->hasRole(RoleName::ADMIN->value) ? true : null;
     }
 
     /**

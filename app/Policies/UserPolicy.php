@@ -23,6 +23,7 @@ If not, see <https://www.gnu.org/licenses/>.
 namespace App\Policies;
 
 use App\Models\User;
+use App\Support\RoleName;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 /**
@@ -44,7 +45,7 @@ class UserPolicy
 
     public function before(User $user, string $ability): ?bool
     {
-        return $user->hasRole('Admin') ? true : null;
+        return $user->hasRole(RoleName::ADMIN->value) ? true : null;
     }
 
     /**

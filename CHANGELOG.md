@@ -10,6 +10,40 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Geändert (Permission-Welt nachschärfen — Block E, Welle E.1)
+
+- **`App\Models\Role` gelöscht.** Custom-Modell parallel zu Spatie's
+  `Role` ohne Mehrwert. Aufrufer in `ProjectController`,
+  `ChapterController`, `RegisteredUserController` und einem Test
+  auf `Spatie\Permission\Models\Role` umgestellt.
+- **`App\Models\RoleHasPermission` gelöscht.** Wurde nur an einer
+  Stelle (Project-Invite-Pfad in `RegisteredUserController::store`)
+  als Wrapper für die `role_has_permissions`-Pivot-Tabelle genutzt.
+  Pfad umgeschrieben auf Spatie's `permissions()`-Relation am
+  Role-Modell mit eager-load — funktional identisch, ein
+  Custom-Modell weniger.
+- **Neue `App\Support\RoleName`-Backed-Enum** analog
+  `PermissionName`. Vier Cases (`ADMIN`, `READER`, `EDITOR`,
+  `REVIEWER`) mit den Spatie-Rollen-Namen als String-Werten.
+  Harte Strings (`'Admin'` in Policies, Service, Controllern)
+  durchgängig auf Enum-Zugriffe umgestellt — Umbenennungen sind
+  jetzt typ-sicher, nicht mehr nur per grep.
+
+### Entfernt (Permission-Welt nachschärfen — Block E, Welle E.1)
+
+- **`tests/Feature/Refactor/AdminRoutesCharacterizationTest.php`
+  gelöscht.** Die Charakterisierung war für die
+  IsAdmin-Middleware-Migration in Block D PR 1 gedacht und nach
+  PR 2 redundant — die User- und Role-Controller-Tests decken
+  denselben Pfad ab.
+
+### Hinzugefügt (Permission-Welt nachschärfen — Block E, Welle E.1)
+
+- **`tests/Unit/Support/RoleNameTest.php`** — drei Pest-Tests
+  fixieren Cases, `all()`-Helper und die exakte Schreibweise der
+  Rollen-Namen (Case-Sensitivity ist kritisch, weil Spatie
+  Rollen per Strict-Match sucht).
+
 ### Sicherheit (npm-audit-Hotfix Frontend)
 
 - **`axios` komplett aus dem Frontend-Stack entfernt** — schließt

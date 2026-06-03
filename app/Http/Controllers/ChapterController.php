@@ -28,11 +28,11 @@ use App\Http\Requests\UpdateChapterRequest;
 use App\Models\Chapter;
 use App\Models\Permission;
 use App\Models\Project;
-use App\Models\Role;
 use App\Services\ChapterService;
 use App\Services\CommentRetrieve;
 use App\Services\CommentService;
 use App\Services\ContentReorderService;
+use App\Support\RoleName;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
@@ -41,6 +41,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
+use Spatie\Permission\Models\Role;
 
 class ChapterController extends Controller
 {
@@ -78,7 +79,7 @@ class ChapterController extends Controller
         // F-DB-013: vorher Role::where('id', 'not like', '1') —
         // LIKE-Vergleich auf INT-Spalte mit hartkodierter ID.
         // Sauber: per Rollen-Name filtern.
-        $listRole = Role::where('name', '!=', 'Admin')->pluck('name', 'id');
+        $listRole = Role::where('name', '!=', RoleName::ADMIN->value)->pluck('name', 'id');
 
         return view('chapters.index', compact('project', 'listPermissions', 'permissions', 'listRole'));
     }

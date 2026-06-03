@@ -26,6 +26,7 @@ use App\Models\Chapter;
 use App\Models\Project;
 use App\Models\User;
 use App\Support\PermissionName;
+use App\Support\RoleName;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 /**
@@ -43,7 +44,7 @@ class ChapterPolicy
 
     public function before(User $user, string $ability): ?bool
     {
-        return $user->hasRole('Admin') ? true : null;
+        return $user->hasRole(RoleName::ADMIN->value) ? true : null;
     }
 
     public function view(User $user, Chapter $chapter): bool

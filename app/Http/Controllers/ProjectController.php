@@ -29,7 +29,6 @@ use App\Models\Audiovisual;
 use App\Models\Gallery;
 use App\Models\Permission;
 use App\Models\Project;
-use App\Models\Role;
 use App\Models\Source;
 use App\Models\Text;
 use App\Models\User;
@@ -40,6 +39,7 @@ use App\Services\ProjectImageService;
 use App\Services\ProjectPermissionService;
 use App\Services\SourceService;
 use App\Services\UserService;
+use App\Support\RoleName;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Illuminate\Contracts\Foundation\Application;
@@ -58,6 +58,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Storage;
 use Spatie\Activitylog\Models\Activity;
+use Spatie\Permission\Models\Role;
 
 class ProjectController extends Controller
 {
@@ -186,7 +187,7 @@ class ProjectController extends Controller
 
         $permissions = Permission::all();
         // F-DB-013: vorher Role::where('id', 'not like', '1').
-        $listRole = Role::where('name', '!=', 'Admin')->pluck('name', 'id');
+        $listRole = Role::where('name', '!=', RoleName::ADMIN->value)->pluck('name', 'id');
         // F-DB-014: SoftDeletes-Scope greift implizit — kein whereNull nötig.
         $users = User::all();
         $userService = new UserService;
@@ -790,7 +791,7 @@ class ProjectController extends Controller
         $project = Project::findOrFail($projectId);
         $listGrantedUsers = $this->permissions->getUsersForThisProject((int) $projectId);
         // F-DB-013: vorher Role::where('id', 'not like', '1').
-        $listRole = Role::where('name', '!=', 'Admin')->pluck('name', 'id');
+        $listRole = Role::where('name', '!=', RoleName::ADMIN->value)->pluck('name', 'id');
         $permissions = Permission::all();
         asort($listGrantedUsers);
 
