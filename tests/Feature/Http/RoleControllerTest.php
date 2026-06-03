@@ -166,6 +166,69 @@ it('destroy: Admin löscht eine Rolle', function () {
     expect(Role::where('name', 'ZuLoeschen')->exists())->toBeFalse();
 });
 
+// ---------- Authorization-Bypass-Charakterisierung (Hotfix) ----------
+//
+// Vor dem Hotfix war `RoleController` nur auf index/edit/destroy
+// gegated. Reader konnten via Direkt-POST/PATCH neue Rollen anlegen
+// oder bestehende ändern — Privilege-Escalation analog zum
+// UserController::update-Bypass. Diese Tests fixieren das geschlossene
+// Verhalten auf store/update/show.
+
+it('store: Reader darf KEINE neue Rolle anlegen — 403', function () {
+    /** @var TestCase $this */
+    /** @var User $reader */
+    $reader = User::factory()->create();
+    $reader->assignRole('Reader');
+    $this->actingAs($reader);
+
+    $viewPermission = Permission::where('name', 'view')->first();
+
+    $response = $this->post('/roles', [
+        'name' => 'Eskalation',
+        'permission' => [$viewPermission->id],
+    ]);
+
+    $response->assertStatus(403);
+    expect(Role::where('name', 'Eskalation')->exists())->toBeFalse();
+});
+
+it('update: Reader darf KEINE Rolle ändern — 403', function () {
+    /** @var TestCase $this */
+    /** @var User $reader */
+    $reader = User::factory()->create();
+    $reader->assignRole('Reader');
+    $this->actingAs($reader);
+
+    $role = Role::create(['name' => 'BleibtBestehen', 'guard_name' => 'web']);
+    $role->syncPermissions(['view']);
+
+    $editPermission = Permission::where('name', 'edit')->first();
+
+    $response = $this->patch('/roles/'.$role->id, [
+        'name' => 'Umbenannt',
+        'permission' => [$editPermission->id],
+    ]);
+
+    $response->assertStatus(403);
+
+    $role->refresh();
+    expect($role->name)->toBe('BleibtBestehen');
+});
+
+it('show: Reader darf eine Rolle NICHT anzeigen — 403', function () {
+    /** @var TestCase $this */
+    /** @var User $reader */
+    $reader = User::factory()->create();
+    $reader->assignRole('Reader');
+    $this->actingAs($reader);
+
+    $readerRoleId = Role::where('name', 'Reader')->value('id');
+
+    $response = $this->get('/roles/'.$readerRoleId);
+
+    $response->assertStatus(403);
+});
+
 it('show: Admin sieht eine Rolle mit ihren Permissions', function () {
     /** @var TestCase $this */
     /** @var User $admin */
