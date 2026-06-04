@@ -10,6 +10,41 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Geändert (Permission-Welt nachschärfen — Block E, Welle E.3)
+
+- **`UserController::update` und das eigene Profil sind jetzt
+  zwei klar getrennte Pfade.** Vorher hatte eine einzige Methode
+  beide Use-Cases mit `if (old_password != '')`-Verzweigung und
+  einem Caller-Admin-Guard auf dem `roles`-Feld bewältigt. Nach
+  dem Split:
+  - **`PATCH /users/{user}`** ist der reine Admin-Edit-Pfad —
+    Validation via neuem `UpdateUserAsAdminRequest`,
+    Authorization durch `role:Admin`-Middleware im Constructor.
+    Felder: `firstName`, `lastName`, optional `roles`,
+    `adminUser`, `createProject`.
+  - **`PATCH /profile`** (neu) ist der Self-Edit-Pfad —
+    Validation via neuem `UpdateOwnProfileRequest`. Target ist
+    immer der eingeloggte User; das `roles`-Feld ist
+    *strukturell* nicht zugelassen (keine Rule, keine
+    `validated`-Daten). Optionaler Passwort-Wechsel mit
+    Verifikation des alten Passworts über eine Closure-Rule.
+- **`resources/views/users/profile.blade.php`** zeigt jetzt auf
+  `profile.update` statt `users.update`. Methode auf `PATCH`
+  korrigiert (vorher `PUT`).
+- **`UserController::__construct`-Middleware-Liste** um `update`
+  erweitert — Admin-only, weil Self-Edit jetzt strukturell über
+  die andere Route läuft.
+
+### Hinzugefügt (Permission-Welt nachschärfen — Block E, Welle E.3)
+
+- **`UpdateUserAsAdminRequest` und `UpdateOwnProfileRequest`** in
+  `app/Http/Requests/`.
+- **Zwei Pest-Test-Files** in `tests/Feature/Http/Requests/`:
+  Authorize-Boundaries (Admin/Reader/Guest) und Rule-Set-
+  Charakterisierung. Self-Edit-Tests in
+  `tests/Feature/Http/UserControllerTest.php` auf
+  `PATCH /profile` umgezogen.
+
 ### Behoben (Permission-Welt nachschärfen — Block E, Welle E.2)
 
 - **`PermissionTableSeeder` Strict-Mode-fest gemacht.** Vorher

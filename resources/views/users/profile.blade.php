@@ -34,9 +34,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
             <p>{{ $message }}</p>
         </div>
     @endif
-    <form method="POST" action="{{ route('users.update', Auth::user()->id) }}">
+    {{-- Block E / Welle E.3: Self-Edit zielt jetzt auf die eigene
+         profile.update-Route mit UpdateOwnProfileRequest, nicht mehr
+         auf users.update (das ist Admin-only). --}}
+    <form method="POST" action="{{ route('profile.update') }}">
     @csrf
-    @method('PUT')
+    @method('PATCH')
 
     <!-- Name -->
         <div>

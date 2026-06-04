@@ -141,6 +141,12 @@ Route::group(
         Route::get('/profile', [UserController::class, 'profile'])->name(
             'profile'
         );
+        // Block E / Welle E.3: Self-Edit-Pfad eigene Route mit eigenem
+        // FormRequest (UpdateOwnProfileRequest). Target ist immer
+        // auth()->user(), kein {user}-Param nötig.
+        Route::patch('/profile', [UserController::class, 'updateProfile'])->name(
+            'profile.update'
+        );
         Route::get('/permission/user/{id}/', [ProjectController::class, 'givePermissionToUser'])->name(
             'permission.project'
         );
