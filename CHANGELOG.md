@@ -10,6 +10,24 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Geändert (Permission-Welt nachschärfen — Block E, Welle E.4)
+
+- **`RoleController::store` und `::update` nutzen FormRequests.**
+  Vorher inline `$this->validate(...)` mit hartkodierten Rules.
+  Jetzt `StoreRoleRequest` und `UpdateRoleRequest` in
+  `app/Http/Requests/`, jeweils mit `authorize()` =
+  `hasRole(Admin)` als Defense-in-Depth zur Constructor-Middleware.
+  Plus typisierte `$validated`-Daten statt `$request->input(...)`.
+  Bringt die FormRequest-Konvention aus ADR-0017 auch im
+  Rollen-CRUD an.
+
+### Hinzugefügt (Permission-Welt nachschärfen — Block E, Welle E.4)
+
+- **Zwei Pest-Test-Files** in `tests/Feature/Http/Requests/`
+  (`StoreRoleRequestTest`, `UpdateRoleRequestTest`):
+  Authorize-Boundaries (Admin/Reader/Guest) und Rule-Set-
+  Charakterisierung.
+
 ### Geändert (Permission-Welt nachschärfen — Block E, Welle E.3)
 
 - **`UserController::update` und das eigene Profil sind jetzt
