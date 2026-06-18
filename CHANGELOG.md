@@ -10,6 +10,40 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Geändert (Permission-Welt nachschärfen — Block E, Welle E.5)
+
+- **`RegisteredUserController::store` von ~115 Zeilen auf ~30
+  Zeilen verschlankt.** Vier neue Klassen kapseln jetzt die drei
+  Verzweigungen plus den Role-Resolver:
+  - `App\Support\RoleResolver` (Helper) — vorher Private-Methode
+    im Controller. Akzeptiert Single-String, Array, Role-Name,
+    numerische Role-ID; löst alles in konkrete `Role`-Instanzen
+    auf.
+  - `App\Services\UserReactivationService` — kapselt den
+    `if ($userExists)`-Pfad mit `DB::table`-Update auf
+    `deleted_at = null`.
+  - `App\Services\UserOnboardingService` — User-Erzeugung per
+    Property-Setter inkl. Privilege-Check für `is_admin` /
+    `create_project` (NF-SEC-202), Rollen-Sync, Welcome-Mail.
+  - `App\Services\ProjectInvitationService` — Permission-Lookup
+    über Spatie-Relation, `ProjectUserPermission`-Pivot-Inserts,
+    Invitation-Eintrag.
+- **Latenter Bug behoben:** `now()->addDay(3)` in der Welcome-
+  Notification-Logik hat das `3`-Argument still verworfen (die
+  Carbon-Methode nimmt keine Parameter). Welcome-Tokens waren
+  faktisch nur einen Tag gültig statt drei. Jetzt `addDays(3)`,
+  gefangen durch Larastan im strict-Mode der neuen Service-Klasse.
+
+### Hinzugefügt (Permission-Welt nachschärfen — Block E, Welle E.5)
+
+- **Vier neue Pest-Test-Files** mit insgesamt 18 Tests:
+  - `tests/Feature/Support/RoleResolverTest.php` (5)
+  - `tests/Feature/Services/UserReactivationServiceTest.php` (4)
+  - `tests/Feature/Services/UserOnboardingServiceTest.php` (6)
+  - `tests/Feature/Services/ProjectInvitationServiceTest.php` (4)
+
+
+
 ### Sicherheit (composer audit — Laravel Framework)
 
 - **`laravel/framework` von 12.61.0 auf 12.62.0** angehoben.
