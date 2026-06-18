@@ -10,6 +10,27 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Sicherheit (Permission-Welt nachschärfen — Block E, Welle E.7a-Hotfix)
+
+- **`ProjectController::editMetaData` ohne Authorize-Gate geschlossen.**
+  `/project/{id}/metadata` war nur durch `auth`-Middleware geschützt
+  — Reader konnten fremde Project-Metadaten samt Permissions-
+  Verwaltung sehen. Inline-Authorize via `update`-Policy. Damit
+  greift dieselbe Owner/Admin/Eingeladener-mit-edit-Logik wie für
+  die regulären Update-Pfade. Im Smoke nach E.7a aufgedeckt
+  (analog zum Block-D-Architecture-Review-BLOCKER).
+- **Latenter View-Bug behoben:** die `projects.create.blade.php`-
+  View las `$listPermissions` (Zeile 168), das `editMetaData`
+  aber nicht an die View übergab. Bei Admin griff der
+  `Auth::user()->isAdmin()`-Short-Circuit vorher und der Bug fiel
+  nie auf; mit dem Owner- oder Eingeladenen-Pfad lief das
+  `in_array`-Statement und crashte mit `Undefined variable`.
+  Variable wird jetzt analog `ProjectController::edit` via
+  `UserService::getAllUsers` befüllt.
+- **Drei neue Charakterisierungs-Tests** in
+  `ProjectControllerAuthorizationTest`: Fremder → 403, Owner →
+  200/302, Admin → 200/302.
+
 ### Geändert (Permission-Welt nachschärfen — Block E, Welle E.7a)
 
 - **`ChapterPolicy` und `EntryPolicy` project-scoped via Service.**
