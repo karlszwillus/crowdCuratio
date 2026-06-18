@@ -10,6 +10,13 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Sicherheit (composer audit — Laravel Framework)
+
+- **`laravel/framework` von 12.61.0 auf 12.62.0** angehoben.
+  GHSA-crmm-hgp2-wgrp (Temporary Signed URL Path Confusion,
+  Severity medium). Nur Lockfile-Update — `composer.json` hat
+  `^12.0` und deckt den Bereich ab. composer audit jetzt grün.
+
 ### Geändert (Permission-Welt nachschärfen — Block E, Welle E.4)
 
 - **`RoleController::store` und `::update` nutzen FormRequests.**
