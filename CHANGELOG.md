@@ -10,6 +10,113 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Sicherheit (composer audit — Laravel Framework)
+
+- **`laravel/framework` von 12.61.0 auf 12.62.0** angehoben.
+  GHSA-crmm-hgp2-wgrp (Temporary Signed URL Path Confusion,
+  Severity medium). Nur Lockfile-Update — `composer.json` hat
+  `^12.0` und deckt den Bereich ab. composer audit jetzt grün.
+
+### Geändert (Permission-Welt nachschärfen — Block E, Welle E.4)
+
+- **`RoleController::store` und `::update` nutzen FormRequests.**
+  Vorher inline `$this->validate(...)` mit hartkodierten Rules.
+  Jetzt `StoreRoleRequest` und `UpdateRoleRequest` in
+  `app/Http/Requests/`, jeweils mit `authorize()` =
+  `hasRole(Admin)` als Defense-in-Depth zur Constructor-Middleware.
+  Plus typisierte `$validated`-Daten statt `$request->input(...)`.
+  Bringt die FormRequest-Konvention aus ADR-0017 auch im
+  Rollen-CRUD an.
+
+### Hinzugefügt (Permission-Welt nachschärfen — Block E, Welle E.4)
+
+- **Zwei Pest-Test-Files** in `tests/Feature/Http/Requests/`
+  (`StoreRoleRequestTest`, `UpdateRoleRequestTest`):
+  Authorize-Boundaries (Admin/Reader/Guest) und Rule-Set-
+  Charakterisierung.
+
+### Geändert (Permission-Welt nachschärfen — Block E, Welle E.3)
+
+- **`UserController::update` und das eigene Profil sind jetzt
+  zwei klar getrennte Pfade.** Vorher hatte eine einzige Methode
+  beide Use-Cases mit `if (old_password != '')`-Verzweigung und
+  einem Caller-Admin-Guard auf dem `roles`-Feld bewältigt. Nach
+  dem Split:
+  - **`PATCH /users/{user}`** ist der reine Admin-Edit-Pfad —
+    Validation via neuem `UpdateUserAsAdminRequest`,
+    Authorization durch `role:Admin`-Middleware im Constructor.
+    Felder: `firstName`, `lastName`, optional `roles`,
+    `adminUser`, `createProject`.
+  - **`PATCH /profile`** (neu) ist der Self-Edit-Pfad —
+    Validation via neuem `UpdateOwnProfileRequest`. Target ist
+    immer der eingeloggte User; das `roles`-Feld ist
+    *strukturell* nicht zugelassen (keine Rule, keine
+    `validated`-Daten). Optionaler Passwort-Wechsel mit
+    Verifikation des alten Passworts über eine Closure-Rule.
+- **`resources/views/users/profile.blade.php`** zeigt jetzt auf
+  `profile.update` statt `users.update`. Methode auf `PATCH`
+  korrigiert (vorher `PUT`).
+- **`UserController::__construct`-Middleware-Liste** um `update`
+  erweitert — Admin-only, weil Self-Edit jetzt strukturell über
+  die andere Route läuft.
+
+### Hinzugefügt (Permission-Welt nachschärfen — Block E, Welle E.3)
+
+- **`UpdateUserAsAdminRequest` und `UpdateOwnProfileRequest`** in
+  `app/Http/Requests/`.
+- **Zwei Pest-Test-Files** in `tests/Feature/Http/Requests/`:
+  Authorize-Boundaries (Admin/Reader/Guest) und Rule-Set-
+  Charakterisierung. Self-Edit-Tests in
+  `tests/Feature/Http/UserControllerTest.php` auf
+  `PATCH /profile` umgezogen.
+
+### Behoben (Permission-Welt nachschärfen — Block E, Welle E.2)
+
+- **`PermissionTableSeeder` Strict-Mode-fest gemacht.** Vorher
+  schickte der Seeder `permission_id` und `position` durch ein
+  `updateOrCreate`-Array an `PermissionDescription`, dessen
+  `$fillable = ['description']` beides nicht zulässt. In Production
+  lief das still durch (Strict-Mode dort aus), in Dev/CI war es
+  eine latente `MassAssignmentException` — entdeckt im
+  Architecture-Review nach Block D. Pfad jetzt über expliziten
+  Query plus Property-Setter, identisch zum Test-Setup-Pattern.
+  Zwei Pest-Tests in `PermissionTableSeederStrictModeTest`
+  fixieren den Erst- und den Re-Run unter aktivem `shouldBeStrict()`.
+
+### Geändert (Permission-Welt nachschärfen — Block E, Welle E.1)
+
+- **`App\Models\Role` gelöscht.** Custom-Modell parallel zu Spatie's
+  `Role` ohne Mehrwert. Aufrufer in `ProjectController`,
+  `ChapterController`, `RegisteredUserController` und einem Test
+  auf `Spatie\Permission\Models\Role` umgestellt.
+- **`App\Models\RoleHasPermission` gelöscht.** Wurde nur an einer
+  Stelle (Project-Invite-Pfad in `RegisteredUserController::store`)
+  als Wrapper für die `role_has_permissions`-Pivot-Tabelle genutzt.
+  Pfad umgeschrieben auf Spatie's `permissions()`-Relation am
+  Role-Modell mit eager-load — funktional identisch, ein
+  Custom-Modell weniger.
+- **Neue `App\Support\RoleName`-Backed-Enum** analog
+  `PermissionName`. Vier Cases (`ADMIN`, `READER`, `EDITOR`,
+  `REVIEWER`) mit den Spatie-Rollen-Namen als String-Werten.
+  Harte Strings (`'Admin'` in Policies, Service, Controllern)
+  durchgängig auf Enum-Zugriffe umgestellt — Umbenennungen sind
+  jetzt typ-sicher, nicht mehr nur per grep.
+
+### Entfernt (Permission-Welt nachschärfen — Block E, Welle E.1)
+
+- **`tests/Feature/Refactor/AdminRoutesCharacterizationTest.php`
+  gelöscht.** Die Charakterisierung war für die
+  IsAdmin-Middleware-Migration in Block D PR 1 gedacht und nach
+  PR 2 redundant — die User- und Role-Controller-Tests decken
+  denselben Pfad ab.
+
+### Hinzugefügt (Permission-Welt nachschärfen — Block E, Welle E.1)
+
+- **`tests/Unit/Support/RoleNameTest.php`** — drei Pest-Tests
+  fixieren Cases, `all()`-Helper und die exakte Schreibweise der
+  Rollen-Namen (Case-Sensitivity ist kritisch, weil Spatie
+  Rollen per Strict-Match sucht).
+
 ### Sicherheit (npm-audit-Hotfix Frontend)
 
 - **`axios` komplett aus dem Frontend-Stack entfernt** — schließt

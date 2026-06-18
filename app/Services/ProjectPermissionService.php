@@ -28,6 +28,7 @@ use App\Models\Project;
 use App\Models\ProjectUserPermission;
 use App\Models\User;
 use App\Support\PermissionName;
+use App\Support\RoleName;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
 use Spatie\Permission\Models\Permission;
@@ -238,7 +239,7 @@ class ProjectPermissionService
      */
     public function listProjectsForUser(User $user): EloquentCollection
     {
-        if ($user->hasRole('Admin')) {
+        if ($user->hasRole(RoleName::ADMIN->value)) {
             return Project::query()
                 ->join('users', 'users.id', '=', 'projects.user_id')
                 ->select('projects.*', 'users.name as user_name')

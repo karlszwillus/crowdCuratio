@@ -127,14 +127,14 @@ it('update: Reader darf fremden User NICHT updaten — 403', function () {
     expect($target->hasRole('Admin'))->toBeFalse();
 });
 
-it('update: Reader darf sein eigenes Profil updaten (Self-Edit bleibt offen)', function () {
+it('updateProfile: Reader updatet sein eigenes Profil über PATCH /profile', function () {
     /** @var TestCase $this */
     /** @var User $reader */
     $reader = User::factory()->create(['name' => 'Alt', 'last_name' => 'Vorher']);
     $reader->assignRole('Reader');
     $this->actingAs($reader);
 
-    $response = $this->patch('/users/'.$reader->id, [
+    $response = $this->patch('/profile', [
         'firstName' => 'Neu',
         'lastName' => 'Heute',
     ]);
@@ -146,21 +146,19 @@ it('update: Reader darf sein eigenes Profil updaten (Self-Edit bleibt offen)', f
     expect($reader->last_name)->toBe('Heute');
 });
 
-it('update: Reader darf sich selbst KEINE Admin-Rolle zuweisen', function () {
+it('updateProfile: das roles-Feld wird ignoriert (Self-Edit kann keine Rollen setzen)', function () {
     /** @var TestCase $this */
     /** @var User $reader */
     $reader = User::factory()->create();
     $reader->assignRole('Reader');
     $this->actingAs($reader);
 
-    $response = $this->patch('/users/'.$reader->id, [
+    $response = $this->patch('/profile', [
         'firstName' => $reader->name,
         'lastName' => $reader->last_name,
         'roles' => ['Admin'],
     ]);
 
-    // Self-Edit ist erlaubt, aber das roles-Feld darf nur ein Admin setzen.
-    // Status ist 2xx/3xx — die Rolle bleibt aber Reader.
     expect($response->status())->toBeIn([200, 302]);
 
     $reader->refresh();
@@ -223,14 +221,14 @@ it('resendInvitation: setzt welcome_valid_until neu', function () {
     expect($invitee->welcome_valid_until->greaterThan(now()))->toBeTrue();
 });
 
-it('update: User ändert sein eigenes Passwort über den old_password-Pfad', function () {
+it('updateProfile: User ändert sein eigenes Passwort über den old_password-Pfad', function () {
     /** @var TestCase $this */
     /** @var User $user */
     $user = User::factory()->create(['password' => Hash::make('alt-passwort-123')]);
     $user->assignRole('Reader');
     $this->actingAs($user);
 
-    $response = $this->patch('/users/'.$user->id, [
+    $response = $this->patch('/profile', [
         'firstName' => $user->name,
         'lastName' => $user->last_name,
         'old_password' => 'alt-passwort-123',
@@ -244,14 +242,14 @@ it('update: User ändert sein eigenes Passwort über den old_password-Pfad', fun
     expect(Hash::check('neues-passwort-456', $user->password))->toBeTrue();
 });
 
-it('update: falsches old_password schlägt fehl, Passwort bleibt unverändert', function () {
+it('updateProfile: falsches old_password schlägt fehl, Passwort bleibt unverändert', function () {
     /** @var TestCase $this */
     /** @var User $user */
     $user = User::factory()->create(['password' => Hash::make('alt-passwort-123')]);
     $user->assignRole('Reader');
     $this->actingAs($user);
 
-    $response = $this->from('/users/'.$user->id.'/edit')->patch('/users/'.$user->id, [
+    $response = $this->from('/profile')->patch('/profile', [
         'firstName' => $user->name,
         'lastName' => $user->last_name,
         'old_password' => 'falsches-passwort',

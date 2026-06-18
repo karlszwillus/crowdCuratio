@@ -22,12 +22,13 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreRoleRequest;
+use App\Http\Requests\UpdateRoleRequest;
 use App\Models\ModelHasRole;
 use App\Models\PermissionDescription;
 use DB;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -84,21 +85,13 @@ class RoleController extends Controller
 
     /**
      * Store a newly created resource in storage.
-     *
-     * @return Response
      */
-    public function store(Request $request)
+    public function store(StoreRoleRequest $request): RedirectResponse
     {
-        $this->validate(
-            $request,
-            [
-                'name' => 'required|unique:roles,name',
-                'permission' => 'required',
-            ]
-        );
+        $validated = $request->validated();
 
-        $role = Role::create(['name' => $request->input('name')]);
-        $role->syncPermissions($request->input('permission'));
+        $role = Role::create(['name' => $validated['name']]);
+        $role->syncPermissions($validated['permission']);
 
         return redirect()->route('roles.index')
             ->with('success', __('message_add_role_success'));
@@ -146,23 +139,16 @@ class RoleController extends Controller
      * Update the specified resource in storage.
      *
      * @param  int  $id
-     * @return Response
      */
-    public function update(Request $request, $id)
+    public function update(UpdateRoleRequest $request, $id): RedirectResponse
     {
-        $this->validate(
-            $request,
-            [
-                'name' => 'required',
-                'permission' => 'required',
-            ]
-        );
+        $validated = $request->validated();
 
         $role = Role::find($id);
-        $role->name = $request->input('name');
+        $role->name = $validated['name'];
         $role->save();
 
-        $role->syncPermissions($request->input('permission'));
+        $role->syncPermissions($validated['permission']);
 
         return redirect()->route('roles.index')
             ->with('success', __('message_edit_role_success'));

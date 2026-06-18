@@ -22,6 +22,8 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UpdateOwnProfileRequest;
+use App\Http\Requests\UpdateUserAsAdminRequest;
 use App\Models\MailSetting;
 use App\Models\User;
 use Illuminate\Contracts\Foundation\Application;
@@ -39,7 +41,10 @@ class UserController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('role:Admin')->only(['index', 'edit', 'destroy']);
+        // Block E / Welle E.3: `update` jetzt auch role:Admin-gated.
+        // Self-Edit lebt auf einer eigenen Route (`PATCH /profile`)
+        // mit eigenem FormRequest — siehe `updateProfile` unten.
+        $this->middleware('role:Admin')->only(['index', 'edit', 'update', 'destroy']);
     }
 
     /**
@@ -110,76 +115,56 @@ class UserController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Admin-Edit eines beliebigen Users.
      *
-     * @return RedirectResponse
+     * Block E / Welle E.3: `update` ist jetzt der reine Admin-Pfad
+     * — Validation via `UpdateUserAsAdminRequest`, Authorization
+     * durch `role:Admin`-Middleware im Constructor. Der frühere
+     * Password-Change-Pfad lebt auf `PATCH /profile` mit eigenem
+     * FormRequest (siehe `updateProfile`).
      */
-    public function update(Request $request, User $user)
+    public function update(UpdateUserAsAdminRequest $request, User $user): RedirectResponse
     {
-        // Hotfix Authorization-Bypass: Self-Edit erlaubt (Profil/
-        // Passwort-Change), Admin via Policy::before. Sonst 403.
-        $this->authorize('update', $user);
+        $validated = $request->validated();
 
-        // Das roles-Feld darf nur ein Admin synchronisieren — ein
-        // Self-Edit-Caller würde sich sonst die Admin-Rolle selbst
-        // setzen können (Privilege-Escalation analog NF-SEC-202).
-        $callerMayAssignRoles = $request->user()?->hasRole('Admin') === true;
+        $user->name = $validated['firstName'];
+        $user->last_name = $validated['lastName'];
+        $user->is_admin = $request->boolean('adminUser');
+        $user->create_project = $request->boolean('createProject');
+        $user->save();
 
-        if (isset($request['old_password']) && $request['old_password'] != '') {
-            $request->validate(
-                [
-                    'old_password' => [
-                        'required',
-
-                        function ($attribute, $value, $fail) use ($user) {
-                            if (! Hash::check($value, $user->password)) {
-                                $fail('__("message_old_password_incorrect")');
-                            }
-                        },
-                    ],
-                    'new_password' => 'required|min:8',
-                    'confirm_password' => 'required|same:new_password',
-                ]
-            );
-
-            $request->validate(
-                [
-                    'firstName' => 'required|string|max:255',
-                    'lastName' => 'required|string|max:255',
-                ]
-            );
-
-            $user->name = $request['firstName'];
-            $user->last_name = $request['lastName'];
-            $user->password = Hash::make($request['new_password']);
-            $user->save();
-
-            if ($callerMayAssignRoles && isset($request['roles'])) {
-                $user->syncRoles($request->input('roles'));
-            }
-
-            return redirect()->back()->with('success', __('message_edit_profile_success'));
-        } else {
-            $request->validate(
-                [
-                    'firstName' => 'required|string|max:255',
-                    'lastName' => 'required|string|max:255',
-
-                ]
-            );
-
-            $user->name = $request['firstName'];
-            $user->last_name = $request['lastName'];
-            $user->is_admin = isset($request['adminUser']) ? $request['adminUser'] : 0;
-            $user->create_project = isset($request['createProject']) ? $request['createProject'] : 0;
-            $user->save();
-
-            if ($callerMayAssignRoles && isset($request['roles'])) {
-                $user->syncRoles($request->input('roles'));
-            }
-
-            return redirect()->back()->with('success', __('message_edit_user_success'));
+        if (isset($validated['roles'])) {
+            $user->syncRoles($validated['roles']);
         }
+
+        return redirect()->back()->with('success', __('message_edit_user_success'));
+    }
+
+    /**
+     * Self-Edit des eigenen Profils inkl. optionalem Passwort-Wechsel.
+     *
+     * Block E / Welle E.3 (neu). Target ist immer `auth()->user()`,
+     * daher kein `{user}`-Route-Param. Validation via
+     * `UpdateOwnProfileRequest` — der `old_password`-Check lebt
+     * dort als Closure-Rule, sodass falsche alte Passwörter über
+     * Validation-Fehler zurückkommen.
+     */
+    public function updateProfile(UpdateOwnProfileRequest $request): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $validated = $request->validated();
+
+        $user->name = $validated['firstName'];
+        $user->last_name = $validated['lastName'];
+
+        if (filled($validated['new_password'] ?? null)) {
+            $user->password = Hash::make($validated['new_password']);
+        }
+
+        $user->save();
+
+        return redirect()->back()->with('success', __('message_edit_profile_success'));
     }
 
     /**

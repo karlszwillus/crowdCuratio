@@ -55,16 +55,31 @@ class PermissionTableSeeder extends Seeder
 
         foreach (PermissionName::all() as $position => $name) {
             $permission = Permission::updateOrCreate(['name' => $name]);
-            PermissionDescription::updateOrCreate(
-                ['permission_id' => $permission->id],
-                [
-                    'description' => $descriptions[$name],
-                    // permission_descriptions.position ist NOT NULL ohne
-                    // Default — vor strict=true (ADR-0011) hat MySQL still
-                    // 0 eingetragen, jetzt bricht der Insert sonst ab.
-                    'position' => $position,
-                ]
-            );
+
+            // Block E / Welle E.2: `permission_id` und `position` sind
+            // bewusst nicht in `PermissionDescription::$fillable` (sie
+            // sind Lifecycle-Felder, keine User-Eingaben). Vorher liefen
+            // beide durch ein `updateOrCreate`-Array — das ruft intern
+            // `fill()` und wirft unter `Model::shouldBeStrict()` eine
+            // MassAssignmentException. In Production lief der Seeder
+            // still durch, weil Strict-Mode dort aus ist; in Dev/CI war
+            // er eine tickende Bombe.
+            //
+            // Property-Setter umgehen den Mass-Assignment-Schutz sauber,
+            // ohne ihn aufzuweichen — gleiche Variante, die die Tests in
+            // `RoleControllerTest::beforeEach` fahren.
+            // `firstOrNew(['permission_id' => ...])` greift intern auf
+            // `fill()` zu und triggert daher denselben Strict-Mode-Bruch.
+            // Daher explizit per Query suchen, sonst eine leere Instanz.
+            $description = PermissionDescription::query()
+                ->where('permission_id', $permission->id)
+                ->first() ?? new PermissionDescription;
+
+            $description->permission_id = $permission->id;
+            $description->position = $position;
+            $description->setTranslation('description', 'de', $descriptions[$name]['de']);
+            $description->setTranslation('description', 'en', $descriptions[$name]['en']);
+            $description->save();
         }
     }
 }
