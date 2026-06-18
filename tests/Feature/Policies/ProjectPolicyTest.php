@@ -24,6 +24,7 @@ use App\Models\ProjectUserPermission;
 use App\Models\User;
 use App\Policies\ProjectPolicy;
 use App\Support\PermissionName;
+use App\Support\RoleName;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -211,4 +212,109 @@ it('viewAny: User ohne view-Permission darf die Project-Liste nicht sehen', func
     $policy = app(ProjectPolicy::class);
 
     expect($policy->viewAny($noRole))->toBeFalse();
+});
+
+// ---------- update / delete / restore / publish — Negativtests ----------
+//
+// Block E / Welle E.7a (Architecture-Review-Befund): die destruktiven
+// Operationen waren in `ProjectPolicyTest` nicht durch Negativtests
+// abgedeckt. Heutiges Verhalten: nur Owner darf, Admin via before().
+// Eingeladene (auch mit edit-/delete-Permission auf dem Pivot) dürfen
+// heute NICHT — die ProjectPolicy nutzt für diese Methoden den
+// reinen Owner-Check, nicht den Service. Das fixieren wir hier.
+
+it('update: Fremder ohne Einladung darf das Project NICHT updaten', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole(RoleName::READER->value);
+    /** @var User $stranger */
+    $stranger = User::factory()->create();
+    $stranger->assignRole(RoleName::READER->value);
+    $project = makeProject($owner);
+
+    $policy = app(ProjectPolicy::class);
+
+    expect($policy->update($stranger, $project))->toBeFalse();
+});
+
+it('update: Owner darf sein Project updaten', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole(RoleName::READER->value);
+    $project = makeProject($owner);
+
+    $policy = app(ProjectPolicy::class);
+
+    expect($policy->update($owner, $project))->toBeTrue();
+});
+
+it('delete: Fremder darf das Project NICHT löschen', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole(RoleName::READER->value);
+    /** @var User $stranger */
+    $stranger = User::factory()->create();
+    $stranger->assignRole(RoleName::READER->value);
+    $project = makeProject($owner);
+
+    $policy = app(ProjectPolicy::class);
+
+    expect($policy->delete($stranger, $project))->toBeFalse();
+});
+
+it('delete: Owner darf sein Project löschen', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole(RoleName::READER->value);
+    $project = makeProject($owner);
+
+    $policy = app(ProjectPolicy::class);
+
+    expect($policy->delete($owner, $project))->toBeTrue();
+});
+
+it('restore: Fremder darf das Project NICHT restoren', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole(RoleName::READER->value);
+    /** @var User $stranger */
+    $stranger = User::factory()->create();
+    $stranger->assignRole(RoleName::READER->value);
+    $project = makeProject($owner);
+
+    $policy = app(ProjectPolicy::class);
+
+    expect($policy->restore($stranger, $project))->toBeFalse();
+});
+
+it('publish: Fremder darf das Project NICHT veröffentlichen', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole(RoleName::READER->value);
+    /** @var User $stranger */
+    $stranger = User::factory()->create();
+    $stranger->assignRole(RoleName::READER->value);
+    $project = makeProject($owner);
+
+    $policy = app(ProjectPolicy::class);
+
+    expect($policy->publish($stranger, $project))->toBeFalse();
+});
+
+it('publish: Owner darf sein Project veröffentlichen', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole(RoleName::READER->value);
+    $project = makeProject($owner);
+
+    $policy = app(ProjectPolicy::class);
+
+    expect($policy->publish($owner, $project))->toBeTrue();
 });

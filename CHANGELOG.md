@@ -10,6 +10,40 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Geändert (Permission-Welt nachschärfen — Block E, Welle E.7a)
+
+- **`ChapterPolicy` und `EntryPolicy` project-scoped via Service.**
+  Vorher reiner Owner-Check (`$user->id === $chapter->project->user_id`)
+  — Eingeladene mit `edit`/`delete`/`view`-Permission auf dem Pivot
+  fielen durch. Jetzt geht `view`/`update`/`delete`/`createIn`
+  durch `ProjectPermissionService::userHasPermissionOnProject`,
+  das den Owner-Shortcut intern abdeckt und zusätzlich den Pivot-
+  Lookup macht. Admin via `before()` unverändert.
+  **Verhaltens-Wechsel:** ein Eingeladener mit `edit`-Permission
+  kann jetzt Chapter und Entries editieren — vorher nur der
+  Project-Owner. Das war ein im Architecture-Review identifiziertes
+  Authorization-Loch.
+- **Neue Basisklasse `App\Policies\OwnerScopedPolicy`.** Abstract,
+  trägt `before()`-Admin-Shortcut, Service-Injection und einen
+  `check(User, Project, PermissionName)`-Helper. Wiederverwendbar
+  für die noch ausstehenden Content-Policies (Text/Image/Gallery/
+  Audiovisual), die in E.7b folgen, sobald die `media_content`-
+  Polymorphie eine einheitliche `project()`-Ableitung pro Modell
+  zulässt.
+
+### Hinzugefügt (Permission-Welt nachschärfen — Block E, Welle E.7a)
+
+- **`tests/Feature/Policies/ChapterPolicyTest.php`** (neu) — sieben
+  Pest-Tests: Owner / Admin (`before`) / Eingeladener-mit-view /
+  Eingeladener-mit-edit / Eingeladener-nur-mit-view (kein
+  Edit-Recht) / Fremder.
+- **`tests/Feature/Policies/EntryPolicyTest.php`** (neu) — sechs
+  Tests, gleiche Boundaries plus transitiver Chapter→Project-Pfad.
+- **`tests/Feature/Policies/ProjectPolicyTest.php`** um acht
+  Negativtests erweitert: `update`/`delete`/`restore`/`publish`
+  jeweils Owner ✓ + Fremder ✗ (Architecture-Review-Befund —
+  diese Methoden waren bisher nicht negativ-getestet).
+
 ### Geändert (Permission-Welt nachschärfen — Block E, Welle E.6)
 
 - **Sieben Comment-Endpunkte auf `StoreCommentRequest` umgestellt.**
