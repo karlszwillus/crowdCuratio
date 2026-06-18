@@ -23,6 +23,7 @@ If not, see <https://www.gnu.org/licenses/>.
 namespace App\Http\Controllers;
 
 use App\Data\EntryData;
+use App\Http\Requests\StoreCommentRequest;
 use App\Http\Requests\StoreEntryRequest;
 use App\Http\Requests\UpdateEntryRequest;
 use App\Models\Entry;
@@ -143,11 +144,9 @@ class EntryController extends Controller
      * Modell explizit aus $request->id (siehe Hinweis im
      * ProjectController::commentProject).
      */
-    public function commentEntry(Request $request): RedirectResponse
+    public function commentEntry(StoreCommentRequest $request): RedirectResponse
     {
-        $request->validate(['comment' => 'required']);
-
-        $entry = Entry::findOrFail($request->id);
+        $entry = Entry::findOrFail($request->validated('id'));
         $this->comments->addComment($entry, $request);
 
         return redirect()->back()->with('success', 'Reply to comment added successfully');

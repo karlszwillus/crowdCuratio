@@ -24,6 +24,7 @@ namespace App\Http\Controllers;
 
 use App\Data\ChapterData;
 use App\Http\Requests\StoreChapterRequest;
+use App\Http\Requests\StoreCommentRequest;
 use App\Http\Requests\UpdateChapterRequest;
 use App\Models\Chapter;
 use App\Models\Permission;
@@ -151,11 +152,9 @@ class ChapterController extends Controller
      * Modell explizit aus $request->id (siehe Hinweis im
      * ProjectController::commentProject).
      */
-    public function commentChapter(Request $request): RedirectResponse
+    public function commentChapter(StoreCommentRequest $request): RedirectResponse
     {
-        $request->validate(['comment' => 'required']);
-
-        $chapter = Chapter::findOrFail($request->id);
+        $chapter = Chapter::findOrFail($request->validated('id'));
         $this->comments->addComment($chapter, $request);
 
         return redirect()->back()->with('success', 'Reply to comment added successfully');

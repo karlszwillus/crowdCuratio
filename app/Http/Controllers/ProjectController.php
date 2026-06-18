@@ -23,6 +23,7 @@ If not, see <https://www.gnu.org/licenses/>.
 namespace App\Http\Controllers;
 
 use App\Data\ProjectData;
+use App\Http\Requests\StoreCommentRequest;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Audiovisual;
@@ -333,11 +334,9 @@ class ProjectController extends Controller
      * das Project-Argument nicht — wir laden es explizit aus
      * $request->id, wie der alte CommentTrait das auch tat.
      */
-    public function commentProject(Request $request): RedirectResponse
+    public function commentProject(StoreCommentRequest $request): RedirectResponse
     {
-        $request->validate(['comment' => 'required']);
-
-        $project = Project::findOrFail($request->id);
+        $project = Project::findOrFail($request->validated('id'));
         $this->authorize('comment', $project);
         $this->comments->addComment($project, $request);
 

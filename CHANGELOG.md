@@ -10,6 +10,24 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Geändert (Permission-Welt nachschärfen — Block E, Welle E.6)
+
+- **Sieben Comment-Endpunkte auf `StoreCommentRequest` umgestellt.**
+  Vorher hatte jede der sieben Controller-Methoden (Project,
+  Chapter, Entry, Text, Image, Gallery, Audiovisual) ein
+  identisches `$request->validate(['comment' => 'required'])`
+  inline. Ein gemeinsamer FormRequest deckt das ab — typisiert,
+  authorize-prüfbar, FormRequest-Konvention aus ADR-0017 auch hier
+  eingelöst. Die project-scoped Autorisierung (`authorize('comment',
+  $model)`) bleibt im Controller, weil sie das konkrete Modell
+  braucht.
+
+### Hinzugefügt (Permission-Welt nachschärfen — Block E, Welle E.6)
+
+- **`tests/Feature/Http/Requests/StoreCommentRequestTest.php`** —
+  vier Pest-Tests: Authorize-Boundary (auth/guest) und Rule-Set
+  (`comment` + `id` jeweils required).
+
 ### Geändert (Permission-Welt nachschärfen — Block E, Welle E.5)
 
 - **`RegisteredUserController::store` von ~115 Zeilen auf ~30
