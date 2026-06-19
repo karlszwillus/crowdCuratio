@@ -25,6 +25,7 @@ namespace App\Http\Controllers;
 use App\Data\GalleryData;
 use App\Data\ImageData;
 use App\Data\TextData;
+use App\Http\Requests\StoreCommentRequest;
 use App\Http\Requests\StoreImageBlockRequest;
 use App\Models\Comment;
 use App\Models\Gallery;
@@ -254,11 +255,9 @@ class ContentController extends Controller
      * Route hat kein {text} in der URL, deshalb laden wir das
      * Modell explizit aus $request->id (siehe ProjectController).
      */
-    public function commentText(Request $request): RedirectResponse
+    public function commentText(StoreCommentRequest $request): RedirectResponse
     {
-        $request->validate(['comment' => 'required']);
-
-        $text = Text::findOrFail($request->id);
+        $text = Text::findOrFail($request->validated('id'));
         $this->comments->addComment($text, $request);
 
         return redirect()->back()->with('success', 'Reply to comment added successfully');
@@ -299,11 +298,9 @@ class ContentController extends Controller
      * Route hat kein {image} in der URL, deshalb laden wir das
      * Modell explizit aus $request->id (siehe ProjectController).
      */
-    public function commentImage(Request $request): RedirectResponse
+    public function commentImage(StoreCommentRequest $request): RedirectResponse
     {
-        $request->validate(['comment' => 'required']);
-
-        $image = Image::findOrFail($request->id);
+        $image = Image::findOrFail($request->validated('id'));
         $this->comments->addComment($image, $request);
 
         return redirect()->back()->with('success', 'Reply to comment added successfully');
@@ -519,11 +516,9 @@ class ContentController extends Controller
      * Route hat kein {gallery} in der URL, deshalb laden wir das
      * Modell explizit aus $request->id (siehe ProjectController).
      */
-    public function commentGallery(Request $request): RedirectResponse
+    public function commentGallery(StoreCommentRequest $request): RedirectResponse
     {
-        $request->validate(['comment' => 'required']);
-
-        $gallery = Gallery::findOrFail($request->id);
+        $gallery = Gallery::findOrFail($request->validated('id'));
         $this->comments->addComment($gallery, $request);
 
         return redirect()->back()->with('success', 'Reply to comment added successfully');

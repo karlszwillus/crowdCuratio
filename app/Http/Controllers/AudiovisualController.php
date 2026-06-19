@@ -24,6 +24,7 @@ namespace App\Http\Controllers;
 
 use App\Data\AudiovisualData;
 use App\Http\Requests\StoreAudiovisualRequest;
+use App\Http\Requests\StoreCommentRequest;
 use App\Models\Audiovisual;
 use App\Services\AudiovisualService;
 use App\Services\CommentService;
@@ -109,11 +110,9 @@ class AudiovisualController extends Controller
      * Route hat kein {audiovisual} in der URL, deshalb laden wir
      * das Modell explizit aus $request->id (siehe ProjectController).
      */
-    public function commentAudiovisual(Request $request): RedirectResponse
+    public function commentAudiovisual(StoreCommentRequest $request): RedirectResponse
     {
-        $request->validate(['comment' => 'required']);
-
-        $audiovisual = Audiovisual::findOrFail($request->id);
+        $audiovisual = Audiovisual::findOrFail($request->validated('id'));
         $this->comments->addComment($audiovisual, $request);
 
         return redirect()->back()->with('success', 'Reply to comment added successfully');

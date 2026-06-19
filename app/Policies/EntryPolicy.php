@@ -26,30 +26,26 @@ use App\Models\Chapter;
 use App\Models\Entry;
 use App\Models\User;
 use App\Support\PermissionName;
-use App\Support\RoleName;
-use Illuminate\Auth\Access\HandlesAuthorization;
 
 /**
  * Entry-Authorization.
  *
- * Owner-Logik transitiv über Chapter → Project. Admin via before().
+ * Block E / Welle E.7a: project-scoped via `OwnerScopedPolicy`,
+ * transitiv über Chapter → Project. Owner-Shortcut und Pivot-Lookup
+ * macht der Service. Vorher nur reiner Owner-Check ohne Service.
  *
  * Referenz: .werkbank/ADR/0013-authorization-strategie.md
  */
-class EntryPolicy
+class EntryPolicy extends OwnerScopedPolicy
 {
-    use HandlesAuthorization;
-
-    public function before(User $user, string $ability): ?bool
-    {
-        return $user->hasRole(RoleName::ADMIN->value) ? true : null;
-    }
-
     public function view(User $user, Entry $entry): bool
     {
-        return $user->id === (int) $entry->chapter->project->user_id;
+        return $this->check($user, $entry->chapter->project, PermissionName::VIEW);
     }
 
+    /**
+     * Globale Permission, kein Project-Kontext — bleibt wie vorher.
+     */
     public function create(User $user): bool
     {
         return $user->can(PermissionName::ADD);
@@ -57,23 +53,19 @@ class EntryPolicy
 
     /**
      * Darf $user im konkreten $chapter einen Entry anlegen?
-     *
-     * Owner-Check transitiv über Project. Schließt NF-LAR-003:
-     * Permission 'add' allein reichte nicht, weil sie projekt­übergreifend
-     * gilt — der Owner-Check verhindert das Anlegen in fremden Kapiteln.
      */
     public function createIn(User $user, Chapter $chapter): bool
     {
-        return $user->id === (int) $chapter->project->user_id;
+        return $this->check($user, $chapter->project, PermissionName::ADD);
     }
 
     public function update(User $user, Entry $entry): bool
     {
-        return $user->id === (int) $entry->chapter->project->user_id;
+        return $this->check($user, $entry->chapter->project, PermissionName::EDIT);
     }
 
     public function delete(User $user, Entry $entry): bool
     {
-        return $user->id === (int) $entry->chapter->project->user_id;
+        return $this->check($user, $entry->chapter->project, PermissionName::DELETE);
     }
 }

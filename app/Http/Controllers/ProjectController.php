@@ -23,6 +23,7 @@ If not, see <https://www.gnu.org/licenses/>.
 namespace App\Http\Controllers;
 
 use App\Data\ProjectData;
+use App\Http\Requests\StoreCommentRequest;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Audiovisual;
@@ -333,11 +334,9 @@ class ProjectController extends Controller
      * das Project-Argument nicht — wir laden es explizit aus
      * $request->id, wie der alte CommentTrait das auch tat.
      */
-    public function commentProject(Request $request): RedirectResponse
+    public function commentProject(StoreCommentRequest $request): RedirectResponse
     {
-        $request->validate(['comment' => 'required']);
-
-        $project = Project::findOrFail($request->id);
+        $project = Project::findOrFail($request->validated('id'));
         $this->authorize('comment', $project);
         $this->comments->addComment($project, $request);
 
@@ -786,16 +785,31 @@ class ProjectController extends Controller
      *
      * @return Application|Factory|View
      */
-    public function editMetaData($projectId)
+    public function editMetaData($projectId, UserService $userService)
     {
         $project = Project::findOrFail($projectId);
+
+        // Block E / Welle E.7a-Hotfix: vorher nur `auth`-Middleware,
+        // jeder Reader konnte fremde Project-Metadaten und die
+        // Permissions-Verwaltung sehen. Jetzt geht der Pfad durch
+        // ProjectPolicy::update — Owner ODER Admin ODER
+        // Eingeladener mit edit-Permission.
+        $this->authorize('update', $project);
+
         $listGrantedUsers = $this->permissions->getUsersForThisProject((int) $projectId);
         // F-DB-013: vorher Role::where('id', 'not like', '1').
         $listRole = Role::where('name', '!=', RoleName::ADMIN->value)->pluck('name', 'id');
         $permissions = Permission::all();
+        // Hotfix: `$listPermissions` wurde von der `projects.create`-
+        // View erwartet (Zeile 168: `in_array('invite', $listPermissions)`),
+        // aber nicht übergeben — bei Admin griff der Short-Circuit
+        // `Auth::user()->isAdmin()` vorher, daher fiel der Bug lange
+        // nicht auf. Mit dem Owner-Pfad oder einem Eingeladenen mit
+        // edit-Permission läuft die View bis zur in_array-Prüfung.
+        $listPermissions = $userService->getAllUsers($project->id);
         asort($listGrantedUsers);
 
-        return \view('projects.create', compact('project', 'listGrantedUsers', 'listRole', 'permissions'));
+        return \view('projects.create', compact('project', 'listGrantedUsers', 'listRole', 'permissions', 'listPermissions'));
     }
 
     /**

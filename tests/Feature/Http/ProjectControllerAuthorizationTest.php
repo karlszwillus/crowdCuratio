@@ -153,6 +153,62 @@ it('Comment: Eingeladener mit comment-Permission darf kommentieren', function ()
     expect($response->status())->toBeIn([200, 302]);
 });
 
+// ---------- editMetaData (E.7a-Hotfix) ----------
+//
+// Vor dem Hotfix war /project/{id}/metadata nur durch auth-Middleware
+// gegated — Reader konnten fremde Project-Metadaten und die
+// Permissions-Verwaltung sehen. Plus die View crashte mit
+// Undefined Variable $listPermissions, weil der Controller die
+// nicht übergab.
+
+it('editMetaData: Fremder darf fremde Project-Metadata NICHT öffnen — 403', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole('Reader');
+    /** @var User $stranger */
+    $stranger = User::factory()->create();
+    $stranger->assignRole('Reader');
+    $project = makeProject($owner);
+
+    $this->actingAs($stranger);
+
+    $response = $this->get('/project/'.$project->id.'/metadata');
+
+    $response->assertStatus(403);
+});
+
+it('editMetaData: Owner darf seine Project-Metadata öffnen', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole('Reader');
+    $project = makeProject($owner);
+
+    $this->actingAs($owner);
+
+    $response = $this->get('/project/'.$project->id.'/metadata');
+
+    expect($response->status())->toBeIn([200, 302]);
+});
+
+it('editMetaData: Admin darf fremde Project-Metadata öffnen', function () {
+    /** @var TestCase $this */
+    /** @var User $admin */
+    $admin = User::factory()->create();
+    $admin->assignRole('Admin');
+    /** @var User $other */
+    $other = User::factory()->create();
+    $other->assignRole('Reader');
+    $project = makeProject($other);
+
+    $this->actingAs($admin);
+
+    $response = $this->get('/project/'.$project->id.'/metadata');
+
+    expect($response->status())->toBeIn([200, 302]);
+});
+
 it('Comment: Fremder ohne Einladung kriegt 403', function () {
     /** @var TestCase $this */
     /** @var User $owner */

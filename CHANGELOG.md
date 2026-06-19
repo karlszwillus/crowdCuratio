@@ -10,6 +10,113 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Sicherheit (Permission-Welt nachschärfen — Block E, Welle E.7a-Hotfix)
+
+- **`ProjectController::editMetaData` ohne Authorize-Gate geschlossen.**
+  `/project/{id}/metadata` war nur durch `auth`-Middleware geschützt
+  — Reader konnten fremde Project-Metadaten samt Permissions-
+  Verwaltung sehen. Inline-Authorize via `update`-Policy. Damit
+  greift dieselbe Owner/Admin/Eingeladener-mit-edit-Logik wie für
+  die regulären Update-Pfade. Im Smoke nach E.7a aufgedeckt
+  (analog zum Block-D-Architecture-Review-BLOCKER).
+- **Latenter View-Bug behoben:** die `projects.create.blade.php`-
+  View las `$listPermissions` (Zeile 168), das `editMetaData`
+  aber nicht an die View übergab. Bei Admin griff der
+  `Auth::user()->isAdmin()`-Short-Circuit vorher und der Bug fiel
+  nie auf; mit dem Owner- oder Eingeladenen-Pfad lief das
+  `in_array`-Statement und crashte mit `Undefined variable`.
+  Variable wird jetzt analog `ProjectController::edit` via
+  `UserService::getAllUsers` befüllt.
+- **Drei neue Charakterisierungs-Tests** in
+  `ProjectControllerAuthorizationTest`: Fremder → 403, Owner →
+  200/302, Admin → 200/302.
+
+### Geändert (Permission-Welt nachschärfen — Block E, Welle E.7a)
+
+- **`ChapterPolicy` und `EntryPolicy` project-scoped via Service.**
+  Vorher reiner Owner-Check (`$user->id === $chapter->project->user_id`)
+  — Eingeladene mit `edit`/`delete`/`view`-Permission auf dem Pivot
+  fielen durch. Jetzt geht `view`/`update`/`delete`/`createIn`
+  durch `ProjectPermissionService::userHasPermissionOnProject`,
+  das den Owner-Shortcut intern abdeckt und zusätzlich den Pivot-
+  Lookup macht. Admin via `before()` unverändert.
+  **Verhaltens-Wechsel:** ein Eingeladener mit `edit`-Permission
+  kann jetzt Chapter und Entries editieren — vorher nur der
+  Project-Owner. Das war ein im Architecture-Review identifiziertes
+  Authorization-Loch.
+- **Neue Basisklasse `App\Policies\OwnerScopedPolicy`.** Abstract,
+  trägt `before()`-Admin-Shortcut, Service-Injection und einen
+  `check(User, Project, PermissionName)`-Helper. Wiederverwendbar
+  für die noch ausstehenden Content-Policies (Text/Image/Gallery/
+  Audiovisual), die in E.7b folgen, sobald die `media_content`-
+  Polymorphie eine einheitliche `project()`-Ableitung pro Modell
+  zulässt.
+
+### Hinzugefügt (Permission-Welt nachschärfen — Block E, Welle E.7a)
+
+- **`tests/Feature/Policies/ChapterPolicyTest.php`** (neu) — sieben
+  Pest-Tests: Owner / Admin (`before`) / Eingeladener-mit-view /
+  Eingeladener-mit-edit / Eingeladener-nur-mit-view (kein
+  Edit-Recht) / Fremder.
+- **`tests/Feature/Policies/EntryPolicyTest.php`** (neu) — sechs
+  Tests, gleiche Boundaries plus transitiver Chapter→Project-Pfad.
+- **`tests/Feature/Policies/ProjectPolicyTest.php`** um acht
+  Negativtests erweitert: `update`/`delete`/`restore`/`publish`
+  jeweils Owner ✓ + Fremder ✗ (Architecture-Review-Befund —
+  diese Methoden waren bisher nicht negativ-getestet).
+
+### Geändert (Permission-Welt nachschärfen — Block E, Welle E.6)
+
+- **Sieben Comment-Endpunkte auf `StoreCommentRequest` umgestellt.**
+  Vorher hatte jede der sieben Controller-Methoden (Project,
+  Chapter, Entry, Text, Image, Gallery, Audiovisual) ein
+  identisches `$request->validate(['comment' => 'required'])`
+  inline. Ein gemeinsamer FormRequest deckt das ab — typisiert,
+  authorize-prüfbar, FormRequest-Konvention aus ADR-0017 auch hier
+  eingelöst. Die project-scoped Autorisierung (`authorize('comment',
+  $model)`) bleibt im Controller, weil sie das konkrete Modell
+  braucht.
+
+### Hinzugefügt (Permission-Welt nachschärfen — Block E, Welle E.6)
+
+- **`tests/Feature/Http/Requests/StoreCommentRequestTest.php`** —
+  vier Pest-Tests: Authorize-Boundary (auth/guest) und Rule-Set
+  (`comment` + `id` jeweils required).
+
+### Geändert (Permission-Welt nachschärfen — Block E, Welle E.5)
+
+- **`RegisteredUserController::store` von ~115 Zeilen auf ~30
+  Zeilen verschlankt.** Vier neue Klassen kapseln jetzt die drei
+  Verzweigungen plus den Role-Resolver:
+  - `App\Support\RoleResolver` (Helper) — vorher Private-Methode
+    im Controller. Akzeptiert Single-String, Array, Role-Name,
+    numerische Role-ID; löst alles in konkrete `Role`-Instanzen
+    auf.
+  - `App\Services\UserReactivationService` — kapselt den
+    `if ($userExists)`-Pfad mit `DB::table`-Update auf
+    `deleted_at = null`.
+  - `App\Services\UserOnboardingService` — User-Erzeugung per
+    Property-Setter inkl. Privilege-Check für `is_admin` /
+    `create_project` (NF-SEC-202), Rollen-Sync, Welcome-Mail.
+  - `App\Services\ProjectInvitationService` — Permission-Lookup
+    über Spatie-Relation, `ProjectUserPermission`-Pivot-Inserts,
+    Invitation-Eintrag.
+- **Latenter Bug behoben:** `now()->addDay(3)` in der Welcome-
+  Notification-Logik hat das `3`-Argument still verworfen (die
+  Carbon-Methode nimmt keine Parameter). Welcome-Tokens waren
+  faktisch nur einen Tag gültig statt drei. Jetzt `addDays(3)`,
+  gefangen durch Larastan im strict-Mode der neuen Service-Klasse.
+
+### Hinzugefügt (Permission-Welt nachschärfen — Block E, Welle E.5)
+
+- **Vier neue Pest-Test-Files** mit insgesamt 18 Tests:
+  - `tests/Feature/Support/RoleResolverTest.php` (5)
+  - `tests/Feature/Services/UserReactivationServiceTest.php` (4)
+  - `tests/Feature/Services/UserOnboardingServiceTest.php` (6)
+  - `tests/Feature/Services/ProjectInvitationServiceTest.php` (4)
+
+
+
 ### Sicherheit (composer audit — Laravel Framework)
 
 - **`laravel/framework` von 12.61.0 auf 12.62.0** angehoben.
