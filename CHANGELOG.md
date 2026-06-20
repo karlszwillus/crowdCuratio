@@ -10,6 +10,27 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Geändert (Block E.7b Sub-Welle 2a — media_content Morph-Columns)
+
+- **Neue Spalten `content_id`, `content_type`, `parent_id`,
+  `parent_type` auf `media_content`.** Wegbereiter für den
+  Schema-Refactor aus ADR-0022. Die alten Spalten (`media_content_id`,
+  `media_contentable_id`, `media_contentable_type`) bleiben für
+  die Übergangswelle stehen — Services schreiben in Sub-Welle 2d
+  doppelt, gelesen werden in 2b/2c die neuen Spalten. Cleanup der
+  alten Spalten erfolgt in Sub-Welle 4 nach Smoke.
+- **Daten-Backfill** in derselben Migration: `content_id` 1:1 aus
+  `media_content_id`, `parent_id` aus `media_contentable_id`,
+  `parent_type = Entry::class` für alle Bestands-Rows (laut
+  Audit-Parent-Probe), `content_type` mit Spezialfall für
+  `Image::class`-Tags mit Match in `galleries` → `Gallery::class`
+  (historischer Schiefstand aus `GalleryService::attachToEntry`,
+  jetzt sauber). Migration ist idempotent — nur Rows mit NULL
+  `content_id` werden geschrieben.
+- **Fünf Pest-Tests** in `MediaContentMorphColumnsTest`: Endzustand,
+  Text-Mapping, Image-zu-Gallery-Mapping, Audiovisual-Mapping,
+  Roundtrip down/up.
+
 ### Hinzugefügt (Block E.7b Sub-Welle 1 — Voranalyse)
 
 - **`db:audit-media-content` Artisan-Command.** Read-only-Audit der
