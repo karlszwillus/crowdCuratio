@@ -36,7 +36,18 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     <div class="writeinfo"></div>
                     <div class="col-xs-12">
                         <span id="lblChapter"></span>
-                        <form id="entry_frm" name="entry_frm"
+                        {{-- Stakeholder-Fix Juni 2026: ID/name war
+                             `entry_frm` und kollidierte mit dem Entry-
+                             und Audiovisual-Modal in chapters/index.
+                             Drei DOM-Elemente mit identischer ID
+                             machten die Entry-Reset-Helper
+                             (`resetEntryForm`/`setEntryFormUpdate`)
+                             unscharf — das `_method=PATCH`-Override
+                             aus dem Entry-Form konnte auf das Gallery-
+                             Form übergreifen, POST /save-gallery wurde
+                             dann als PATCH interpretiert und endete in
+                             einer 404. --}}
+                        <form id="gallery_frm" name="gallery_frm"
                               action="{{ route('save.gallery') }}"
                               method="POST"
                               enctype="multipart/form-data">

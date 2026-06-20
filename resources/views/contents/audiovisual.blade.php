@@ -36,7 +36,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     <div class="writeinfo"></div>
                     <div class="col-xs-12">
                         <span id="lblChapter"></span>
-                        <form id="entry_frm" name="entry_frm"
+                        {{-- Stakeholder-Fix Juni 2026: ID/name war
+                             `entry_frm` und kollidierte mit dem Entry-
+                             und Gallery-Modal in chapters/index. Siehe
+                             gallery.blade.php zum Hintergrund. --}}
+                        <form id="audiovisual_frm" name="audiovisual_frm"
                               action="{{ route('save.audiovisual') }}"
                               method="POST"
                               enctype="multipart/form-data">
