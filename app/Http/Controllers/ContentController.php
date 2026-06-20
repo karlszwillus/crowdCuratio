@@ -121,14 +121,20 @@ class ContentController extends Controller
         // Translation-Pfad: setzt alt-Übersetzung + delegiert
         // Source-Übersetzungen via translateField. Bleibt vorerst
         // inline (Translation-Refactor späterer Block).
-        if (isset($request['translationMode'])) {
-            if (isset($request['originId'])) {
+        //
+        // Stakeholder-Fix Juni 2026: Härtung gegen
+        // `ConvertEmptyStringsToNull` (Laravel-11-Default). `isset()`
+        // auf den Request-Bag-Keys ist post-Middleware unzuverlässig
+        // — Keys können present sein mit Wert `null`. `filled()`
+        // testet idiomatisch "vorhanden und nicht leer/null".
+        if ($request->filled('translationMode')) {
+            if ($request->filled('originId')) {
                 $this->translateField($request['originId'], $request['originField'], $request['isTranslated']);
             }
-            if (isset($request['copyrightId'])) {
+            if ($request->filled('copyrightId')) {
                 $this->translateField($request['copyrightId'], $request['copyrightField'], $request['isTranslated']);
             }
-            if (isset($request['altField'])) {
+            if ($request->filled('altField')) {
                 $image = Image::findOrFail($request['imageId']);
                 $image->setTranslation('alt', 'en', $request['altField']);
                 $image->save();
@@ -144,7 +150,11 @@ class ContentController extends Controller
 
         $data = ImageData::fromRequest($request);
 
-        if (isset($request['imageId']) && $request['imageId'] !== '') {
+        // Stakeholder-Fix Juni 2026: siehe saveGallery — gleiches
+        // Pattern, gleicher Fix. `ConvertEmptyStringsToNull` macht
+        // `imageId=""` zu `null`; ohne `filled()` lief die alte
+        // Bedingung in `Image::findOrFail(null)` → 404.
+        if ($request->filled('imageId')) {
             $image = Image::findOrFail($request['imageId']);
             $newFile = $request->hasFile('newImage') ? $request->file('newImage') : null;
             $this->images->update($image, $data, $newFile);
@@ -202,14 +212,19 @@ class ContentController extends Controller
         // die Source-Namen, kein Body-Update via TextService. Bleibt
         // bis zur Translation-Refaktorierung (späterer Block) auf
         // den Inline-Aufrufen.
-        if (isset($request['translationMode'])) {
-            if (isset($request['textId'])) {
+        //
+        // Stakeholder-Fix Juni 2026: Härtung gegen
+        // `ConvertEmptyStringsToNull` (analog saveImage), damit
+        // `null`-Werte nicht in `saveTranslatedText`/`translateField`
+        // mit `findOrFail(null)` enden.
+        if ($request->filled('translationMode')) {
+            if ($request->filled('textId')) {
                 $this->saveTranslatedText($request);
             }
-            if (isset($request['originId'])) {
+            if ($request->filled('originId')) {
                 $this->translateField($request['originId'], $request['originField'], $request['isTranslated']);
             }
-            if (isset($request['copyrightId'])) {
+            if ($request->filled('copyrightId')) {
                 $this->translateField($request['copyrightId'], $request['copyrightField'], $request['isTranslated']);
             }
 
@@ -224,7 +239,11 @@ class ContentController extends Controller
 
         $data = TextData::fromRequest($request);
 
-        if (isset($request['textId']) && $request['textId'] !== '') {
+        // Stakeholder-Fix Juni 2026: siehe saveGallery — gleiches
+        // Pattern, gleicher Fix. `ConvertEmptyStringsToNull` macht
+        // `textId=""` zu `null`; ohne `filled()` läuft die alte
+        // Bedingung in `Text::findOrFail(null)` → 404.
+        if ($request->filled('textId')) {
             $text = Text::findOrFail($request['textId']);
             $this->texts->update($text, $data);
 
@@ -458,7 +477,17 @@ class ContentController extends Controller
     {
         $data = GalleryData::fromRequest($request);
 
-        if (isset($request['galleryId']) && $request['galleryId'] !== '') {
+        // Stakeholder-Fix Juni 2026: vorher
+        // `isset($request['galleryId']) && $request['galleryId'] !== ''`.
+        // Seit dem Laravel-11-Sprung (Phase 3 / Block F) ist die
+        // Middleware `ConvertEmptyStringsToNull` Default-Bestandteil
+        // der `web`-Gruppe — sie schreibt leere Hidden-Inputs (Neu-
+        // anlage: `galleryId=""`) zu `null` um. Die alte Bedingung
+        // war dafür blind (`null !== ''` ist `true`), lief in den
+        // Update-Pfad und liess `Gallery::findOrFail(null)` als 404
+        // rendern. `$request->filled('galleryId')` ist die idiomatische
+        // Laravel-Form: true, wenn Input present UND nicht leer/null.
+        if ($request->filled('galleryId')) {
             $gallery = Gallery::findOrFail($request['galleryId']);
             $this->galleries->update($gallery, $data);
 
