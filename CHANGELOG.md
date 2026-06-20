@@ -10,6 +10,19 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Doku (AM-D-2 retroaktiv als BEHOBEN markiert)
+
+- **AM-D-2 — Kommentar-Save schlägt still fehl: ✓ BEHOBEN.**
+  Re-Smoke am 2026-06-20 hat bestätigt, dass Kommentar-Save für
+  Entry/Chapter/Text/Image/Gallery/Audiovisual sauber funktioniert.
+  Der Bug war implizit gefixt durch Phase 4 / Block F, Commit
+  `70306dc` vom 2026-06-01 — die add-Pfade laden das Model jetzt
+  explizit aus `$request->id` statt aus dem Service-Container
+  (wo Laravel sonst eine leere Model-Instanz mit `id=null`
+  zurückgibt). `docs/smoke.md` Pfad 9 von „kaputt" auf „grün",
+  Grün-Zähler 8 → 9, Kaputt-Zähler 3 → 2 (nur noch AM-B-2 und
+  AM-B-3).
+
 ### Sicherheit (Reader-Frontend-Härtung Juni 2026)
 
 - **`ProjectController::translateCurrentProject` ohne Authorize-Gate

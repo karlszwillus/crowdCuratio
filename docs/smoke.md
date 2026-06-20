@@ -40,7 +40,7 @@ die Refactoring-Welle.
 | 6   | Image-Block (Foto-Upload + Anzeige)        | **grün**    | **AM-B-1 BEHOBEN** ✓ |
 | 7   | Überschriften-Darstellung in der UI        | kaputt      | **AM-B-2**    |
 | 8   | PDF-Export / Preview-Download              | kaputt      | **AM-B-3**    |
-| 9   | Kommentar zu einem Element                 | kaputt      | AM-D-2 (Save schlägt still fehl) |
+| 9   | Kommentar zu einem Element                 | **grün**    | **AM-D-2 BEHOBEN** ✓ (gefixt mit Phase 4 / Block F, Commit 70306dc) |
 | 10  | Invitation-Flow (User einladen)            | **grün**    | (war broken, gefixt mit F.5 + Mail-Defaults) |
 | 11  | Admin-Register-Gate (Reader/Editor blockiert) | **grün** | (Privilege-Escalation-Hotfix, v0.9.0) |
 
@@ -280,20 +280,29 @@ Beobachtung:
   „Speichern"-Button.
 - Kommentar getippt („Smoke-Test Kommentar zur Reproduktion von Pfad 9")
   und auf „Speichern" geklickt.
-- **Stille Fehlfunktion:** Button reagiert (hover-blau), aber:
+- **Stille Fehlfunktion (alter Stand):** Button reagiert (hover-blau), aber:
   - Kein grüner Bestätigungs-Banner.
   - Das Textfeld bleibt mit dem Kommentar gefüllt (würde nach Save normalerweise geleert).
   - Auf `/allComments` ist die Tabelle **leer** („No data available in table") — der Kommentar wurde nicht gespeichert.
 
-Mögliche Ursachen:
-- JS-Submit-Handler hat einen stillen Fehler (kein POST gefeuert).
-- CSRF-Token fehlt oder ist abgelaufen.
-- Authorization (Querverweis F-SEC-007) blockiert serverseitig stillschweigend, weil keine Policy/Gate greift.
-- Logic-Fail im `EntryController::commentEntry` / `CommentTrait::commentAsUser`.
+**Re-Smoke 2026-06-20: BEHOBEN.** Save funktioniert für Admin
+(Re-Smoke nach E.7a-Hotfix gegengeprüft). Root-Cause war NICHT
+einer der hier vermuteten Pfade, sondern die add-Pfade-Signatur
+mit Model-Type-Hint ohne passenden Route-Parameter: Laravel
+resolvte das Argument aus dem Service-Container als leeres
+Model mit `id=null`, der `addComment()`-Aufruf lief auf
+einer ID-losen Modell-Instanz und persistierte nichts — kein
+DB-Fehler, kein Banner, leere Liste. Implizit gefixt in
+Phase 4 / Block F, Commit **`70306dc`** (2026-06-01): die
+add-Pfade (commentProject/commentChapter/commentEntry/commentText/
+commentImage/saveCommentGallery/saveCommentAudiovisual) laden
+das Modell jetzt explizit via `Model::findOrFail($request->id)`
+bzw. `$request->validated('id')`.
 
-Status: **kaputt** (Save scheitert)
-Nächster Schritt: Browser DevTools → Network-Tab → Klick Speichern, schauen ob POST rausgeht und welcher Status zurückkommt. Verbleibt für Phase 4 (Refactoring CommentTrait → CommentService, F-ARCH-002).
-Fundstelle vermutet: AJAX-Submit im `chapters/index.blade.php` plus `EntryController::saveCommentEntry` / `Comment` Trait.
+Status: **grün** (Save funktioniert seit Block F)
+Tag: AM-D-2 BEHOBEN ✓
+Fix-Commit: `70306dc` — fix(comment): Modell explizit aus
+`$request->id` laden, Test-Route-Namen korrigieren.
 
 ---
 
@@ -369,8 +378,8 @@ Status: **grün** — manuell verifiziert nach Phase-2.5-Hotfix
 
 | Status     | Anzahl Pfade |
 |------------|-------------:|
-| grün       | 8 (1, 2, 3, 4, 5, 6, 10, **11 neu mit v0.9.0**) |
-| kaputt     | 3 (7 = AM-B-2, 8 = AM-B-3, 9 = AM-D-2 Kommentar-Save) |
+| grün       | 9 (1, 2, 3, 4, 5, 6, **9 (neu grün)**, 10, 11) |
+| kaputt     | 2 (7 = AM-B-2, 8 = AM-B-3)                          |
 | teilweise  | 0            |
 | blockiert  | 0            |
 | **Summe**  | **11**       |
@@ -387,9 +396,11 @@ Stakeholder-Bug-Verifikation:
 
 - **AM-D-1** (eigenes Tag) — Default-Impressum „Schreinerstraße 59"
   hardcoded im Preview-Template, statt Projekt-Impressum zu lesen.
-- **AM-D-2** — Kommentar-Save für Entry funktioniert stillschweigend
-  nicht (Pfad 9). Mögliche Querverbindung zu F-SEC-007
-  (Authorization-Bypass) oder JS-Submit-Bug.
+- **AM-D-2** ✓ BEHOBEN (Re-Smoke 2026-06-20). Kommentar-Save für
+  Entry / Chapter / Text / Image funktioniert. Implizit gefixt
+  durch Phase 4 / Block F, Commit `70306dc` (2026-06-01) —
+  add-Pfade laden das Model jetzt explizit aus `$request->id`
+  statt es aus dem Container empty-resolven zu lassen.
 - **AM-D-3** — User-Registrierung scheitert im Default-Setup, weil
   keine zweite Rolle als Default verfügbar ist und die Validation
   nicht zwischen Admin- und Nicht-Admin-User unterscheidet (Pfad 10).
