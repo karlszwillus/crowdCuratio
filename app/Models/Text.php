@@ -108,6 +108,43 @@ class Text extends Model implements HasComments
     }
 
     /**
+     * Phase 4 / Block E.7b Sub-Welle 2c (ADR-0022).
+     *
+     * `morphMany` über die neuen Pivot-Spalten `content_id` +
+     * `content_type`. Liefert alle MediaContent-Pivot-Einträge,
+     * die diesen Text an Entries hängen. Ersetzt mittelfristig die
+     * `medias()`-Methode oben, die auf die alten
+     * media_contentable_*-Spalten geht — Konsumenten werden in
+     * Welle 4 umgestellt.
+     */
+    public function mediaContents(): MorphMany
+    {
+        return $this->morphMany(MediaContent::class, 'content');
+    }
+
+    /**
+     * Navigiert vom Text über den Pivot zum Entry, von dort zum
+     * Chapter und zum Project. Vorbereitung für Block E.7b
+     * Welle 3 (TextPolicy auf OwnerScopedPolicy).
+     *
+     * Liefert `null`, wenn der Text noch nicht an einen Entry
+     * gehängt ist (Race-Case zwischen Service::create und
+     * attachToEntry).
+     */
+    public function project(): ?Project
+    {
+        /** @var MediaContent|null $pivot */
+        $pivot = $this->mediaContents()->first();
+        if ($pivot === null) {
+            return null;
+        }
+        /** @var Entry|null $parent */
+        $parent = $pivot->parent;
+
+        return $parent?->chapter?->project;
+    }
+
+    /**
      * Add language to log
      */
     public function tapActivity(Activity $activity)

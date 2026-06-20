@@ -60,6 +60,32 @@ class Audiovisual extends Model implements HasComments
     }
 
     /**
+     * Phase 4 / Block E.7b Sub-Welle 2c (ADR-0022). Pivot-
+     * Beziehung über die neuen Spalten content_id/content_type.
+     */
+    public function mediaContents(): MorphMany
+    {
+        return $this->morphMany(MediaContent::class, 'content');
+    }
+
+    /**
+     * Navigiert vom Audiovisual über den Pivot zum Entry → Chapter
+     * → Project. Vorbereitung für AudiovisualPolicy in E.7b Welle 3.
+     */
+    public function project(): ?Project
+    {
+        /** @var MediaContent|null $pivot */
+        $pivot = $this->mediaContents()->first();
+        if ($pivot === null) {
+            return null;
+        }
+        /** @var Entry|null $parent */
+        $parent = $pivot->parent;
+
+        return $parent?->chapter?->project;
+    }
+
+    /**
      * Add language to log
      */
     public function tapActivity(Activity $activity)

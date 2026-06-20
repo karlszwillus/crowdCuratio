@@ -10,6 +10,31 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Geändert (Block E.7b Sub-Welle 2c — Content-Modelle mit project()-Navigation)
+
+- **`mediaContents()` und `project()` auf den vier Content-Modellen**
+  ergänzt (`Text`, `Image`, `Gallery`, `Audiovisual`). `mediaContents()`
+  ist eine `morphMany`-Beziehung auf die neuen Pivot-Spalten
+  `content_id` + `content_type`. `project()` navigiert vom Content
+  über den Pivot zum Entry → Chapter → Project. Bei Image ist der
+  Pfad indirekt: Image hängt über `gallery_id` an einer Gallery,
+  die wiederum am Entry — `Image::project()` delegiert deshalb an
+  `Gallery::project()`.
+- **`Image::gallery()`-Beziehung als `belongsTo` ergänzt.** Bisher
+  gab es nur die `Gallery::images()`-Richtung; der Rückweg fehlte
+  und wurde an mehreren Stellen umständlich nachgebaut.
+- **Sechs neue Pest-Tests** in `ContentProjectNavigationTest`:
+  - `Text::project()` über den Pivot (positiv/negativ)
+  - `Audiovisual::project()` über den Pivot (positiv)
+  - `Gallery::project()` über den Pivot (positiv)
+  - `Image::project()` indirekt über die Gallery (positiv/negativ)
+- **Alte Modell-Methoden** (`Text::entry()`, `Image::entry()`,
+  `Image::parentEntry()`, `Image::medias()` etc.) bleiben in Place
+  während der Übergangswelle. Cleanup in Sub-Welle 4 nach
+  Konsumenten-Umstellung.
+
+  Vorbereitung für die vier Content-Policies in Welle 3.
+
 ### Geändert (Block E.7b Sub-Welle 2b — MediaContent Morph-Relations)
 
 - **`MediaContent::content()` und `MediaContent::parent()`** als

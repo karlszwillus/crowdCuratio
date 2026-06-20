@@ -23,6 +23,7 @@ If not, see <https://www.gnu.org/licenses/>.
 use App\Models\Audiovisual;
 use App\Models\Entry;
 use App\Models\Gallery;
+use App\Models\Image;
 use App\Models\MediaContent;
 use App\Models\Text;
 use App\Models\User;
@@ -81,7 +82,7 @@ it('content() liefert die Gallery, wenn content_type = Gallery::class (historisc
     $row = MediaContent::create([
         'media_content_id' => $gallery->id,
         'media_contentable_id' => $entry->id,
-        'media_contentable_type' => \App\Models\Image::class,
+        'media_contentable_type' => Image::class,
         'content_id' => $gallery->id,
         'content_type' => Gallery::class,
         'parent_id' => $entry->id,
