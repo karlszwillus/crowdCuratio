@@ -10,6 +10,27 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Sicherheit (Composer-Audit-Hotfix Juni 2026)
+
+- **guzzlehttp/guzzle 7.10.5 → 7.12.1 und guzzlehttp/psr7 2.x → 2.12.1.**
+  Drei CVEs aus dem `composer audit`-Lauf vom 2026-06-20:
+  - `CVE-2026-55767` (medium) — Dot-only cookie domains match all hosts
+    (`guzzlehttp/guzzle <7.12.1`).
+  - `CVE-2026-55568` (medium) — Silent HTTPS proxy downgrade to cleartext
+    (`guzzlehttp/guzzle <7.12.1`).
+  - `CVE-2026-55766` (medium) — CRLF injection in HTTP start-line
+    serialization (`guzzlehttp/psr7 <2.12.1`).
+
+  Direkte Production-Auswirkung in crowdCuratio gering — Guzzle wird
+  nur über transitive Abhängigkeiten von Laravel/Sanctum/Translatable
+  genutzt und nicht für outgoing HTTP-Calls in Anwendungslogik. Trotzdem
+  Hard-Fix, weil sonst `composer audit` rot bleibt und nachfolgende
+  CI-Läufe blockt. Update über
+
+      composer update guzzlehttp/guzzle guzzlehttp/psr7 --with-dependencies
+
+  composer.lock-Diff enthält den Pin-Sprung.
+
 ### Behoben (Quick-Win-Welle Stakeholder-Bugs Juni 2026)
 
 - **Neuanlage von Gallery, Text, Image und Audio/Video lieferte 404.**
