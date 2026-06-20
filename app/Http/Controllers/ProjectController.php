@@ -597,6 +597,17 @@ class ProjectController extends Controller
      */
     public function translateCurrentProject($id)
     {
+        $project = Project::findOrFail($id);
+
+        // Reader-Frontend-Härtung Juni 2026 (Smoke-Findings nach
+        // E.7a-Hotfix). Vorher nur `auth`-Middleware — jeder
+        // Reader konnte fremde Project-Inhalte in der
+        // Übersetzungs-Maske sehen und (via Sub-POSTs) potentiell
+        // mit-bearbeiten. Analog zum editMetaData-Hotfix: Owner
+        // ODER Admin ODER Eingeladener mit edit-Permission über
+        // ProjectPolicy::update.
+        $this->authorize('update', $project);
+
         App::setlocale('de');
         $data = $this->allData($id);
 

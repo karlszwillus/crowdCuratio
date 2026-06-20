@@ -57,14 +57,24 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     </button>
                 @endif
             </div>
-            <div class="col-sm-3">
-                <a href="{{route('translate', $project->id)}}"
-                   class="btn btn-secondary btn-block text-left mt-1 mb-2">{{__('translate')}}</a>
-            </div>
-            <div class="col-sm-3">
-                <a href="{{route('project.metadata', $project->id)}}"
-                   class="btn btn-secondary btn-block text-left mt-1 mb-2">{{__('meta_data')}}</a>
-            </div>
+            {{-- Reader-Frontend-Härtung Juni 2026: Backend blockt
+                 jetzt sowohl `translate` (translateCurrentProject)
+                 als auch `project.metadata` (editMetaData) via
+                 ProjectPolicy::update. Frontend zeigte die Buttons
+                 aber weiter dem Reader an — das gab im Smoke einen
+                 toten Klick-Pfad (403 oder weisse Seite). Buttons
+                 hinter @can('update', $project), damit sie nur
+                 Owner/Admin/Eingeladener-mit-edit sehen. --}}
+            @can('update', $project)
+                <div class="col-sm-3">
+                    <a href="{{route('translate', $project->id)}}"
+                       class="btn btn-secondary btn-block text-left mt-1 mb-2">{{__('translate')}}</a>
+                </div>
+                <div class="col-sm-3">
+                    <a href="{{route('project.metadata', $project->id)}}"
+                       class="btn btn-secondary btn-block text-left mt-1 mb-2">{{__('meta_data')}}</a>
+                </div>
+            @endcan
         </form>
 
     </div>
@@ -1510,6 +1520,16 @@ If not, see <https://www.gnu.org/licenses/>. -->
         }
 
         //Drag and drop
+        // Reader-Frontend-Härtung Juni 2026: jQuery-Sortable-Inits
+        // nur für User mit update-Recht. Backend (chapter.drag →
+        // ChapterController::saveDragAndDrop) blockt seit Phase 4
+        // via $this->authorize('update', $project); das Frontend
+        // initialisierte die Sortables aber für alle User —
+        // Reader konnten Content visuell verschieben, der POST
+        // gegen die Route lief in 403, der UI-Zustand blieb
+        // verschoben bis zum nächsten Refresh. Verwirrend, UX-
+        // mäßig falsch und in der Konsole ein 403-Spuk.
+        @can('update', $project)
         $(function() {
             $( ".sortable_list_chapter" ).sortable({
 				placeholder:"placeholder",
@@ -1593,6 +1613,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
 
         });
+        @endcan {{-- Reader-Frontend-Härtung Juni 2026 (Sortable-Init-Gate) --}}
 
     </script>
 @endsection

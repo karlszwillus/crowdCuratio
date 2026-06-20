@@ -10,6 +10,71 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Geändert (AM-B-2 + AM-B-3 Mini-Fix — Preview-Spacing)
+
+- **`public/css/index.css` — drei Spacing-Stellschrauben am
+  Preview-Layout.** Smoke mit längerem Content zeigte: bei
+  mehrzeiligen Subtitle-/Description-Texten kollabiert der
+  CSS-Multicolumn-Container `.zweispaltig` vertikal nicht
+  zuverlässig, Folge-Sections (`.einspaltig` mit „Bereich"-
+  Header, Galerien) laufen visuell in den Tail der vorigen
+  Section. Drei Mini-Justierungen:
+  - `.hintergrundweiss` Padding `.5em` → `1.5em`.
+  - `.zweispaltig` `margin-bottom` `1em` → `2.5em`.
+  - `.einspaltig` bekommt `margin-top: 1.5em`; `.einspaltig h2`
+    von `margin: 3em 0 .8em` auf `1.5em 0 .8em` (Container-
+    Margin trägt jetzt mit).
+  Das ist bewusst ein defensiver CSS-Patch, kein Multicolumn-
+  Ersatz und keine HTML-Umstellung — die größere Layout-Welle
+  bleibt für die Design-Überarbeitung. Bug-Tags: AM-B-2 und
+  AM-B-3 von „kaputt" auf „mit Mini-Fix verbessert, Layout-
+  Refactor steht weiter in der UI/UX-Welle aus".
+
+### Doku (AM-D-2 retroaktiv als BEHOBEN markiert)
+
+- **AM-D-2 — Kommentar-Save schlägt still fehl: ✓ BEHOBEN.**
+  Re-Smoke am 2026-06-20 hat bestätigt, dass Kommentar-Save für
+  Entry/Chapter/Text/Image/Gallery/Audiovisual sauber funktioniert.
+  Der Bug war implizit gefixt durch Phase 4 / Block F, Commit
+  `70306dc` vom 2026-06-01 — die add-Pfade laden das Model jetzt
+  explizit aus `$request->id` statt aus dem Service-Container
+  (wo Laravel sonst eine leere Model-Instanz mit `id=null`
+  zurückgibt). `docs/smoke.md` Pfad 9 von „kaputt" auf „grün",
+  Grün-Zähler 8 → 9, Kaputt-Zähler 3 → 2 (nur noch AM-B-2 und
+  AM-B-3).
+
+### Sicherheit (Reader-Frontend-Härtung Juni 2026)
+
+- **`ProjectController::translateCurrentProject` ohne Authorize-Gate
+  geschlossen.** `/project/{id}/translate` war nur durch `auth`-
+  Middleware geschützt — jeder eingeloggte User konnte fremde
+  Project-Inhalte in der Übersetzungs-Maske sehen. Analog zum
+  editMetaData-Hotfix (Welle E.7a-Hotfix) Inline-Authorize via
+  `update`-Policy. Damit greift Owner ODER Admin ODER Eingeladener-
+  mit-edit-Logik wie für die anderen Update-Pfade. Im Smoke nach
+  E.7a-Hotfix entdeckt — derselbe Pfad-Klasse wie editMetaData,
+  beim ersten Sweep übersehen.
+- **Drei neue Charakterisierungs-Tests** in
+  `ProjectControllerAuthorizationTest`: Fremder → 403, Owner →
+  200/302, Admin → 200/302.
+
+### Geändert (Reader-Frontend-Härtung Juni 2026)
+
+- **„Übersetzen"- und „Projekt-Metadaten"-Buttons in
+  `chapters/index.blade.php` hinter `@can('update', $project)`.**
+  Vorher zeigten beide Buttons sich auch Readern. Backend blockte
+  seit E.7a-Hotfix sauber via Policy, der Frontend-Klick lief
+  damit in 403/leere Seite — UX-mäßig irritierend. Mit dem
+  Frontend-Gate sehen Reader die Buttons gar nicht mehr.
+- **jQuery-Sortable-Init in `chapters/index.blade.php` hinter
+  `@can('update', $project)`.** Reader konnten Chapter/Entries/
+  Content via Drag-and-Drop visuell verschieben; Backend
+  (`chapter.drag` → `ChapterController::saveDragAndDrop` mit
+  `$this->authorize('update', $project)`) lehnte den POST mit 403
+  ab, der UI-Zustand blieb aber verschoben bis zum nächsten
+  Refresh. Mit dem Frontend-Gate wird die Sortable-Mechanik für
+  Reader gar nicht erst initialisiert.
+
 ### Sicherheit (Composer-Audit-Hotfix Juni 2026)
 
 - **guzzlehttp/guzzle 7.10.5 → 7.12.1 und guzzlehttp/psr7 2.x → 2.12.1.**

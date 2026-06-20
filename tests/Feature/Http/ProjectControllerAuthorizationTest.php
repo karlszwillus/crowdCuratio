@@ -209,6 +209,66 @@ it('editMetaData: Admin darf fremde Project-Metadata öffnen', function () {
     expect($response->status())->toBeIn([200, 302]);
 });
 
+/*
+|--------------------------------------------------------------------------
+| translateCurrentProject — Reader-Frontend-Härtung Juni 2026
+|--------------------------------------------------------------------------
+|
+| Smoke-Findings nach E.7a-Hotfix: der Translate-Pfad
+| (translateCurrentProject) hatte vorher nur `auth`-Middleware. Reader
+| konnten fremde Project-Inhalte in der Übersetzungs-Maske sehen.
+| Inline-Authorize via `update`-Policy schließt das analog zu
+| editMetaData.
+*/
+
+it('translateCurrentProject: Fremder ohne Einladung kriegt 403', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole('Reader');
+    /** @var User $stranger */
+    $stranger = User::factory()->create();
+    $stranger->assignRole('Reader');
+    $project = makeProject($owner);
+
+    $this->actingAs($stranger);
+
+    $response = $this->get(route('translate', $project->id));
+
+    $response->assertStatus(403);
+});
+
+it('translateCurrentProject: Owner darf', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole('Reader');
+    $project = makeProject($owner);
+
+    $this->actingAs($owner);
+
+    $response = $this->get(route('translate', $project->id));
+
+    expect($response->status())->toBeIn([200, 302]);
+});
+
+it('translateCurrentProject: Admin darf fremde Übersetzungs-Maske öffnen', function () {
+    /** @var TestCase $this */
+    /** @var User $admin */
+    $admin = User::factory()->create();
+    $admin->assignRole('Admin');
+    /** @var User $other */
+    $other = User::factory()->create();
+    $other->assignRole('Reader');
+    $project = makeProject($other);
+
+    $this->actingAs($admin);
+
+    $response = $this->get(route('translate', $project->id));
+
+    expect($response->status())->toBeIn([200, 302]);
+});
+
 it('Comment: Fremder ohne Einladung kriegt 403', function () {
     /** @var TestCase $this */
     /** @var User $owner */
