@@ -10,6 +10,38 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Sicherheit (Reader-Frontend-Härtung Juni 2026)
+
+- **`ProjectController::translateCurrentProject` ohne Authorize-Gate
+  geschlossen.** `/project/{id}/translate` war nur durch `auth`-
+  Middleware geschützt — jeder eingeloggte User konnte fremde
+  Project-Inhalte in der Übersetzungs-Maske sehen. Analog zum
+  editMetaData-Hotfix (Welle E.7a-Hotfix) Inline-Authorize via
+  `update`-Policy. Damit greift Owner ODER Admin ODER Eingeladener-
+  mit-edit-Logik wie für die anderen Update-Pfade. Im Smoke nach
+  E.7a-Hotfix entdeckt — derselbe Pfad-Klasse wie editMetaData,
+  beim ersten Sweep übersehen.
+- **Drei neue Charakterisierungs-Tests** in
+  `ProjectControllerAuthorizationTest`: Fremder → 403, Owner →
+  200/302, Admin → 200/302.
+
+### Geändert (Reader-Frontend-Härtung Juni 2026)
+
+- **„Übersetzen"- und „Projekt-Metadaten"-Buttons in
+  `chapters/index.blade.php` hinter `@can('update', $project)`.**
+  Vorher zeigten beide Buttons sich auch Readern. Backend blockte
+  seit E.7a-Hotfix sauber via Policy, der Frontend-Klick lief
+  damit in 403/leere Seite — UX-mäßig irritierend. Mit dem
+  Frontend-Gate sehen Reader die Buttons gar nicht mehr.
+- **jQuery-Sortable-Init in `chapters/index.blade.php` hinter
+  `@can('update', $project)`.** Reader konnten Chapter/Entries/
+  Content via Drag-and-Drop visuell verschieben; Backend
+  (`chapter.drag` → `ChapterController::saveDragAndDrop` mit
+  `$this->authorize('update', $project)`) lehnte den POST mit 403
+  ab, der UI-Zustand blieb aber verschoben bis zum nächsten
+  Refresh. Mit dem Frontend-Gate wird die Sortable-Mechanik für
+  Reader gar nicht erst initialisiert.
+
 ### Sicherheit (Composer-Audit-Hotfix Juni 2026)
 
 - **guzzlehttp/guzzle 7.10.5 → 7.12.1 und guzzlehttp/psr7 2.x → 2.12.1.**
