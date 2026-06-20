@@ -46,9 +46,25 @@ class MediaContent extends Model implements HasComments
     /**
      * The attributes that are mass assignable.
      *
+     * Phase 4 / Block E.7b Sub-Welle 2b (ADR-0022): die neuen
+     * Morph-Spalten content_id/content_type/parent_id/parent_type
+     * werden während der Übergangswelle doppelt mit den alten
+     * media_content_id/media_contentable_*-Spalten geführt.
+     * Services schreiben in 2d in beide; Cleanup der alten in
+     * Sub-Welle 4.
+     *
      * @var list<string>
      */
-    protected $fillable = ['media_content_id', 'media_contentable_id', 'media_contentable_type', 'position'];
+    protected $fillable = [
+        'media_content_id',
+        'media_contentable_id',
+        'media_contentable_type',
+        'content_id',
+        'content_type',
+        'parent_id',
+        'parent_type',
+        'position',
+    ];
 
     /**
      * Override parent boot and Call deleting event
@@ -84,6 +100,33 @@ class MediaContent extends Model implements HasComments
     public function media()
     {
         return $this->morphTo()->orderBy('position', 'DESC');
+    }
+
+    /**
+     * Sauberer morphTo auf das Content-Modell (Text/Image/Gallery/
+     * Audiovisual). Phase 4 / Block E.7b Sub-Welle 2b (ADR-0022).
+     *
+     * Liest aus den neuen Spalten `content_id` + `content_type` —
+     * im Gegensatz zur Tag-Spalten-Semantik der alten
+     * media_contentable_*-Spalten. Cleanup der alten in Sub-Welle 4.
+     */
+    public function content(): MorphTo
+    {
+        return $this->morphTo('content');
+    }
+
+    /**
+     * Sauberer morphTo auf den Parent (heute durchgehend Entry).
+     * Phase 4 / Block E.7b Sub-Welle 2b (ADR-0022).
+     *
+     * Liest aus den neuen Spalten `parent_id` + `parent_type`.
+     * Die alten `media_contentable_*`-Spalten haben hier zwar die
+     * Parent-ID gespeichert, aber den Type des Contents (nicht
+     * des Parents) — siehe ADR-0022 für die historische Erklärung.
+     */
+    public function parent(): MorphTo
+    {
+        return $this->morphTo('parent');
     }
 
     /**

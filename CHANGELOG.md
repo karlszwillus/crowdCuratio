@@ -10,6 +10,27 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Geändert (Block E.7b Sub-Welle 2b — MediaContent Morph-Relations)
+
+- **`MediaContent::content()` und `MediaContent::parent()`** als
+  saubere `morphTo`-Beziehungen ergänzt. `content()` liest aus
+  `content_id` + `content_type`, `parent()` aus `parent_id` +
+  `parent_type` — also den in Sub-Welle 2a angelegten neuen
+  Spalten. Damit greift Laravels eingebaute Polymorphic-Mechanik
+  (z.B. `@can(...)` auf das geladene Modell) erstmals zuverlässig.
+- **Alte Beziehungen bleiben unverändert** (`text()`, `image()`,
+  `gallery()`, `audiovisual()`, `entry()`, `media()`) — sie werden
+  in Sub-Welle 2c/2d von Konsumenten abgelöst, in Sub-Welle 4
+  zusammen mit den alten Spalten gedroppt.
+- **`$fillable` erweitert** um die vier neuen Spalten, damit
+  Services in Sub-Welle 2d die Doppelschreibung durchführen
+  können.
+- **Vier Pest-Tests** in `MediaContentMorphRelationsTest`:
+  Text/Gallery/Audiovisual als content() plus Entry als parent().
+  Der Gallery-Test pinnt explizit den historischen Schiefstand-
+  Fix (alte `media_contentable_type` = `Image::class`, neue
+  `content_type` = `Gallery::class`).
+
 ### Geändert (Block E.7b Sub-Welle 2a — media_content Morph-Columns)
 
 - **Neue Spalten `content_id`, `content_type`, `parent_id`,
