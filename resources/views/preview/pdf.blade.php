@@ -803,8 +803,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
 <footer>
     <div class="footerinner">
 
-        <p id="footeradresse">Schreinerstraße 59 <br> 10247 Berlin</p>
-        <ul><li id="emailadressefooter"><a class="verlinkung" href="#">mail@berlinhistory.app</a></li></ul>
+        {{-- Stakeholder-Fix: Default-Adresse + Email entfernt;
+             siehe preview/index.blade.php. --}}
+        @if(! empty(strip_tags((string) $project->imprint)))
+            <div id="footeradresse">{!! $project->imprint !!}</div>
+        @endif
         <ul id="verlinkungslistefooter" >
             <li class="footerverlinkung"><a class="verlinkung" href="#">Datenschutz</a> </li>
             <li class="footerverlinkung"> <a class="verlinkung" href="#">Impressum</a> </li>

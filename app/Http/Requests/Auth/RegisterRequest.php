@@ -40,10 +40,16 @@ use Illuminate\Foundation\Http\FormRequest;
  * Felder kommen aus dem Stakeholder-Workflow `auth.register`:
  *  - firstName / lastName  → User-Name
  *  - email                 → User-Email
- *  - roles                 → Spatie-Permission-Rolle (auch wenn
- *                            adminUser gesetzt, ist roles weiter
- *                            erforderlich; Frontend-Verbesserung
- *                            steht im Phase-6-Backlog).
+ *  - roles                 → Spatie-Permission-Rolle. Beim
+ *                            Admin-Invite-Pfad (`adminUser=true`)
+ *                            wird die Eingabe ignoriert (der
+ *                            Controller setzt die Admin-Rolle
+ *                            unabhängig), deshalb ist die Regel
+ *                            dort nicht mehr `required` —
+ *                            Stakeholder mussten sonst trotz
+ *                            Admin-Haken eine Default-Rolle
+ *                            auswählen (Stakeholder-Bug
+ *                            AM-D-3-Rest).
  *  - policy                → Datenschutz-Bestätigung (Checkbox).
  *  - adminUser / createProject / projectId → optional, je nach
  *    Einladungs-Kontext.
@@ -57,11 +63,16 @@ class RegisterRequest extends FormRequest
 
     public function rules(): array
     {
+        // Beim Admin-Invite ist die Rollen-Wahl egal — der Controller
+        // setzt die Admin-Rolle direkt. Daher ist `roles` dort
+        // optional.
+        $rolesRule = $this->boolean('adminUser') ? 'sometimes' : 'required';
+
         return [
             'firstName' => 'required|string|max:255',
             'lastName' => 'required|string|max:255',
             'email' => 'required|string|email|max:255',
-            'roles' => 'required',
+            'roles' => $rolesRule,
             'policy' => 'required',
             'adminUser' => 'sometimes|boolean',
             'createProject' => 'sometimes|boolean',

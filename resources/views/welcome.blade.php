@@ -401,10 +401,12 @@
                 <a href="{{ url('/dashboard') }}" class="text-sm text-gray-700 underline">Dashboard</a>
             @else
                 <a href="{{ route('login') }}" class="text-sm text-gray-700 underline">Log in</a>
-
-                @if (Route::has('register'))
-                    <a href="{{ route('register') }}" class="ml-4 text-sm text-gray-700 underline">Register</a>
-                @endif
+                {{-- Stakeholder-Fix AM-D-4-Rest: Register-Link für
+                     Gäste entfernt. /register ist ein Admin-Tool
+                     (NF-SEC-202), die Route ist hinter auth-
+                     Middleware — der öffentliche Link führte daher
+                     nur zum Login-Redirect und war für Gäste
+                     irreführend. --}}
             @endauth
         </div>
     @endif

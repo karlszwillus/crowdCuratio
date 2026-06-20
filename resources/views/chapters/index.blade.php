@@ -661,7 +661,13 @@ If not, see <https://www.gnu.org/licenses/>. -->
     </div>
     @include('Entry.index')
     @include('contents.index')
-    @include('contents.gallery')
+    {{-- Stakeholder-Fix Juni 2026: `@include('contents.gallery')` war
+         hier ein Doppel-Include — `contents.index` (Z. 86) lädt das
+         Gallery-Modal bereits transitiv. Folge: galleryModal + Form +
+         alle Hidden Inputs (galleryId, title, …) waren DOM-doppelt,
+         was den Submit unzuverlässig machte (POST /save-gallery → 404).
+         Image-/Audiovisual-Modal kommen weiter direkt rein — die
+         haben keine eigenen Sub-Includes. --}}
     @include('contents.image')
     @include('contents.audiovisual')
 @endsection

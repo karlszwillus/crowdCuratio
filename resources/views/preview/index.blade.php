@@ -199,8 +199,17 @@ If not, see <https://www.gnu.org/licenses/>. -->
 <footer>
     <div class="footerinner">
 
-        <p id="footeradresse">Schreinerstraße 59 <br> 10247 Berlin</p>
-        <ul><li id="emailadressefooter"><a class="verlinkung" href="#">mail@berlinhistory.app</a></li></ul>
+        {{-- Stakeholder-Fix: Default-Adresse + Email entfernt; das
+             projektspezifische Impressum liegt im Project-Feld
+             `imprint` und ist über den Policy-Link im Footer
+             erreichbar. Wenn ein Projekt einen Kurz-Footer zeigen
+             möchte, kann das Impressum-Feld eine eigene
+             Anschrift-Zeile enthalten — wird hier ohne
+             HTML-Escape gerendert, weil der Translatable-Wert
+             vom Owner gepflegt wird. --}}
+        @if(! empty(strip_tags((string) $project->imprint)))
+            <div id="footeradresse">{!! $project->imprint !!}</div>
+        @endif
         <ul id="verlinkungslistefooter" >
             <li class="footerverlinkung"><a class="verlinkung" href="{{route('preview.metadata', ['type' => 'copyright','parameters' => $parameters])}}">{{__('copyright')}}</a> </li>
             <li class="footerverlinkung"> <a class="verlinkung" href="{{route('preview.metadata', ['type' => 'policy','parameters' => $parameters])}}">{{__('policy')}}</a> </li>

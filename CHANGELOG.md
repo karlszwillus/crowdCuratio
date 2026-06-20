@@ -10,6 +10,79 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Sicherheit (Composer-Audit-Hotfix Juni 2026)
+
+- **guzzlehttp/guzzle 7.10.5 → 7.12.1 und guzzlehttp/psr7 2.x → 2.12.1.**
+  Drei CVEs aus dem `composer audit`-Lauf vom 2026-06-20:
+  - `CVE-2026-55767` (medium) — Dot-only cookie domains match all hosts
+    (`guzzlehttp/guzzle <7.12.1`).
+  - `CVE-2026-55568` (medium) — Silent HTTPS proxy downgrade to cleartext
+    (`guzzlehttp/guzzle <7.12.1`).
+  - `CVE-2026-55766` (medium) — CRLF injection in HTTP start-line
+    serialization (`guzzlehttp/psr7 <2.12.1`).
+
+  Direkte Production-Auswirkung in crowdCuratio gering — Guzzle wird
+  nur über transitive Abhängigkeiten von Laravel/Sanctum/Translatable
+  genutzt und nicht für outgoing HTTP-Calls in Anwendungslogik. Trotzdem
+  Hard-Fix, weil sonst `composer audit` rot bleibt und nachfolgende
+  CI-Läufe blockt. Update über
+
+      composer update guzzlehttp/guzzle guzzlehttp/psr7 --with-dependencies
+
+  composer.lock-Diff enthält den Pin-Sprung.
+
+### Behoben (Quick-Win-Welle Stakeholder-Bugs Juni 2026)
+
+- **Neuanlage von Gallery, Text, Image und Audio/Video lieferte 404.**
+  Direkte Folge des Laravel-11-Sprungs (Phase 3 / Block F): Die
+  Middleware `ConvertEmptyStringsToNull` ist seitdem
+  Default-Bestandteil der `web`-Gruppe und schreibt leere Hidden-
+  Inputs (Neuanlage: `galleryId=""`, `textId=""`, `imageId=""`,
+  `audiovisualId=""`) zu `null` um. Die Update-Weichen in
+  `ContentController::saveGallery|saveText|saveImage` und
+  `AudiovisualController::store` folgten dem Pattern
+  `isset($request['xId']) && $request['xId'] !== ''`. Bei `null`
+  ist `isset` über den Request-Bag-Key `true` und `null !== ''`
+  ebenfalls `true` — der Code lief in den Update-Pfad, rief
+  `Model::findOrFail(null)` auf, das warf `ModelNotFoundException`
+  und Laravel rendert das als HTTP 404 → Custom-404-Page. Edit-
+  Pfad ging weiter durch, weil dort die ID gefüllt war. Fix in
+  vier Controller-Methoden plus zwei translationMode-Branches:
+  `$request->filled('xId')` ersetzt die alten Pattern. Sieben
+  Pest-Tests in `ContentControllerEmptyIdFilledTest` pinnen das
+  Verhalten — fünf für die Neuanlage-Pfade, zwei für die
+  Update-Pfade als Schutz vor Über-Korrektur.
+- **AM-D-1 — hardcoded Default-Impressum aus Project-Preview/PDF
+  raus.** `resources/views/preview/index.blade.php` und
+  `resources/views/preview/pdf.blade.php` zeigten unten immer die
+  Schreinerstraße samt E-Mail-Adresse, unabhängig vom Projekt.
+  Jetzt: Footer-Block rendert nur, wenn `$project->imprint` nach
+  `strip_tags` nicht leer ist.
+- **AM-D-3-Rest — `roles` beim Admin-Invite nicht mehr `required`.**
+  `RegisterRequest::rules()` hatte `roles` zwingend, der
+  RegisteredUserController-Pfad ignoriert das beim Admin-Invite
+  aber sowieso (setzt die Admin-Rolle direkt). Stakeholder mussten
+  trotz Admin-Haken eine Default-Rolle wählen. Conditional Rule
+  via `$rolesRule = $this->boolean('adminUser') ? 'sometimes' :
+  'required';`. Drei Pest-Tests in `RegisterRequestTest` pinnen
+  das.
+- **AM-D-4-Rest — Welcome-Page-Register-Link für Gäste raus.**
+  `resources/views/welcome.blade.php` Z. 406 zeigte einen
+  Register-Link für Nicht-Eingeloggte, der durch NF-SEC-202 in
+  einen Login-Redirect lief — UX-mäßig irreführend.
+- **Gallery-/Audiovisual-Form-IDs eindeutig + Doppel-Include
+  weg.** Drei Form-Tags in `Entry/index.blade.php`,
+  `contents/gallery.blade.php` und `contents/audiovisual.blade.php`
+  hatten alle `id="entry_frm"`. Die `resetEntryForm`/
+  `setEntryFormUpdate`-Helper in `chapters/index.blade.php`
+  konnten dadurch das `_method=PATCH`-Override aus dem Entry-Form
+  auf das Gallery-Form übergreifen lassen. Zusätzlich lud
+  `contents/index.blade.php` Z. 86 das Gallery-Modal transitiv
+  und `chapters/index.blade.php` Z. 664 noch einmal direkt — das
+  Gallery-Modal war doppelt im DOM. Gallery- und Audiovisual-
+  Form bekommen jetzt eigene IDs (`gallery_frm`,
+  `audiovisual_frm`), der Doppel-Include ist raus.
+
 ### Sicherheit (Permission-Welt nachschärfen — Block E, Welle E.7a-Hotfix)
 
 - **`ProjectController::editMetaData` ohne Authorize-Gate geschlossen.**

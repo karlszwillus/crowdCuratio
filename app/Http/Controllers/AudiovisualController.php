@@ -66,7 +66,12 @@ class AudiovisualController extends Controller
 
         $data = AudiovisualData::fromRequest($request, $normalizedLink);
 
-        if (isset($request['audiovisualId']) && $request['audiovisualId'] !== '') {
+        // Stakeholder-Fix Juni 2026: siehe ContentController::saveGallery —
+        // dasselbe `ConvertEmptyStringsToNull`-Stolperstein-Pattern.
+        // `audiovisualId=""` wird zur Pipeline zu `null`, was die alte
+        // `!== ''`-Bedingung blind macht und `findOrFail(null)` → 404
+        // rendert. `$request->filled(...)` deckt beide Fälle ab.
+        if ($request->filled('audiovisualId')) {
             $audiovisual = Audiovisual::findOrFail($request['audiovisualId']);
             $this->audiovisuals->update($audiovisual, $data);
 
