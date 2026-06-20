@@ -10,6 +10,25 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Hinzugefügt (Block E.7b Sub-Welle 1 — Voranalyse)
+
+- **`db:audit-media-content` Artisan-Command.** Read-only-Audit der
+  `media_content`-Pivot-Tabelle vor dem Schema-Refactor (ADR-0022).
+  Zählt Rows pro `media_contentable_type`-Wert, prüft die
+  Content-Tags gegen das jeweils erwartete Modell (Text gegen
+  `texts`, Audiovisual gegen `audiovisuals`, Image-Tags gegen
+  `galleries` — wegen des historischen Schiefstands, dass
+  `GalleryService::attachToEntry` `Image::class` als Type setzt),
+  und liefert die empirische Probe gegen Entry als gemeinsamen
+  Parent. Output ist Markdown auf STDOUT mit konkreter Mapping-
+  Empfehlung für die Schema-Migration (Sub-Welle 2). Read-only,
+  kein `--fix`-Modus — das Fix kommt durch die Migration in Sub-
+  Welle 2.
+
+  Voraussetzung für E.7b: vor jedem Schema-Eingriff brauchen wir
+  Klarheit über den IST-Stand der Pivot-Belegung. Aufgesetzt am
+  Stil von `db:audit-fk` (ADR-0018 / Phase 2 / E.3).
+
 ### Geändert (AM-B-2 + AM-B-3 Mini-Fix — Preview-Spacing)
 
 - **`public/css/index.css` — drei Spacing-Stellschrauben am
