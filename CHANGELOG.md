@@ -10,6 +10,26 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Geändert (AM-B-2 + AM-B-3 Mini-Fix — Preview-Spacing)
+
+- **`public/css/index.css` — drei Spacing-Stellschrauben am
+  Preview-Layout.** Smoke mit längerem Content zeigte: bei
+  mehrzeiligen Subtitle-/Description-Texten kollabiert der
+  CSS-Multicolumn-Container `.zweispaltig` vertikal nicht
+  zuverlässig, Folge-Sections (`.einspaltig` mit „Bereich"-
+  Header, Galerien) laufen visuell in den Tail der vorigen
+  Section. Drei Mini-Justierungen:
+  - `.hintergrundweiss` Padding `.5em` → `1.5em`.
+  - `.zweispaltig` `margin-bottom` `1em` → `2.5em`.
+  - `.einspaltig` bekommt `margin-top: 1.5em`; `.einspaltig h2`
+    von `margin: 3em 0 .8em` auf `1.5em 0 .8em` (Container-
+    Margin trägt jetzt mit).
+  Das ist bewusst ein defensiver CSS-Patch, kein Multicolumn-
+  Ersatz und keine HTML-Umstellung — die größere Layout-Welle
+  bleibt für die Design-Überarbeitung. Bug-Tags: AM-B-2 und
+  AM-B-3 von „kaputt" auf „mit Mini-Fix verbessert, Layout-
+  Refactor steht weiter in der UI/UX-Welle aus".
+
 ### Doku (AM-D-2 retroaktiv als BEHOBEN markiert)
 
 - **AM-D-2 — Kommentar-Save schlägt still fehl: ✓ BEHOBEN.**

@@ -38,8 +38,8 @@ die Refactoring-Welle.
 | 4   | Entry im Chapter anlegen                   | grün        | —             |
 | 5   | Text-Block zum Entry hinzufügen            | grün*       | UX-Glitches   |
 | 6   | Image-Block (Foto-Upload + Anzeige)        | **grün**    | **AM-B-1 BEHOBEN** ✓ |
-| 7   | Überschriften-Darstellung in der UI        | kaputt      | **AM-B-2**    |
-| 8   | PDF-Export / Preview-Download              | kaputt      | **AM-B-3**    |
+| 7   | Überschriften-Darstellung in der UI        | teilweise   | **AM-B-2 Mini-Fix** ✓ (CSS-Padding/Margin Juni 2026; größerer Layout-Refactor in UI/UX-Welle) |
+| 8   | PDF-Export / Preview-Download              | teilweise   | **AM-B-3 Mini-Fix** ✓ (Multicolumn-Spacing entschärft; größerer Layout-Refactor in UI/UX-Welle) |
 | 9   | Kommentar zu einem Element                 | **grün**    | **AM-D-2 BEHOBEN** ✓ (gefixt mit Phase 4 / Block F, Commit 70306dc) |
 | 10  | Invitation-Flow (User einladen)            | **grün**    | (war broken, gefixt mit F.5 + Mail-Defaults) |
 | 11  | Admin-Register-Gate (Reader/Editor blockiert) | **grün** | (Privilege-Escalation-Hotfix, v0.9.0) |
@@ -378,9 +378,9 @@ Status: **grün** — manuell verifiziert nach Phase-2.5-Hotfix
 
 | Status     | Anzahl Pfade |
 |------------|-------------:|
-| grün       | 9 (1, 2, 3, 4, 5, 6, **9 (neu grün)**, 10, 11) |
-| kaputt     | 2 (7 = AM-B-2, 8 = AM-B-3)                          |
-| teilweise  | 0            |
+| grün       | 9 (1, 2, 3, 4, 5, 6, 9, 10, 11)                     |
+| kaputt     | 0                                                   |
+| teilweise  | 2 (7 = AM-B-2 Mini-Fix, 8 = AM-B-3 Mini-Fix; größerer Layout-Refactor in UI/UX-Welle) |
 | blockiert  | 0            |
 | **Summe**  | **11**       |
 
