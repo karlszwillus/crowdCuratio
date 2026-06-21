@@ -10,6 +10,31 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Tests (Block E.7b Sub-Welle 4a-Hotfix-II.c — Pinning-Tests für vier-Controller-Sweep)
+
+Charakterisierungs-Tests für die in II.a + II.b gegateten Methoden.
+Eine neue Datei `tests/Feature/Http/ContentRouteAuthorizationTest.php`
+mit 16 Tests pinnt die kritischsten Vektoren:
+
+- **ChapterController**: edit, commentChapter, setCommentStatusChapter
+  als Reader auf fremdem Project → 403.
+- **EntryController**: edit, commentEntry, setCommentStatusEntry
+  analog → 403.
+- **ContentController**: saveText (Reader ohne globale edit-Permission
+  + Editor mit edit aber ohne Project-Einladung), editText/editImage/
+  editGallery (Read-Pfade), commentText, setCommentStatusText,
+  updateCommentStatus (URL-Trigger) → 403.
+- **AudiovisualController**: store (Reader ohne edit-Permission),
+  commentAudiovisual → 403.
+- **Happy-Path Sanity**: Owner darf editText auf eigenem Text;
+  eingeladener Reader mit comment-Permission darf commentEntry.
+
+Setup-Konvention aus ADR-0023:
+`app(PermissionRegistrar)->forgetCachedPermissions()` im
+beforeEach — verhindert dass Tests durch inkonsistenten Spatie-
+Permission-Cache fälschlich grün laufen (siehe Welle-4a-Hotfix-
+Test-Verfälschung).
+
 ### Sicherheit (Block E.7b Sub-Welle 4a-Hotfix-II.b — ContentController + AudiovisualController Authorize-Sweep)
 
 Abschluss des 4-Controller-Sweeps. Alle public Schreib- und
