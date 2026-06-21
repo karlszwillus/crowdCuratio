@@ -94,8 +94,6 @@ class Text extends Model implements HasComments
 
     /**
      * Get media
-     *
-     * @return MorphMany
      */
     /**
      * Phase 4 / Block E.7b Sub-Welle 2c (ADR-0022), Sub-Welle 4c-Cleanup.

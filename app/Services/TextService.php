@@ -119,26 +119,16 @@ class TextService
      */
     private function attachToEntry(int $textId, int $entryId): void
     {
-        // Phase 4 / Block E.7b Sub-Welle 2d (ADR-0022):
+        // Phase 4 / Block E.7b Sub-Welle 4d (ADR-0022):
         // Doppelschreibung der alten media_contentable-Spalten
-        // und der neuen Morph-Spalten content / parent. Während
-        // der Übergangswelle lesen Konsumenten teils alt (preview-
-        // Blade, ContentController-Direktzugriffe), teils neu
-        // (Welle-3-Policies via $text->project()). Cleanup der
-        // alten Spalten in Sub-Welle 4.
-        MediaContent::firstOrCreate(
-            [
-                'media_content_id' => $textId,
-                'media_contentable_id' => $entryId,
-                'media_contentable_type' => Text::class,
-            ],
-            [
-                'content_id' => $textId,
-                'content_type' => Text::class,
-                'parent_id' => $entryId,
-                'parent_type' => Entry::class,
-            ]
-        );
+        // entfernt. Aus 2d-Übergang in Vollbetrieb auf content_*
+        // / parent_*-Spalten. Cleanup der alten Spalten in Welle 4e.
+        MediaContent::firstOrCreate([
+            'content_id' => $textId,
+            'content_type' => Text::class,
+            'parent_id' => $entryId,
+            'parent_type' => Entry::class,
+        ]);
     }
 
     /**
@@ -146,6 +136,8 @@ class TextService
      * Texts via Eloquent (NF-LAR-009-Fix: vorher
      * update(['deleted_at' => now()]) — Bypass der SoftDeletes-
      * Trait-Hooks).
+     *
+     * Welle 4d (ADR-0022): Lookup auf neue content_*-Spalten umgestellt.
      */
     private function detachFromEntries(int $textId): void
     {
@@ -153,8 +145,8 @@ class TextService
             ->where('commentable_type', Text::class)
             ->delete();
 
-        MediaContent::where('media_contentable_id', $textId)
-            ->where('media_contentable_type', Text::class)
+        MediaContent::where('content_id', $textId)
+            ->where('content_type', Text::class)
             ->delete();
     }
 }

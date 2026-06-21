@@ -105,22 +105,16 @@ class GalleryService
      */
     private function attachToEntry(int $galleryId, int $entryId): void
     {
-        $lastPosition = MediaContent::where('media_contentable_id', $entryId)
+        // Welle 4d (ADR-0022): lastPosition über parent_id, Insert
+        // nur noch in neue Spalten. content_type=Gallery::class löst
+        // gleichzeitig den historischen Schiefstand (alte Tag-Spalte
+        // führte fälschlich Image::class) sauber auf.
+        $lastPosition = MediaContent::where('parent_id', $entryId)
             ->orderByDesc('position')
             ->value('position');
 
-        // Phase 4 / Block E.7b Sub-Welle 2d (ADR-0022):
-        // Doppelschreibung. Alte media_contentable_type bleibt
-        // historisch auf Image::class (kein Verhaltens-Wechsel
-        // für die alten Konsumenten, deren Tag-Lookup sowieso
-        // schon ins Leere ging — siehe ADR-0022). Die neue
-        // content_type-Spalte trägt den korrekten Gallery::class-
-        // Wert und löst den latenten Detach-Bug in 2/4 mit auf.
         MediaContent::create([
             'position' => ($lastPosition ?? 0) + 1,
-            'media_content_id' => $galleryId,
-            'media_contentable_id' => $entryId,
-            'media_contentable_type' => Image::class,
             'content_id' => $galleryId,
             'content_type' => Gallery::class,
             'parent_id' => $entryId,
@@ -131,6 +125,13 @@ class GalleryService
     /**
      * Soft-deleted Comment- und MediaContent-Einträge einer
      * Gallery via Eloquent (NF-LAR-009-Fix).
+     *
+     * Welle 4d (ADR-0022): Lookup auf content_id/content_type
+     * umgestellt — die alte Variante suchte `media_contentable_id`
+     * auf der `$galleryId`, was funktional ein Bug war (die Spalte
+     * hielt die Entry-ID, und der Type war historisch Image::class
+     * statt Gallery::class). Die Methode fand also nie etwas und
+     * Galleries blieben als Pivot-Leichen liegen. Jetzt sauber.
      */
     private function detachFromEntries(int $galleryId): void
     {
@@ -138,8 +139,8 @@ class GalleryService
             ->where('commentable_type', Gallery::class)
             ->delete();
 
-        MediaContent::where('media_contentable_id', $galleryId)
-            ->where('media_contentable_type', Gallery::class)
+        MediaContent::where('content_id', $galleryId)
+            ->where('content_type', Gallery::class)
             ->delete();
     }
 }

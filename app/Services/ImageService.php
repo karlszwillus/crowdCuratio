@@ -137,6 +137,12 @@ class ImageService
     /**
      * Soft-deleted Comment- und MediaContent-Einträge eines
      * Images via Eloquent (NF-LAR-009-Fix).
+     *
+     * Welle 4d (ADR-0022): Lookup auf content_*-Spalten umgestellt.
+     * Hinweis: Images werden in der Regel NICHT direkt am Pivot
+     * geführt — sie hängen unter ihrer Gallery (`gallery_id`-FK).
+     * Diese Query findet daher typischerweise nichts; sie steht
+     * defensiv für historische Direkt-Bindings.
      */
     private function detachFromEntries(int $imageId): void
     {
@@ -144,8 +150,8 @@ class ImageService
             ->where('commentable_type', Image::class)
             ->delete();
 
-        MediaContent::where('media_contentable_id', $imageId)
-            ->where('media_contentable_type', Image::class)
+        MediaContent::where('content_id', $imageId)
+            ->where('content_type', Image::class)
             ->delete();
     }
 }

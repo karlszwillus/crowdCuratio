@@ -83,9 +83,11 @@ class ContentReorderService
     /**
      * Schreibt die übergebene MediaContent-Reihenfolge. Wenn ein
      * `$targetEntryId` übergeben ist, wird zusätzlich die
-     * `media_contentable_id` umgesetzt (Verschieben zwischen
-     * Entries). Ohne `$targetEntryId` wird nur die Position
-     * aktualisiert.
+     * `parent_id` umgesetzt (Verschieben zwischen Entries). Ohne
+     * `$targetEntryId` wird nur die Position aktualisiert.
+     *
+     * Welle 4d (ADR-0022): von der alten `media_contentable_id` auf
+     * `parent_id` umgestellt.
      *
      * @param  array<int|string|null>  $ids
      */
@@ -98,7 +100,7 @@ class ContentReorderService
 
             if ($targetEntryId !== null) {
                 MediaContent::where('id', $contentId)->update([
-                    'media_contentable_id' => $targetEntryId,
+                    'parent_id' => $targetEntryId,
                     'position' => $index + 1,
                 ]);
             } else {

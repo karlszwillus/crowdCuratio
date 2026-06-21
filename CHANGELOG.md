@@ -10,6 +10,46 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Geändert (Block E.7b Sub-Welle 4d — Service-Doppelschreibung entfernt)
+
+Sechs Services schreiben/lesen jetzt ausschließlich aus den neuen
+`content_*` / `parent_*`-Spalten. Die in Welle 2d eingeführte
+Doppelschreibung in die alten `media_contentable_*` /
+`media_content_id`-Spalten ist damit beendet.
+
+- **`TextService::attachToEntry`**: nur noch neue Spalten in
+  `MediaContent::firstOrCreate`.
+- **`TextService::detachFromEntries`**: Lookup auf `content_id` /
+  `content_type`.
+- **`AudiovisualService::attachToEntry`**: lastPosition über
+  `parent_id`, Insert nur in neue Spalten.
+- **`AudiovisualService::destroy`**: Pivot-Lookup auf `content_id`
+  / `content_type`.
+- **`GalleryService::attachToEntry`**: lastPosition über
+  `parent_id`, Insert mit korrekter `content_type = Gallery::class`
+  (löst den historischen Image-Schiefstand sauber auf).
+- **`GalleryService::detachFromEntries`**: behebt den latenten Bug,
+  bei dem die alte Variante `media_contentable_id` auf der
+  `$galleryId` suchte (Entry-Spalte mit Gallery-ID-Wert) und
+  zusätzlich auf `Gallery::class` filterte (alte Tag-Spalte hielt
+  aber `Image::class`). Die Methode fand also nie etwas und ließ
+  Pivot-Leichen liegen.
+- **`ImageService::detachFromEntries`**: Lookup auf
+  `content_id` / `content_type`. Findet typischerweise nichts,
+  weil Images über Gallery verknüpft sind, nicht direkt.
+- **`ContentReorderService::reorderContent`**: Drag-and-Drop
+  zwischen Entries schreibt auf `parent_id` statt
+  `media_contentable_id`.
+- **`LogService::getParentText`**: Manual-Join auf
+  `media_content.content_id` / `parent_id`, Diskriminator auf
+  `content_type`.
+
+`MediaContent::$fillable` behält die alten Spalten-Keys noch,
+weil Tests in `tests/Feature/Database/`,
+`tests/Feature/Models/` und `tests/Feature/Http/`
+sie aktuell beim Anlegen von Pivot-Rows mitliefern. Cleanup
+zusammen mit dem Spalten-Drop in Welle 4e.
+
 ### Entfernt (Block E.7b Sub-Welle 4c — tote Model-Beziehungen)
 
 Cleanup der konsumentenlosen Eloquent-Beziehungen auf den alten
