@@ -88,9 +88,10 @@ it('create legt Audiovisual mit MediaContent-Attach an Entry an', function () {
     expect($av->id)->toBeInt();
     expect($av->link)->toBe('https://www.youtube.com/embed/abc12345678');
 
-    $media = MediaContent::where('media_content_id', $av->id)
-        ->where('media_contentable_id', $entry->id)
-        ->where('media_contentable_type', Audiovisual::class)
+    // E.7b 4d (ADR-0022): Pivot via content_*/parent_*-Spalten.
+    $media = MediaContent::where('content_id', $av->id)
+        ->where('parent_id', $entry->id)
+        ->where('content_type', Audiovisual::class)
         ->first();
     expect($media)->not->toBeNull();
 });

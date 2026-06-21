@@ -67,9 +67,10 @@ it('create legt einen Text mit Source-Refs und MediaContent-Eintrag an', functio
     expect($text->originText->name)->toBe('Test-Origin');
     expect($text->copyrightText->name)->toBe('Test-Copyright');
 
-    $media = MediaContent::where('media_content_id', $text->id)
-        ->where('media_contentable_id', $entry->id)
-        ->where('media_contentable_type', Text::class)
+    // E.7b 4d (ADR-0022): Pivot via content_*/parent_*-Spalten.
+    $media = MediaContent::where('content_id', $text->id)
+        ->where('parent_id', $entry->id)
+        ->where('content_type', Text::class)
         ->first();
     expect($media)->not->toBeNull();
 });

@@ -10,6 +10,25 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Behoben (Block E.7b Sub-Welle 4d-Followup-II — Service-Tests + HappyPath auf neue Spalten)
+
+Acht Tests fragten explizit die alten media_content-Spalten ab und
+sind nach 4d rot geworden:
+
+- `HappyPathTest::Owner kann ein Audio-File hochladen` und
+  `… einen Text-Block anlegen`: Pivot-Lookup auf `parent_id` /
+  `content_type`.
+- `AudiovisualServiceTest::create`, `GalleryServiceTest::create`,
+  `TextServiceTest::create`: analog.
+- `ContentServiceDoubleWriteTest`: alle drei `it()`-Blöcke geprüft.
+  Test-Name wird inhaltlich obsolet (Doppelschreibung beendet);
+  Datei behält ihren Namen vorerst und prüft nur noch die neuen
+  Spalten. Umbenennung kommt im nächsten Aufräumblock.
+
+Der Gallery-Test bestätigt, dass `content_type` jetzt sauber
+`Gallery::class` führt — der historische `Image::class`-Schiefstand
+verschwindet mit der alten Spalte.
+
 ### Behoben (Block E.7b Sub-Welle 4d-Followup — alte Spalten nullable)
 
 Nach 4d-Commit brachen HappyPath-Tests mit

@@ -203,9 +203,10 @@ test('Happy-Path: Owner kann ein Audio-File hochladen', function () {
     $response->assertRedirect();
     $audiovisual = Audiovisual::firstOrFail();
     expect($audiovisual->type)->toBe('audio');
-    // attachMedia-Pfad: MediaContent-Row für die Polymorphic-Bindung.
-    expect(MediaContent::where('media_contentable_id', $entry->id)
-        ->where('media_contentable_type', Audiovisual::class)
+    // attachMedia-Pfad: MediaContent-Row für die Polymorphic-Bindung
+    // (E.7b 4d, ADR-0022: content_*/parent_*-Spalten).
+    expect(MediaContent::where('parent_id', $entry->id)
+        ->where('content_type', Audiovisual::class)
         ->exists())->toBeTrue();
 });
 
@@ -237,8 +238,8 @@ test('Happy-Path: Owner kann einen Text-Block anlegen', function () {
     $text = Text::firstOrFail();
     expect($text->origin)->not->toBeNull();
     expect($text->copyright)->not->toBeNull();
-    expect(MediaContent::where('media_contentable_id', $entry->id)
-        ->where('media_contentable_type', Text::class)
+    expect(MediaContent::where('parent_id', $entry->id)
+        ->where('content_type', Text::class)
         ->exists())->toBeTrue();
 });
 
