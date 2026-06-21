@@ -65,9 +65,6 @@ function textAttachedTo(User $owner): array
     $text = Text::factory()->create();
 
     MediaContent::create([
-        'media_content_id' => $text->id,
-        'media_contentable_id' => $entry->id,
-        'media_contentable_type' => Text::class,
         'content_id' => $text->id,
         'content_type' => Text::class,
         'parent_id' => $entry->id,

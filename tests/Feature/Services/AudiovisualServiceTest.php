@@ -150,6 +150,8 @@ it('destroy soft-deleted Audiovisual und seinen MediaContent', function () {
 
     expect(Audiovisual::find($av->id))->toBeNull();
     expect(Audiovisual::withTrashed()->find($av->id))->not->toBeNull();
-    $media = MediaContent::where('media_content_id', $av->id)->first();
+    $media = MediaContent::where('content_id', $av->id)
+        ->where('content_type', Audiovisual::class)
+        ->first();
     expect($media)->toBeNull(); // soft-deleted via Eloquent
 });

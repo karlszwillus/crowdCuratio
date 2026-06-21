@@ -10,6 +10,38 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Entfernt (Block E.7b Sub-Welle 4e — alte media_content-Spalten gedroppt)
+
+Abschluss des E.7b-Cleanups (ADR-0022). Die drei alten Pivot-
+Spalten `media_content_id`, `media_contentable_id`,
+`media_contentable_type` sind vollständig aus Schema, Modell und
+Tests entfernt. `media_content` führt nur noch die sauberen
+content_*/parent_*-Spalten.
+
+- **Migration** `2026_06_22_140000_drop_old_media_content_columns.php`:
+  dropt die drei Spalten. `down()` legt sie ohne NOT-NULL wieder an —
+  Daten gehen verloren, voller Rollback braucht Pre-Drop-Backup.
+- **`MediaContent::$fillable`**: alte Spalten-Keys entfernt.
+- **`AuditMediaContent`-Command** komplett auf neue Spalten
+  umgeschrieben — Type-Counts pro `content_type`, Orphan-Check der
+  `content_id`, Parent-Probe auf `parent_id` gegen Entry. Empfehlung-
+  Sektion ersetzt durch knappen Status.
+- **Tests aufgeräumt:**
+  - `tests/Feature/Database/MediaContentMorphColumnsTest.php`
+    gelöscht (historischer Backfill-Pinning für die 2a-Migration,
+    nach Spalten-Drop obsolet).
+  - `MediaContentMorphRelationsTest`, `ContentProjectNavigationTest`,
+    `TextPolicyTest`, `ImagePolicyTest`, `GalleryPolicyTest`,
+    `AudiovisualPolicyTest`, `ContentRouteAuthorizationTest`,
+    `AudiovisualServiceTest`, `CommentRetrieveTest`: alle Insert-
+    Stellen auf nur noch content_*/parent_*-Spalten umgestellt.
+
+Live-Deploy-Pfad (in der Migration dokumentiert):
+1. Backup `media_content`-Tabelle.
+2. `php artisan db:migrate-media-content` (Dry-run, Drift-Report).
+3. `php artisan db:migrate-media-content --apply` falls Drift.
+4. `php artisan migrate` (Spalten-Drop).
+
 ### Hinzugefügt (Block E.7b Sub-Welle 4e-prep — db:migrate-media-content)
 
 Safety-Net-Command vor dem Spalten-Drop in Welle 4e:

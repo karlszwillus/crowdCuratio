@@ -61,10 +61,6 @@ function galleryAttachedTo(User $owner): array
     $gallery = Gallery::factory()->create();
 
     MediaContent::create([
-        'media_content_id' => $gallery->id,
-        'media_contentable_id' => $entry->id,
-        // Historischer Schiefstand: alte Spalte hat Image::class.
-        'media_contentable_type' => Image::class,
         'content_id' => $gallery->id,
         'content_type' => Gallery::class,
         'parent_id' => $entry->id,

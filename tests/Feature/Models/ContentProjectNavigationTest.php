@@ -45,10 +45,8 @@ use Tests\TestCase;
 
 function attachContentToEntry(string $contentClass, int $contentId, Entry $entry): MediaContent
 {
+    // E.7b 4e (ADR-0022): alte media_contentable_*-Spalten gedroppt.
     return MediaContent::create([
-        'media_content_id' => $contentId,
-        'media_contentable_id' => $entry->id,
-        'media_contentable_type' => $contentClass,
         'content_id' => $contentId,
         'content_type' => $contentClass,
         'parent_id' => $entry->id,
