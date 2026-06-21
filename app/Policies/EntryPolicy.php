@@ -71,4 +71,17 @@ class EntryPolicy extends OwnerScopedPolicy
     {
         return $this->check($user, $entry->chapter->project, PermissionName::DELETE);
     }
+
+    /**
+     * Darf $user auf $entry kommentieren?
+     *
+     * E.7b 4a-Hotfix-II (2026-06-21): nachgereicht im 4-Controller-
+     * Sweep, weil die Comment-Pfade (EntryController::commentEntry,
+     * setCommentStatusEntry, saveCommentEntry) project-scoped gegated
+     * werden müssen.
+     */
+    public function comment(User $user, Entry $entry): bool
+    {
+        return $this->check($user, $entry->chapter->project, PermissionName::COMMENT);
+    }
 }

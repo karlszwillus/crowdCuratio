@@ -123,9 +123,14 @@ class ChapterController extends Controller
      */
     public function edit($id)
     {
-        $data = Chapter::findOrFail($id);
+        $chapter = Chapter::findOrFail($id);
 
-        return response()->json($data);
+        // E.7b 4a-Hotfix-II (2026-06-21): vorher ungated — Reader
+        // konnten via /chapters/{id}/edit JSON-Daten fremder Chapter
+        // ziehen.
+        $this->authorize('view', $chapter);
+
+        return response()->json($chapter);
     }
 
     /**
@@ -155,6 +160,12 @@ class ChapterController extends Controller
     public function commentChapter(StoreCommentRequest $request): RedirectResponse
     {
         $chapter = Chapter::findOrFail($request->validated('id'));
+
+        // E.7b 4a-Hotfix-II: StoreCommentRequest::authorize() prüft
+        // nur Auth-User, kein project-scoped Gate. Hier nachreichen,
+        // analog ProjectController::commentProject.
+        $this->authorize('comment', $chapter);
+
         $this->comments->addComment($chapter, $request);
 
         return redirect()->back()->with('success', 'Reply to comment added successfully');
@@ -173,6 +184,11 @@ class ChapterController extends Controller
      */
     public function getChapterComment($id)
     {
+        // E.7b 4a-Hotfix-II: Chapter laden + authorize, bevor wir
+        // Comments eines fremden Chapter rausgeben.
+        $chapter = Chapter::findOrFail($id);
+        $this->authorize('view', $chapter);
+
         $comment = new CommentRetrieve;
 
         return $comment->getComments('App\Models\Chapter', $id);
@@ -193,13 +209,18 @@ class ChapterController extends Controller
      */
     public function saveComment(Request $request): RedirectResponse
     {
+        // E.7b 4a-Hotfix-II: Chapter immer laden + authorize('comment'),
+        // auch im name=edit-Pfad. Vorher konnte jeder eingeloggte
+        // User über diesen Endpunkt fremde Comments editieren.
+        $chapter = Chapter::findOrFail($request->route('id'));
+        $this->authorize('comment', $chapter);
+
         if (isset($request['name']) && $request['name'] === 'edit') {
             $this->comments->editComment((int) $request['pk'], (string) $request['value']);
 
             return redirect()->back()->with('success', 'Comment edited successfully');
         }
 
-        $chapter = Chapter::findOrFail($request->route('id'));
         $this->comments->dispatchSaveAction($chapter, $request);
 
         return redirect()->back()->with('success', 'Comment-Aktion ausgeführt');
@@ -208,9 +229,23 @@ class ChapterController extends Controller
     /**
      * Setzt den Status eines Comments auf einem Chapter.
      */
-    public function setCommentStatusChapter(Request $request, Chapter $chapter): JsonResponse
+    public function setCommentStatusChapter(Request $request): JsonResponse
     {
-        $this->comments->setCommentStatus((int) $request['id'], (int) $request['status']);
+        // E.7b 4a-Hotfix-II: vorher hing das Methoden-Signature an
+        // einer `Chapter $chapter`-Route-Model-Binding, das ohne
+        // {chapter}-Route-Parameter ein leeres Modell instantiierte
+        // (toter Auth-Hook). Jetzt: Comment via Request['id'] laden,
+        // Project auflösen, authorize('comment') auf dem Project.
+        $commentId = (int) $request['id'];
+        $project = $this->comments->resolveProjectForComment($commentId);
+
+        if ($project === null) {
+            abort(404);
+        }
+
+        $this->authorize('comment', $project);
+
+        $this->comments->setCommentStatus($commentId, (int) $request['status']);
 
         return response()->json(['success' => true]);
     }

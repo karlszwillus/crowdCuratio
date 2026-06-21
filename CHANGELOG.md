@@ -10,6 +10,45 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Sicherheit (Block E.7b Sub-Welle 4a-Hotfix-II.a — ChapterController + EntryController Authorize-Sweep)
+
+Nach dem Welle-4a-Hotfix (Spatie's Gate::before abgeschaltet) waren
+die zuvor ungegated Methoden in den Content-nahen Controllern
+*schlimmer* dran — vorher gab es pseudo-Auth durch Spatie's Bypass,
+jetzt war gar kein Schutz mehr drin. Sweep über ChapterController
+und EntryController, II.b folgt mit ContentController +
+AudiovisualController.
+
+- **`ChapterController::edit($id)`** — JSON-API für Edit-Maske;
+  vorher konnten fremde Chapter-Daten gelesen werden.
+  `authorize('view', $chapter)`.
+- **`ChapterController::commentChapter`** — `StoreCommentRequest`
+  prüft nur Auth-User; project-scoped Gate nachgereicht.
+  `authorize('comment', $chapter)`.
+- **`ChapterController::getChapterComment($id)`** — Comments
+  fremder Chapter gelesen. `authorize('view', $chapter)`.
+- **`ChapterController::saveComment`** — Chapter immer laden +
+  `authorize('comment')` auch im `name=edit`-Pfad. Vorher konnten
+  fremde Comments editiert werden.
+- **`ChapterController::setCommentStatusChapter`** — Signature
+  bekam einen `Chapter $chapter`-Parameter ohne `{chapter}`-Route-
+  Param (Route-Model-Binding band ein leeres Modell — toter
+  Auth-Hook). Jetzt: Comment via `$request['id']` laden, Project
+  via `CommentService::resolveProjectForComment()` auflösen,
+  `authorize('comment', $project)`.
+- **Analog `EntryController`**: `show($id)`, `edit($id)`,
+  `commentEntry`, `getEntryComment`, `saveCommentEntry`,
+  `setCommentStatusEntry` mit `authorize`-Gates versorgt; bei den
+  Comment-Pfaden derselbe Resolver-Helper genutzt.
+- **`ChapterPolicy::comment()` + `EntryPolicy::comment()`**:
+  neue project-scoped Methode für die Comment-Pfade (analog
+  `ProjectPolicy::comment`).
+- **`CommentService::resolveProjectForComment(int $commentId): ?Project`**:
+  neuer Helper, navigiert vom Comment via `commentable_type`/
+  `commentable_id` zum Project. Für die `setCommentStatus*`-
+  Endpunkte, die kein Modell in der Route haben und früher mit
+  totem Route-Model-Binding ausgestattet waren.
+
 ### Sicherheit (Block E.7b Sub-Welle 4a-Hotfix — Spatie Gate::before Reader-Bypass)
 
 - **KRITISCH: Globale `view`-Permission von Spatie umging alle

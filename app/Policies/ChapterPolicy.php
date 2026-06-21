@@ -72,4 +72,17 @@ class ChapterPolicy extends OwnerScopedPolicy
     {
         return $this->check($user, $chapter->project, PermissionName::DELETE);
     }
+
+    /**
+     * Darf $user auf $chapter kommentieren?
+     *
+     * E.7b 4a-Hotfix-II (2026-06-21): nachgereicht im 4-Controller-
+     * Sweep, weil die Comment-Pfade (ChapterController::commentChapter,
+     * setCommentStatusChapter, saveComment) project-scoped gegated
+     * werden müssen.
+     */
+    public function comment(User $user, Chapter $chapter): bool
+    {
+        return $this->check($user, $chapter->project, PermissionName::COMMENT);
+    }
 }

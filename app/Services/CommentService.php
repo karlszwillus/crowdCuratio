@@ -23,7 +23,15 @@ If not, see <https://www.gnu.org/licenses/>.
 namespace App\Services;
 
 use App\Contracts\HasComments;
+use App\Models\Audiovisual;
+use App\Models\Chapter;
 use App\Models\Comment;
+use App\Models\Entry;
+use App\Models\Gallery;
+use App\Models\Image;
+use App\Models\MediaContent;
+use App\Models\Project;
+use App\Models\Text;
 use Illuminate\Http\Request;
 
 /**
@@ -119,6 +127,75 @@ class CommentService
             $comment->status = $status;
             $comment->save();
         }
+    }
+
+    /**
+     * Löst zu einem Comment das zugehörige Project auf.
+     *
+     * E.7b 4a-Hotfix-II (2026-06-21): zentrale Helper-Methode für
+     * die Comment-Pfade in ChapterController/EntryController/
+     * ContentController/AudiovisualController/ProjectController.
+     * Die `setCommentStatus*`- und `saveComment*`-Endpunkte haben
+     * keinen Project-Bezug im Route-Param und können das Modell-
+     * Argument im Methoden-Signature nicht via Route-Model-Binding
+     * auflösen — wir navigieren stattdessen vom Comment via
+     * `commentable_type`/`commentable_id` zum Project.
+     */
+    public function resolveProjectForComment(int $commentId): ?Project
+    {
+        $comment = Comment::find($commentId);
+
+        if ($comment === null) {
+            return null;
+        }
+
+        $type = $comment->commentable_type;
+        $id = $comment->commentable_id;
+
+        if ($type === null || $id === null) {
+            return null;
+        }
+
+        return match ($type) {
+            Project::class => Project::find($id),
+            Chapter::class => Chapter::find($id)?->project,
+            Entry::class => Entry::find($id)?->chapter?->project,
+            Text::class => Text::find($id)?->project(),
+            Audiovisual::class => Audiovisual::find($id)?->project(),
+            Gallery::class => Gallery::find($id)?->project(),
+            Image::class => Image::find($id)?->project(),
+            MediaContent::class => $this->resolveProjectViaMediaContent($id),
+            default => null,
+        };
+    }
+
+    /**
+     * Auflösung für Comments, die direkt am MediaContent-Pivot hängen
+     * (selten — z.B. wenn vorhandene Comment-Daten den Pivot statt
+     * den Content referenzieren).
+     */
+    private function resolveProjectViaMediaContent(int $mediaContentId): ?Project
+    {
+        $mc = MediaContent::find($mediaContentId);
+        if ($mc === null) {
+            return null;
+        }
+        /** @var \Illuminate\Database\Eloquent\Model|null $content */
+        $content = $mc->content;
+        if ($content === null) {
+            return null;
+        }
+        if ($content instanceof Project) {
+            return $content;
+        }
+        if (method_exists($content, 'project')) {
+            $project = $content->project();
+            if ($project instanceof Project) {
+                return $project;
+            }
+        }
+
+        return null;
     }
 
     /**
