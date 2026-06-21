@@ -22,7 +22,6 @@ If not, see <https://www.gnu.org/licenses/>.
 
 use App\Models\Entry;
 use App\Models\Gallery;
-use App\Models\Image;
 use App\Models\MediaContent;
 use App\Models\Project;
 use App\Models\ProjectUserPermission;

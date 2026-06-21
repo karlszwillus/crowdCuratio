@@ -70,8 +70,8 @@ beforeEach(function () {
 
 /**
  * Hängt ein Content-Modell via MediaContent-Pivot an einen Entry.
- * E.7b 4e (ADR-0022): nur noch neue content_*/parent_*-Spalten,
- * die alten media_contentable_*-Spalten sind gedroppt.
+ * E.7b 4e (ADR-0022): nur noch neue content_- und parent_-Spalten,
+ * die alten media_contentable-Spalten sind gedroppt.
  */
 function attachToEntry(string $contentClass, int $contentId, Entry $entry): MediaContent
 {

@@ -23,7 +23,6 @@ If not, see <https://www.gnu.org/licenses/>.
 use App\Models\Audiovisual;
 use App\Models\Entry;
 use App\Models\Gallery;
-use App\Models\Image;
 use App\Models\MediaContent;
 use App\Models\Text;
 use App\Models\User;

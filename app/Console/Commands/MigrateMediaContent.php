@@ -24,6 +24,7 @@ namespace App\Console\Commands;
 
 use App\Models\Entry;
 use App\Models\Gallery;
+use App\Models\Image;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -120,7 +121,6 @@ class MigrateMediaContent extends Command
 
         DB::table('media_content')->orderBy('id')->chunkById(500, function ($rows) use (
             $apply,
-            $entryTable,
             $galleryTable,
             &$alreadyFilled,
             &$fixable,
@@ -152,7 +152,7 @@ class MigrateMediaContent extends Command
                 // media_content_id eine bestehende Gallery trifft,
                 // setzen wir content_type sauber auf Gallery::class.
                 if (
-                    $newContentType === \App\Models\Image::class
+                    $newContentType === Image::class
                     && $newContentId !== null
                     && DB::table($galleryTable)->where('id', $newContentId)->exists()
                 ) {
