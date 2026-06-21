@@ -238,9 +238,19 @@ class ProjectController extends Controller
     }
 
     /**
-     * @return array
+     * Helper für edit(): liefert die Activity-Log-Liste für ein
+     * konkretes Content-Modell innerhalb eines Project-Edit-Pfades.
+     *
+     * Block E.7b Sub-Welle 3-Hotfix (ADR-0022, ADR-0013):
+     * Sichtbarkeit auf `private` reduziert. Vorher `public`, aber
+     * nicht via Route erreichbar — der einzige Aufrufer ist
+     * `edit()` (Z. 198), das selbst gegated ist. Damit ist der
+     * Pfad indirekt geschützt; ein eigener `authorize`-Call wäre
+     * redundant.
+     *
+     * @return array<int, array{id: int|string, userName: string, created_at: mixed}>
      */
-    public function history($model, $id)
+    private function history($model, $id)
     {
         $type = "App\Models\\".$model;
         $exception = '[]';
@@ -449,6 +459,17 @@ class ProjectController extends Controller
      */
     public function getCurrentLog($id)
     {
+        // Block E.7b Sub-Welle 3-Hotfix (ADR-0022, ADR-0013):
+        // Route /log/text/{id} ist text-bezogen (Name `log.text`).
+        // $id ist eine Text-ID — via Text::project() navigieren wir
+        // zum Project und gaten gegen view. Vorher kein Gate.
+        $text = Text::findOrFail($id);
+        $project = $text->project();
+        if ($project === null) {
+            abort(404);
+        }
+        $this->authorize('view', $project);
+
         $log = new LogService;
         $activities = $log->textLog($id);
 

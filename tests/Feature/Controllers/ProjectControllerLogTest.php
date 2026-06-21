@@ -104,6 +104,27 @@ it('allData zählt Chapters/Entries und deren Übersetzungs-Status', function ()
     expect($result['percentageOfTranslation'])->toBe(50.0);
 });
 
+/**
+ * Helper: ruft die private `ProjectController::history()` via
+ * Reflection auf. Welle-3-Hotfix-II (ADR-0022, Block E.7b):
+ * history() ist jetzt `private`, weil sie nur intern von edit()
+ * aufgerufen wird (keine eigene Route). Diese Charakterisierungs-
+ * Tests sollen das Verhalten dennoch direkt pinnen, ohne den
+ * gesamten edit()-Pfad aufzubauen. Eine spätere Welle 4 dürfte
+ * `history()` zu einem Service extrahieren (ActivityHistoryService),
+ * dann werden diese Tests umgezogen und der Reflection-Trick fällt.
+ *
+ * @return array<int, array<string, mixed>>
+ */
+function invokeHistory(ProjectController $controller, string $model, int $id): array
+{
+    $method = new ReflectionMethod($controller, 'history');
+    /** @var array<int, array<string, mixed>> $logs */
+    $logs = $method->invoke($controller, $model, $id);
+
+    return $logs;
+}
+
 it('history liefert für ein Modell ohne Activity-Einträge ein leeres Log-Array', function () {
     /** @var TestCase $this */
     /** @var User $owner */
@@ -117,7 +138,7 @@ it('history liefert für ein Modell ohne Activity-Einträge ein leeres Log-Array
     /** @var ProjectController $controller */
     $controller = app(ProjectController::class);
 
-    $logs = $controller->history('Chapter', $chapter->id);
+    $logs = invokeHistory($controller, 'Chapter', $chapter->id);
 
     expect($logs)->toBeArray()->toBeEmpty();
 });
@@ -140,7 +161,7 @@ it('history liefert für ein Chapter mit Update-Activity einen Log-Eintrag', fun
     /** @var ProjectController $controller */
     $controller = app(ProjectController::class);
 
-    $logs = $controller->history('Chapter', $chapter->id);
+    $logs = invokeHistory($controller, 'Chapter', $chapter->id);
 
     expect($logs)->toBeArray();
     expect(count($logs))->toBeGreaterThan(0);

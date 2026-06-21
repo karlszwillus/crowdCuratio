@@ -45,11 +45,13 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
   setPermissionForUserOnProject (Privilege Escalation als
   expliziter Test).
 
-  **Folgeaufgabe** (separate Welle): zwei nicht-Project-bound
-  Methoden `history($model, $id)` und `getCurrentLog($id)`
-  brauchen ebenfalls Authorize. Da die Project-Auflösung dort
-  komplexer ist (model/id-Pärchen statt direktem `$project`),
-  separater Mini-Hotfix nach diesem Smoke.
+  **Nachzug:** zwei nicht-Project-bound Methoden — `history($model, $id)`
+  ist nun `private` (war als `public` deklariert, hat aber keine
+  Route, einziger Caller ist `edit()`, das selbst gegated ist).
+  `getCurrentLog($id)` lädt `$id` als Text-ID, navigiert via
+  `Text::project()` aus Welle 2c und gated dann mit `view`. Damit
+  sind alle bekannten Authorize-Lücken im `ProjectController`
+  geschlossen.
 
 ### Sicherheit (Block E.7b Sub-Welle 3 — Content-Policies)
 
