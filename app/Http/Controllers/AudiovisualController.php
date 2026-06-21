@@ -89,6 +89,8 @@ class AudiovisualController extends Controller
     public function delete(Request $request, $id): RedirectResponse
     {
         $audiovisual = Audiovisual::findOrFail($id);
+        // Block E.7b Sub-Welle 3 (ADR-0022): AudiovisualPolicy::delete.
+        $this->authorize('delete', $audiovisual);
         $this->audiovisuals->destroy($audiovisual);
 
         return redirect('projects/'.$request->project.'/edit')->with('success', __('message_delete_success'));

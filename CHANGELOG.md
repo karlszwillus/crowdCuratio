@@ -10,6 +10,38 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Sicherheit (Block E.7b Sub-Welle 3 — Content-Policies)
+
+- **Vier neue Policy-Klassen** auf `OwnerScopedPolicy`-Basis:
+  `TextPolicy`, `ImagePolicy`, `GalleryPolicy`, `AudiovisualPolicy`.
+  Methoden `view`, `update`, `delete`, `comment` jeweils via
+  `Project`-Resolve aus dem Content-Modell (`$content->project()`
+  aus Sub-Welle 2c). Owner-Shortcut und Pivot-Lookup übernimmt
+  der `ProjectPermissionService`, Admin via `before()`.
+- **`OwnerScopedPolicy::checkViaProject(?Project)`** als neuer
+  Helper. Liefert `false`, wenn das Project nicht aufgelöst werden
+  kann (Race-Case zwischen Content-Create und attachToEntry, oder
+  Image ohne `gallery_id`).
+- **Registrierung in `AuthServiceProvider`** für alle vier
+  Content-Modelle. Damit greift `@can(...)` in Blades und
+  `$this->authorize(...)` in Controllern automatisch.
+- **Vier Pest-Test-Files** mit 5-7 Tests pro Policy (Owner /
+  Admin / Eingeladener-mit-edit / Eingeladener-nur-mit-view /
+  Fremder × view/update/delete + Negativtest für
+  fehlende Verknüpfung): `TextPolicyTest`, `ImagePolicyTest`,
+  `GalleryPolicyTest`, `AudiovisualPolicyTest`. Image-Test
+  pinnt explizit den indirekten Pfad via Gallery.
+- **Authorize-Calls in den Destroy-Pfaden** ergänzt:
+  `ContentController::destroyText/destroyImage/destroyGallery`
+  und `AudiovisualController::delete`. Vorher konnten diese
+  Endpunkte nur per `auth`-Middleware geschützt werden — ein
+  eingeladener Reader hätte zwar via UI keinen Delete-Button
+  gesehen, ein direkter HTTP-Aufruf hätte aber durchgehen
+  können. Jetzt blockt die Policy.
+
+  Comment-Authorize-Pfade und edit-Pfade folgen in einer
+  separaten Mini-Welle nach dem Smoke-Check.
+
 ### Geändert (Block E.7b Sub-Welle 2d — Service-Doppelschreibung)
 
 - **`TextService::attachToEntry`, `AudiovisualService::attachToEntry`

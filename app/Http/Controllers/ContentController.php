@@ -68,6 +68,8 @@ class ContentController extends Controller
     public function destroyText(Request $request, $id)
     {
         $text = Text::findOrFail($id);
+        // Block E.7b Sub-Welle 3 (ADR-0022): TextPolicy::delete.
+        $this->authorize('delete', $text);
         $this->texts->destroy($text);
 
         return redirect('projects/'.$request->project.'/edit')->with('success', __('message_delete_text_success'));
@@ -81,6 +83,8 @@ class ContentController extends Controller
     public function destroyImage(Request $request, $id)
     {
         $image = Image::findOrFail($id);
+        // Block E.7b Sub-Welle 3 (ADR-0022): ImagePolicy::delete.
+        $this->authorize('delete', $image);
         $this->images->destroy($image);
 
         return redirect('projects/'.$request->project.'/edit')->with('success', __('message_delete_image_success'));
@@ -520,6 +524,8 @@ class ContentController extends Controller
     public function destroyGallery(Request $request, $id)
     {
         $gallery = Gallery::findOrFail($id);
+        // Block E.7b Sub-Welle 3 (ADR-0022): GalleryPolicy::delete.
+        $this->authorize('delete', $gallery);
         $this->galleries->destroy($gallery);
 
         return redirect('projects/'.$request->project.'/edit')->with('success', __('message_delete_text_success'));

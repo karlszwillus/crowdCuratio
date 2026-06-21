@@ -76,4 +76,24 @@ abstract class OwnerScopedPolicy
     {
         return $this->permissions->userHasPermissionOnProject($user, $project, $permission);
     }
+
+    /**
+     * Variante von check() für Content-Policies (Text/Image/Gallery/
+     * Audiovisual). Block E.7b Sub-Welle 3 (ADR-0022).
+     *
+     * Die Content-Modelle haben eine `project()`-Methode, die `null`
+     * liefern kann, wenn der Content noch nicht an einen Entry
+     * gehängt ist (Race-Case zwischen Service::create und
+     * attachToEntry, sowie für direkt im Test angelegte Modelle
+     * ohne MediaContent-Pivot). In dem Fall wird `false`
+     * zurückgegeben — kein Project, kein Zugriff.
+     */
+    protected function checkViaProject(User $user, ?Project $project, PermissionName $permission): bool
+    {
+        if ($project === null) {
+            return false;
+        }
+
+        return $this->check($user, $project, $permission);
+    }
 }
