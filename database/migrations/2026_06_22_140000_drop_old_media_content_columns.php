@@ -43,6 +43,18 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // SQLite schmeißt 'no such column in index'-Fehler, wenn der
+        // dropColumn die Spalte unter einem bestehenden Index wegzieht.
+        // Indizes laut create-Migration (2021_07_28_162259):
+        //   media_content_media_content_id_index
+        //   media_content_media_contentable_id_index
+        //   media_content_media_contentable_type_index
+        Schema::table('media_content', function (Blueprint $table) {
+            $table->dropIndex('media_content_media_content_id_index');
+            $table->dropIndex('media_content_media_contentable_id_index');
+            $table->dropIndex('media_content_media_contentable_type_index');
+        });
+
         Schema::table('media_content', function (Blueprint $table) {
             $table->dropColumn([
                 'media_content_id',
@@ -57,10 +69,17 @@ return new class extends Migration
         // Rollback. Spalten werden ohne NOT-NULL-Constraint
         // wiederhergestellt — die Daten sind weg, ein vollständiger
         // Rollback würde den Restore aus dem Pre-Drop-Backup brauchen.
+        // Indizes parallel wieder herstellen (analog up()).
         Schema::table('media_content', function (Blueprint $table) {
             $table->unsignedBigInteger('media_content_id')->nullable();
             $table->unsignedBigInteger('media_contentable_id')->nullable();
             $table->string('media_contentable_type')->nullable();
+        });
+
+        Schema::table('media_content', function (Blueprint $table) {
+            $table->index('media_content_id');
+            $table->index('media_contentable_id');
+            $table->index('media_contentable_type');
         });
     }
 };
