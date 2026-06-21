@@ -10,6 +10,25 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Hinzugefügt (Block E.7b Sub-Welle 4e-prep — db:migrate-media-content)
+
+Safety-Net-Command vor dem Spalten-Drop in Welle 4e:
+`php artisan db:migrate-media-content [--apply]`. Sucht Pivot-Rows
+in `media_content`, die in den neuen `content_*`/`parent_*`-Spalten
+leer sind, aber in den alten Werte haben — und kopiert sie rüber.
+Inklusive Gallery-Schiefstand-Fix (alte Tag-Spalte führte
+`Image::class` für Galleries, wird auf `Gallery::class` korrigiert).
+
+Default ist Dry-run mit Report (matched / fixable / unrecoverable /
+gallery_schiefstand); `--apply` schreibt die Korrekturen.
+Idempotent — Re-Runs sind sicher.
+
+In der Praxis sollte der Command nichts zu tun finden, weil die
+Welle-2a-Migration bereits einmalig gebackfilled hat und Welle 2d
+bis 4d in beide Spalten parallel geschrieben hat. Er ist
+Sicherheitsnetz für Drift-Fälle (manuelle DB-Bearbeitung,
+fehlgeschlagene Migration in 2a).
+
 ### Behoben (Block E.7b Sub-Welle 4d-Followup-II — Service-Tests + HappyPath auf neue Spalten)
 
 Acht Tests fragten explizit die alten media_content-Spalten ab und
