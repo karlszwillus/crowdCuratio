@@ -25,6 +25,7 @@ use App\Models\User;
 use App\Support\PermissionName;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 /*
@@ -269,6 +270,88 @@ it('translateCurrentProject: Admin darf fremde Übersetzungs-Maske öffnen', fun
     expect($response->status())->toBeIn([200, 302]);
 });
 
+/*
+|--------------------------------------------------------------------------
+| Reader-via-URL-Hotfix nach Welle-3-Smoke (2026-06-21)
+|--------------------------------------------------------------------------
+|
+| Karl-Befund: über URL-Manipulation kam ein eingeloggter User in
+| fremde Projekte. Sweep über ProjectController fand acht ungegated
+| Pfade — sechs view-Pfade plus zwei kritische Permission-Verteil-
+| Pfade. Diese Tests pinnen jetzt die Authorize-Gates.
+*/
+
+it('show: Fremder darf fremdes Project NICHT öffnen', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole('Reader');
+    /** @var User $stranger */
+    $stranger = User::factory()->create();
+    $stranger->assignRole('Reader');
+    $project = makeProject($owner);
+
+    $this->actingAs($stranger);
+
+    $response = $this->get('/projects/'.$project->id);
+
+    $response->assertStatus(403);
+});
+
+it('edit: Fremder darf fremdes Project NICHT in der Edit-Maske sehen', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole('Reader');
+    /** @var User $stranger */
+    $stranger = User::factory()->create();
+    $stranger->assignRole('Reader');
+    $project = makeProject($owner);
+
+    $this->actingAs($stranger);
+
+    $response = $this->get('/projects/'.$project->id.'/edit');
+
+    $response->assertStatus(403);
+});
+
+it('edit: Owner darf eigenes Project öffnen', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole('Reader');
+    $project = makeProject($owner);
+
+    $this->actingAs($owner);
+
+    $response = $this->get('/projects/'.$project->id.'/edit');
+
+    expect($response->status())->toBeIn([200, 302]);
+});
+
+it('setPermissionForUserOnProject: Fremder kriegt 403 (Privilege Escalation geschlossen)', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole('Reader');
+    /** @var User $stranger */
+    $stranger = User::factory()->create();
+    $stranger->assignRole('Reader');
+    $project = makeProject($owner);
+
+    $this->actingAs($stranger);
+
+    $response = $this
+        ->from('/projects/'.$project->id.'/edit')
+        ->post(route('project.permission'), [
+            'user' => $stranger->id,
+            'project' => $project->id,
+            'permissions' => [1, 2, 3, 4, 5, 6, 7],
+        ]);
+
+    $response->assertStatus(403);
+});
+
 it('Comment: Fremder ohne Einladung kriegt 403', function () {
     /** @var TestCase $this */
     /** @var User $owner */
@@ -287,4 +370,82 @@ it('Comment: Fremder ohne Einladung kriegt 403', function () {
     ]);
 
     $response->assertStatus(403);
+});
+
+/*
+|--------------------------------------------------------------------------
+| Welle-4a-Hotfix (2026-06-21) — Spatie Gate::before Reader-Bypass
+|--------------------------------------------------------------------------
+|
+| Karl-Befund: Reader Rolf (Zugriff nur Projekt 18/19) konnte
+| /projects/20/edit aufrufen. Diagnose via Tinker:
+|   policy.view direct = 0    (Policy sagt korrekt nein)
+|   rolf can view project = 1 (Gate sagt fälschlich ja)
+|
+| Ursache: Spatie's PermissionRegistrar registriert per Default
+| ein `Gate::before`, das bei jedem `can()`/`authorize()` zuerst
+| `checkPermissionTo($ability)` prüft — ohne Modell-Argument.
+| Reader hat globale Permission `view`, also gibt das `Gate::before`
+| true zurück, bevor ProjectPolicy::view überhaupt aufgerufen wird.
+|
+| Fix: `register_permission_check_method => false` in
+| config/permission.php, plus Umstellung der globalen Permission-
+| Checks auf `hasPermissionTo()` / `@hasPermissionTo`.
+|
+| Dieser Test pinnt explizit, dass der Bypass jetzt zu ist —
+| Reader mit globaler view-Permission kommt NICHT auf fremde
+| Project-Edit-Maske durch.
+|
+| Der davor stehende `edit: Fremder darf...`-Test war
+| fälschlich grün — vermutlich weil im Test-Setup Spatie's
+| Permission-Cache nicht initialisiert ist und checkPermissionTo
+| throw'd, was Laravel als false interpretiert. In Live-Umgebung
+| mit hot Cache liefert checkPermissionTo true.
+*/
+
+it('Spatie-Bypass: Reader mit globaler view-Permission darf NICHT auf fremdes Project edit', function () {
+    /** @var TestCase $this */
+
+    // Spatie's Cache primen, damit checkPermissionTo nicht throw't
+    // sondern den realen Live-Pfad nimmt.
+    app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole('Reader');
+    /** @var User $stranger */
+    $stranger = User::factory()->create();
+    $stranger->assignRole('Reader');
+
+    // Explizit: Stranger hat die globale Spatie-Permission `view`
+    // direkt zugewiesen, simuliert volle Cache-Hit-Bedingungen.
+    $stranger->givePermissionTo(PermissionName::VIEW->value);
+
+    $project = makeProject($owner);
+
+    $this->actingAs($stranger);
+
+    $response = $this->get('/projects/'.$project->id.'/edit');
+
+    $response->assertStatus(403);
+});
+
+it('Spatie-Bypass: hasPermissionTo VIEW true, aber Gate::view auf fremdem Project false', function () {
+    /** @var TestCase $this */
+    app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole('Reader');
+    /** @var User $stranger */
+    $stranger = User::factory()->create();
+    $stranger->assignRole('Reader');
+    $stranger->givePermissionTo(PermissionName::VIEW->value);
+
+    $project = makeProject($owner);
+
+    // Globale Permission ja
+    expect($stranger->hasPermissionTo(PermissionName::VIEW->value))->toBeTrue();
+    // Project-scoped via Gate nein
+    expect($stranger->can('view', $project))->toBeFalse();
 });

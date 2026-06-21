@@ -310,8 +310,13 @@ test('Happy-Path: Editor-Rolle bringt add-Permission und Project-Anlage über Ro
     );
     $editor->assignRole('Editor');
 
-    expect($editor->can(PermissionName::ADD))->toBeTrue();
-    expect($editor->can(PermissionName::DELETE))->toBeTrue();
+    // E.7b 4a-Hotfix (ADR-0023): Spatie's Gate::before ist
+    // abgeschaltet — globale Permission-Checks ohne Modell-Argument
+    // gehen jetzt über hasPermissionTo() direkt, nicht mehr über
+    // can(). Mit Modell ($user->can('add', $project)) bleibt
+    // can() der richtige Weg.
+    expect($editor->hasPermissionTo(PermissionName::ADD->value))->toBeTrue();
+    expect($editor->hasPermissionTo(PermissionName::DELETE->value))->toBeTrue();
 
     $response = $this->actingAs($editor)
         ->from(route('projects.create'))

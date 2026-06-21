@@ -44,11 +44,14 @@ class EntryPolicy extends OwnerScopedPolicy
     }
 
     /**
-     * Globale Permission, kein Project-Kontext — bleibt wie vorher.
+     * Globale Permission, kein Project-Kontext.
+     *
+     * E.7b 4a-Hotfix (2026-06-21): hasPermissionTo() statt can(),
+     * weil Spatie's Gate::before abgeschaltet ist (config/permission.php).
      */
     public function create(User $user): bool
     {
-        return $user->can(PermissionName::ADD);
+        return $user->hasPermissionTo(PermissionName::ADD->value);
     }
 
     /**
@@ -67,5 +70,18 @@ class EntryPolicy extends OwnerScopedPolicy
     public function delete(User $user, Entry $entry): bool
     {
         return $this->check($user, $entry->chapter->project, PermissionName::DELETE);
+    }
+
+    /**
+     * Darf $user auf $entry kommentieren?
+     *
+     * E.7b 4a-Hotfix-II (2026-06-21): nachgereicht im 4-Controller-
+     * Sweep, weil die Comment-Pfade (EntryController::commentEntry,
+     * setCommentStatusEntry, saveCommentEntry) project-scoped gegated
+     * werden müssen.
+     */
+    public function comment(User $user, Entry $entry): bool
+    {
+        return $this->check($user, $entry->chapter->project, PermissionName::COMMENT);
     }
 }

@@ -74,7 +74,13 @@ class ProjectPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can(PermissionName::VIEW);
+        // Block E.7b Sub-Welle 4a-Hotfix (2026-06-21): Spatie's
+        // `Gate::before` ist via config/permission.php abgeschaltet,
+        // damit project-scoped Policies nicht durch globale
+        // Permissions kurzgeschlossen werden. Globale Permission-
+        // Checks gehen jetzt über `hasPermissionTo()` direkt (kein
+        // Gate-Roundtrip).
+        return $user->hasPermissionTo(PermissionName::VIEW->value);
     }
 
     /**
@@ -96,7 +102,10 @@ class ProjectPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can(PermissionName::ADD);
+        // E.7b 4a-Hotfix: siehe viewAny() — globale Permission via
+        // hasPermissionTo() statt Gate, weil Spatie's Gate::before
+        // jetzt nicht mehr registriert ist.
+        return $user->hasPermissionTo(PermissionName::ADD->value);
     }
 
     /**

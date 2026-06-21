@@ -203,7 +203,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                         <div id="entry_{{$entry->id}}">
                                                             <ul class="list-group  ui-sortable-content sortable_list_content connectedSortableContent" data-entry="{{$entry->id}}" id="{{$entry->id}}">
                                                                 @foreach($entry->mediaContent as $item)
-                                                                    @if($item->media_contentable_type == 'App\Models\Text')
+                                                                    @if($item->content_type == 'App\Models\Text')
                                                                         @isset($item->text->text)
                                                                             <li class="item text content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}">
                                                                                 <div class="row border border-secondary p-4 mb-4 ml-auto w-10/12">
@@ -266,7 +266,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                             </li>
                                                                         @endisset
                                                                     @endif
-                                                                    @if($item->media_contentable_type == 'App\Models\Audiovisual')
+                                                                    @if($item->content_type == 'App\Models\Audiovisual')
                                                                         @isset($item->audiovisual->link)
                                                                             <li class="item audiovisual content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}">
                                                                                 <div class="row border border-secondary p-4 mb-4 ml-auto w-10/12">
@@ -339,7 +339,10 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                             </li>
                                                                         @endisset
                                                                     @endif
-                                                                    @if(isset($item) && $item->media_contentable_type == 'App\Models\Image')
+                                                                    {{-- Phase 4 / E.7b 4a: alte Spalte hatte historisch
+                                                                         'App\Models\Image' für Galleries; neue content_type
+                                                                         hat 'App\Models\Gallery' (ADR-0022). --}}
+                                                                    @if(isset($item) && $item->content_type == 'App\Models\Gallery')
                                                                         @if(isset($item->gallery))
                                                                             <li class="item gallery content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}">
                                                                                 <div class="row border border-secondary p-4 mb-4 ml-auto w-10/12">

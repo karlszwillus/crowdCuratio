@@ -45,11 +45,14 @@ class ChapterPolicy extends OwnerScopedPolicy
     }
 
     /**
-     * Globale Permission, kein Project-Kontext — bleibt wie vorher.
+     * Globale Permission, kein Project-Kontext.
+     *
+     * E.7b 4a-Hotfix (2026-06-21): hasPermissionTo() statt can(),
+     * weil Spatie's Gate::before abgeschaltet ist (config/permission.php).
      */
     public function create(User $user): bool
     {
-        return $user->can(PermissionName::ADD);
+        return $user->hasPermissionTo(PermissionName::ADD->value);
     }
 
     /**
@@ -68,5 +71,18 @@ class ChapterPolicy extends OwnerScopedPolicy
     public function delete(User $user, Chapter $chapter): bool
     {
         return $this->check($user, $chapter->project, PermissionName::DELETE);
+    }
+
+    /**
+     * Darf $user auf $chapter kommentieren?
+     *
+     * E.7b 4a-Hotfix-II (2026-06-21): nachgereicht im 4-Controller-
+     * Sweep, weil die Comment-Pfade (ChapterController::commentChapter,
+     * setCommentStatusChapter, saveComment) project-scoped gegated
+     * werden müssen.
+     */
+    public function comment(User $user, Chapter $chapter): bool
+    {
+        return $this->check($user, $chapter->project, PermissionName::COMMENT);
     }
 }

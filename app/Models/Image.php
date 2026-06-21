@@ -99,6 +99,46 @@ class Image extends Model implements HasComments
         return $this->belongsTo(Entry::class, 'media_contentable_id', 'id');
     }
 
+    /**
+     * Phase 4 / Block E.7b Sub-Welle 2c (ADR-0022). Direkter
+     * Rückbezug auf die Gallery, an die das Image über
+     * `images.gallery_id` gekoppelt ist. Bisher gab es nur die
+     * `Gallery::images()`-Richtung, der Rückweg fehlte.
+     */
+    public function gallery(): BelongsTo
+    {
+        return $this->belongsTo(Gallery::class, 'gallery_id', 'id');
+    }
+
+    /**
+     * Phase 4 / Block E.7b Sub-Welle 2c (ADR-0022). Pivot-
+     * Beziehung über die neuen Spalten content_id/content_type.
+     *
+     * Hinweis: Images werden in der Praxis NICHT direkt an einen
+     * Entry gehängt — sie hängen an einer Gallery (`gallery_id`-
+     * FK), und die Gallery wiederum an einem Entry über
+     * `media_content`. Deshalb ist `mediaContents()` für Images
+     * typischerweise leer; die `project()`-Methode geht den
+     * indirekten Pfad über `$this->gallery->project()`.
+     */
+    public function mediaContents(): MorphMany
+    {
+        return $this->morphMany(MediaContent::class, 'content');
+    }
+
+    /**
+     * Navigiert vom Image über die Gallery (Direkt-FK
+     * `gallery_id`) zum Entry → Chapter → Project. Vorbereitung
+     * für ImagePolicy in E.7b Welle 3.
+     */
+    public function project(): ?Project
+    {
+        /** @var Gallery|null $gallery */
+        $gallery = $this->gallery;
+
+        return $gallery?->project();
+    }
+
     public function parentEntry()
     {
         return $this->hasManyThrough(

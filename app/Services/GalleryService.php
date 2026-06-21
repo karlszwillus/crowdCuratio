@@ -24,6 +24,7 @@ namespace App\Services;
 
 use App\Data\GalleryData;
 use App\Models\Comment;
+use App\Models\Entry;
 use App\Models\Gallery;
 use App\Models\Image;
 use App\Models\MediaContent;
@@ -108,11 +109,22 @@ class GalleryService
             ->orderByDesc('position')
             ->value('position');
 
+        // Phase 4 / Block E.7b Sub-Welle 2d (ADR-0022):
+        // Doppelschreibung. Alte media_contentable_type bleibt
+        // historisch auf Image::class (kein Verhaltens-Wechsel
+        // für die alten Konsumenten, deren Tag-Lookup sowieso
+        // schon ins Leere ging — siehe ADR-0022). Die neue
+        // content_type-Spalte trägt den korrekten Gallery::class-
+        // Wert und löst den latenten Detach-Bug in 2/4 mit auf.
         MediaContent::create([
             'position' => ($lastPosition ?? 0) + 1,
             'media_content_id' => $galleryId,
             'media_contentable_id' => $entryId,
             'media_contentable_type' => Image::class,
+            'content_id' => $galleryId,
+            'content_type' => Gallery::class,
+            'parent_id' => $entryId,
+            'parent_type' => Entry::class,
         ]);
     }
 

@@ -50,8 +50,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
                             {!! $comment->created_at !!}
                         </td>
                         <td>
-                            @if($comment->commentable_type == 'App\Models\MediaContent' && isset($comment->content->media_contentable_type))
-                                {!! class_basename($comment->content->media_contentable_type) !!}
+                            {{-- Phase 4 / E.7b 4a (ADR-0022): media_contentable_type → content_type.
+                                 Beifang: Gallery-Kommentare zeigten historisch "Image" als
+                                 Type-Label (alte Spalte hatte 'App\Models\Image' für Gallery);
+                                 jetzt steht hier korrekt "Gallery". --}}
+                            @if($comment->commentable_type == 'App\Models\MediaContent' && isset($comment->content->content_type))
+                                {!! class_basename($comment->content->content_type) !!}
                             @else
                                 @isset($comment->commentable_type)
                                     {!! class_basename($comment->commentable_type) !!}
@@ -59,8 +63,8 @@ If not, see <https://www.gnu.org/licenses/>. -->
                             @endif
                         </td>
                         <td>
-                            @if($comment->commentable_type == 'App\Models\MediaContent' && isset($comment->content->media_contentable_type))
-                                <a href="projects/{{$comment->project_id}}/edit?model={{$comment->commentable_type}}&comment={{$comment->commentable_id}}&type={{class_basename($comment->content->media_contentable_type)}}#anchor_{{class_basename($comment->commentable_type)}}_{{$comment->commentable_id}}">
+                            @if($comment->commentable_type == 'App\Models\MediaContent' && isset($comment->content->content_type))
+                                <a href="projects/{{$comment->project_id}}/edit?model={{$comment->commentable_type}}&comment={{$comment->commentable_id}}&type={{class_basename($comment->content->content_type)}}#anchor_{{class_basename($comment->commentable_type)}}_{{$comment->commentable_id}}">
                                     @isset($comment->comment)
                                         {!! $comment->comment !!}
                                     @endisset

@@ -104,7 +104,12 @@ class EntryController extends Controller
      */
     public function show($id)
     {
-        //
+        // E.7b 4a-Hotfix-II: Methode hat heute keinen Body (Stub),
+        // aber via Route::resource('/entries',...) ist sie aufrufbar.
+        // Auth-Gate damit der Stub nicht später ohne Schutz Inhalte
+        // ausliefert.
+        $entry = Entry::findOrFail($id);
+        $this->authorize('view', $entry);
     }
 
     /**
@@ -115,9 +120,13 @@ class EntryController extends Controller
      */
     public function edit($id)
     {
-        $data = Entry::findOrFail($id);
+        $entry = Entry::findOrFail($id);
 
-        return response()->json($data);
+        // E.7b 4a-Hotfix-II: vorher ungated — Reader konnten
+        // JSON-Daten fremder Entries via /entries/{id}/edit ziehen.
+        $this->authorize('view', $entry);
+
+        return response()->json($entry);
     }
 
     /**
@@ -147,6 +156,11 @@ class EntryController extends Controller
     public function commentEntry(StoreCommentRequest $request): RedirectResponse
     {
         $entry = Entry::findOrFail($request->validated('id'));
+
+        // E.7b 4a-Hotfix-II: StoreCommentRequest::authorize() prüft
+        // nur Auth-User. Hier project-scoped gate nachreichen.
+        $this->authorize('comment', $entry);
+
         $this->comments->addComment($entry, $request);
 
         return redirect()->back()->with('success', 'Reply to comment added successfully');
@@ -159,6 +173,10 @@ class EntryController extends Controller
      */
     public function getEntryComment($id)
     {
+        // E.7b 4a-Hotfix-II: Entry laden + authorize.
+        $entry = Entry::findOrFail($id);
+        $this->authorize('view', $entry);
+
         $comment = new CommentRetrieve;
 
         return $comment->getComments('App\Models\Entry', $id);
@@ -173,13 +191,17 @@ class EntryController extends Controller
      */
     public function saveCommentEntry(Request $request): RedirectResponse
     {
+        // E.7b 4a-Hotfix-II: Entry immer laden + authorize, auch im
+        // name=edit-Pfad. Vorher konnten fremde Comments editiert werden.
+        $entry = Entry::findOrFail($request->route('id'));
+        $this->authorize('comment', $entry);
+
         if (isset($request['name']) && $request['name'] === 'edit') {
             $this->comments->editComment((int) $request['pk'], (string) $request['value']);
 
             return redirect()->back()->with('success', 'Comment edited successfully');
         }
 
-        $entry = Entry::findOrFail($request->route('id'));
         $this->comments->dispatchSaveAction($entry, $request);
 
         return redirect()->back()->with('success', 'Comment-Aktion ausgeführt');
@@ -188,9 +210,21 @@ class EntryController extends Controller
     /**
      * Setzt den Status eines Comments auf einem Entry.
      */
-    public function setCommentStatusEntry(Request $request, Entry $entry): JsonResponse
+    public function setCommentStatusEntry(Request $request): JsonResponse
     {
-        $this->comments->setCommentStatus((int) $request['id'], (int) $request['status']);
+        // E.7b 4a-Hotfix-II: das `Entry $entry`-Argument war ohne
+        // {entry}-Route-Parameter ein toter Auth-Hook. Jetzt: via
+        // Comment-Id Project auflösen und gate.
+        $commentId = (int) $request['id'];
+        $project = $this->comments->resolveProjectForComment($commentId);
+
+        if ($project === null) {
+            abort(404);
+        }
+
+        $this->authorize('comment', $project);
+
+        $this->comments->setCommentStatus($commentId, (int) $request['status']);
 
         return response()->json(['success' => true]);
     }

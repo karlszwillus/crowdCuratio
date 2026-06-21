@@ -10,6 +10,405 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Behoben (Block E.7b Sub-Welle 4a-Hotfix-II.d — Owner-Bypass-Bug + Translation-Test-Reflection)
+
+Nach II.c-Verifikation gefunden:
+
+- **`saveText` / `saveImage` / `saveGallery` / Audiovisual `store`
+  schlossen Project-Owner aus**, weil die Defense-in-Depth-Hürde
+  `hasPermissionTo('edit')` als ersten Schritt auch dann blockierte,
+  wenn der nachgelagerte `authorize('update', $model)`-Gate über
+  den Owner-Shortcut der OwnerScopedPolicy durchgegangen wäre.
+  Drei HappyPath-Tests brachen: Owner kann kein Audio hochladen,
+  keinen Text-Block anlegen, kein Bild in Gallery hochladen.
+- Fix: Top-Level-Defense-in-Depth in den vier Methoden entfernt.
+  Nur dort, wo kein Modell-Argument für ein project-scoped
+  authorize() vorhanden ist — `translationMode + originId/copyrightId`
+  in `saveText` und `saveImage` (Source-Translation auf global
+  geteilten Sources) — bleibt `hasPermissionTo('edit')` als Reader-
+  Schutz.
+- **Image-Create-Pfad** in `saveImage` gate'd jetzt über `Entry`
+  statt `Gallery`, weil frisch angelegte Galleries oft noch keine
+  Pivot-Verbindung haben und `Gallery::project()` null gibt.
+
+- **`ContentControllerTranslationTest`** rief `translateField` und
+  `saveTranslatedText` direkt auf — die sind in II.b auf `private`
+  reduziert. Reflection-Helper `invokeTranslateField` /
+  `invokeSaveTranslatedText` analog `invokeHistory` in
+  `ProjectControllerLogTest`. Tests testen weiterhin direkt die
+  privaten Helper, bis ein TranslationService in einer späteren
+  Welle extrahiert wird.
+
+### Tests (Block E.7b Sub-Welle 4a-Hotfix-II.c — Pinning-Tests für vier-Controller-Sweep)
+
+Charakterisierungs-Tests für die in II.a + II.b gegateten Methoden.
+Eine neue Datei `tests/Feature/Http/ContentRouteAuthorizationTest.php`
+mit 16 Tests pinnt die kritischsten Vektoren:
+
+- **ChapterController**: edit, commentChapter, setCommentStatusChapter
+  als Reader auf fremdem Project → 403.
+- **EntryController**: edit, commentEntry, setCommentStatusEntry
+  analog → 403.
+- **ContentController**: saveText (Reader ohne globale edit-Permission
+  + Editor mit edit aber ohne Project-Einladung), editText/editImage/
+  editGallery (Read-Pfade), commentText, setCommentStatusText,
+  updateCommentStatus (URL-Trigger) → 403.
+- **AudiovisualController**: store (Reader ohne edit-Permission),
+  commentAudiovisual → 403.
+- **Happy-Path Sanity**: Owner darf editText auf eigenem Text;
+  eingeladener Reader mit comment-Permission darf commentEntry.
+
+Setup-Konvention aus ADR-0023:
+`app(PermissionRegistrar)->forgetCachedPermissions()` im
+beforeEach — verhindert dass Tests durch inkonsistenten Spatie-
+Permission-Cache fälschlich grün laufen (siehe Welle-4a-Hotfix-
+Test-Verfälschung).
+
+### Sicherheit (Block E.7b Sub-Welle 4a-Hotfix-II.b — ContentController + AudiovisualController Authorize-Sweep)
+
+Abschluss des 4-Controller-Sweeps. Alle public Schreib- und
+JSON-API-Methoden in ContentController und AudiovisualController
+haben jetzt project-scoped `authorize`-Gates.
+
+ContentController gegated:
+- **`editText` / `editImage` / `editGallery`** — JSON-API für die
+  Edit-Maske; vorher konnten fremde Inhaltsdaten gezogen werden.
+  `authorize('view', $text|$image|$gallery)`.
+- **`saveText`** — vorgelagert `hasPermissionTo('edit')`
+  (Defense-in-Depth, schließt Reader sofort raus); im Update-Pfad
+  `authorize('update', $text)`, im Create-Pfad
+  `authorize('update', $entry)` auf den Ziel-Entry.
+- **`saveImage`** — analog: globale `edit`-Permission als Hürde,
+  dann `authorize('update', $image|$gallery)` je nach Pfad.
+- **`saveGallery`** — analog: globale Hürde + Gate auf Gallery
+  oder Entry.
+- **`commentText` / `commentImage` / `commentGallery`** —
+  StoreCommentRequest prüft nur Auth-User; project-scoped Gate
+  nachgereicht.
+- **`getTextComment` / `getImageComment`** — Modell laden +
+  `authorize('view', ...)`.
+- **`saveCommentText` / `saveCommentImage` / `saveCommentGallery`**
+  — `authorize('comment', $text|$image|$gallery)`.
+- **`setCommentStatusText` / `setCommentStatusImage`** — vorher
+  toter Route-Model-Binding (`Text $text` / `Image $image` ohne
+  Route-Param), jetzt Comment via `$request['id']` laden, Project
+  via `CommentService::resolveProjectForComment()` auflösen,
+  `authorize('comment', $project)`.
+- **`updateCommentStatus($id, $status)`** — URL-basierter Comment-
+  Status-Trigger; Project-Resolution + `authorize('comment')`.
+- **`resetText`** — `authorize('update', $text)` vor dem Reset.
+
+AudiovisualController gegated:
+- **`store`** — globale `edit`-Permission + `authorize('update',
+  $audiovisual)` im Update-Pfad bzw. `authorize('update', $entry)`
+  im Create-Pfad.
+- **`saveCommentAudiovisual`** — `authorize('comment', $audiovisual)`.
+- **`commentAudiovisual`** — analog.
+
+Strukturelle Konsequenzen:
+- **`translateField` und `saveTranslatedText` auf `private`**
+  reduziert. Methoden haben keine eigene Route, werden nur intern
+  aus `saveText` / `saveImage` aufgerufen. Auth läuft vorgelagert
+  über die Aufrufer. Sources sind global geteilt — kein project-
+  scoped Gate möglich, aber durch globale `edit`-Permission
+  geschützt (Reader nicht erreichbar).
+- **Image-Create-Pfad** in `saveImage` lädt das Gallery-Modell
+  vor dem Service-Call und gate dagegen.
+- **Text/Audiovisual-Create-Pfade** laden Entry-Modell vor und gate.
+
+Pinning-Tests für die kritischsten Vektoren folgen in einer
+kleinen Folge-Welle (Hotfix-II.c).
+
+### Sicherheit (Block E.7b Sub-Welle 4a-Hotfix-II.a — ChapterController + EntryController Authorize-Sweep)
+
+Nach dem Welle-4a-Hotfix (Spatie's Gate::before abgeschaltet) waren
+die zuvor ungegated Methoden in den Content-nahen Controllern
+*schlimmer* dran — vorher gab es pseudo-Auth durch Spatie's Bypass,
+jetzt war gar kein Schutz mehr drin. Sweep über ChapterController
+und EntryController, II.b folgt mit ContentController +
+AudiovisualController.
+
+- **`ChapterController::edit($id)`** — JSON-API für Edit-Maske;
+  vorher konnten fremde Chapter-Daten gelesen werden.
+  `authorize('view', $chapter)`.
+- **`ChapterController::commentChapter`** — `StoreCommentRequest`
+  prüft nur Auth-User; project-scoped Gate nachgereicht.
+  `authorize('comment', $chapter)`.
+- **`ChapterController::getChapterComment($id)`** — Comments
+  fremder Chapter gelesen. `authorize('view', $chapter)`.
+- **`ChapterController::saveComment`** — Chapter immer laden +
+  `authorize('comment')` auch im `name=edit`-Pfad. Vorher konnten
+  fremde Comments editiert werden.
+- **`ChapterController::setCommentStatusChapter`** — Signature
+  bekam einen `Chapter $chapter`-Parameter ohne `{chapter}`-Route-
+  Param (Route-Model-Binding band ein leeres Modell — toter
+  Auth-Hook). Jetzt: Comment via `$request['id']` laden, Project
+  via `CommentService::resolveProjectForComment()` auflösen,
+  `authorize('comment', $project)`.
+- **Analog `EntryController`**: `show($id)`, `edit($id)`,
+  `commentEntry`, `getEntryComment`, `saveCommentEntry`,
+  `setCommentStatusEntry` mit `authorize`-Gates versorgt; bei den
+  Comment-Pfaden derselbe Resolver-Helper genutzt.
+- **`ChapterPolicy::comment()` + `EntryPolicy::comment()`**:
+  neue project-scoped Methode für die Comment-Pfade (analog
+  `ProjectPolicy::comment`).
+- **`CommentService::resolveProjectForComment(int $commentId): ?Project`**:
+  neuer Helper, navigiert vom Comment via `commentable_type`/
+  `commentable_id` zum Project. Für die `setCommentStatus*`-
+  Endpunkte, die kein Modell in der Route haben und früher mit
+  totem Route-Model-Binding ausgestattet waren.
+
+### Sicherheit (Block E.7b Sub-Welle 4a-Hotfix — Spatie Gate::before Reader-Bypass)
+
+- **KRITISCH: Globale `view`-Permission von Spatie umging alle
+  project-scoped Policies.** Karl-Befund vom 2026-06-21: Reader
+  Rolf (Zugriff nur Projekt 18/19) konnte `/projects/20/edit`
+  öffnen, obwohl `ProjectController::edit` seit Welle-3-Hotfix
+  `$this->authorize('view', $project)` ruft. Tinker-Diagnose:
+  `$policy->view($rolf, $project) = 0` korrekt nein, aber
+  `$rolf->can('view', $project) = 1` falsch ja. Dazwischen
+  Spatie's `Gate::before`-Hook, den Spatie's
+  `PermissionRegistrar::registerPermissions()` per Default
+  registriert. Der Hook ruft `checkPermissionTo('view')`
+  ohne Modell-Argument — Reader hat die globale Permission
+  `view`, gibt true zurück, Policy wird übersprungen.
+
+  Effekt: alle in Block D PR 2 / E.7a / E.7b aufgebauten
+  project-scoped Policies waren in der Live-App effektiv tot.
+  Die Tests waren grün, weil im Test-Setup der Permission-Cache
+  vermutlich nicht initialisiert ist und `checkPermissionTo`
+  intern eine Exception wirft, die Laravel als false interpretiert.
+
+  Fix:
+  - `config/permission.php`: `'register_permission_check_method' => false`
+    — Spatie registriert das `Gate::before` nicht mehr, Policies
+    entscheiden allein.
+  - 4 Policy-Methoden umgestellt: `ProjectPolicy::viewAny`,
+    `ProjectPolicy::create`, `ChapterPolicy::create`,
+    `EntryPolicy::create` von `$user->can(PermissionName::*)` auf
+    `$user->hasPermissionTo(PermissionName::*->value)` — geht
+    direkt über Spatie's Trait an die DB, ohne Gate-Roundtrip.
+  - 3 Blade-Stellen in `roles/index.blade.php`: `@can('edit')`,
+    `@can('delete')`, `@can('add')` auf
+    `@hasPermissionTo(...)` umgestellt (Spatie-Blade-Directive).
+  - Zwei neue Pinning-Tests in `ProjectControllerAuthorizationTest`:
+    expliziter Reader-Bypass-Test mit primärem Permission-Cache
+    und `givePermissionTo(VIEW)` (simuliert volle Live-Bedingungen).
+  - ADR-0023 dokumentiert den Trade-off (Spatie Gate::before vs.
+    project-scoped Policies).
+
+### Geändert (Block E.7b Sub-Welle 4a — Views minimal-invasiv auf neue Spalten)
+
+- **`MediaContent::text()/image()/gallery()/audiovisual()` belongsTo
+  liest jetzt aus `content_id` statt aus `media_content_id`.** Während
+  der Doppelschreibungs-Welle 2d sind beide gleichwertig befüllt, in
+  Welle 4e fällt die alte Spalte weg. Die alten Accessor-Namen (z.B.
+  `$item->text`, `$item->gallery`) bleiben in den Blades nutzbar; nur
+  der Foreign-Key wechselt darunter. Der Diskriminator-Check
+  (Gallery vs. Image vs. Text) bleibt Sache der Aufrufer.
+- **`MediaContent::entry()` belongsToMany auf `parent_id`** statt
+  `media_contentable_id`.
+- **`Entry::mediaContent()` hasMany auf `parent_id`** statt
+  `media_contentable_id`. Eager-Loads in Project-Scopes
+  (`chapters.entries.mediaContent.*`) bleiben unverändert nutzbar.
+- **`chapters/index.blade.php`, `preview/index.blade.php`,
+  `preview/pdf.blade.php`: Diskriminator-Check auf `content_type`**
+  statt `media_contentable_type`. Markup unverändert.
+  Beifang: Gallery-Pfad triggerte historisch auf
+  `'App\Models\Image'` (alte Tag-Spalte hatte den Schiefstand);
+  jetzt korrekt auf `'App\Models\Gallery'`.
+- **`contents/comment.blade.php`: Type-Label und URL-Param `?type=`
+  auf `content_type`.** Beifang: Gallery-Kommentare zeigten in der
+  Comment-Übersicht historisch "Image" als Type-Label — jetzt
+  steht korrekt "Gallery". URL-Param `?type=Gallery` wird vom
+  Edit-Pfad gleichwertig akzeptiert wie der alte `?type=Image`.
+
+### Sicherheit (Block E.7b Sub-Welle 3-Hotfix — ProjectController Authorize-Sweep)
+
+- **KRITISCH: `ProjectController::setPermissionForUserOnProject`
+  ohne Authorize-Gate.** Bisher konnte jeder eingeloggte User
+  via direktem POST `/project/permission` einem beliebigen User
+  volle Rechte auf jedes Projekt vergeben. Privilege Escalation
+  in derselben Klasse wie NF-SEC-202 (Phase 2.5). Beim
+  Welle-3-Smoke entdeckt via Reader-URL-Manipulation; der Sweep
+  über alle `ProjectController`-Methoden hat den darunterliegenden
+  Befund freigelegt. Jetzt mit `$this->authorize('update', $project)`.
+- **Sieben weitere ungegated Project-Pfade** geschlossen:
+  - `show($project)` — Reader sah fremde Projects via
+    `/projects/{id}`.
+  - `edit(Request, $project)` — Reader sah fremde Edit-Masken
+    via `/projects/{id}/edit` (Karls konkreter Smoke-Befund).
+  - `getDetails($project, $id)` — Activity-Log-Diffs fremder
+    Projects.
+  - `previewProject(Request)` — Web-Preview fremder Projects.
+  - `downloadPreview(Request)` — PDF-Download fremder Projects.
+  - `projectMetadata(Request)` — Impressum/AGB-Aggregation
+    fremder Projects.
+  - `givePermissionToUser($id)` — Info-Leak: Permission-IDs
+    eines beliebigen Users auf ein beliebiges Projekt
+    herausgeben. Gate analog setPermissionForUserOnProject mit
+    `update`.
+
+  Alle sechs `show`/`edit`/`preview`/`metadata`-Pfade jetzt mit
+  `$this->authorize('view', $project)`. Damit greift Owner-
+  Shortcut, Admin via before(), Eingeladene mit `view`-Permission
+  durch — Fremde bekommen 403.
+- **Vier neue Charakterisierungs-Tests** in
+  `ProjectControllerAuthorizationTest`: show/edit/Owner-Edit/
+  setPermissionForUserOnProject (Privilege Escalation als
+  expliziter Test).
+
+  **Nachzug:** zwei nicht-Project-bound Methoden — `history($model, $id)`
+  ist nun `private` (war als `public` deklariert, hat aber keine
+  Route, einziger Caller ist `edit()`, das selbst gegated ist).
+  `getCurrentLog($id)` lädt `$id` als Text-ID, navigiert via
+  `Text::project()` aus Welle 2c und gated dann mit `view`. Damit
+  sind alle bekannten Authorize-Lücken im `ProjectController`
+  geschlossen.
+
+### Sicherheit (Block E.7b Sub-Welle 3 — Content-Policies)
+
+- **Vier neue Policy-Klassen** auf `OwnerScopedPolicy`-Basis:
+  `TextPolicy`, `ImagePolicy`, `GalleryPolicy`, `AudiovisualPolicy`.
+  Methoden `view`, `update`, `delete`, `comment` jeweils via
+  `Project`-Resolve aus dem Content-Modell (`$content->project()`
+  aus Sub-Welle 2c). Owner-Shortcut und Pivot-Lookup übernimmt
+  der `ProjectPermissionService`, Admin via `before()`.
+- **`OwnerScopedPolicy::checkViaProject(?Project)`** als neuer
+  Helper. Liefert `false`, wenn das Project nicht aufgelöst werden
+  kann (Race-Case zwischen Content-Create und attachToEntry, oder
+  Image ohne `gallery_id`).
+- **Registrierung in `AuthServiceProvider`** für alle vier
+  Content-Modelle. Damit greift `@can(...)` in Blades und
+  `$this->authorize(...)` in Controllern automatisch.
+- **Vier Pest-Test-Files** mit 5-7 Tests pro Policy (Owner /
+  Admin / Eingeladener-mit-edit / Eingeladener-nur-mit-view /
+  Fremder × view/update/delete + Negativtest für
+  fehlende Verknüpfung): `TextPolicyTest`, `ImagePolicyTest`,
+  `GalleryPolicyTest`, `AudiovisualPolicyTest`. Image-Test
+  pinnt explizit den indirekten Pfad via Gallery.
+- **Authorize-Calls in den Destroy-Pfaden** ergänzt:
+  `ContentController::destroyText/destroyImage/destroyGallery`
+  und `AudiovisualController::delete`. Vorher konnten diese
+  Endpunkte nur per `auth`-Middleware geschützt werden — ein
+  eingeladener Reader hätte zwar via UI keinen Delete-Button
+  gesehen, ein direkter HTTP-Aufruf hätte aber durchgehen
+  können. Jetzt blockt die Policy.
+
+  Comment-Authorize-Pfade und edit-Pfade folgen in einer
+  separaten Mini-Welle nach dem Smoke-Check.
+
+### Geändert (Block E.7b Sub-Welle 2d — Service-Doppelschreibung)
+
+- **`TextService::attachToEntry`, `AudiovisualService::attachToEntry`
+  und `GalleryService::attachToEntry`** schreiben jetzt parallel
+  in die alten `media_contentable_*`- und die neuen
+  `content_*`/`parent_*`-Spalten der `media_content`-Pivot-Tabelle.
+  Damit funktionieren alte Konsumenten (preview-Blade,
+  ContentController-Direktzugriffe) und neue Konsumenten
+  (Welle-3-Policies via `$content->project()`) während der
+  Übergangswelle parallel. Cleanup der alten Spalten + Konsumenten
+  in Sub-Welle 4 nach Smoke.
+- **GalleryService — Spezialfall:** der historische Schiefstand
+  bleibt in der alten `media_contentable_type=Image::class`-Spalte
+  erhalten (kein Verhaltens-Wechsel für die heute funktionierenden
+  Lesepfade), die neue `content_type`-Spalte trägt jetzt den
+  korrekten `Gallery::class`-Wert. Der latente `detachFromEntries`-
+  Bug (sucht nach `Gallery::class`, findet nie etwas, weil die
+  Rows `Image::class`-getaggt sind) wird in Sub-Welle 4 mit dem
+  Switch auf die neuen Spalten aufgelöst.
+- **Drei Pest-Tests** in `ContentServiceDoubleWriteTest`:
+  Text/Audiovisual/Gallery → jeweils Sicht auf alte + neue Spalten
+  nach `Service::create()`. Der Gallery-Test pinnt explizit, dass
+  die alte Spalte `Image::class` behält und die neue
+  `Gallery::class` trägt.
+
+### Geändert (Block E.7b Sub-Welle 2c — Content-Modelle mit project()-Navigation)
+
+- **`mediaContents()` und `project()` auf den vier Content-Modellen**
+  ergänzt (`Text`, `Image`, `Gallery`, `Audiovisual`). `mediaContents()`
+  ist eine `morphMany`-Beziehung auf die neuen Pivot-Spalten
+  `content_id` + `content_type`. `project()` navigiert vom Content
+  über den Pivot zum Entry → Chapter → Project. Bei Image ist der
+  Pfad indirekt: Image hängt über `gallery_id` an einer Gallery,
+  die wiederum am Entry — `Image::project()` delegiert deshalb an
+  `Gallery::project()`.
+- **`Image::gallery()`-Beziehung als `belongsTo` ergänzt.** Bisher
+  gab es nur die `Gallery::images()`-Richtung; der Rückweg fehlte
+  und wurde an mehreren Stellen umständlich nachgebaut.
+- **Sechs neue Pest-Tests** in `ContentProjectNavigationTest`:
+  - `Text::project()` über den Pivot (positiv/negativ)
+  - `Audiovisual::project()` über den Pivot (positiv)
+  - `Gallery::project()` über den Pivot (positiv)
+  - `Image::project()` indirekt über die Gallery (positiv/negativ)
+- **Alte Modell-Methoden** (`Text::entry()`, `Image::entry()`,
+  `Image::parentEntry()`, `Image::medias()` etc.) bleiben in Place
+  während der Übergangswelle. Cleanup in Sub-Welle 4 nach
+  Konsumenten-Umstellung.
+
+  Vorbereitung für die vier Content-Policies in Welle 3.
+
+### Geändert (Block E.7b Sub-Welle 2b — MediaContent Morph-Relations)
+
+- **`MediaContent::content()` und `MediaContent::parent()`** als
+  saubere `morphTo`-Beziehungen ergänzt. `content()` liest aus
+  `content_id` + `content_type`, `parent()` aus `parent_id` +
+  `parent_type` — also den in Sub-Welle 2a angelegten neuen
+  Spalten. Damit greift Laravels eingebaute Polymorphic-Mechanik
+  (z.B. `@can(...)` auf das geladene Modell) erstmals zuverlässig.
+- **Alte Beziehungen bleiben unverändert** (`text()`, `image()`,
+  `gallery()`, `audiovisual()`, `entry()`, `media()`) — sie werden
+  in Sub-Welle 2c/2d von Konsumenten abgelöst, in Sub-Welle 4
+  zusammen mit den alten Spalten gedroppt.
+- **`$fillable` erweitert** um die vier neuen Spalten, damit
+  Services in Sub-Welle 2d die Doppelschreibung durchführen
+  können.
+- **Vier Pest-Tests** in `MediaContentMorphRelationsTest`:
+  Text/Gallery/Audiovisual als content() plus Entry als parent().
+  Der Gallery-Test pinnt explizit den historischen Schiefstand-
+  Fix (alte `media_contentable_type` = `Image::class`, neue
+  `content_type` = `Gallery::class`).
+
+### Geändert (Block E.7b Sub-Welle 2a — media_content Morph-Columns)
+
+- **Neue Spalten `content_id`, `content_type`, `parent_id`,
+  `parent_type` auf `media_content`.** Wegbereiter für den
+  Schema-Refactor aus ADR-0022. Die alten Spalten (`media_content_id`,
+  `media_contentable_id`, `media_contentable_type`) bleiben für
+  die Übergangswelle stehen — Services schreiben in Sub-Welle 2d
+  doppelt, gelesen werden in 2b/2c die neuen Spalten. Cleanup der
+  alten Spalten erfolgt in Sub-Welle 4 nach Smoke.
+- **Daten-Backfill** in derselben Migration: `content_id` 1:1 aus
+  `media_content_id`, `parent_id` aus `media_contentable_id`,
+  `parent_type = Entry::class` für alle Bestands-Rows (laut
+  Audit-Parent-Probe), `content_type` mit Spezialfall für
+  `Image::class`-Tags mit Match in `galleries` → `Gallery::class`
+  (historischer Schiefstand aus `GalleryService::attachToEntry`,
+  jetzt sauber). Migration ist idempotent — nur Rows mit NULL
+  `content_id` werden geschrieben.
+- **Fünf Pest-Tests** in `MediaContentMorphColumnsTest`: Endzustand,
+  Text-Mapping, Image-zu-Gallery-Mapping, Audiovisual-Mapping,
+  Roundtrip down/up.
+
+### Hinzugefügt (Block E.7b Sub-Welle 1 — Voranalyse)
+
+- **`db:audit-media-content` Artisan-Command.** Read-only-Audit der
+  `media_content`-Pivot-Tabelle vor dem Schema-Refactor (ADR-0022).
+  Zählt Rows pro `media_contentable_type`-Wert, prüft die
+  Content-Tags gegen das jeweils erwartete Modell (Text gegen
+  `texts`, Audiovisual gegen `audiovisuals`, Image-Tags gegen
+  `galleries` — wegen des historischen Schiefstands, dass
+  `GalleryService::attachToEntry` `Image::class` als Type setzt),
+  und liefert die empirische Probe gegen Entry als gemeinsamen
+  Parent. Output ist Markdown auf STDOUT mit konkreter Mapping-
+  Empfehlung für die Schema-Migration (Sub-Welle 2). Read-only,
+  kein `--fix`-Modus — das Fix kommt durch die Migration in Sub-
+  Welle 2.
+
+  Voraussetzung für E.7b: vor jedem Schema-Eingriff brauchen wir
+  Klarheit über den IST-Stand der Pivot-Belegung. Aufgesetzt am
+  Stil von `db:audit-fk` (ADR-0018 / Phase 2 / E.3).
+
 ### Geändert (AM-B-2 + AM-B-3 Mini-Fix — Preview-Spacing)
 
 - **`public/css/index.css` — drei Spacing-Stellschrauben am

@@ -24,6 +24,7 @@ namespace App\Services;
 
 use App\Data\AudiovisualData;
 use App\Models\Audiovisual;
+use App\Models\Entry;
 use App\Models\MediaContent;
 use App\Traits\UploadTrait;
 use Illuminate\Http\UploadedFile;
@@ -182,11 +183,17 @@ class AudiovisualService
             ->orderByDesc('position')
             ->value('position');
 
+        // Phase 4 / Block E.7b Sub-Welle 2d (ADR-0022): Doppel-
+        // schreibung alte + neue Morph-Spalten. Cleanup in 2/4.
         MediaContent::create([
             'position' => ($lastPosition ?? 0) + 1,
             'media_content_id' => $audiovisualId,
             'media_contentable_id' => $entryId,
             'media_contentable_type' => Audiovisual::class,
+            'content_id' => $audiovisualId,
+            'content_type' => Audiovisual::class,
+            'parent_id' => $entryId,
+            'parent_type' => Entry::class,
         ]);
     }
 }

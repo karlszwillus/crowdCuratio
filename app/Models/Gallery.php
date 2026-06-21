@@ -92,6 +92,38 @@ class Gallery extends Model implements HasComments
     }
 
     /**
+     * Phase 4 / Block E.7b Sub-Welle 2c (ADR-0022). Pivot-
+     * Beziehung über die neuen Spalten content_id/content_type.
+     */
+    public function mediaContents(): MorphMany
+    {
+        return $this->morphMany(MediaContent::class, 'content');
+    }
+
+    /**
+     * Navigiert von der Gallery über den Pivot zum Entry → Chapter
+     * → Project. Vorbereitung für GalleryPolicy in E.7b Welle 3.
+     *
+     * Bei Galerien historisch besonders relevant, weil
+     * `GalleryService::attachToEntry` `Image::class` als
+     * media_contentable_type setzte — die neue `content_type`-
+     * Spalte hat den korrekten Gallery::class-Wert nach Backfill
+     * (Sub-Welle 2a).
+     */
+    public function project(): ?Project
+    {
+        /** @var MediaContent|null $pivot */
+        $pivot = $this->mediaContents()->first();
+        if ($pivot === null) {
+            return null;
+        }
+        /** @var Entry|null $parent */
+        $parent = $pivot->parent;
+
+        return $parent?->chapter?->project;
+    }
+
+    /**
      * Add language to log
      */
     public function tapActivity(Activity $activity)

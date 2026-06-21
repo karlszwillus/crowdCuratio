@@ -159,6 +159,11 @@ class ProjectController extends Controller
      */
     public function show(Project $project)
     {
+        // Block E.7b Sub-Welle 3-Hotfix (ADR-0022, ADR-0013):
+        // Reader-via-URL-Smoke gefunden — show öffnete fremde
+        // Projects ohne Gate.
+        $this->authorize('view', $project);
+
         return view('projects.show', compact('project'));
     }
 
@@ -169,6 +174,13 @@ class ProjectController extends Controller
      */
     public function edit(Request $request, Project $project)
     {
+        // Block E.7b Sub-Welle 3-Hotfix (ADR-0022, ADR-0013):
+        // Reader-via-URL-Smoke (2026-06-21) zeigte, dass /projects/{id}/edit
+        // jeden eingeloggten User in fremde Projekte hineinblicken liess.
+        // view-Gate reicht: eingeladene Reader sehen die Edit-Maske mit
+        // ihren Lese-Rechten, Fremde bekommen 403.
+        $this->authorize('view', $project);
+
         $textLog = [];
         $comments = [];
         $isComment = false;
@@ -226,14 +238,29 @@ class ProjectController extends Controller
     }
 
     /**
-     * @return array
+     * Helper für edit(): liefert die Activity-Log-Liste für ein
+     * konkretes Content-Modell innerhalb eines Project-Edit-Pfades.
+     *
+     * Block E.7b Sub-Welle 3-Hotfix (ADR-0022, ADR-0013):
+     * Sichtbarkeit auf `private` reduziert. Vorher `public`, aber
+     * nicht via Route erreichbar — der einzige Aufrufer ist
+     * `edit()` (Z. 198), das selbst gegated ist. Damit ist der
+     * Pfad indirekt geschützt; ein eigener `authorize`-Call wäre
+     * redundant.
+     *
+     * @return array<int, array{id: int|string, userName: string, created_at: mixed}>
      */
-    public function history($model, $id)
+    private function history($model, $id)
     {
         $type = "App\Models\\".$model;
         $exception = '[]';
 
-        $activities = Activity::where('subject_id', '=', $id)
+        // Strict-Mode: $value->causer wird in der Schleife für jedes
+        // Activity-Item gelesen — ohne Eager-Load wirft Laravel 11+
+        // mit preventLazyLoading() eine LazyLoadingViolationException
+        // (Karl-Befund 2026-06-21). E.7b 4a-Hotfix-II.a-Followup.
+        $activities = Activity::with('causer')
+            ->where('subject_id', '=', $id)
             ->where('subject_type', '=', $type)->where('description', 'NOT LIKE', '%created%')
             ->where('properties', 'NOT LIKE', '%is_translate%')
             ->where('properties', 'NOT LIKE', '%'.$exception.'%')
@@ -387,6 +414,15 @@ class ProjectController extends Controller
         $projectId = (int) $request['project'];
         $permissionIds = (array) ($request['permissions'] ?? []);
 
+        // Block E.7b Sub-Welle 3-Hotfix (ADR-0022, ADR-0013):
+        // KRITISCH — bisher konnte JEDER eingeloggte User via direktem
+        // POST `/project/permission` einem beliebigen User volle Rechte
+        // auf jedes Projekt vergeben. Privilege Escalation, vergleichbar
+        // mit NF-SEC-202. update-Gate: nur Owner/Admin/Eingeladener-mit-
+        // edit darf Permissions verteilen.
+        $project = Project::findOrFail($projectId);
+        $this->authorize('update', $project);
+
         $this->permissions->setForUserOnProject(
             $userId,
             $projectId,
@@ -411,6 +447,13 @@ class ProjectController extends Controller
     {
         [$userId, $projectId] = array_map('intval', explode('_', $id));
 
+        // Block E.7b Sub-Welle 3-Hotfix (ADR-0022, ADR-0013):
+        // Info-Leak — gibt Permission-IDs eines beliebigen Users
+        // auf ein beliebiges Projekt heraus. Gate analog
+        // setPermissionForUserOnProject.
+        $project = Project::findOrFail($projectId);
+        $this->authorize('update', $project);
+
         $data = $this->permissions->getPermissionIdsForUserOnProject($userId, $projectId);
 
         return response()->json($data);
@@ -421,6 +464,17 @@ class ProjectController extends Controller
      */
     public function getCurrentLog($id)
     {
+        // Block E.7b Sub-Welle 3-Hotfix (ADR-0022, ADR-0013):
+        // Route /log/text/{id} ist text-bezogen (Name `log.text`).
+        // $id ist eine Text-ID — via Text::project() navigieren wir
+        // zum Project und gaten gegen view. Vorher kein Gate.
+        $text = Text::findOrFail($id);
+        $project = $text->project();
+        if ($project === null) {
+            abort(404);
+        }
+        $this->authorize('view', $project);
+
         $log = new LogService;
         $activities = $log->textLog($id);
 
@@ -433,6 +487,11 @@ class ProjectController extends Controller
     public function getDetails($project, $id)
     {
         $project = Project::findOrFail($project);
+
+        // Block E.7b Sub-Welle 3-Hotfix (ADR-0022, ADR-0013):
+        // getDetails liefert Activity-Log-Diffs des Projekts —
+        // sollte nur Lese-berechtigte sehen.
+        $this->authorize('view', $project);
 
         $activities = Activity::where('id', '=', $id)->get();
 
@@ -849,6 +908,11 @@ class ProjectController extends Controller
         $parameters['id'] = $request['project'];
         $project = Project::withPreviewTree()->findOrFail($request['project']);
 
+        // Block E.7b Sub-Welle 3-Hotfix (ADR-0022, ADR-0013):
+        // Web-Preview eines fremden Projekts war ohne Gate erreichbar
+        // — Reader-via-URL.
+        $this->authorize('view', $project);
+
         return \view('preview.index', compact('project', 'parameters'));
     }
 
@@ -875,6 +939,11 @@ class ProjectController extends Controller
         }
 
         $project = Project::withPreviewTree()->findOrFail($request->id);
+
+        // Block E.7b Sub-Welle 3-Hotfix (ADR-0022, ADR-0013):
+        // PDF-Download fremder Projekte ohne Gate war erreichbar.
+        $this->authorize('view', $project);
+
         $html = View('preview.pdf', compact('project', 'parameters'))->render();
 
         $options = new Options;
@@ -897,6 +966,12 @@ class ProjectController extends Controller
 
         if (isset($parameters['id'])) {
             $project = Project::withCopyrightTree()->findOrFail($parameters['id']);
+
+            // Block E.7b Sub-Welle 3-Hotfix (ADR-0022, ADR-0013):
+            // projectMetadata liefert Impressum/AGB/Quellen-Listen
+            // fremder Projekte ohne Gate.
+            $this->authorize('view', $project);
+
             if ($request->type == 'copyright') {
                 $content = $project->terms;
                 $type = 'copyright';

@@ -109,6 +109,26 @@ return [
 
     'enable_wildcard_permission' => false,
 
+    /*
+     * Block E.7b Sub-Welle 4a-Hotfix (2026-06-21, Karl-Befund):
+     * Spatie registriert per Default ein `Gate::before`, das bei
+     * jedem `can()`/`authorize()` zuerst `checkPermissionTo()` prüft —
+     * ohne Modell-Argument auszuwerten. Dadurch hat ein eingeloggter
+     * User mit globaler `view`-Permission jedes Project sehen
+     * dürfen (Reader-Bypass), egal was die ProjectPolicy::view sagt.
+     *
+     * Hier abgeschaltet: project-scoped Authorization läuft jetzt
+     * über die Policies. Globale Permission-Checks gehen über
+     * Spatie's `$user->hasPermissionTo(...)` bzw. das
+     * `@hasPermissionTo`-Blade-Directive (siehe ADR-0023).
+     *
+     * Hintergrund: Policy-Methoden-Namen (`view`, `update`, `delete`,
+     * `comment`) kollidieren mit Permission-Namen (`view`, `edit`,
+     * `delete`, `comment`). Eine Umbenennung der Permissions wäre
+     * invasiver gewesen.
+     */
+    'register_permission_check_method' => false,
+
     'cache' => [
 
         /*

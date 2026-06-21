@@ -22,12 +22,20 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Providers;
 
+use App\Models\Audiovisual;
 use App\Models\Chapter;
 use App\Models\Entry;
+use App\Models\Gallery;
+use App\Models\Image;
 use App\Models\Project;
+use App\Models\Text;
+use App\Policies\AudiovisualPolicy;
 use App\Policies\ChapterPolicy;
 use App\Policies\EntryPolicy;
+use App\Policies\GalleryPolicy;
+use App\Policies\ImagePolicy;
 use App\Policies\ProjectPolicy;
+use App\Policies\TextPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -41,10 +49,12 @@ class AuthServiceProvider extends ServiceProvider
         Project::class => ProjectPolicy::class,
         Chapter::class => ChapterPolicy::class,
         Entry::class => EntryPolicy::class,
-        // Text, Image, Gallery, Comment-Policies stehen noch aus —
-        // gehören mit ADR-0012 zusammen (media_content vs. direct
-        // entry binding). Der CommentTrait wurde mit der
-        // CommentService-Extraktion bereits ersatzlos abgelöst.
+        // Block E.7b Sub-Welle 3 (ADR-0022): Content-Policies
+        // aufgesetzt auf OwnerScopedPolicy via Content::project().
+        Text::class => TextPolicy::class,
+        Image::class => ImagePolicy::class,
+        Gallery::class => GalleryPolicy::class,
+        Audiovisual::class => AudiovisualPolicy::class,
     ];
 
     /**

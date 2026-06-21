@@ -26,6 +26,7 @@ use App\Data\AudiovisualData;
 use App\Http\Requests\StoreAudiovisualRequest;
 use App\Http\Requests\StoreCommentRequest;
 use App\Models\Audiovisual;
+use App\Models\Entry;
 use App\Services\AudiovisualService;
 use App\Services\CommentService;
 use Illuminate\Http\RedirectResponse;
@@ -56,6 +57,10 @@ class AudiovisualController extends Controller
      */
     public function store(StoreAudiovisualRequest $request)
     {
+        // E.7b 4a-Hotfix-II.d: Auth läuft project-scoped auf
+        // Audiovisual (Update-Pfad) oder Entry (Create-Pfad) —
+        // kein translateField hier, daher keine globale Hürde nötig.
+
         // Audio-Upload oder YouTube-URL-Konversion vor dem
         // DTO-Bau — der Service normalisiert beides auf einen
         // String, der direkt in `link` gespeichert wird.
@@ -73,12 +78,18 @@ class AudiovisualController extends Controller
         // rendert. `$request->filled(...)` deckt beide Fälle ab.
         if ($request->filled('audiovisualId')) {
             $audiovisual = Audiovisual::findOrFail($request['audiovisualId']);
+            // E.7b 4a-Hotfix-II.b: project-scoped Gate.
+            $this->authorize('update', $audiovisual);
             $this->audiovisuals->update($audiovisual, $data);
 
             return redirect()->back()->with('success', __('message_update_success'));
         }
 
-        $this->audiovisuals->create($data, (int) $request['entryId']);
+        // E.7b 4a-Hotfix-II.b: Create-Pfad — Entry laden + gaten.
+        $entry = Entry::findOrFail((int) $request['entryId']);
+        $this->authorize('update', $entry);
+
+        $this->audiovisuals->create($data, $entry->id);
 
         return redirect()->back()->with('success', __('message_add_success'));
     }
@@ -89,6 +100,8 @@ class AudiovisualController extends Controller
     public function delete(Request $request, $id): RedirectResponse
     {
         $audiovisual = Audiovisual::findOrFail($id);
+        // Block E.7b Sub-Welle 3 (ADR-0022): AudiovisualPolicy::delete.
+        $this->authorize('delete', $audiovisual);
         $this->audiovisuals->destroy($audiovisual);
 
         return redirect('projects/'.$request->project.'/edit')->with('success', __('message_delete_success'));
@@ -100,6 +113,9 @@ class AudiovisualController extends Controller
      */
     public function saveCommentAudiovisual(Request $request, Audiovisual $audiovisual): RedirectResponse
     {
+        // E.7b 4a-Hotfix-II.b: project-scoped Gate via Audiovisual.
+        $this->authorize('comment', $audiovisual);
+
         $commentable = isset($request['question'])
             ? (Audiovisual::find($request['question']) ?? $audiovisual)
             : $audiovisual;
@@ -118,6 +134,9 @@ class AudiovisualController extends Controller
     public function commentAudiovisual(StoreCommentRequest $request): RedirectResponse
     {
         $audiovisual = Audiovisual::findOrFail($request->validated('id'));
+        // E.7b 4a-Hotfix-II.b: project-scoped Gate nachgereicht.
+        $this->authorize('comment', $audiovisual);
+
         $this->comments->addComment($audiovisual, $request);
 
         return redirect()->back()->with('success', 'Reply to comment added successfully');

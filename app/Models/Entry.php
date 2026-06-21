@@ -136,11 +136,16 @@ class Entry extends Model implements HasComments
     /**
      * Get media content
      *
+     * Phase 4 / Block E.7b Sub-Welle 4a (ADR-0022): Foreign-Key
+     * wechselt von der alten Tag-Spalte `media_contentable_id` auf
+     * `parent_id`. Während Doppelschreibung sind beide gleichwertig;
+     * die alte Spalte fällt in Welle 4e weg.
+     *
      * @return HasMany
      */
     public function mediaContent()
     {
-        return $this->hasMany(MediaContent::class, 'media_contentable_id')->orderBy('position', 'asc');
+        return $this->hasMany(MediaContent::class, 'parent_id')->orderBy('position', 'asc');
     }
 
     /**

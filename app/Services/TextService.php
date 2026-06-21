@@ -24,6 +24,7 @@ namespace App\Services;
 
 use App\Data\TextData;
 use App\Models\Comment;
+use App\Models\Entry;
 use App\Models\MediaContent;
 use App\Models\Text;
 
@@ -118,11 +119,26 @@ class TextService
      */
     private function attachToEntry(int $textId, int $entryId): void
     {
-        MediaContent::firstOrCreate([
-            'media_content_id' => $textId,
-            'media_contentable_id' => $entryId,
-            'media_contentable_type' => Text::class,
-        ]);
+        // Phase 4 / Block E.7b Sub-Welle 2d (ADR-0022):
+        // Doppelschreibung der alten media_contentable-Spalten
+        // und der neuen Morph-Spalten content / parent. Während
+        // der Übergangswelle lesen Konsumenten teils alt (preview-
+        // Blade, ContentController-Direktzugriffe), teils neu
+        // (Welle-3-Policies via $text->project()). Cleanup der
+        // alten Spalten in Sub-Welle 4.
+        MediaContent::firstOrCreate(
+            [
+                'media_content_id' => $textId,
+                'media_contentable_id' => $entryId,
+                'media_contentable_type' => Text::class,
+            ],
+            [
+                'content_id' => $textId,
+                'content_type' => Text::class,
+                'parent_id' => $entryId,
+                'parent_type' => Entry::class,
+            ]
+        );
     }
 
     /**

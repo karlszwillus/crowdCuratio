@@ -46,9 +46,25 @@ class MediaContent extends Model implements HasComments
     /**
      * The attributes that are mass assignable.
      *
+     * Phase 4 / Block E.7b Sub-Welle 2b (ADR-0022): die neuen
+     * Morph-Spalten content_id/content_type/parent_id/parent_type
+     * werden während der Übergangswelle doppelt mit den alten
+     * media_content_id/media_contentable_*-Spalten geführt.
+     * Services schreiben in 2d in beide; Cleanup der alten in
+     * Sub-Welle 4.
+     *
      * @var list<string>
      */
-    protected $fillable = ['media_content_id', 'media_contentable_id', 'media_contentable_type', 'position'];
+    protected $fillable = [
+        'media_content_id',
+        'media_contentable_id',
+        'media_contentable_type',
+        'content_id',
+        'content_type',
+        'parent_id',
+        'parent_type',
+        'position',
+    ];
 
     /**
      * Override parent boot and Call deleting event
@@ -87,33 +103,74 @@ class MediaContent extends Model implements HasComments
     }
 
     /**
+     * Sauberer morphTo auf das Content-Modell (Text/Image/Gallery/
+     * Audiovisual). Phase 4 / Block E.7b Sub-Welle 2b (ADR-0022).
+     *
+     * Liest aus den neuen Spalten `content_id` + `content_type` —
+     * im Gegensatz zur Tag-Spalten-Semantik der alten
+     * media_contentable_*-Spalten. Cleanup der alten in Sub-Welle 4.
+     */
+    public function content(): MorphTo
+    {
+        return $this->morphTo('content');
+    }
+
+    /**
+     * Sauberer morphTo auf den Parent (heute durchgehend Entry).
+     * Phase 4 / Block E.7b Sub-Welle 2b (ADR-0022).
+     *
+     * Liest aus den neuen Spalten `parent_id` + `parent_type`.
+     * Die alten `media_contentable_*`-Spalten haben hier zwar die
+     * Parent-ID gespeichert, aber den Type des Contents (nicht
+     * des Parents) — siehe ADR-0022 für die historische Erklärung.
+     */
+    public function parent(): MorphTo
+    {
+        return $this->morphTo('parent');
+    }
+
+    /**
      * Get image
+     *
+     * Phase 4 / Block E.7b Sub-Welle 4a (ADR-0022): Foreign-Key
+     * wechselt von `media_content_id` auf `content_id`. Während der
+     * Doppelschreibungs-Welle 2d sind beide Spalten gleichwertig
+     * befüllt; in Welle 4e wird die alte Spalte gedroppt. Der
+     * Diskriminator-Check (Gallery vs. Image vs. Text) bleibt in
+     * den Aufrufern (Views, Controllers).
      *
      * @return BelongsTo
      */
     public function image()
     {
-        return $this->belongsTo(Image::class, 'media_content_id', 'id');
+        return $this->belongsTo(Image::class, 'content_id', 'id');
     }
 
     /**
      * Get text
      *
+     * Phase 4 / Block E.7b Sub-Welle 4a (ADR-0022): siehe image().
+     *
      * @return BelongsTo
      */
     public function text()
     {
-        return $this->belongsTo(Text::class, 'media_content_id', 'id');
+        return $this->belongsTo(Text::class, 'content_id', 'id');
     }
 
     /**
      * Get entry
      *
+     * Phase 4 / Block E.7b Sub-Welle 4a (ADR-0022): Foreign-Key
+     * wechselt von `media_contentable_id` auf `parent_id`. Inhalt
+     * bleibt identisch — die Beziehung zeigt auf den Entry-Parent
+     * des Pivot.
+     *
      * @return BelongsToMany
      */
     public function entry()
     {
-        return $this->belongsToMany(Entry::class, 'media_content', 'id', 'media_contentable_id');
+        return $this->belongsToMany(Entry::class, 'media_content', 'id', 'parent_id');
     }
 
     /**
@@ -127,21 +184,27 @@ class MediaContent extends Model implements HasComments
     /**
      * Get gallery
      *
+     * Phase 4 / Block E.7b Sub-Welle 4a (ADR-0022): Foreign-Key
+     * wechselt von `media_content_id` auf `content_id`. Siehe image().
+     *
      * @return BelongsTo
      */
     public function gallery()
     {
-        return $this->belongsTo(Gallery::class, 'media_content_id', 'id');
+        return $this->belongsTo(Gallery::class, 'content_id', 'id');
     }
 
     /**
      * Get Audiovisual
      *
+     * Phase 4 / Block E.7b Sub-Welle 4a (ADR-0022): Foreign-Key
+     * wechselt von `media_content_id` auf `content_id`. Siehe image().
+     *
      * @return BelongsTo
      */
     public function audiovisual()
     {
-        return $this->belongsTo(Audiovisual::class, 'media_content_id', 'id');
+        return $this->belongsTo(Audiovisual::class, 'content_id', 'id');
     }
 
     /**
