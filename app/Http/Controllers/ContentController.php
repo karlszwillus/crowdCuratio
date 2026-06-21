@@ -414,7 +414,7 @@ class ContentController extends Controller
             // Strict-Mode: project, user und content müssen eager
             // geladen sein, weil contents.comment.blade.php auf
             // $comment->project->name, $comment->user->name und
-            // $comment->content->media_contentable_type zugreift.
+            // $comment->content->content_type zugreift (E.7b 4a, ADR-0022).
             $comments = Comment::with(['user', 'project', 'content'])
                 ->whereNotNull('project_id')
                 ->get();

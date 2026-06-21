@@ -10,6 +10,32 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Geändert (Block E.7b Sub-Welle 4a — Views minimal-invasiv auf neue Spalten)
+
+- **`MediaContent::text()/image()/gallery()/audiovisual()` belongsTo
+  liest jetzt aus `content_id` statt aus `media_content_id`.** Während
+  der Doppelschreibungs-Welle 2d sind beide gleichwertig befüllt, in
+  Welle 4e fällt die alte Spalte weg. Die alten Accessor-Namen (z.B.
+  `$item->text`, `$item->gallery`) bleiben in den Blades nutzbar; nur
+  der Foreign-Key wechselt darunter. Der Diskriminator-Check
+  (Gallery vs. Image vs. Text) bleibt Sache der Aufrufer.
+- **`MediaContent::entry()` belongsToMany auf `parent_id`** statt
+  `media_contentable_id`.
+- **`Entry::mediaContent()` hasMany auf `parent_id`** statt
+  `media_contentable_id`. Eager-Loads in Project-Scopes
+  (`chapters.entries.mediaContent.*`) bleiben unverändert nutzbar.
+- **`chapters/index.blade.php`, `preview/index.blade.php`,
+  `preview/pdf.blade.php`: Diskriminator-Check auf `content_type`**
+  statt `media_contentable_type`. Markup unverändert.
+  Beifang: Gallery-Pfad triggerte historisch auf
+  `'App\Models\Image'` (alte Tag-Spalte hatte den Schiefstand);
+  jetzt korrekt auf `'App\Models\Gallery'`.
+- **`contents/comment.blade.php`: Type-Label und URL-Param `?type=`
+  auf `content_type`.** Beifang: Gallery-Kommentare zeigten in der
+  Comment-Übersicht historisch "Image" als Type-Label — jetzt
+  steht korrekt "Gallery". URL-Param `?type=Gallery` wird vom
+  Edit-Pfad gleichwertig akzeptiert wie der alte `?type=Image`.
+
 ### Sicherheit (Block E.7b Sub-Welle 3-Hotfix — ProjectController Authorize-Sweep)
 
 - **KRITISCH: `ProjectController::setPermissionForUserOnProject`

@@ -132,31 +132,45 @@ class MediaContent extends Model implements HasComments
     /**
      * Get image
      *
+     * Phase 4 / Block E.7b Sub-Welle 4a (ADR-0022): Foreign-Key
+     * wechselt von `media_content_id` auf `content_id`. Während der
+     * Doppelschreibungs-Welle 2d sind beide Spalten gleichwertig
+     * befüllt; in Welle 4e wird die alte Spalte gedroppt. Der
+     * Diskriminator-Check (Gallery vs. Image vs. Text) bleibt in
+     * den Aufrufern (Views, Controllers).
+     *
      * @return BelongsTo
      */
     public function image()
     {
-        return $this->belongsTo(Image::class, 'media_content_id', 'id');
+        return $this->belongsTo(Image::class, 'content_id', 'id');
     }
 
     /**
      * Get text
      *
+     * Phase 4 / Block E.7b Sub-Welle 4a (ADR-0022): siehe image().
+     *
      * @return BelongsTo
      */
     public function text()
     {
-        return $this->belongsTo(Text::class, 'media_content_id', 'id');
+        return $this->belongsTo(Text::class, 'content_id', 'id');
     }
 
     /**
      * Get entry
      *
+     * Phase 4 / Block E.7b Sub-Welle 4a (ADR-0022): Foreign-Key
+     * wechselt von `media_contentable_id` auf `parent_id`. Inhalt
+     * bleibt identisch — die Beziehung zeigt auf den Entry-Parent
+     * des Pivot.
+     *
      * @return BelongsToMany
      */
     public function entry()
     {
-        return $this->belongsToMany(Entry::class, 'media_content', 'id', 'media_contentable_id');
+        return $this->belongsToMany(Entry::class, 'media_content', 'id', 'parent_id');
     }
 
     /**
@@ -170,21 +184,27 @@ class MediaContent extends Model implements HasComments
     /**
      * Get gallery
      *
+     * Phase 4 / Block E.7b Sub-Welle 4a (ADR-0022): Foreign-Key
+     * wechselt von `media_content_id` auf `content_id`. Siehe image().
+     *
      * @return BelongsTo
      */
     public function gallery()
     {
-        return $this->belongsTo(Gallery::class, 'media_content_id', 'id');
+        return $this->belongsTo(Gallery::class, 'content_id', 'id');
     }
 
     /**
      * Get Audiovisual
      *
+     * Phase 4 / Block E.7b Sub-Welle 4a (ADR-0022): Foreign-Key
+     * wechselt von `media_content_id` auf `content_id`. Siehe image().
+     *
      * @return BelongsTo
      */
     public function audiovisual()
     {
-        return $this->belongsTo(Audiovisual::class, 'media_content_id', 'id');
+        return $this->belongsTo(Audiovisual::class, 'content_id', 'id');
     }
 
     /**

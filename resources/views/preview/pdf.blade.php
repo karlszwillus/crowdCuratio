@@ -744,15 +744,18 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                     @isset($entry->description)<p>{!! $entry->description !!}</p>@endisset
                                 </div>
 
+                                {{-- Phase 4 / E.7b 4a (ADR-0022): media_contentable_type → content_type.
+                                     Gallery wurde historisch als 'App\Models\Image' getaggt; neue
+                                     Spalte führt sauber 'App\Models\Gallery'. --}}
                                 @if(isset($entry->mediaContent))
                                     @foreach($entry->mediaContent as $media)
-                                        @if(isset($media->media_contentable_type))
-                                            @if($media->media_contentable_type == 'App\Models\Text' && isset($media->text->text))
+                                        @if(isset($media->content_type))
+                                            @if($media->content_type == 'App\Models\Text' && isset($media->text->text))
                                                 <div class="einspaltig">
                                                     <p>{!! $media->text->text !!}</p>
                                                 </div>
                                             @endif
-                                            @if($media->media_contentable_type == 'App\Models\Image')
+                                            @if($media->content_type == 'App\Models\Gallery')
                                 <div class="einspaltig">
                                     @isset($media->gallery->title)<h2>{!! $media->gallery->title !!}</h2>@endisset
                                     @isset($media->gallery->subtitle)<p class="subtitle">{!! $media->gallery->subtitle !!}</p>@endisset
@@ -771,7 +774,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
 												@endif
                                                  </div>
                                             @endif
-                                            @if($media->media_contentable_type == 'App\Models\Audiovisual')
+                                            @if($media->content_type == 'App\Models\Audiovisual')
                                                 @if($media->audiovisual->type == 'audio')
                                                     <audio controls class="embed-responsive-item" id="audio" src="{{route('audio',$media->audiovisual->link)}}"  ></audio>
                                                 @endif
