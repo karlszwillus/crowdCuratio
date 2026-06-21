@@ -10,6 +10,19 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Behoben (Block E.7b Sub-Welle 4d-Followup — alte Spalten nullable)
+
+Nach 4d-Commit brachen HappyPath-Tests mit
+`Integrity constraint violation: NOT NULL constraint failed:
+media_content.media_content_id`. Ursache: Services schreiben nur
+noch in `content_*`/`parent_*`-Spalten, die alten Spalten haben
+aber noch `NOT NULL`-Constraints — Insert fehlt der Wert.
+
+Migration `2026_06_22_120000_make_old_media_content_columns_nullable.php`
+nimmt die NOT-NULL-Constraints von `media_content_id`,
+`media_contentable_id`, `media_contentable_type`. Vollständiger
+Drop folgt in Welle 4e nach Backfill-Verifikation.
+
 ### Geändert (Block E.7b Sub-Welle 4d — Service-Doppelschreibung entfernt)
 
 Sechs Services schreiben/lesen jetzt ausschließlich aus den neuen
