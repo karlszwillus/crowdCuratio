@@ -25,6 +25,7 @@ use App\Models\User;
 use App\Support\PermissionName;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 /*
@@ -407,7 +408,7 @@ it('Spatie-Bypass: Reader mit globaler view-Permission darf NICHT auf fremdes Pr
 
     // Spatie's Cache primen, damit checkPermissionTo nicht throw't
     // sondern den realen Live-Pfad nimmt.
-    app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+    app(PermissionRegistrar::class)->forgetCachedPermissions();
 
     /** @var User $owner */
     $owner = User::factory()->create();
@@ -431,7 +432,7 @@ it('Spatie-Bypass: Reader mit globaler view-Permission darf NICHT auf fremdes Pr
 
 it('Spatie-Bypass: hasPermissionTo VIEW true, aber Gate::view auf fremdem Project false', function () {
     /** @var TestCase $this */
-    app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
+    app(PermissionRegistrar::class)->forgetCachedPermissions();
 
     /** @var User $owner */
     $owner = User::factory()->create();

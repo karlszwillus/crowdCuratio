@@ -32,6 +32,7 @@ use App\Models\Image;
 use App\Models\MediaContent;
 use App\Models\Project;
 use App\Models\Text;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 
 /**
@@ -176,7 +177,7 @@ class CommentService
         if ($mc === null) {
             return null;
         }
-        /** @var \Illuminate\Database\Eloquent\Model|null $content */
+        /** @var Model|null $content */
         $content = $mc->content;
         if ($content === null) {
             return null;
