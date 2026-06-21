@@ -149,22 +149,18 @@ class CommentService
             return null;
         }
 
-        $type = $comment->commentable_type;
-        $id = $comment->commentable_id;
-
-        if ($type === null || $id === null) {
-            return null;
-        }
-
-        return match ($type) {
-            Project::class => Project::find($id),
-            Chapter::class => Chapter::find($id)?->project,
-            Entry::class => Entry::find($id)?->chapter?->project,
-            Text::class => Text::find($id)?->project(),
-            Audiovisual::class => Audiovisual::find($id)?->project(),
-            Gallery::class => Gallery::find($id)?->project(),
-            Image::class => Image::find($id)?->project(),
-            MediaContent::class => $this->resolveProjectViaMediaContent($id),
+        // commentable_type/_id sind als non-nullable im Comment-PHPDoc
+        // typisiert — Larastan würde explizite null-Checks als always-
+        // false-Smells melden. Pragmatisch: direkt im match() arbeiten.
+        return match ($comment->commentable_type) {
+            Project::class => Project::find($comment->commentable_id),
+            Chapter::class => Chapter::find($comment->commentable_id)?->project,
+            Entry::class => Entry::find($comment->commentable_id)?->chapter?->project,
+            Text::class => Text::find($comment->commentable_id)?->project(),
+            Audiovisual::class => Audiovisual::find($comment->commentable_id)?->project(),
+            Gallery::class => Gallery::find($comment->commentable_id)?->project(),
+            Image::class => Image::find($comment->commentable_id)?->project(),
+            MediaContent::class => $this->resolveProjectViaMediaContent($comment->commentable_id),
             default => null,
         };
     }
