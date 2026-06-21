@@ -10,6 +10,35 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Behoben (Block E.7b Sub-Welle 4a-Hotfix-II.d — Owner-Bypass-Bug + Translation-Test-Reflection)
+
+Nach II.c-Verifikation gefunden:
+
+- **`saveText` / `saveImage` / `saveGallery` / Audiovisual `store`
+  schlossen Project-Owner aus**, weil die Defense-in-Depth-Hürde
+  `hasPermissionTo('edit')` als ersten Schritt auch dann blockierte,
+  wenn der nachgelagerte `authorize('update', $model)`-Gate über
+  den Owner-Shortcut der OwnerScopedPolicy durchgegangen wäre.
+  Drei HappyPath-Tests brachen: Owner kann kein Audio hochladen,
+  keinen Text-Block anlegen, kein Bild in Gallery hochladen.
+- Fix: Top-Level-Defense-in-Depth in den vier Methoden entfernt.
+  Nur dort, wo kein Modell-Argument für ein project-scoped
+  authorize() vorhanden ist — `translationMode + originId/copyrightId`
+  in `saveText` und `saveImage` (Source-Translation auf global
+  geteilten Sources) — bleibt `hasPermissionTo('edit')` als Reader-
+  Schutz.
+- **Image-Create-Pfad** in `saveImage` gate'd jetzt über `Entry`
+  statt `Gallery`, weil frisch angelegte Galleries oft noch keine
+  Pivot-Verbindung haben und `Gallery::project()` null gibt.
+
+- **`ContentControllerTranslationTest`** rief `translateField` und
+  `saveTranslatedText` direkt auf — die sind in II.b auf `private`
+  reduziert. Reflection-Helper `invokeTranslateField` /
+  `invokeSaveTranslatedText` analog `invokeHistory` in
+  `ProjectControllerLogTest`. Tests testen weiterhin direkt die
+  privaten Helper, bis ein TranslationService in einer späteren
+  Welle extrahiert wird.
+
 ### Tests (Block E.7b Sub-Welle 4a-Hotfix-II.c — Pinning-Tests für vier-Controller-Sweep)
 
 Charakterisierungs-Tests für die in II.a + II.b gegateten Methoden.

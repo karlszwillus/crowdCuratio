@@ -52,6 +52,29 @@ beforeEach(function () {
         ->syncPermissions(Permission::all());
 });
 
+/**
+ * E.7b 4a-Hotfix-II.b (ADR-0023): translateField + saveTranslatedText
+ * sind auf `private` reduziert, weil sie nur intern aus saveText/
+ * saveImage aufgerufen werden (keine eigene Route). Diese Charakter-
+ * isierungs-Tests sollen das Verhalten dennoch direkt pinnen,
+ * ohne den gesamten saveText()-Pfad aufzubauen. Reflection-Trick,
+ * analog ProjectControllerLogTest::invokeHistory.
+ *
+ * Spätere Welle dürfte beide in einen TranslationService extrahieren,
+ * dann werden diese Tests umgezogen und der Reflection-Trick fällt.
+ */
+function invokeTranslateField(ContentController $controller, int $id, string $field, mixed $translated): void
+{
+    $method = new ReflectionMethod($controller, 'translateField');
+    $method->invoke($controller, $id, $field, $translated);
+}
+
+function invokeSaveTranslatedText(ContentController $controller, Request $request): void
+{
+    $method = new ReflectionMethod($controller, 'saveTranslatedText');
+    $method->invoke($controller, $request);
+}
+
 it('translateField schreibt en-Übersetzung auf das Source-name-Feld', function () {
     /** @var TestCase $this */
     /** @var User $owner */
@@ -71,7 +94,7 @@ it('translateField schreibt en-Übersetzung auf das Source-name-Feld', function 
     // der EN-Value, das Ziel-Modell-Feld ist hartkodiert auf
     // `name`. `$translated` ist das is_translated-Flag (truthy/
     // falsy). Wird im Service-Refactor späterer Block geradezogen.
-    $controller->translateField($sourceId, 'EN-Quelle', true);
+    invokeTranslateField($controller, $sourceId, 'EN-Quelle', true);
 
     $source = Source::findOrFail($sourceId);
 
@@ -102,7 +125,7 @@ it('saveTranslatedText schreibt en-Übersetzung auf den Text-Body', function () 
     /** @var ContentController $controller */
     $controller = app(ContentController::class);
 
-    $controller->saveTranslatedText($request);
+    invokeSaveTranslatedText($controller, $request);
 
     $text->refresh();
 
@@ -132,7 +155,7 @@ it('saveTranslatedText überspringt en-Update beim "undefined"-Sentinel', functi
     /** @var ContentController $controller */
     $controller = app(ContentController::class);
 
-    $controller->saveTranslatedText($request);
+    invokeSaveTranslatedText($controller, $request);
 
     $text->refresh();
 
@@ -159,7 +182,7 @@ it('saveTranslatedText filtert script-Tags aus dem EN-Body', function () {
     /** @var ContentController $controller */
     $controller = app(ContentController::class);
 
-    $controller->saveTranslatedText($request);
+    invokeSaveTranslatedText($controller, $request);
 
     $text->refresh();
 

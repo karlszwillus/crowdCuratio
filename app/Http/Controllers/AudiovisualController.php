@@ -58,12 +58,9 @@ class AudiovisualController extends Controller
      */
     public function store(StoreAudiovisualRequest $request)
     {
-        // E.7b 4a-Hotfix-II.b: Defense-in-Depth — Reader (ohne
-        // globale 'edit'-Permission) kommen hier nicht durch.
-        // Modell-spezifisches authorize() folgt weiter unten.
-        if (! $request->user()->hasPermissionTo(PermissionName::EDIT->value)) {
-            abort(403);
-        }
+        // E.7b 4a-Hotfix-II.d: Auth läuft project-scoped auf
+        // Audiovisual (Update-Pfad) oder Entry (Create-Pfad) —
+        // kein translateField hier, daher keine globale Hürde nötig.
 
         // Audio-Upload oder YouTube-URL-Konversion vor dem
         // DTO-Bau — der Service normalisiert beides auf einen

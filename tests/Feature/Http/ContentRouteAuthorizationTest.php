@@ -210,16 +210,21 @@ it('EntryController::setCommentStatusEntry — Fremder darf fremden Comment-Stat
 
 /*
 |--------------------------------------------------------------------------
-| ContentController::saveText — Defense-in-Depth + project-scoped Gate
+| ContentController::saveText — project-scoped Gate
 |--------------------------------------------------------------------------
 |
-| saveText hat zwei Hürden:
-|   1. globale 'edit'-Permission (Reader hat die nicht → 403)
-|   2. project-scoped authorize('update', $text) bei textId-Pfad
-|      bzw. authorize('update', $entry) bei Create-Pfad
+| saveText gate'd project-scoped:
+|   - textId-Pfad: authorize('update', $text)
+|   - Create-Pfad (entryId): authorize('update', $entry)
+|   - translationMode mit nur originId/copyrightId: hasPermissionTo('edit')
+|     als Defense-in-Depth (Sources sind global geteilt, kein
+|     project-Bezug).
+|
+| Owner-Shortcut in OwnerScopedPolicy lässt Project-Owner ohne
+| globale 'edit'-Permission durch.
 */
 
-it('ContentController::saveText — Reader (ohne globale edit-Permission) kommt nicht durch', function () {
+it('ContentController::saveText — Reader auf fremdem Entry kommt nicht durch (project-scoped Gate)', function () {
     /** @var TestCase $this */
     ['stranger' => $stranger, 'entry' => $entry] = readerVsStrangerSetup();
 

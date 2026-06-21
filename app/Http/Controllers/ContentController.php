@@ -124,13 +124,14 @@ class ContentController extends Controller
      */
     public function saveImage(StoreImageBlockRequest $request)
     {
-        // E.7b 4a-Hotfix-II.b: Defense-in-Depth — Reader (ohne
-        // globale 'edit'-Permission) kommen hier nicht durch.
-        // Modell-spezifisches authorize() folgt weiter unten, wenn
-        // imageId/galleryId aufgelöst sind.
-        if (! $request->user()->hasPermissionTo(PermissionName::EDIT->value)) {
-            abort(403);
-        }
+        // E.7b 4a-Hotfix-II.b (revidiert nach HappyPath-Befund):
+        // Defense-in-Depth nur dort, wo kein Modell-Argument für
+        // ein project-scoped authorize() vorhanden ist (Source-
+        // Translation via translateField). Sonst entscheidet das
+        // nachgelagerte authorize('update', $image|$gallery|$entry)
+        // — das schließt Reader korrekt aus und lässt Project-Owner
+        // auch ohne globale 'edit'-Permission durch (Owner-Shortcut
+        // in OwnerScopedPolicy).
 
         // Translation-Pfad: setzt alt-Übersetzung + delegiert
         // Source-Übersetzungen via translateField. Bleibt vorerst
@@ -142,6 +143,14 @@ class ContentController extends Controller
         // — Keys können present sein mit Wert `null`. `filled()`
         // testet idiomatisch "vorhanden und nicht leer/null".
         if ($request->filled('translationMode')) {
+            // E.7b 4a-Hotfix-II.d: Source-Translation hat keinen
+            // Project-Bezug (Sources sind global geteilt). Reader-
+            // Schutz via globale 'edit'-Permission als Defense-in-Depth.
+            if ($request->filled('originId') || $request->filled('copyrightId')) {
+                if (! $request->user()->hasPermissionTo(PermissionName::EDIT->value)) {
+                    abort(403);
+                }
+            }
             if ($request->filled('originId')) {
                 $this->translateField($request['originId'], $request['originField'], $request['isTranslated']);
             }
@@ -182,12 +191,14 @@ class ContentController extends Controller
 
         $request->validate(['image' => 'required']);
 
-        // E.7b 4a-Hotfix-II.b: Create-Pfad — Gallery laden + gaten,
-        // weil Image dort hineingehängt wird.
-        $gallery = Gallery::findOrFail((int) $request['galleryId']);
-        $this->authorize('update', $gallery);
+        // E.7b 4a-Hotfix-II.d: Create-Pfad gated über Entry statt
+        // Gallery — eine frisch angelegte Gallery hat ggf. noch keine
+        // Pivot-Verbindung und `Gallery::project()` würde null geben.
+        // Entry hat klare Project-Verbindung via Chapter.
+        $entry = Entry::findOrFail((int) $request['entryId']);
+        $this->authorize('update', $entry);
 
-        $this->images->create($data, $request->file('image'), $gallery->id);
+        $this->images->create($data, $request->file('image'), (int) $request['galleryId']);
 
         return redirect()->back()->with('success', __('message_add_image_success'));
     }
@@ -243,13 +254,13 @@ class ContentController extends Controller
      */
     public function saveText(Request $request)
     {
-        // E.7b 4a-Hotfix-II.b: Defense-in-Depth — Reader (ohne
-        // globale 'edit'-Permission) kommen hier nicht durch.
-        // Modell-spezifisches authorize() folgt weiter unten, wenn
-        // textId/entryId aufgelöst sind.
-        if (! $request->user()->hasPermissionTo(PermissionName::EDIT->value)) {
-            abort(403);
-        }
+        // E.7b 4a-Hotfix-II.d: Auth liegt jetzt project-scoped
+        // direkt am jeweiligen Pfad — Source-Translation (originId/
+        // copyrightId) bekommt die globale 'edit'-Permission als
+        // Hürde (Sources sind global geteilt), Text-Update und
+        // Create gehen über authorize('update', $text|$entry).
+        // Owner-Shortcut in OwnerScopedPolicy fängt Project-Owner
+        // auch ohne globale 'edit'-Permission ab.
 
         // Translation-Pfad: schreibt Übersetzungen in den Body und
         // die Source-Namen, kein Body-Update via TextService. Bleibt
@@ -266,6 +277,13 @@ class ContentController extends Controller
                 $text = Text::findOrFail($request['textId']);
                 $this->authorize('update', $text);
                 $this->saveTranslatedText($request);
+            }
+            // E.7b 4a-Hotfix-II.d: Source-Translation ist global —
+            // Defense-in-Depth über globale 'edit'-Permission.
+            if ($request->filled('originId') || $request->filled('copyrightId')) {
+                if (! $request->user()->hasPermissionTo(PermissionName::EDIT->value)) {
+                    abort(403);
+                }
             }
             if ($request->filled('originId')) {
                 $this->translateField($request['originId'], $request['originField'], $request['isTranslated']);
@@ -590,10 +608,10 @@ class ContentController extends Controller
 
     public function saveGallery(Request $request)
     {
-        // E.7b 4a-Hotfix-II.b: Defense-in-Depth — Reader-Gate.
-        if (! $request->user()->hasPermissionTo(PermissionName::EDIT->value)) {
-            abort(403);
-        }
+        // E.7b 4a-Hotfix-II.d: Auth läuft project-scoped auf
+        // Gallery (Update-Pfad) oder Entry (Create-Pfad) — kein
+        // translateField in dieser Methode, daher keine globale
+        // Hürde nötig.
 
         $data = GalleryData::fromRequest($request);
 
