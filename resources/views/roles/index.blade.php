@@ -52,16 +52,19 @@ If not, see <https://www.gnu.org/licenses/>. -->
                         <a title="view role" href="{{ route('roles.show',$role->id) }}" data-toggle="tooltip"
                            data-placement="top" title="See role"> <i class="bi bi-eye m-2"></i></a>
                         @if($role->name != 'Admin')
-                        @can('edit')
+                        {{-- E.7b 4a-Hotfix: @can('edit') → @hasPermissionTo, weil Spatie's
+                             Gate::before in config/permission.php abgeschaltet wurde.
+                             Globale Spatie-Permissions checken jetzt direkt via Trait. --}}
+                        @hasPermissionTo('edit')
                             <a title="{{__('edit_role')}}" href="{{ route('roles.edit',$role->id) }}"
                                data-toggle="tooltip"
                                data-placement="top" title="{{__('edit_role')}}"><i
                                         class="bi bi-pencil-fill m-2"></i></a>
-                        @endcan
+                        @endhasPermissionTo
                         @csrf
                         @method('DELETE')
                         @if(auth()->user()->id != $role->id)
-                            @can('delete')
+                            @hasPermissionTo('delete')
                                 @if($role->cnt > 0)
                                     <a id="" href="" class="roleDelete" data-id="{{$role->id}}" data-toggle="tooltip"
                                        data-placement="top" title="Delete role"><i class="bi bi-trash"></i></a>
@@ -72,7 +75,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 @endif
-                            @endcan
+                            @endhasPermissionTo
                         @endif
                         @endif
                     </form>
@@ -85,10 +88,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
 @endsection
 @section('sidebar')
     <div class="pull-right">
-        @can('add')
+        {{-- E.7b 4a-Hotfix: @can → @hasPermissionTo (Spatie Gate::before
+             abgeschaltet, siehe config/permission.php). --}}
+        @hasPermissionTo('add')
             <a class="btn btn-secondary btn-lg btn-block text-left"
                href="{{ route('roles.create') }}"> {{__('create_new_role')}}</a>
-        @endcan
+        @endhasPermissionTo
     </div>
 
     <!-- Modal window-->

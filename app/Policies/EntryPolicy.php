@@ -44,11 +44,14 @@ class EntryPolicy extends OwnerScopedPolicy
     }
 
     /**
-     * Globale Permission, kein Project-Kontext — bleibt wie vorher.
+     * Globale Permission, kein Project-Kontext.
+     *
+     * E.7b 4a-Hotfix (2026-06-21): hasPermissionTo() statt can(),
+     * weil Spatie's Gate::before abgeschaltet ist (config/permission.php).
      */
     public function create(User $user): bool
     {
-        return $user->can(PermissionName::ADD);
+        return $user->hasPermissionTo(PermissionName::ADD->value);
     }
 
     /**

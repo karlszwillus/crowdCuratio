@@ -10,6 +10,45 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Sicherheit (Block E.7b Sub-Welle 4a-Hotfix — Spatie Gate::before Reader-Bypass)
+
+- **KRITISCH: Globale `view`-Permission von Spatie umging alle
+  project-scoped Policies.** Karl-Befund vom 2026-06-21: Reader
+  Rolf (Zugriff nur Projekt 18/19) konnte `/projects/20/edit`
+  öffnen, obwohl `ProjectController::edit` seit Welle-3-Hotfix
+  `$this->authorize('view', $project)` ruft. Tinker-Diagnose:
+  `$policy->view($rolf, $project) = 0` korrekt nein, aber
+  `$rolf->can('view', $project) = 1` falsch ja. Dazwischen
+  Spatie's `Gate::before`-Hook, den Spatie's
+  `PermissionRegistrar::registerPermissions()` per Default
+  registriert. Der Hook ruft `checkPermissionTo('view')`
+  ohne Modell-Argument — Reader hat die globale Permission
+  `view`, gibt true zurück, Policy wird übersprungen.
+
+  Effekt: alle in Block D PR 2 / E.7a / E.7b aufgebauten
+  project-scoped Policies waren in der Live-App effektiv tot.
+  Die Tests waren grün, weil im Test-Setup der Permission-Cache
+  vermutlich nicht initialisiert ist und `checkPermissionTo`
+  intern eine Exception wirft, die Laravel als false interpretiert.
+
+  Fix:
+  - `config/permission.php`: `'register_permission_check_method' => false`
+    — Spatie registriert das `Gate::before` nicht mehr, Policies
+    entscheiden allein.
+  - 4 Policy-Methoden umgestellt: `ProjectPolicy::viewAny`,
+    `ProjectPolicy::create`, `ChapterPolicy::create`,
+    `EntryPolicy::create` von `$user->can(PermissionName::*)` auf
+    `$user->hasPermissionTo(PermissionName::*->value)` — geht
+    direkt über Spatie's Trait an die DB, ohne Gate-Roundtrip.
+  - 3 Blade-Stellen in `roles/index.blade.php`: `@can('edit')`,
+    `@can('delete')`, `@can('add')` auf
+    `@hasPermissionTo(...)` umgestellt (Spatie-Blade-Directive).
+  - Zwei neue Pinning-Tests in `ProjectControllerAuthorizationTest`:
+    expliziter Reader-Bypass-Test mit primärem Permission-Cache
+    und `givePermissionTo(VIEW)` (simuliert volle Live-Bedingungen).
+  - ADR-0023 dokumentiert den Trade-off (Spatie Gate::before vs.
+    project-scoped Policies).
+
 ### Geändert (Block E.7b Sub-Welle 4a — Views minimal-invasiv auf neue Spalten)
 
 - **`MediaContent::text()/image()/gallery()/audiovisual()` belongsTo
