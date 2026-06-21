@@ -45,11 +45,14 @@ return new class extends Migration
     {
         // SQLite schmeißt 'no such column in index'-Fehler, wenn der
         // dropColumn die Spalte unter einem bestehenden Index wegzieht.
-        // Indizes laut create-Migration (2021_07_28_162259):
+        // Aus der create-Migration (2021_07_28_162259) drei Single-
+        // Spalten-Indizes plus ein zusammengesetzter Unique-Constraint:
         //   media_content_media_content_id_index
         //   media_content_media_contentable_id_index
         //   media_content_media_contentable_type_index
+        //   media_contentable_unique (über alle drei Spalten)
         Schema::table('media_content', function (Blueprint $table) {
+            $table->dropUnique('media_contentable_unique');
             $table->dropIndex('media_content_media_content_id_index');
             $table->dropIndex('media_content_media_contentable_id_index');
             $table->dropIndex('media_content_media_contentable_type_index');
@@ -80,6 +83,10 @@ return new class extends Migration
             $table->index('media_content_id');
             $table->index('media_contentable_id');
             $table->index('media_contentable_type');
+            $table->unique(
+                ['media_content_id', 'media_contentable_id', 'media_contentable_type'],
+                'media_contentable_unique',
+            );
         });
     }
 };
