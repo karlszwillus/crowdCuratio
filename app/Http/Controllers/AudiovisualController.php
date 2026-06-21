@@ -26,8 +26,10 @@ use App\Data\AudiovisualData;
 use App\Http\Requests\StoreAudiovisualRequest;
 use App\Http\Requests\StoreCommentRequest;
 use App\Models\Audiovisual;
+use App\Models\Entry;
 use App\Services\AudiovisualService;
 use App\Services\CommentService;
+use App\Support\PermissionName;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -56,6 +58,13 @@ class AudiovisualController extends Controller
      */
     public function store(StoreAudiovisualRequest $request)
     {
+        // E.7b 4a-Hotfix-II.b: Defense-in-Depth — Reader (ohne
+        // globale 'edit'-Permission) kommen hier nicht durch.
+        // Modell-spezifisches authorize() folgt weiter unten.
+        if (! $request->user()->hasPermissionTo(PermissionName::EDIT->value)) {
+            abort(403);
+        }
+
         // Audio-Upload oder YouTube-URL-Konversion vor dem
         // DTO-Bau — der Service normalisiert beides auf einen
         // String, der direkt in `link` gespeichert wird.
@@ -73,12 +82,18 @@ class AudiovisualController extends Controller
         // rendert. `$request->filled(...)` deckt beide Fälle ab.
         if ($request->filled('audiovisualId')) {
             $audiovisual = Audiovisual::findOrFail($request['audiovisualId']);
+            // E.7b 4a-Hotfix-II.b: project-scoped Gate.
+            $this->authorize('update', $audiovisual);
             $this->audiovisuals->update($audiovisual, $data);
 
             return redirect()->back()->with('success', __('message_update_success'));
         }
 
-        $this->audiovisuals->create($data, (int) $request['entryId']);
+        // E.7b 4a-Hotfix-II.b: Create-Pfad — Entry laden + gaten.
+        $entry = Entry::findOrFail((int) $request['entryId']);
+        $this->authorize('update', $entry);
+
+        $this->audiovisuals->create($data, $entry->id);
 
         return redirect()->back()->with('success', __('message_add_success'));
     }
@@ -102,6 +117,9 @@ class AudiovisualController extends Controller
      */
     public function saveCommentAudiovisual(Request $request, Audiovisual $audiovisual): RedirectResponse
     {
+        // E.7b 4a-Hotfix-II.b: project-scoped Gate via Audiovisual.
+        $this->authorize('comment', $audiovisual);
+
         $commentable = isset($request['question'])
             ? (Audiovisual::find($request['question']) ?? $audiovisual)
             : $audiovisual;
@@ -120,6 +138,9 @@ class AudiovisualController extends Controller
     public function commentAudiovisual(StoreCommentRequest $request): RedirectResponse
     {
         $audiovisual = Audiovisual::findOrFail($request->validated('id'));
+        // E.7b 4a-Hotfix-II.b: project-scoped Gate nachgereicht.
+        $this->authorize('comment', $audiovisual);
+
         $this->comments->addComment($audiovisual, $request);
 
         return redirect()->back()->with('success', 'Reply to comment added successfully');

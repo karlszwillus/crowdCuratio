@@ -28,6 +28,7 @@ use App\Data\TextData;
 use App\Http\Requests\StoreCommentRequest;
 use App\Http\Requests\StoreImageBlockRequest;
 use App\Models\Comment;
+use App\Models\Entry;
 use App\Models\Gallery;
 use App\Models\Image;
 use App\Models\Project;
@@ -38,6 +39,7 @@ use App\Services\CommentService;
 use App\Services\GalleryService;
 use App\Services\ImageService;
 use App\Services\TextService;
+use App\Support\PermissionName;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
@@ -122,6 +124,14 @@ class ContentController extends Controller
      */
     public function saveImage(StoreImageBlockRequest $request)
     {
+        // E.7b 4a-Hotfix-II.b: Defense-in-Depth — Reader (ohne
+        // globale 'edit'-Permission) kommen hier nicht durch.
+        // Modell-spezifisches authorize() folgt weiter unten, wenn
+        // imageId/galleryId aufgelöst sind.
+        if (! $request->user()->hasPermissionTo(PermissionName::EDIT->value)) {
+            abort(403);
+        }
+
         // Translation-Pfad: setzt alt-Übersetzung + delegiert
         // Source-Übersetzungen via translateField. Bleibt vorerst
         // inline (Translation-Refactor späterer Block).
@@ -140,6 +150,8 @@ class ContentController extends Controller
             }
             if ($request->filled('altField')) {
                 $image = Image::findOrFail($request['imageId']);
+                // E.7b 4a-Hotfix-II.b: project-scoped Gate für Image.
+                $this->authorize('update', $image);
                 $image->setTranslation('alt', 'en', $request['altField']);
                 $image->save();
             }
@@ -160,6 +172,8 @@ class ContentController extends Controller
         // Bedingung in `Image::findOrFail(null)` → 404.
         if ($request->filled('imageId')) {
             $image = Image::findOrFail($request['imageId']);
+            // E.7b 4a-Hotfix-II.b: project-scoped Gate.
+            $this->authorize('update', $image);
             $newFile = $request->hasFile('newImage') ? $request->file('newImage') : null;
             $this->images->update($image, $data, $newFile);
 
@@ -168,7 +182,12 @@ class ContentController extends Controller
 
         $request->validate(['image' => 'required']);
 
-        $this->images->create($data, $request->file('image'), (int) $request['galleryId']);
+        // E.7b 4a-Hotfix-II.b: Create-Pfad — Gallery laden + gaten,
+        // weil Image dort hineingehängt wird.
+        $gallery = Gallery::findOrFail((int) $request['galleryId']);
+        $this->authorize('update', $gallery);
+
+        $this->images->create($data, $request->file('image'), $gallery->id);
 
         return redirect()->back()->with('success', __('message_add_image_success'));
     }
@@ -176,10 +195,19 @@ class ContentController extends Controller
     /**
      * Translate metadata
      *
+     * E.7b 4a-Hotfix-II.b (2026-06-21): auf `private` reduziert.
+     * Methode wurde nur intern aus saveText/saveImage aufgerufen,
+     * hat keine eigene Route, aber war public — was bedeutete dass
+     * sie indirekt via Reflection oder Vererbung erreichbar wäre.
+     * Auth läuft jetzt vorgelagert über die Aufrufer (saveText/
+     * saveImage prüfen hasPermissionTo('edit')).
+     * Sources sind global geteilte Origin-/Copyright-Quellen ohne
+     * Project-Bezug — ein project-scoped Gate gibt es hier nicht.
+     *
      * @param  $request
      * @return $this
      */
-    public function translateField($id, $field, $translated)
+    private function translateField($id, $field, $translated)
     {
 
         $source = Source::findOrFail($id);
@@ -200,6 +228,9 @@ class ContentController extends Controller
     public function editImage($id)
     {
         $image = Image::findOrFail($id);
+        // E.7b 4a-Hotfix-II.b: JSON-API darf keine fremden Image-Daten
+        // ausliefern.
+        $this->authorize('view', $image);
         $data = ['id' => $image->id, 'image' => $image->image, 'url' => $image->url, 'alt' => $image->alt, 'origin' => $image->originImage->name, 'copyright' => $image->copyrightImage->name];
 
         return response()->json($data);
@@ -212,6 +243,14 @@ class ContentController extends Controller
      */
     public function saveText(Request $request)
     {
+        // E.7b 4a-Hotfix-II.b: Defense-in-Depth — Reader (ohne
+        // globale 'edit'-Permission) kommen hier nicht durch.
+        // Modell-spezifisches authorize() folgt weiter unten, wenn
+        // textId/entryId aufgelöst sind.
+        if (! $request->user()->hasPermissionTo(PermissionName::EDIT->value)) {
+            abort(403);
+        }
+
         // Translation-Pfad: schreibt Übersetzungen in den Body und
         // die Source-Namen, kein Body-Update via TextService. Bleibt
         // bis zur Translation-Refaktorierung (späterer Block) auf
@@ -223,6 +262,9 @@ class ContentController extends Controller
         // mit `findOrFail(null)` enden.
         if ($request->filled('translationMode')) {
             if ($request->filled('textId')) {
+                // E.7b 4a-Hotfix-II.b: project-scoped Gate.
+                $text = Text::findOrFail($request['textId']);
+                $this->authorize('update', $text);
                 $this->saveTranslatedText($request);
             }
             if ($request->filled('originId')) {
@@ -249,12 +291,19 @@ class ContentController extends Controller
         // Bedingung in `Text::findOrFail(null)` → 404.
         if ($request->filled('textId')) {
             $text = Text::findOrFail($request['textId']);
+            // E.7b 4a-Hotfix-II.b: project-scoped Gate.
+            $this->authorize('update', $text);
             $this->texts->update($text, $data);
 
             return redirect()->back()->with('success', __('message_edit_text_success'));
         }
 
-        $this->texts->create($data, (int) $request['entryId']);
+        // E.7b 4a-Hotfix-II.b: Create-Pfad — Entry laden + gaten,
+        // weil Text dort angefügt wird.
+        $entry = Entry::findOrFail((int) $request['entryId']);
+        $this->authorize('update', $entry);
+
+        $this->texts->create($data, $entry->id);
 
         return redirect()->back()->with('success', __('message_add_text_success'));
     }
@@ -267,6 +316,9 @@ class ContentController extends Controller
     public function editText($id)
     {
         $text = Text::findOrFail($id);
+        // E.7b 4a-Hotfix-II.b: JSON-API darf keine fremden Text-Daten
+        // ausliefern.
+        $this->authorize('view', $text);
         $data = ['id' => $text->id, 'text' => $text->text, 'origin' => $text->originText->name, 'copyright' => $text->copyrightText->name];
 
         return response()->json($data);
@@ -281,6 +333,9 @@ class ContentController extends Controller
     public function commentText(StoreCommentRequest $request): RedirectResponse
     {
         $text = Text::findOrFail($request->validated('id'));
+        // E.7b 4a-Hotfix-II.b: project-scoped Gate nachgereicht.
+        $this->authorize('comment', $text);
+
         $this->comments->addComment($text, $request);
 
         return redirect()->back()->with('success', 'Reply to comment added successfully');
@@ -293,6 +348,11 @@ class ContentController extends Controller
      */
     public function getTextComment($id)
     {
+        // E.7b 4a-Hotfix-II.b: Text laden + authorize. $id ist die
+        // Text-Modell-Id (siehe Aufrufer in chapters/index.blade.php).
+        $text = Text::findOrFail($id);
+        $this->authorize('view', $text);
+
         $comment = new CommentRetrieve;
 
         return $comment->getComments('App\Models\MediaContent', $id);
@@ -303,6 +363,9 @@ class ContentController extends Controller
      */
     public function saveCommentText(Request $request, Text $text): RedirectResponse
     {
+        // E.7b 4a-Hotfix-II.b: project-scoped Gate via Text.
+        $this->authorize('comment', $text);
+
         // Reply hängt sich an das Text-Modell, das `question` referenziert.
         // Bei Edit und Delete ist das egal, der Helper greift nur bei Reply
         // auf das commentable-Modell zu.
@@ -324,6 +387,9 @@ class ContentController extends Controller
     public function commentImage(StoreCommentRequest $request): RedirectResponse
     {
         $image = Image::findOrFail($request->validated('id'));
+        // E.7b 4a-Hotfix-II.b: project-scoped Gate nachgereicht.
+        $this->authorize('comment', $image);
+
         $this->comments->addComment($image, $request);
 
         return redirect()->back()->with('success', 'Reply to comment added successfully');
@@ -336,6 +402,10 @@ class ContentController extends Controller
      */
     public function getImageComment($id)
     {
+        // E.7b 4a-Hotfix-II.b: Image laden + authorize.
+        $image = Image::findOrFail($id);
+        $this->authorize('view', $image);
+
         $comment = new CommentRetrieve;
 
         return $comment->getComments('App\Models\MediaContent', $id);
@@ -346,6 +416,9 @@ class ContentController extends Controller
      */
     public function saveCommentImage(Request $request, Image $image): RedirectResponse
     {
+        // E.7b 4a-Hotfix-II.b: project-scoped Gate via Image.
+        $this->authorize('comment', $image);
+
         if (isset($request['name']) && $request['name'] === 'edit') {
             $this->comments->editComment((int) $request['pk'], (string) $request['value']);
 
@@ -364,9 +437,21 @@ class ContentController extends Controller
     /**
      * Setzt den Status eines Comments auf einem Text.
      */
-    public function setCommentStatusText(Request $request, Text $text): JsonResponse
+    public function setCommentStatusText(Request $request): JsonResponse
     {
-        $this->comments->setCommentStatus((int) $request['id'], (int) $request['status']);
+        // E.7b 4a-Hotfix-II.b: das `Text $text`-Argument war ohne
+        // {text}-Route-Parameter ein toter Auth-Hook. Comment via
+        // Request['id'] laden, Project auflösen, authorize.
+        $commentId = (int) $request['id'];
+        $project = $this->comments->resolveProjectForComment($commentId);
+
+        if ($project === null) {
+            abort(404);
+        }
+
+        $this->authorize('comment', $project);
+
+        $this->comments->setCommentStatus($commentId, (int) $request['status']);
 
         return response()->json(['success' => true]);
     }
@@ -374,9 +459,19 @@ class ContentController extends Controller
     /**
      * Setzt den Status eines Comments auf einem Image.
      */
-    public function setCommentStatusImage(Request $request, Image $image): JsonResponse
+    public function setCommentStatusImage(Request $request): JsonResponse
     {
-        $this->comments->setCommentStatus((int) $request['id'], (int) $request['status']);
+        // E.7b 4a-Hotfix-II.b: analog setCommentStatusText.
+        $commentId = (int) $request['id'];
+        $project = $this->comments->resolveProjectForComment($commentId);
+
+        if ($project === null) {
+            abort(404);
+        }
+
+        $this->authorize('comment', $project);
+
+        $this->comments->setCommentStatus($commentId, (int) $request['status']);
 
         return response()->json(['success' => true]);
     }
@@ -389,6 +484,9 @@ class ContentController extends Controller
     public function resetText(Request $request)
     {
         $model = Text::findOrFail($request['idReset']);
+        // E.7b 4a-Hotfix-II.b: project-scoped Gate.
+        $this->authorize('update', $model);
+
         $model->text = $request['valueReset'];
 
         $model->save();
@@ -448,8 +546,11 @@ class ContentController extends Controller
      *
      * @return $this
      */
-    public function saveTranslatedText(Request $request)
+    private function saveTranslatedText(Request $request)
     {
+        // E.7b 4a-Hotfix-II.b: auf `private` reduziert. Wird nur
+        // intern aus saveText() aufgerufen; saveText prüft vorab
+        // hasPermissionTo('edit') + project-scoped Gate auf $text.
 
         $text = Text::findOrFail($request['textId']);
 
@@ -472,6 +573,16 @@ class ContentController extends Controller
      */
     public function updateCommentStatus($id, $status): RedirectResponse
     {
+        // E.7b 4a-Hotfix-II.b: Comment laden, Project auflösen,
+        // authorize, bevor Status auf fremdem Comment geändert wird.
+        $project = $this->comments->resolveProjectForComment((int) $id);
+
+        if ($project === null) {
+            abort(404);
+        }
+
+        $this->authorize('comment', $project);
+
         $this->comments->setCommentStatus((int) $id, (int) $status);
 
         return redirect()->back()->with('success', __('message_status_success'));
@@ -479,6 +590,11 @@ class ContentController extends Controller
 
     public function saveGallery(Request $request)
     {
+        // E.7b 4a-Hotfix-II.b: Defense-in-Depth — Reader-Gate.
+        if (! $request->user()->hasPermissionTo(PermissionName::EDIT->value)) {
+            abort(403);
+        }
+
         $data = GalleryData::fromRequest($request);
 
         // Stakeholder-Fix Juni 2026: vorher
@@ -493,12 +609,18 @@ class ContentController extends Controller
         // Laravel-Form: true, wenn Input present UND nicht leer/null.
         if ($request->filled('galleryId')) {
             $gallery = Gallery::findOrFail($request['galleryId']);
+            // E.7b 4a-Hotfix-II.b: project-scoped Gate.
+            $this->authorize('update', $gallery);
             $this->galleries->update($gallery, $data);
 
             return redirect()->back()->with('success', __('message_update_success'));
         }
 
-        $this->galleries->create($data, (int) $request['entryId']);
+        // E.7b 4a-Hotfix-II.b: Create-Pfad — Entry laden + gaten.
+        $entry = Entry::findOrFail((int) $request['entryId']);
+        $this->authorize('update', $entry);
+
+        $this->galleries->create($data, $entry->id);
 
         return redirect()->back()->with('success', __('message_gallery_success'));
     }
@@ -512,6 +634,14 @@ class ContentController extends Controller
     {
 
         $gallery = Gallery::where('id', $id)->first();
+
+        if ($gallery === null) {
+            abort(404);
+        }
+
+        // E.7b 4a-Hotfix-II.b: JSON-API darf keine fremden Gallery-
+        // Daten ausliefern.
+        $this->authorize('view', $gallery);
 
         return \response()->json($gallery);
     }
@@ -536,6 +666,9 @@ class ContentController extends Controller
      */
     public function saveCommentGallery(Request $request, Gallery $gallery): RedirectResponse
     {
+        // E.7b 4a-Hotfix-II.b: project-scoped Gate via Gallery.
+        $this->authorize('comment', $gallery);
+
         $commentable = isset($request['question'])
             ? (Gallery::find($request['question']) ?? $gallery)
             : $gallery;
@@ -554,6 +687,9 @@ class ContentController extends Controller
     public function commentGallery(StoreCommentRequest $request): RedirectResponse
     {
         $gallery = Gallery::findOrFail($request->validated('id'));
+        // E.7b 4a-Hotfix-II.b: project-scoped Gate nachgereicht.
+        $this->authorize('comment', $gallery);
+
         $this->comments->addComment($gallery, $request);
 
         return redirect()->back()->with('success', 'Reply to comment added successfully');

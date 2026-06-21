@@ -10,6 +10,61 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Sicherheit (Block E.7b Sub-Welle 4a-Hotfix-II.b — ContentController + AudiovisualController Authorize-Sweep)
+
+Abschluss des 4-Controller-Sweeps. Alle public Schreib- und
+JSON-API-Methoden in ContentController und AudiovisualController
+haben jetzt project-scoped `authorize`-Gates.
+
+ContentController gegated:
+- **`editText` / `editImage` / `editGallery`** — JSON-API für die
+  Edit-Maske; vorher konnten fremde Inhaltsdaten gezogen werden.
+  `authorize('view', $text|$image|$gallery)`.
+- **`saveText`** — vorgelagert `hasPermissionTo('edit')`
+  (Defense-in-Depth, schließt Reader sofort raus); im Update-Pfad
+  `authorize('update', $text)`, im Create-Pfad
+  `authorize('update', $entry)` auf den Ziel-Entry.
+- **`saveImage`** — analog: globale `edit`-Permission als Hürde,
+  dann `authorize('update', $image|$gallery)` je nach Pfad.
+- **`saveGallery`** — analog: globale Hürde + Gate auf Gallery
+  oder Entry.
+- **`commentText` / `commentImage` / `commentGallery`** —
+  StoreCommentRequest prüft nur Auth-User; project-scoped Gate
+  nachgereicht.
+- **`getTextComment` / `getImageComment`** — Modell laden +
+  `authorize('view', ...)`.
+- **`saveCommentText` / `saveCommentImage` / `saveCommentGallery`**
+  — `authorize('comment', $text|$image|$gallery)`.
+- **`setCommentStatusText` / `setCommentStatusImage`** — vorher
+  toter Route-Model-Binding (`Text $text` / `Image $image` ohne
+  Route-Param), jetzt Comment via `$request['id']` laden, Project
+  via `CommentService::resolveProjectForComment()` auflösen,
+  `authorize('comment', $project)`.
+- **`updateCommentStatus($id, $status)`** — URL-basierter Comment-
+  Status-Trigger; Project-Resolution + `authorize('comment')`.
+- **`resetText`** — `authorize('update', $text)` vor dem Reset.
+
+AudiovisualController gegated:
+- **`store`** — globale `edit`-Permission + `authorize('update',
+  $audiovisual)` im Update-Pfad bzw. `authorize('update', $entry)`
+  im Create-Pfad.
+- **`saveCommentAudiovisual`** — `authorize('comment', $audiovisual)`.
+- **`commentAudiovisual`** — analog.
+
+Strukturelle Konsequenzen:
+- **`translateField` und `saveTranslatedText` auf `private`**
+  reduziert. Methoden haben keine eigene Route, werden nur intern
+  aus `saveText` / `saveImage` aufgerufen. Auth läuft vorgelagert
+  über die Aufrufer. Sources sind global geteilt — kein project-
+  scoped Gate möglich, aber durch globale `edit`-Permission
+  geschützt (Reader nicht erreichbar).
+- **Image-Create-Pfad** in `saveImage` lädt das Gallery-Modell
+  vor dem Service-Call und gate dagegen.
+- **Text/Audiovisual-Create-Pfade** laden Entry-Modell vor und gate.
+
+Pinning-Tests für die kritischsten Vektoren folgen in einer
+kleinen Folge-Welle (Hotfix-II.c).
+
 ### Sicherheit (Block E.7b Sub-Welle 4a-Hotfix-II.a — ChapterController + EntryController Authorize-Sweep)
 
 Nach dem Welle-4a-Hotfix (Spatie's Gate::before abgeschaltet) waren
