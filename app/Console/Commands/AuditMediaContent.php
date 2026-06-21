@@ -34,7 +34,7 @@ use Illuminate\Support\Facades\DB;
  * Phase 4 / Block E.7b, ADR-0022, in Welle 4e umgeschrieben.
  *
  * Read-only-Audit der `media_content`-Pivot-Tabelle. Nach dem
- * Spalten-Drop läuft der Audit auf den neuen content_*/parent_*-
+ * Spalten-Drop läuft der Audit auf den neuen content_- und parent_-
  * Spalten: Type-Counts pro `content_type`, Orphan-Check der
  * `content_id` gegen das jeweilige Content-Modell, Parent-Probe
  * der `parent_id` gegen Entry.

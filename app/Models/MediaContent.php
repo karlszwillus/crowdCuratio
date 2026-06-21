@@ -47,9 +47,9 @@ class MediaContent extends Model implements HasComments
      * The attributes that are mass assignable.
      *
      * Phase 4 / Block E.7b Sub-Welle 4e (ADR-0022): Cleanup. Die alten
-     * media_content_id/media_contentable_*-Spalten sind in der
+     * media_content_id- und media_contentable-Spalten sind in der
      * Spalten-Drop-Migration entfernt; das Modell führt nur noch die
-     * neuen content_*/parent_*-Spalten.
+     * neuen content_- und parent_-Spalten.
      *
      * @var list<string>
      */

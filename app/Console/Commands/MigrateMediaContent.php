@@ -31,9 +31,9 @@ use Illuminate\Support\Facades\DB;
  * Phase 4 / Block E.7b Sub-Welle 4e-prep, ADR-0022.
  *
  * Safety-Net-Backfill für media_content vor dem Spalten-Drop in
- * Welle 4e. Sucht Pivot-Rows, die in den neuen content_*/parent_*-
- * Spalten leer sind, aber in den alten media_contentable_*/
- * media_content_id-Spalten Werte haben — und kopiert sie rüber.
+ * Welle 4e. Sucht Pivot-Rows, die in den neuen content_- bzw.
+ * parent_-Spalten leer sind, aber in den alten media_contentable-
+ * oder media_content_id-Spalten Werte haben — und kopiert sie rüber.
  *
  * Hintergrund: Die Schema-Migration in Welle 2a hat einen einmaligen
  * Backfill durchgeführt, und seit Welle 2d schreiben die Services in

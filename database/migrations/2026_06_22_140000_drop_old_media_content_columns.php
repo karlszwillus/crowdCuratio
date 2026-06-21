@@ -29,7 +29,7 @@ use Illuminate\Support\Facades\Schema;
  *
  * Spalten-Drop. Nach Welle 4b (Controllers), 4c (Models), 4d
  * (Services) liest und schreibt nichts mehr in die alten
- * media_contentable_*/media_content_id-Spalten. Welle 4e-prep
+ * media_contentable-/media_content_id-Spalten. Welle 4e-prep
  * (`db:migrate-media-content --apply`) ist als Safety-Net auf
  * Live-Daten gelaufen.
  *
