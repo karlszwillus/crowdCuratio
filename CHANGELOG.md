@@ -10,6 +10,31 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Geändert (Block E.7b Sub-Welle 2d — Service-Doppelschreibung)
+
+- **`TextService::attachToEntry`, `AudiovisualService::attachToEntry`
+  und `GalleryService::attachToEntry`** schreiben jetzt parallel
+  in die alten `media_contentable_*`- und die neuen
+  `content_*`/`parent_*`-Spalten der `media_content`-Pivot-Tabelle.
+  Damit funktionieren alte Konsumenten (preview-Blade,
+  ContentController-Direktzugriffe) und neue Konsumenten
+  (Welle-3-Policies via `$content->project()`) während der
+  Übergangswelle parallel. Cleanup der alten Spalten + Konsumenten
+  in Sub-Welle 4 nach Smoke.
+- **GalleryService — Spezialfall:** der historische Schiefstand
+  bleibt in der alten `media_contentable_type=Image::class`-Spalte
+  erhalten (kein Verhaltens-Wechsel für die heute funktionierenden
+  Lesepfade), die neue `content_type`-Spalte trägt jetzt den
+  korrekten `Gallery::class`-Wert. Der latente `detachFromEntries`-
+  Bug (sucht nach `Gallery::class`, findet nie etwas, weil die
+  Rows `Image::class`-getaggt sind) wird in Sub-Welle 4 mit dem
+  Switch auf die neuen Spalten aufgelöst.
+- **Drei Pest-Tests** in `ContentServiceDoubleWriteTest`:
+  Text/Audiovisual/Gallery → jeweils Sicht auf alte + neue Spalten
+  nach `Service::create()`. Der Gallery-Test pinnt explizit, dass
+  die alte Spalte `Image::class` behält und die neue
+  `Gallery::class` trägt.
+
 ### Geändert (Block E.7b Sub-Welle 2c — Content-Modelle mit project()-Navigation)
 
 - **`mediaContents()` und `project()` auf den vier Content-Modellen**
