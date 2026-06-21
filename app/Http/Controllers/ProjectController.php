@@ -255,7 +255,12 @@ class ProjectController extends Controller
         $type = "App\Models\\".$model;
         $exception = '[]';
 
-        $activities = Activity::where('subject_id', '=', $id)
+        // Strict-Mode: $value->causer wird in der Schleife für jedes
+        // Activity-Item gelesen — ohne Eager-Load wirft Laravel 11+
+        // mit preventLazyLoading() eine LazyLoadingViolationException
+        // (Karl-Befund 2026-06-21). E.7b 4a-Hotfix-II.a-Followup.
+        $activities = Activity::with('causer')
+            ->where('subject_id', '=', $id)
             ->where('subject_type', '=', $type)->where('description', 'NOT LIKE', '%created%')
             ->where('properties', 'NOT LIKE', '%is_translate%')
             ->where('properties', 'NOT LIKE', '%'.$exception.'%')
