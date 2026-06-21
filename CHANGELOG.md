@@ -10,6 +10,31 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Entfernt (Block E.7b Sub-Welle 4c — tote Model-Beziehungen)
+
+Cleanup der konsumentenlosen Eloquent-Beziehungen auf den alten
+`media_contentable_*` / `media_content_id`-Spalten:
+
+- **`MediaContent::media()`** — morphTo ohne Spalten-Argument
+  (default `media_id`/`media_type`, beides existiert nicht im
+  Schema). Toter Code seit Anbeginn.
+- **`Comment::media()`** — morphToMany via
+  `media_contentable_id`. Keine Konsumenten in app/, resources/
+  oder tests/.
+- **`Text::medias()`** + **`Text::entry()`** — morphMany auf die
+  toten `media_id`/`media_type`-Spalten bzw. morphToMany via
+  `media_contentable_id`. Beide konsumentenlos. `Text::mediaContents()`
+  (Welle 2c, via `content_id`/`content_type`) ist die einzige aktive
+  Beziehung.
+- **`Image::medias()`**, **`Image::entry()`**,
+  **`Image::parentEntry()`** — drei tote Beziehungen analog.
+  `Image::mediaContents()`, `Image::gallery()` und `Image::project()`
+  bleiben.
+
+`MediaContent::$fillable` behält die alten Spalten-Keys bis zur
+Service-Doppelschreibung-Entfernung in Welle 4d / Spalten-Drop in
+Welle 4e.
+
 ### Geändert (Block E.7b Sub-Welle 4b — ProjectController auf neue Spalten)
 
 Fortsetzung des E.7b-Cleanup-Fadens (ADR-0022). Sammelt die letzten

@@ -93,16 +93,6 @@ class MediaContent extends Model implements HasComments
     }
 
     /**
-     * Get media
-     *
-     * @return MorphTo
-     */
-    public function media()
-    {
-        return $this->morphTo()->orderBy('position', 'DESC');
-    }
-
-    /**
      * Sauberer morphTo auf das Content-Modell (Text/Image/Gallery/
      * Audiovisual). Phase 4 / Block E.7b Sub-Welle 2b (ADR-0022).
      *

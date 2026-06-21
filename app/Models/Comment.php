@@ -90,25 +90,6 @@ class Comment extends Model
     }
 
     /**
-     * Get media
-     *
-     * @return MorphToMany
-     */
-    public function media()
-    {
-        return $this->morphToMany(
-            'App\Models\Entry',
-            'media_contentable',
-            'media_content',
-            'id',
-            'media_contentable_id',
-            '',
-            '',
-            ''
-        )->withPivot('media_contentable_id');
-    }
-
-    /**
      * Get project
      *
      * @return BelongsTo
