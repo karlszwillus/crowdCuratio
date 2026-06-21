@@ -10,6 +10,25 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Geändert (Block E.7b Sub-Welle 4b — ProjectController auf neue Spalten)
+
+Fortsetzung des E.7b-Cleanup-Fadens (ADR-0022). Sammelt die letzten
+Lesungen der alten `media_contentable_*` / `media_content_id`-Spalten
+in den Controllern auf die neuen `content_*` / `parent_*`-Spalten um.
+Doppelschreibung in den Services (4d offen) hält die alten Spalten
+parallel — bis Welle 4e droppt.
+
+- **`ProjectController::getParentText`**: Manual-Join auf
+  `media_content.content_id` (statt `media_content_id`),
+  `media_content.parent_id` (statt `media_contentable_id`) und
+  Diskriminator-Where auf `content_type`.
+- **`ProjectController::allData`** Translation-Status-Sammler: drei
+  Diskriminator-Vergleiche und drei `find()`-Calls in der Schleife
+  über `$entry->mediaContent` von `media_contentable_type` /
+  `media_content_id` auf `content_type` / `content_id` umgestellt.
+  Der Gallery-Pfad nutzt jetzt sauber `content_type == 'Gallery'`
+  statt des historischen `'Image'`-Schiefstands.
+
 ### Behoben (Block E.7b Sub-Welle 4a-Hotfix-II.d — Owner-Bypass-Bug + Translation-Test-Reflection)
 
 Nach II.c-Verifikation gefunden:

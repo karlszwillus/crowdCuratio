@@ -584,13 +584,17 @@ class ProjectController extends Controller
                     ->get();
             case 'images':
             case 'texts':
+                // E.7b Welle 4b (ADR-0022): join geht jetzt auf die
+                // neuen Spalten content_id / parent_id / content_type.
+                // Doppelschreibung in den Services sichert Gleichwertig-
+                // keit zu den alten Spalten bis Welle 4d.
                 return DB::table($table)
-                    ->join('media_content', $table.'.id', '=', 'media_content.media_content_id')
-                    ->join('entries', 'entries.id', '=', 'media_content.media_contentable_id')
+                    ->join('media_content', $table.'.id', '=', 'media_content.content_id')
+                    ->join('entries', 'entries.id', '=', 'media_content.parent_id')
                     ->join('chapters', 'chapters.id', '=', 'entries.chapter_id')
                     ->select('chapters.name as chapter_name', 'entries.name as entry_name')
                     ->where($table.'.id', '=', $id)
-                    ->where('media_content.media_contentable_type', '=', $model)
+                    ->where('media_content.content_type', '=', $model)
                     ->get();
         }
     }
@@ -711,12 +715,16 @@ class ProjectController extends Controller
                     );
 
                     foreach ($collection as $item) {
-                        if ($item['media_contentable_type'] == 'App\Models\Text') {
+                        // E.7b Welle 4b (ADR-0022): Diskriminator-Check
+                        // auf content_type / content_id (neue Spalten).
+                        // Doppelschreibung in den Services hält die alten
+                        // gleichwertig bis Welle 4d.
+                        if ($item['content_type'] == 'App\Models\Text') {
                             // Strict-Mode: originText/copyrightText
                             // werden unten gleich gelesen, deshalb
                             // gleich mit-eager-laden.
                             $text = Text::with(['originText', 'copyrightText'])
-                                ->find($item['media_content_id']);
+                                ->find($item['content_id']);
                             if ($text) {
                                 $text->media_id = $item['id'];
                                 $array[] = $text;
@@ -735,8 +743,8 @@ class ProjectController extends Controller
                                 }
                                 $total++;
                             }
-                        } elseif ($item['media_contentable_type'] == 'App\Models\Audiovisual') {
-                            $audiovisual = Audiovisual::find($item['media_content_id']);
+                        } elseif ($item['content_type'] == 'App\Models\Audiovisual') {
+                            $audiovisual = Audiovisual::find($item['content_id']);
                             if ($audiovisual) {
                                 $audiovisual->media_id = $item['id'];
                                 $array[] = $audiovisual;
@@ -747,10 +755,13 @@ class ProjectController extends Controller
 
                             }
                         } else {
+                            // E.7b Welle 4b: ehemals media_contentable_type
+                            // == 'App\Models\Image' (historischer Schiefstand).
+                            // Neue Spalte content_type führt sauber Gallery::class.
                             // Strict-Mode: images wird unten gleich
                             // gelesen, deshalb mit-eager-laden.
-                            $gallery = Gallery::with('images')->find($item['media_content_id']);
-                            // $image = Image::find($item['media_content_id']);
+                            $gallery = Gallery::with('images')->find($item['content_id']);
+                            // $image = Image::find($item['content_id']);
                             if ($gallery) {
                                 $gallery->media_id = $item['id'];
                                 $gallery->image_list = $gallery->images;
