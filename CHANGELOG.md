@@ -10,6 +10,47 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Sicherheit (Block E.7b Sub-Welle 3-Hotfix — ProjectController Authorize-Sweep)
+
+- **KRITISCH: `ProjectController::setPermissionForUserOnProject`
+  ohne Authorize-Gate.** Bisher konnte jeder eingeloggte User
+  via direktem POST `/project/permission` einem beliebigen User
+  volle Rechte auf jedes Projekt vergeben. Privilege Escalation
+  in derselben Klasse wie NF-SEC-202 (Phase 2.5). Beim
+  Welle-3-Smoke entdeckt via Reader-URL-Manipulation; der Sweep
+  über alle `ProjectController`-Methoden hat den darunterliegenden
+  Befund freigelegt. Jetzt mit `$this->authorize('update', $project)`.
+- **Sieben weitere ungegated Project-Pfade** geschlossen:
+  - `show($project)` — Reader sah fremde Projects via
+    `/projects/{id}`.
+  - `edit(Request, $project)` — Reader sah fremde Edit-Masken
+    via `/projects/{id}/edit` (Karls konkreter Smoke-Befund).
+  - `getDetails($project, $id)` — Activity-Log-Diffs fremder
+    Projects.
+  - `previewProject(Request)` — Web-Preview fremder Projects.
+  - `downloadPreview(Request)` — PDF-Download fremder Projects.
+  - `projectMetadata(Request)` — Impressum/AGB-Aggregation
+    fremder Projects.
+  - `givePermissionToUser($id)` — Info-Leak: Permission-IDs
+    eines beliebigen Users auf ein beliebiges Projekt
+    herausgeben. Gate analog setPermissionForUserOnProject mit
+    `update`.
+
+  Alle sechs `show`/`edit`/`preview`/`metadata`-Pfade jetzt mit
+  `$this->authorize('view', $project)`. Damit greift Owner-
+  Shortcut, Admin via before(), Eingeladene mit `view`-Permission
+  durch — Fremde bekommen 403.
+- **Vier neue Charakterisierungs-Tests** in
+  `ProjectControllerAuthorizationTest`: show/edit/Owner-Edit/
+  setPermissionForUserOnProject (Privilege Escalation als
+  expliziter Test).
+
+  **Folgeaufgabe** (separate Welle): zwei nicht-Project-bound
+  Methoden `history($model, $id)` und `getCurrentLog($id)`
+  brauchen ebenfalls Authorize. Da die Project-Auflösung dort
+  komplexer ist (model/id-Pärchen statt direktem `$project`),
+  separater Mini-Hotfix nach diesem Smoke.
+
 ### Sicherheit (Block E.7b Sub-Welle 3 — Content-Policies)
 
 - **Vier neue Policy-Klassen** auf `OwnerScopedPolicy`-Basis:

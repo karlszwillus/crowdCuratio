@@ -159,6 +159,11 @@ class ProjectController extends Controller
      */
     public function show(Project $project)
     {
+        // Block E.7b Sub-Welle 3-Hotfix (ADR-0022, ADR-0013):
+        // Reader-via-URL-Smoke gefunden — show öffnete fremde
+        // Projects ohne Gate.
+        $this->authorize('view', $project);
+
         return view('projects.show', compact('project'));
     }
 
@@ -169,6 +174,13 @@ class ProjectController extends Controller
      */
     public function edit(Request $request, Project $project)
     {
+        // Block E.7b Sub-Welle 3-Hotfix (ADR-0022, ADR-0013):
+        // Reader-via-URL-Smoke (2026-06-21) zeigte, dass /projects/{id}/edit
+        // jeden eingeloggten User in fremde Projekte hineinblicken liess.
+        // view-Gate reicht: eingeladene Reader sehen die Edit-Maske mit
+        // ihren Lese-Rechten, Fremde bekommen 403.
+        $this->authorize('view', $project);
+
         $textLog = [];
         $comments = [];
         $isComment = false;
@@ -387,6 +399,15 @@ class ProjectController extends Controller
         $projectId = (int) $request['project'];
         $permissionIds = (array) ($request['permissions'] ?? []);
 
+        // Block E.7b Sub-Welle 3-Hotfix (ADR-0022, ADR-0013):
+        // KRITISCH — bisher konnte JEDER eingeloggte User via direktem
+        // POST `/project/permission` einem beliebigen User volle Rechte
+        // auf jedes Projekt vergeben. Privilege Escalation, vergleichbar
+        // mit NF-SEC-202. update-Gate: nur Owner/Admin/Eingeladener-mit-
+        // edit darf Permissions verteilen.
+        $project = Project::findOrFail($projectId);
+        $this->authorize('update', $project);
+
         $this->permissions->setForUserOnProject(
             $userId,
             $projectId,
@@ -411,6 +432,13 @@ class ProjectController extends Controller
     {
         [$userId, $projectId] = array_map('intval', explode('_', $id));
 
+        // Block E.7b Sub-Welle 3-Hotfix (ADR-0022, ADR-0013):
+        // Info-Leak — gibt Permission-IDs eines beliebigen Users
+        // auf ein beliebiges Projekt heraus. Gate analog
+        // setPermissionForUserOnProject.
+        $project = Project::findOrFail($projectId);
+        $this->authorize('update', $project);
+
         $data = $this->permissions->getPermissionIdsForUserOnProject($userId, $projectId);
 
         return response()->json($data);
@@ -433,6 +461,11 @@ class ProjectController extends Controller
     public function getDetails($project, $id)
     {
         $project = Project::findOrFail($project);
+
+        // Block E.7b Sub-Welle 3-Hotfix (ADR-0022, ADR-0013):
+        // getDetails liefert Activity-Log-Diffs des Projekts —
+        // sollte nur Lese-berechtigte sehen.
+        $this->authorize('view', $project);
 
         $activities = Activity::where('id', '=', $id)->get();
 
@@ -849,6 +882,11 @@ class ProjectController extends Controller
         $parameters['id'] = $request['project'];
         $project = Project::withPreviewTree()->findOrFail($request['project']);
 
+        // Block E.7b Sub-Welle 3-Hotfix (ADR-0022, ADR-0013):
+        // Web-Preview eines fremden Projekts war ohne Gate erreichbar
+        // — Reader-via-URL.
+        $this->authorize('view', $project);
+
         return \view('preview.index', compact('project', 'parameters'));
     }
 
@@ -875,6 +913,11 @@ class ProjectController extends Controller
         }
 
         $project = Project::withPreviewTree()->findOrFail($request->id);
+
+        // Block E.7b Sub-Welle 3-Hotfix (ADR-0022, ADR-0013):
+        // PDF-Download fremder Projekte ohne Gate war erreichbar.
+        $this->authorize('view', $project);
+
         $html = View('preview.pdf', compact('project', 'parameters'))->render();
 
         $options = new Options;
@@ -897,6 +940,12 @@ class ProjectController extends Controller
 
         if (isset($parameters['id'])) {
             $project = Project::withCopyrightTree()->findOrFail($parameters['id']);
+
+            // Block E.7b Sub-Welle 3-Hotfix (ADR-0022, ADR-0013):
+            // projectMetadata liefert Impressum/AGB/Quellen-Listen
+            // fremder Projekte ohne Gate.
+            $this->authorize('view', $project);
+
             if ($request->type == 'copyright') {
                 $content = $project->terms;
                 $type = 'copyright';

@@ -269,6 +269,88 @@ it('translateCurrentProject: Admin darf fremde Übersetzungs-Maske öffnen', fun
     expect($response->status())->toBeIn([200, 302]);
 });
 
+/*
+|--------------------------------------------------------------------------
+| Reader-via-URL-Hotfix nach Welle-3-Smoke (2026-06-21)
+|--------------------------------------------------------------------------
+|
+| Karl-Befund: über URL-Manipulation kam ein eingeloggter User in
+| fremde Projekte. Sweep über ProjectController fand acht ungegated
+| Pfade — sechs view-Pfade plus zwei kritische Permission-Verteil-
+| Pfade. Diese Tests pinnen jetzt die Authorize-Gates.
+*/
+
+it('show: Fremder darf fremdes Project NICHT öffnen', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole('Reader');
+    /** @var User $stranger */
+    $stranger = User::factory()->create();
+    $stranger->assignRole('Reader');
+    $project = makeProject($owner);
+
+    $this->actingAs($stranger);
+
+    $response = $this->get('/projects/'.$project->id);
+
+    $response->assertStatus(403);
+});
+
+it('edit: Fremder darf fremdes Project NICHT in der Edit-Maske sehen', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole('Reader');
+    /** @var User $stranger */
+    $stranger = User::factory()->create();
+    $stranger->assignRole('Reader');
+    $project = makeProject($owner);
+
+    $this->actingAs($stranger);
+
+    $response = $this->get('/projects/'.$project->id.'/edit');
+
+    $response->assertStatus(403);
+});
+
+it('edit: Owner darf eigenes Project öffnen', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole('Reader');
+    $project = makeProject($owner);
+
+    $this->actingAs($owner);
+
+    $response = $this->get('/projects/'.$project->id.'/edit');
+
+    expect($response->status())->toBeIn([200, 302]);
+});
+
+it('setPermissionForUserOnProject: Fremder kriegt 403 (Privilege Escalation geschlossen)', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole('Reader');
+    /** @var User $stranger */
+    $stranger = User::factory()->create();
+    $stranger->assignRole('Reader');
+    $project = makeProject($owner);
+
+    $this->actingAs($stranger);
+
+    $response = $this
+        ->from('/projects/'.$project->id.'/edit')
+        ->post(route('project.permission'), [
+            'user' => $stranger->id,
+            'project' => $project->id,
+            'permissions' => [1, 2, 3, 4, 5, 6, 7],
+        ]);
+
+    $response->assertStatus(403);
+});
+
 it('Comment: Fremder ohne Einladung kriegt 403', function () {
     /** @var TestCase $this */
     /** @var User $owner */

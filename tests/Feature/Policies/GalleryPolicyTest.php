@@ -22,6 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 use App\Models\Entry;
 use App\Models\Gallery;
+use App\Models\Image;
 use App\Models\MediaContent;
 use App\Models\Project;
 use App\Models\ProjectUserPermission;
@@ -63,7 +64,7 @@ function galleryAttachedTo(User $owner): array
         'media_content_id' => $gallery->id,
         'media_contentable_id' => $entry->id,
         // Historischer Schiefstand: alte Spalte hat Image::class.
-        'media_contentable_type' => \App\Models\Image::class,
+        'media_contentable_type' => Image::class,
         'content_id' => $gallery->id,
         'content_type' => Gallery::class,
         'parent_id' => $entry->id,
