@@ -10,6 +10,55 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Sicherheit (Security-Sweep-III — Phase-4-Review-Findings)
+
+Sechs Lücken zweiter Ordnung aus den Phase-4-Reviewer-Subagents
+geschlossen. Eigener PR vor Phase-4-Abschluss (`docs/architecture.md`,
+KONTEXT-Bilanz, ADR-Index, TODO-Sync).
+
+**HIGH:**
+- **`ProjectController::resetValue`** — vorher `$request['subjectType']::findOrFail()`
+  ohne Whitelist + ohne Authorize. RCE-naher Vektor, weil ein
+  Angreifer beliebige Klassen-Strings durchschießen konnte. Jetzt:
+  Whitelist auf die sechs curating-relevanten Content-Modelle
+  (Chapter, Entry, Text, Image, Gallery, Audiovisual) + project-
+  scoped `authorize('update', $model)`.
+- **`ChapterController::index`** — Reader-Bypass via
+  `GET /chapters?id=42`: rendert die volle Edit-Hierarchie fremder
+  Projects. Welle-3- und Welle-4a-Hotfix-II hatten das übersehen,
+  weil `index` semantisch ein Listen-Endpunkt aussieht, aber
+  tatsächlich `Project::withEditTree()->findOrFail($request['id'])`
+  lädt. Jetzt: `authorize('view', $project)` direkt nach
+  Modell-Auflösung.
+- **`ProjectController::inviteUserForProject`** — Info-Leak: zeigte
+  Rollen + Permissions fremder User auf fremden Projects. Jetzt:
+  `Project::findOrFail($projectId)` + `authorize('update', $project)`
+  — gleicher Gate wie auf der Permission-Verwaltung in
+  `setPermissionForUserOnProject`.
+
+**MEDIUM:**
+- **`ProjectController::saveCommentProject` + `setCommentStatusProject`**
+  — beide hatten `Project $project` als toter Route-Model-Binding
+  (Route `POST /comment/project/{id}/save` hat `{id}`, nicht
+  `{project}`; `POST /comment/project/status` hat gar keinen
+  Project-Param). Laravel instantiierte ein leeres Project, kein
+  Authorize. Jetzt: `Project::findOrFail($request->route('id'))`
+  bzw. `CommentService::resolveProjectForComment($commentId)`
+  + `authorize('comment', $project)`.
+- **`ProjectController::getParentText`** — SQLi-Surface über die
+  String-Parameter `$table` und `$model`. Whitelist auf
+  `entries`/`images`/`texts` und `Entry::class`/`Text::class`/
+  `Image::class`.
+
+**Frontend-Setter-Folgesweep** geprüft: nur `.addImage`-Click hatte
+den entryId-Bug, der bereits im vorigen Hotfix gefixt wurde.
+`.addContent` setzt entryId korrekt für Text/Audiovisual/Gallery,
+`.addEntry` setzt chapterId korrekt. Keine analogen Lücken.
+
+**Pinning-Tests:** sechs neue Tests in
+`ProjectControllerAuthorizationTest`, `forgetCachedPermissions()`
+in jedem `beforeEach`-Lokal.
+
 ### Geändert (Block E.7b Sub-Welle 4f — Bilanz + Aufräumen)
 
 Abschluss des Cleanup-Branches:

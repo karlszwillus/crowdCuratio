@@ -76,6 +76,11 @@ class ChapterController extends Controller
         // withEditTree() lädt die volle Hierarchie für chapters/index
         // eager — sonst beißt preventLazyLoading (Phase 2 / C.1).
         $project = Project::withEditTree()->findOrFail($request['id']);
+
+        // Security-Sweep-III (2026-06-22): Reader-Bypass geschlossen.
+        // Vorher konnte jeder eingeloggte User via GET /chapters?id=42
+        // die volle Edit-Hierarchie fremder Projects rendern.
+        $this->authorize('view', $project);
         $permissions = Permission::all();
         // F-DB-013: vorher Role::where('id', 'not like', '1') —
         // LIKE-Vergleich auf INT-Spalte mit hartkodierter ID.

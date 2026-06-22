@@ -387,9 +387,19 @@ class ProjectController extends Controller
 
     /**
      * Routet eine save-Submission (Edit/Delete/Reply).
+     *
+     * Security-Sweep-III (2026-06-22): vorher hatte die Methoden-
+     * Signatur `Project $project` über Route-Model-Binding, aber die
+     * Route `POST /comment/project/{id}/save` hat `{id}`, nicht
+     * `{project}` — Laravel instantiierte ein leeres Project-Modell.
+     * Toter Auth-Hook + keine explizite Authorize-Logik. Jetzt:
+     * Project via $request->route('id') laden, authorize('comment').
      */
-    public function saveCommentProject(Request $request, Project $project): RedirectResponse
+    public function saveCommentProject(Request $request): RedirectResponse
     {
+        $project = Project::findOrFail($request->route('id'));
+        $this->authorize('comment', $project);
+
         $this->comments->dispatchSaveAction($project, $request);
 
         return redirect()->back()->with('success', 'Comment-Aktion ausgeführt');
@@ -397,10 +407,25 @@ class ProjectController extends Controller
 
     /**
      * Setzt den Status eines Comments auf einem Project.
+     *
+     * Security-Sweep-III (2026-06-22): vorher toter Route-Model-Binding
+     * (Route hat kein {project}). Jetzt: Comment via Request-id laden,
+     * Project via CommentService::resolveProjectForComment auflösen,
+     * authorize('comment') auf dem Project — analog zu setComment-
+     * StatusChapter/Entry/Text/Image.
      */
-    public function setCommentStatusProject(Request $request, Project $project): JsonResponse
+    public function setCommentStatusProject(Request $request): JsonResponse
     {
-        $this->comments->setCommentStatus((int) $request['id'], (int) $request['status']);
+        $commentId = (int) $request['id'];
+        $project = $this->comments->resolveProjectForComment($commentId);
+
+        if ($project === null) {
+            abort(404);
+        }
+
+        $this->authorize('comment', $project);
+
+        $this->comments->setCommentStatus($commentId, (int) $request['status']);
 
         return response()->json(['success' => true]);
     }
@@ -575,6 +600,22 @@ class ProjectController extends Controller
      */
     public function getParentText($table, $model, $id)
     {
+        // Security-Sweep-III (2026-06-22): SQLi-Surface über die
+        // String-Parameter $table und $model geschlossen. Whitelist
+        // erlaubt nur die drei vom Frontend tatsächlich genutzten
+        // Kombinationen.
+        $allowedTables = ['entries', 'images', 'texts'];
+        $allowedModels = [
+            \App\Models\Entry::class,
+            \App\Models\Text::class,
+            \App\Models\Image::class,
+        ];
+        if (! in_array($table, $allowedTables, true)
+            || ! in_array($model, $allowedModels, true)
+        ) {
+            abort(404);
+        }
+
         switch ($table) {
             case 'entries':
                 return DB::table($table)
@@ -604,51 +645,73 @@ class ProjectController extends Controller
      */
     public function resetValue(Request $request)
     {
-        if (isset($request['subjectType']) && ! is_null($request['subjectType'])) {
-            $model = $request['subjectType']::findorFail($request['subjectId']);
+        // Security-Sweep-III (2026-06-22): vorher rief der Endpunkt
+        // `$request['subjectType']::findorFail($request['subjectId'])`
+        // ohne Whitelist + ohne Authorize. Damit war jede beliebige
+        // Klasse mit findOrFail() instantiierbar — RCE-naher Vektor.
+        // Whitelist auf die fünf curating-relevanten Content-Modelle,
+        // dann project-scoped authorize('update', $model).
+        $whitelist = [
+            \App\Models\Chapter::class,
+            \App\Models\Entry::class,
+            \App\Models\Text::class,
+            \App\Models\Image::class,
+            \App\Models\Gallery::class,
+            \App\Models\Audiovisual::class,
+        ];
 
-            if (isset($request['nameReset'])) {
-                $model->name = $request['nameReset'];
-            }
-
-            if (isset($request['subtitleReset'])) {
-                $model->subtitle = $request['subtitleReset'];
-            }
-
-            if (isset($request['descriptionReset'])) {
-                $model->description = $request['descriptionReset'];
-            }
-
-            if (isset($request['copyrightReset'])) {
-                $model->copyright = $this->sources->findOrCreateId($request['copyrightReset'], 'Copyright');
-            }
-
-            if (isset($request['originReset'])) {
-                $model->copyright = $this->sources->findOrCreateId($request['copyrightReset'], 'Origin');
-            }
-
-            if (isset($request['textReset'])) {
-                $model->text = $request['noHighlight'];
-            }
-
-            if (isset($request['imageReset'])) {
-                $model->image = $request['imageReset'];
-            }
-
-            if (isset($request['urlReset'])) {
-                $model->url = $request['urlReset'];
-            }
-
-            if (isset($request['sourceReset'])) {
-                $model->source = $request['sourceReset'];
-            }
-
-            if (isset($request['linkReset'])) {
-                $model->link = $request['linkReset'];
-            }
-
-            $model->save();
+        if (! isset($request['subjectType']) || is_null($request['subjectType'])) {
+            return redirect(session('links')[2]);
         }
+
+        if (! in_array($request['subjectType'], $whitelist, true)) {
+            abort(403);
+        }
+
+        $model = $request['subjectType']::findOrFail($request['subjectId']);
+        $this->authorize('update', $model);
+
+        if (isset($request['nameReset'])) {
+            $model->name = $request['nameReset'];
+        }
+
+        if (isset($request['subtitleReset'])) {
+            $model->subtitle = $request['subtitleReset'];
+        }
+
+        if (isset($request['descriptionReset'])) {
+            $model->description = $request['descriptionReset'];
+        }
+
+        if (isset($request['copyrightReset'])) {
+            $model->copyright = $this->sources->findOrCreateId($request['copyrightReset'], 'Copyright');
+        }
+
+        if (isset($request['originReset'])) {
+            $model->copyright = $this->sources->findOrCreateId($request['copyrightReset'], 'Origin');
+        }
+
+        if (isset($request['textReset'])) {
+            $model->text = $request['noHighlight'];
+        }
+
+        if (isset($request['imageReset'])) {
+            $model->image = $request['imageReset'];
+        }
+
+        if (isset($request['urlReset'])) {
+            $model->url = $request['urlReset'];
+        }
+
+        if (isset($request['sourceReset'])) {
+            $model->source = $request['sourceReset'];
+        }
+
+        if (isset($request['linkReset'])) {
+            $model->link = $request['linkReset'];
+        }
+
+        $model->save();
 
         return redirect(session('links')[2]);
     }
@@ -797,6 +860,15 @@ class ProjectController extends Controller
      */
     public function inviteUserForProject($id, $projectId)
     {
+        // Security-Sweep-III (2026-06-22): Info-Leak geschlossen.
+        // Vorher konnte jeder eingeloggte User via GET /user/{id}/project/
+        // {projectId}/info Rollen + Permissions fremder User auf fremden
+        // Projects einsehen. Nur Project-Owner/Admin/Eingeladener-mit-
+        // update darf einladende Aktionen vorbereiten — gleicher Gate
+        // wie auf der Permission-Verwaltung in setPermissionForUserOnProject.
+        $project = Project::findOrFail($projectId);
+        $this->authorize('update', $project);
+
         $permissions = $this->permissions->getCurrentUsersPermissions($id);
 
         $user = User::findOrFail($id);
