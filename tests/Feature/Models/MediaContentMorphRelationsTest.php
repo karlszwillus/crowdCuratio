@@ -23,7 +23,6 @@ If not, see <https://www.gnu.org/licenses/>.
 use App\Models\Audiovisual;
 use App\Models\Entry;
 use App\Models\Gallery;
-use App\Models\Image;
 use App\Models\MediaContent;
 use App\Models\Text;
 use App\Models\User;
@@ -34,15 +33,12 @@ use Tests\TestCase;
 | MediaContent — Morph-Relations (E.7b Sub-Welle 2b, ADR-0022)
 |--------------------------------------------------------------------------
 |
-| Pinnt die neuen sauberen morphTo-Beziehungen content() und parent()
-| auf MediaContent. Sie lesen aus den in Sub-Welle 2a angelegten
-| Spalten content_id/content_type bzw. parent_id/parent_type und
-| liefern das konkrete Content- bzw. Parent-Modell zurück.
-|
-| Die alten Beziehungen (text/image/gallery/audiovisual/entry) auf
-| die media_content_id-Spalte bleiben während der Übergangswelle
-| funktionsfähig — Konsumenten werden in Sub-Welle 2c/2d
-| umgestellt, Cleanup in Sub-Welle 4.
+| Pinnt die sauberen morphTo-Beziehungen content() und parent() auf
+| MediaContent. Sie lesen aus den in Sub-Welle 2a angelegten Spalten
+| content_id/content_type bzw. parent_id/parent_type und liefern das
+| konkrete Content- bzw. Parent-Modell zurück. Die alten media_*-
+| Spalten und tote Beziehungen sind in Welle 4e gedroppt bzw.
+| in Welle 4c entfernt.
 */
 
 it('content() liefert den Text-Datensatz, wenn content_type = Text::class', function () {
@@ -53,9 +49,6 @@ it('content() liefert den Text-Datensatz, wenn content_type = Text::class', func
     $text = Text::factory()->create();
 
     $row = MediaContent::create([
-        'media_content_id' => $text->id,
-        'media_contentable_id' => $entry->id,
-        'media_contentable_type' => Text::class,
         'content_id' => $text->id,
         'content_type' => Text::class,
         'parent_id' => $entry->id,
@@ -76,13 +69,9 @@ it('content() liefert die Gallery, wenn content_type = Gallery::class (historisc
     $entry = makeEntry(makeChapter(makeProject($owner)));
     $gallery = Gallery::factory()->create();
 
-    // Alte Tag-Spalte hatte historisch Image::class — neue
-    // content_type-Spalte hat den korrekten Gallery::class-Wert
-    // nach Backfill bzw. Service-Doppelschreibung.
+    // E.7b 4e (ADR-0022): alte Tag-Spalte gedroppt; content_type
+    // führt sauber Gallery::class.
     $row = MediaContent::create([
-        'media_content_id' => $gallery->id,
-        'media_contentable_id' => $entry->id,
-        'media_contentable_type' => Image::class,
         'content_id' => $gallery->id,
         'content_type' => Gallery::class,
         'parent_id' => $entry->id,
@@ -104,9 +93,6 @@ it('content() liefert den Audiovisual-Datensatz, wenn content_type = Audiovisual
     $av = Audiovisual::factory()->create();
 
     $row = MediaContent::create([
-        'media_content_id' => $av->id,
-        'media_contentable_id' => $entry->id,
-        'media_contentable_type' => Audiovisual::class,
         'content_id' => $av->id,
         'content_type' => Audiovisual::class,
         'parent_id' => $entry->id,
@@ -128,9 +114,6 @@ it('parent() liefert den Entry-Datensatz', function () {
     $text = Text::factory()->create();
 
     $row = MediaContent::create([
-        'media_content_id' => $text->id,
-        'media_contentable_id' => $entry->id,
-        'media_contentable_type' => Text::class,
         'content_id' => $text->id,
         'content_type' => Text::class,
         'parent_id' => $entry->id,

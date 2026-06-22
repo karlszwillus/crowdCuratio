@@ -60,9 +60,6 @@ function audiovisualAttachedTo(User $owner): array
     $av = Audiovisual::factory()->create();
 
     MediaContent::create([
-        'media_content_id' => $av->id,
-        'media_contentable_id' => $entry->id,
-        'media_contentable_type' => Audiovisual::class,
         'content_id' => $av->id,
         'content_type' => Audiovisual::class,
         'parent_id' => $entry->id,

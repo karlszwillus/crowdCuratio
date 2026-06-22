@@ -21,6 +21,7 @@ If not, see <https://www.gnu.org/licenses/>.
  */
 
 use App\Models\Comment;
+use App\Models\Entry;
 use App\Models\MediaContent;
 use App\Models\User;
 use App\Services\CommentRetrieve;
@@ -275,9 +276,10 @@ it('liefert für unbekannte Class (MediaContent) leeren pathReply ohne Crash', f
     // getImageComment so durchgereicht.
     $mediaContent = MediaContent::create([
         'position' => 1,
-        'media_content_id' => 1,
-        'media_contentable_id' => $entry->id,
-        'media_contentable_type' => 'App\\Models\\Text',
+        'content_id' => 1,
+        'content_type' => 'App\\Models\\Text',
+        'parent_id' => $entry->id,
+        'parent_type' => Entry::class,
     ]);
 
     $comment = new Comment;

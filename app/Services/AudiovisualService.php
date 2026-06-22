@@ -108,8 +108,9 @@ class AudiovisualService
      */
     public function destroy(Audiovisual $audiovisual): void
     {
-        MediaContent::where('media_content_id', $audiovisual->id)
-            ->where('media_contentable_type', Audiovisual::class)
+        // Welle 4d (ADR-0022): Lookup auf neue content_*-Spalten.
+        MediaContent::where('content_id', $audiovisual->id)
+            ->where('content_type', Audiovisual::class)
             ->delete();
 
         $audiovisual->delete();
@@ -179,17 +180,14 @@ class AudiovisualService
      */
     private function attachToEntry(int $audiovisualId, int $entryId): void
     {
-        $lastPosition = MediaContent::where('media_contentable_id', $entryId)
+        // Welle 4d (ADR-0022): lastPosition über parent_id, Insert
+        // nur noch in die neuen content_*/parent_*-Spalten.
+        $lastPosition = MediaContent::where('parent_id', $entryId)
             ->orderByDesc('position')
             ->value('position');
 
-        // Phase 4 / Block E.7b Sub-Welle 2d (ADR-0022): Doppel-
-        // schreibung alte + neue Morph-Spalten. Cleanup in 2/4.
         MediaContent::create([
             'position' => ($lastPosition ?? 0) + 1,
-            'media_content_id' => $audiovisualId,
-            'media_contentable_id' => $entryId,
-            'media_contentable_type' => Audiovisual::class,
             'content_id' => $audiovisualId,
             'content_type' => Audiovisual::class,
             'parent_id' => $entryId,

@@ -89,16 +89,6 @@ class Image extends Model implements HasComments
      *
      * @return MorphMany
      */
-    public function medias()
-    {
-        return $this->morphMany(MediaContent::class, 'media');
-    }
-
-    public function entry()
-    {
-        return $this->belongsTo(Entry::class, 'media_contentable_id', 'id');
-    }
-
     /**
      * Phase 4 / Block E.7b Sub-Welle 2c (ADR-0022). Direkter
      * Rückbezug auf die Gallery, an die das Image über
@@ -137,18 +127,6 @@ class Image extends Model implements HasComments
         $gallery = $this->gallery;
 
         return $gallery?->project();
-    }
-
-    public function parentEntry()
-    {
-        return $this->hasManyThrough(
-            MediaContent::class,
-            Comment::class,
-            'media_content_id',
-            'commentable_id',
-            'id',
-            'id'
-        );
     }
 
     /**

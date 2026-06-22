@@ -94,28 +94,18 @@ class Text extends Model implements HasComments
 
     /**
      * Get media
-     *
-     * @return MorphMany
      */
-    public function medias()
-    {
-        return $this->morphMany(MediaContent::class, 'media');
-    }
-
-    public function entry()
-    {
-        return $this->morphToMany('App\Models\Text', 'media_contentable', 'media_content', 'media_contentable_id', 'id');
-    }
-
     /**
-     * Phase 4 / Block E.7b Sub-Welle 2c (ADR-0022).
+     * Phase 4 / Block E.7b Sub-Welle 2c (ADR-0022), Sub-Welle 4c-Cleanup.
      *
      * `morphMany` über die neuen Pivot-Spalten `content_id` +
      * `content_type`. Liefert alle MediaContent-Pivot-Einträge,
-     * die diesen Text an Entries hängen. Ersetzt mittelfristig die
-     * `medias()`-Methode oben, die auf die alten
-     * media_contentable_*-Spalten geht — Konsumenten werden in
-     * Welle 4 umgestellt.
+     * die diesen Text an Entries hängen.
+     *
+     * Die alten Beziehungen `medias()` (morphMany via toter
+     * media_id/media_type-Spalten) und `entry()` (morphToMany via
+     * media_contentable_id) waren konsumentenlos und wurden in
+     * Welle 4c entfernt.
      */
     public function mediaContents(): MorphMany
     {

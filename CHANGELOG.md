@@ -10,6 +10,187 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Geändert (Block E.7b Sub-Welle 4f — Bilanz + Aufräumen)
+
+Abschluss des Cleanup-Branches:
+
+- **`tests/Feature/Services/ContentServiceDoubleWriteTest.php`**
+  umbenannt zu `ContentServicePivotInsertTest.php`. Der alte Name
+  war seit Welle 4d inhaltlich obsolet (Doppelschreibung beendet).
+- **`.werkbank/BRIEFINGS/03-block-e7b-bilanz.md`** angelegt — kurze
+  Bilanz des Branches inkl. Live-Deploy-Pfad und offener Punkte.
+- **Werkbank-Konventionen** erweitert: DocBlock-`*/`-Falle für
+  Wildcard-Pattern (`xxx_*/`) geschärft, SQLite-`dropColumn`-Falle
+  für Indizes und Composite-Constraints, Authorize-Sweep über
+  semantisch nachbarschaftliche Controller.
+
+### Entfernt (Block E.7b Sub-Welle 4e — alte media_content-Spalten gedroppt)
+
+Abschluss des E.7b-Cleanups (ADR-0022). Die drei alten Pivot-
+Spalten `media_content_id`, `media_contentable_id`,
+`media_contentable_type` sind vollständig aus Schema, Modell und
+Tests entfernt. `media_content` führt nur noch die sauberen
+content_*/parent_*-Spalten.
+
+- **Migration** `2026_06_22_140000_drop_old_media_content_columns.php`:
+  dropt die drei Spalten. `down()` legt sie ohne NOT-NULL wieder an —
+  Daten gehen verloren, voller Rollback braucht Pre-Drop-Backup.
+- **`MediaContent::$fillable`**: alte Spalten-Keys entfernt.
+- **`AuditMediaContent`-Command** komplett auf neue Spalten
+  umgeschrieben — Type-Counts pro `content_type`, Orphan-Check der
+  `content_id`, Parent-Probe auf `parent_id` gegen Entry. Empfehlung-
+  Sektion ersetzt durch knappen Status.
+- **Tests aufgeräumt:**
+  - `tests/Feature/Database/MediaContentMorphColumnsTest.php`
+    gelöscht (historischer Backfill-Pinning für die 2a-Migration,
+    nach Spalten-Drop obsolet).
+  - `MediaContentMorphRelationsTest`, `ContentProjectNavigationTest`,
+    `TextPolicyTest`, `ImagePolicyTest`, `GalleryPolicyTest`,
+    `AudiovisualPolicyTest`, `ContentRouteAuthorizationTest`,
+    `AudiovisualServiceTest`, `CommentRetrieveTest`: alle Insert-
+    Stellen auf nur noch content_*/parent_*-Spalten umgestellt.
+
+Live-Deploy-Pfad (in der Migration dokumentiert):
+1. Backup `media_content`-Tabelle.
+2. `php artisan db:migrate-media-content` (Dry-run, Drift-Report).
+3. `php artisan db:migrate-media-content --apply` falls Drift.
+4. `php artisan migrate` (Spalten-Drop).
+
+### Hinzugefügt (Block E.7b Sub-Welle 4e-prep — db:migrate-media-content)
+
+Safety-Net-Command vor dem Spalten-Drop in Welle 4e:
+`php artisan db:migrate-media-content [--apply]`. Sucht Pivot-Rows
+in `media_content`, die in den neuen `content_*`/`parent_*`-Spalten
+leer sind, aber in den alten Werte haben — und kopiert sie rüber.
+Inklusive Gallery-Schiefstand-Fix (alte Tag-Spalte führte
+`Image::class` für Galleries, wird auf `Gallery::class` korrigiert).
+
+Default ist Dry-run mit Report (matched / fixable / unrecoverable /
+gallery_schiefstand); `--apply` schreibt die Korrekturen.
+Idempotent — Re-Runs sind sicher.
+
+In der Praxis sollte der Command nichts zu tun finden, weil die
+Welle-2a-Migration bereits einmalig gebackfilled hat und Welle 2d
+bis 4d in beide Spalten parallel geschrieben hat. Er ist
+Sicherheitsnetz für Drift-Fälle (manuelle DB-Bearbeitung,
+fehlgeschlagene Migration in 2a).
+
+### Behoben (Block E.7b Sub-Welle 4d-Followup-II — Service-Tests + HappyPath auf neue Spalten)
+
+Acht Tests fragten explizit die alten media_content-Spalten ab und
+sind nach 4d rot geworden:
+
+- `HappyPathTest::Owner kann ein Audio-File hochladen` und
+  `… einen Text-Block anlegen`: Pivot-Lookup auf `parent_id` /
+  `content_type`.
+- `AudiovisualServiceTest::create`, `GalleryServiceTest::create`,
+  `TextServiceTest::create`: analog.
+- `ContentServiceDoubleWriteTest`: alle drei `it()`-Blöcke geprüft.
+  Test-Name wird inhaltlich obsolet (Doppelschreibung beendet);
+  Datei behält ihren Namen vorerst und prüft nur noch die neuen
+  Spalten. Umbenennung kommt im nächsten Aufräumblock.
+
+Der Gallery-Test bestätigt, dass `content_type` jetzt sauber
+`Gallery::class` führt — der historische `Image::class`-Schiefstand
+verschwindet mit der alten Spalte.
+
+### Behoben (Block E.7b Sub-Welle 4d-Followup — alte Spalten nullable)
+
+Nach 4d-Commit brachen HappyPath-Tests mit
+`Integrity constraint violation: NOT NULL constraint failed:
+media_content.media_content_id`. Ursache: Services schreiben nur
+noch in `content_*`/`parent_*`-Spalten, die alten Spalten haben
+aber noch `NOT NULL`-Constraints — Insert fehlt der Wert.
+
+Migration `2026_06_22_120000_make_old_media_content_columns_nullable.php`
+nimmt die NOT-NULL-Constraints von `media_content_id`,
+`media_contentable_id`, `media_contentable_type`. Vollständiger
+Drop folgt in Welle 4e nach Backfill-Verifikation.
+
+### Geändert (Block E.7b Sub-Welle 4d — Service-Doppelschreibung entfernt)
+
+Sechs Services schreiben/lesen jetzt ausschließlich aus den neuen
+`content_*` / `parent_*`-Spalten. Die in Welle 2d eingeführte
+Doppelschreibung in die alten `media_contentable_*` /
+`media_content_id`-Spalten ist damit beendet.
+
+- **`TextService::attachToEntry`**: nur noch neue Spalten in
+  `MediaContent::firstOrCreate`.
+- **`TextService::detachFromEntries`**: Lookup auf `content_id` /
+  `content_type`.
+- **`AudiovisualService::attachToEntry`**: lastPosition über
+  `parent_id`, Insert nur in neue Spalten.
+- **`AudiovisualService::destroy`**: Pivot-Lookup auf `content_id`
+  / `content_type`.
+- **`GalleryService::attachToEntry`**: lastPosition über
+  `parent_id`, Insert mit korrekter `content_type = Gallery::class`
+  (löst den historischen Image-Schiefstand sauber auf).
+- **`GalleryService::detachFromEntries`**: behebt den latenten Bug,
+  bei dem die alte Variante `media_contentable_id` auf der
+  `$galleryId` suchte (Entry-Spalte mit Gallery-ID-Wert) und
+  zusätzlich auf `Gallery::class` filterte (alte Tag-Spalte hielt
+  aber `Image::class`). Die Methode fand also nie etwas und ließ
+  Pivot-Leichen liegen.
+- **`ImageService::detachFromEntries`**: Lookup auf
+  `content_id` / `content_type`. Findet typischerweise nichts,
+  weil Images über Gallery verknüpft sind, nicht direkt.
+- **`ContentReorderService::reorderContent`**: Drag-and-Drop
+  zwischen Entries schreibt auf `parent_id` statt
+  `media_contentable_id`.
+- **`LogService::getParentText`**: Manual-Join auf
+  `media_content.content_id` / `parent_id`, Diskriminator auf
+  `content_type`.
+
+`MediaContent::$fillable` behält die alten Spalten-Keys noch,
+weil Tests in `tests/Feature/Database/`,
+`tests/Feature/Models/` und `tests/Feature/Http/`
+sie aktuell beim Anlegen von Pivot-Rows mitliefern. Cleanup
+zusammen mit dem Spalten-Drop in Welle 4e.
+
+### Entfernt (Block E.7b Sub-Welle 4c — tote Model-Beziehungen)
+
+Cleanup der konsumentenlosen Eloquent-Beziehungen auf den alten
+`media_contentable_*` / `media_content_id`-Spalten:
+
+- **`MediaContent::media()`** — morphTo ohne Spalten-Argument
+  (default `media_id`/`media_type`, beides existiert nicht im
+  Schema). Toter Code seit Anbeginn.
+- **`Comment::media()`** — morphToMany via
+  `media_contentable_id`. Keine Konsumenten in app/, resources/
+  oder tests/.
+- **`Text::medias()`** + **`Text::entry()`** — morphMany auf die
+  toten `media_id`/`media_type`-Spalten bzw. morphToMany via
+  `media_contentable_id`. Beide konsumentenlos. `Text::mediaContents()`
+  (Welle 2c, via `content_id`/`content_type`) ist die einzige aktive
+  Beziehung.
+- **`Image::medias()`**, **`Image::entry()`**,
+  **`Image::parentEntry()`** — drei tote Beziehungen analog.
+  `Image::mediaContents()`, `Image::gallery()` und `Image::project()`
+  bleiben.
+
+`MediaContent::$fillable` behält die alten Spalten-Keys bis zur
+Service-Doppelschreibung-Entfernung in Welle 4d / Spalten-Drop in
+Welle 4e.
+
+### Geändert (Block E.7b Sub-Welle 4b — ProjectController auf neue Spalten)
+
+Fortsetzung des E.7b-Cleanup-Fadens (ADR-0022). Sammelt die letzten
+Lesungen der alten `media_contentable_*` / `media_content_id`-Spalten
+in den Controllern auf die neuen `content_*` / `parent_*`-Spalten um.
+Doppelschreibung in den Services (4d offen) hält die alten Spalten
+parallel — bis Welle 4e droppt.
+
+- **`ProjectController::getParentText`**: Manual-Join auf
+  `media_content.content_id` (statt `media_content_id`),
+  `media_content.parent_id` (statt `media_contentable_id`) und
+  Diskriminator-Where auf `content_type`.
+- **`ProjectController::allData`** Translation-Status-Sammler: drei
+  Diskriminator-Vergleiche und drei `find()`-Calls in der Schleife
+  über `$entry->mediaContent` von `media_contentable_type` /
+  `media_content_id` auf `content_type` / `content_id` umgestellt.
+  Der Gallery-Pfad nutzt jetzt sauber `content_type == 'Gallery'`
+  statt des historischen `'Image'`-Schiefstands.
+
 ### Behoben (Block E.7b Sub-Welle 4a-Hotfix-II.d — Owner-Bypass-Bug + Translation-Test-Reflection)
 
 Nach II.c-Verifikation gefunden:

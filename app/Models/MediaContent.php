@@ -46,19 +46,14 @@ class MediaContent extends Model implements HasComments
     /**
      * The attributes that are mass assignable.
      *
-     * Phase 4 / Block E.7b Sub-Welle 2b (ADR-0022): die neuen
-     * Morph-Spalten content_id/content_type/parent_id/parent_type
-     * werden während der Übergangswelle doppelt mit den alten
-     * media_content_id/media_contentable_*-Spalten geführt.
-     * Services schreiben in 2d in beide; Cleanup der alten in
-     * Sub-Welle 4.
+     * Phase 4 / Block E.7b Sub-Welle 4e (ADR-0022): Cleanup. Die alten
+     * media_content_id- und media_contentable-Spalten sind in der
+     * Spalten-Drop-Migration entfernt; das Modell führt nur noch die
+     * neuen content_- und parent_-Spalten.
      *
      * @var list<string>
      */
     protected $fillable = [
-        'media_content_id',
-        'media_contentable_id',
-        'media_contentable_type',
         'content_id',
         'content_type',
         'parent_id',
@@ -90,16 +85,6 @@ class MediaContent extends Model implements HasComments
             }
 
         );
-    }
-
-    /**
-     * Get media
-     *
-     * @return MorphTo
-     */
-    public function media()
-    {
-        return $this->morphTo()->orderBy('position', 'DESC');
     }
 
     /**

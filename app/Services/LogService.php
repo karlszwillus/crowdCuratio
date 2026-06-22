@@ -178,13 +178,16 @@ class LogService
                     ->get();
             case 'images':
             case 'texts':
+                // Welle 4d (ADR-0022): join geht auf neue Spalten
+                // content_id / parent_id, Diskriminator-Where auf
+                // content_type.
                 return DB::table($this->table)
-                    ->join('media_content', $this->table.'.id', '=', 'media_content.media_content_id')
-                    ->join('entries', 'entries.id', '=', 'media_content.media_contentable_id')
+                    ->join('media_content', $this->table.'.id', '=', 'media_content.content_id')
+                    ->join('entries', 'entries.id', '=', 'media_content.parent_id')
                     ->join('chapters', 'chapters.id', '=', 'entries.chapter_id')
                     ->select('chapters.name as chapter_name', 'entries.name as entry_name')
                     ->where($this->table.'.id', '=', $id)
-                    ->where('media_content.media_contentable_type', '=', $this->model)
+                    ->where('media_content.content_type', '=', $this->model)
                     ->get();
         }
     }

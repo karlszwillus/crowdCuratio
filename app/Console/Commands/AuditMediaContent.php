@@ -31,31 +31,20 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Phase 4 / Block E.7b, ADR-0022.
+ * Phase 4 / Block E.7b, ADR-0022, in Welle 4e umgeschrieben.
  *
- * Read-only-Audit der `media_content`-Pivot-Tabelle. Vor dem
- * Schema-Refactor brauchen wir Klarheit über die historischen
- * Belegungen der `media_contentable_type`-Spalte — die ist
- * semantisch keine `morphTo`-Parent-Spalte, sondern eine
- * Content-Tag-Spalte mit teils inkonsistenten Werten:
- *
- *   - `Text::class`         (gesetzt von TextService::attachToEntry)
- *   - `Audiovisual::class`  (gesetzt von AudiovisualService::attachToEntry)
- *   - `Image::class`        (gesetzt von GalleryService::attachToEntry,
- *                            historisch — saveGallery hatte
- *                            'App\Models\Image' hartkodiert; matcht
- *                            den detachFromEntries-Zugriff nicht)
- *
- * Der Command zählt die tatsächlichen Werte pro Spalte und prüft,
- * ob `media_content_id` auf eine existierende Row im entsprechenden
- * Content-Modell zeigt. Die Empfehlung für die Migration (Welle 2)
- * basiert auf diesem Ist-Stand.
+ * Read-only-Audit der `media_content`-Pivot-Tabelle. Nach dem
+ * Spalten-Drop läuft der Audit auf den neuen content_- und parent_-
+ * Spalten: Type-Counts pro `content_type`, Orphan-Check der
+ * `content_id` gegen das jeweilige Content-Modell, Parent-Probe
+ * der `parent_id` gegen Entry.
  *
  * Schritte:
  *   php artisan db:audit-media-content
- *     Read-only. Markdown-Tabellen für: Type-Counts pro `media_contentable_type`,
- *     Orphans pro vermutetem Content-Modell, Cross-Match-Probe gegen Entry.
- *     Exit-Code 0 unabhängig vom Befund — der Command ist Diagnose, nicht Gate.
+ *     Read-only. Markdown-Tabellen für: Type-Counts, Orphans pro
+ *     Content-Modell, Cross-Match-Probe gegen Entry.
+ *     Exit-Code 0 unabhängig vom Befund — der Command ist Diagnose,
+ *     nicht Gate.
  */
 class AuditMediaContent extends Command
 {
@@ -90,20 +79,21 @@ class AuditMediaContent extends Command
     }
 
     /**
-     * Zählt rows pro `media_contentable_type`-Wert. Erwartet konkret:
+     * Zählt rows pro `content_type`-Wert. Erwartet:
      *   Text::class         → einer pro saveText-Create
      *   Audiovisual::class  → einer pro save-Audiovisual-Create
-     *   Image::class        → in Wahrheit Gallery-Eintrag (historische
-     *                         Belegung von GalleryService::attachToEntry)
+     *   Gallery::class      → einer pro saveGallery-Create (seit Welle 4d
+     *                         sauber; vor 4d hieß die alte Tag-Spalte
+     *                         für Galleries fälschlich Image::class).
      */
     protected function renderTypeCounts(): void
     {
-        $this->line('## Verteilung media_contentable_type');
+        $this->line('## Verteilung content_type');
         $this->newLine();
 
         $rows = DB::table('media_content')
-            ->select('media_contentable_type', DB::raw('COUNT(*) as count'))
-            ->groupBy('media_contentable_type')
+            ->select('content_type', DB::raw('COUNT(*) as count'))
+            ->groupBy('content_type')
             ->orderByDesc('count')
             ->get();
 
@@ -113,23 +103,23 @@ class AuditMediaContent extends Command
             return;
         }
 
-        $this->line('| media_contentable_type        | count |');
+        $this->line('| content_type                  | count |');
         $this->line('|-------------------------------|------:|');
         foreach ($rows as $row) {
-            $type = $row->media_contentable_type ?? '(null)';
+            $type = $row->content_type ?? '(null)';
             $this->line(sprintf('| %-29s | %5d |', $type, $row->count));
         }
     }
 
     /**
-     * Für jede Content-Klasse: zählt media_content_ids, die NICHT auf
+     * Für jede Content-Klasse: zählt content_ids, die NICHT auf
      * eine existierende Row im jeweiligen Content-Modell zeigen. Diese
      * sind Migrationskandidaten für Cleanup oder zeigen Soft-Deletes,
      * die der Pivot nicht mitgeführt hat.
      */
     protected function renderContentOrphans(): void
     {
-        $this->line('## Cross-Check: media_content_id gegen vermutetes Content-Modell');
+        $this->line('## Cross-Check: content_id gegen Content-Modell');
         $this->newLine();
 
         $contentModels = [
@@ -139,13 +129,13 @@ class AuditMediaContent extends Command
             Image::class => ['table' => 'images', 'column' => 'id'],
         ];
 
-        $this->line('| Type-Tag           | mapped to table | matched ids | orphan ids |');
+        $this->line('| content_type       | mapped to table | matched ids | orphan ids |');
         $this->line('|--------------------|-----------------|------------:|-----------:|');
 
         foreach ($contentModels as $class => $target) {
             $taggedIds = DB::table('media_content')
-                ->where('media_contentable_type', $class)
-                ->pluck('media_content_id');
+                ->where('content_type', $class)
+                ->pluck('content_id');
 
             $matched = 0;
             $orphan = 0;
@@ -175,38 +165,20 @@ class AuditMediaContent extends Command
 
         $this->newLine();
         $this->comment(
-            'Hinweis: ein `Image::class`-Tag mit Match in der `galleries`- '.
-            'statt `images`-Tabelle wäre der historische Gallery-Schiefstand. '.
-            'Wenn die Image-Zeile viele orphans und Gallery viele matches '.
-            'auf Image-Tags hat, ist das genau der Befund.'
+            'Hinweis: nach Welle 4e ist der Pivot konsistent. '.
+            'Orphans in einer Spalte deuten auf Soft-Deletes des Content-Modells, '.
+            'die der Pivot nicht mitgeführt hat, oder auf manuelle DB-Drift.'
         );
-        $this->newLine();
-
-        // Spezialprobe: Image::class-Tags gegen Galleries (historischer Fall)
-        $imageTagsAgainstGalleries = DB::table('media_content')
-            ->where('media_contentable_type', Image::class)
-            ->whereIn(
-                'media_content_id',
-                DB::table('galleries')->select('id')
-            )
-            ->count();
-
-        $this->line('Spezialprobe (historischer Befund):');
-        $this->line(sprintf(
-            '  Image::class-Tags, deren media_content_id eine bestehende Gallery trifft: %d',
-            $imageTagsAgainstGalleries,
-        ));
     }
 
     /**
-     * Für jede Row prüfen, ob `media_contentable_id` auf eine
-     * existierende Entry-Row zeigt. Heute ist Entry der einzige
-     * Parent-Typ in der Praxis (laut Service-Code); diese Probe
-     * pinnt diese Annahme empirisch.
+     * Für jede Row prüfen, ob `parent_id` auf eine existierende
+     * Entry-Row zeigt. Heute ist Entry der einzige Parent-Typ in
+     * der Praxis (laut Service-Code); diese Probe pinnt die Annahme.
      */
     protected function renderParentProbe(): void
     {
-        $this->line('## Parent-Probe: media_contentable_id gegen Entry');
+        $this->line('## Parent-Probe: parent_id gegen Entry');
         $this->newLine();
 
         $total = DB::table('media_content')->count();
@@ -218,7 +190,7 @@ class AuditMediaContent extends Command
 
         $matched = DB::table('media_content')
             ->whereIn(
-                'media_contentable_id',
+                'parent_id',
                 DB::table((new Entry)->getTable())->select('id')
             )
             ->count();
@@ -233,28 +205,19 @@ class AuditMediaContent extends Command
 
         $this->newLine();
         if ($orphan === 0) {
-            $this->info('Alle media_contentable_id zeigen auf eine Entry-Row. Migrationsplan kann parent_type = Entry::class für alle Rows annehmen.');
+            $this->info('Alle parent_id zeigen auf eine Entry-Row.');
         } else {
-            $this->warn("{$orphan} Rows zeigen NICHT auf eine Entry-Row. Vor der Migration manuell prüfen — möglicherweise hängt ein Content an einer Gallery oder einem anderen Parent.");
+            $this->warn("{$orphan} Rows zeigen NICHT auf eine Entry-Row. Drift im Pivot — manuell prüfen.");
         }
     }
 
     protected function renderRecommendation(): void
     {
-        $this->line('## Empfehlung für die Migration (Sub-Welle 2)');
+        $this->line('## Status');
         $this->newLine();
-        $this->line('1. Neue Spalten anlegen: content_id, content_type, parent_id, parent_type.');
-        $this->line('2. Daten verteilen:');
-        $this->line('     - content_id      ← media_content_id');
-        $this->line('     - content_type    ← Mapping aus media_contentable_type:');
-        $this->line('         Text::class         → Text::class');
-        $this->line('         Audiovisual::class  → Audiovisual::class');
-        $this->line('         Image::class (mit Match in galleries) → Gallery::class');
-        $this->line('         (sonst content_type = media_contentable_type 1:1 lassen)');
-        $this->line('     - parent_id        ← media_contentable_id');
-        $this->line('     - parent_type      ← Entry::class (laut Parent-Probe oben)');
-        $this->line('3. Modelle umstellen: morphTo(content), morphTo(parent), project()-Methode pro Content-Modell.');
-        $this->line('4. Services anpassen: TextService/AudiovisualService/GalleryService/ImageService.');
-        $this->line('5. Smoke-Pause vor Cleanup der alten Spalten.');
+        $this->line('media_content läuft seit Welle 4e auf den neuen content_*/parent_*-Spalten.');
+        $this->line('Bei Drift in den obigen Tabellen entweder über `db:migrate-media-content --apply`');
+        $this->line('rüber-mappen (wenn alte Spalten noch im Backup vorhanden) oder die einzelnen');
+        $this->line('Rows manuell prüfen.');
     }
 }

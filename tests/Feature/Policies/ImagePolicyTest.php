@@ -68,9 +68,6 @@ function imageAttachedTo(User $owner): array
     $image = Image::factory()->create(['gallery_id' => $gallery->id]);
 
     MediaContent::create([
-        'media_content_id' => $gallery->id,
-        'media_contentable_id' => $entry->id,
-        'media_contentable_type' => Image::class,
         'content_id' => $gallery->id,
         'content_type' => Gallery::class,
         'parent_id' => $entry->id,

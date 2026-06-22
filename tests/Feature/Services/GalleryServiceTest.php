@@ -64,9 +64,12 @@ it('create legt Gallery mit MediaContent-Attach an Entry an', function () {
     expect($gallery->id)->toBeInt();
     expect($gallery->title)->toBe('Test-Gallery');
 
-    $media = MediaContent::where('media_content_id', $gallery->id)
-        ->where('media_contentable_id', $entry->id)
-        ->where('media_contentable_type', Image::class)
+    // E.7b 4d (ADR-0022): Pivot via content_*/parent_*-Spalten,
+    // content_type jetzt korrekt Gallery::class (statt historisch
+    // Image::class).
+    $media = MediaContent::where('content_id', $gallery->id)
+        ->where('parent_id', $entry->id)
+        ->where('content_type', Gallery::class)
         ->first();
     expect($media)->not->toBeNull();
 });

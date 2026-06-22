@@ -26,7 +26,6 @@ use App\Data\TextData;
 use App\Models\Audiovisual;
 use App\Models\Entry;
 use App\Models\Gallery;
-use App\Models\Image;
 use App\Models\MediaContent;
 use App\Models\Text;
 use App\Models\User;
@@ -37,21 +36,22 @@ use Tests\TestCase;
 
 /*
 |--------------------------------------------------------------------------
-| Content-Services — Doppelschreibung (E.7b Sub-Welle 2d, ADR-0022)
+| Content-Services — Pivot-Schreibpfade (E.7b Sub-Welle 2d → 4d, ADR-0022)
 |--------------------------------------------------------------------------
 |
-| Pinnt, dass die drei attachToEntry-Aufrufer
-| (TextService, GalleryService, AudiovisualService) während der
-| Übergangswelle sowohl die alten media_contentable-Spalten als
-| auch die neuen content- und parent-Spalten korrekt befüllen.
+| Diese Datei hieß ursprünglich „DoubleWriteTest", weil die
+| attachToEntry-Aufrufer in Welle 2d alte media_contentable-Spalten
+| und neue content-/parent-Spalten parallel befüllt haben. Mit
+| Welle 4d ist die Doppelschreibung beendet; in Welle 4f wurde
+| die Datei in „PivotInsertTest" umbenannt, weil sie inhaltlich
+| genau das ist: der Insert-Vertrag der Services gegen den Pivot.
 |
-| Der Gallery-Test pinnt explizit den historischen Schiefstand-
-| Fix: alte media_contentable_type bleibt Image::class
-| (Konsumenten, die nach Image-Tags suchen, sehen das Pivot
-| weiter), neue content_type ist Gallery::class.
+| Der Gallery-Test bestätigt zusätzlich, dass content_type sauber
+| Gallery::class trägt — der historische Image::class-Schiefstand
+| ist mit der alten Spalte verschwunden.
 */
 
-it('TextService::create schreibt alte UND neue Pivot-Spalten', function () {
+it('TextService::create schreibt Pivot-Row mit content_- und parent_-Spalten', function () {
     /** @var TestCase $this */
     /** @var User $owner */
     $owner = User::factory()->create();
@@ -68,16 +68,16 @@ it('TextService::create schreibt alte UND neue Pivot-Spalten', function () {
     );
 
     /** @var MediaContent $pivot */
-    $pivot = MediaContent::where('media_content_id', $text->id)->firstOrFail();
-    expect($pivot->media_contentable_type)->toBe(Text::class);
-    expect((int) $pivot->media_contentable_id)->toBe($entry->id);
+    $pivot = MediaContent::where('content_id', $text->id)
+        ->where('content_type', Text::class)
+        ->firstOrFail();
     expect($pivot->content_type)->toBe(Text::class);
     expect((int) $pivot->content_id)->toBe($text->id);
     expect($pivot->parent_type)->toBe(Entry::class);
     expect((int) $pivot->parent_id)->toBe($entry->id);
 });
 
-it('AudiovisualService::create schreibt alte UND neue Pivot-Spalten', function () {
+it('AudiovisualService::create schreibt Pivot-Row mit content_- und parent_-Spalten', function () {
     /** @var TestCase $this */
     /** @var User $owner */
     $owner = User::factory()->create();
@@ -96,15 +96,16 @@ it('AudiovisualService::create schreibt alte UND neue Pivot-Spalten', function (
     );
 
     /** @var MediaContent $pivot */
-    $pivot = MediaContent::where('media_content_id', $av->id)->firstOrFail();
-    expect($pivot->media_contentable_type)->toBe(Audiovisual::class);
+    $pivot = MediaContent::where('content_id', $av->id)
+        ->where('content_type', Audiovisual::class)
+        ->firstOrFail();
     expect($pivot->content_type)->toBe(Audiovisual::class);
     expect((int) $pivot->content_id)->toBe($av->id);
     expect($pivot->parent_type)->toBe(Entry::class);
     expect((int) $pivot->parent_id)->toBe($entry->id);
 });
 
-it('GalleryService::create schreibt alte media_contentable_type=Image::class UND neue content_type=Gallery::class', function () {
+it('GalleryService::create schreibt Pivot-Row mit content_type=Gallery::class', function () {
     /** @var TestCase $this */
     /** @var User $owner */
     $owner = User::factory()->create();
@@ -123,12 +124,13 @@ it('GalleryService::create schreibt alte media_contentable_type=Image::class UND
     );
 
     /** @var MediaContent $pivot */
-    $pivot = MediaContent::where('media_content_id', $gallery->id)->firstOrFail();
+    $pivot = MediaContent::where('content_id', $gallery->id)
+        ->where('content_type', Gallery::class)
+        ->firstOrFail();
 
-    // Historischer Schiefstand bleibt für Übergangswelle in alter Spalte:
-    expect($pivot->media_contentable_type)->toBe(Image::class);
-
-    // Neue Spalte trägt jetzt den korrekten Wert:
+    // E.7b 4d (ADR-0022): historischer Schiefstand (alte Tag-Spalte
+    // hatte Image::class für Galleries) verschwindet mit der alten
+    // Spalte. Neue content_type-Spalte ist sauber.
     expect($pivot->content_type)->toBe(Gallery::class);
     expect((int) $pivot->content_id)->toBe($gallery->id);
     expect($pivot->parent_type)->toBe(Entry::class);

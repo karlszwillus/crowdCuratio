@@ -70,17 +70,12 @@ beforeEach(function () {
 
 /**
  * Hängt ein Content-Modell via MediaContent-Pivot an einen Entry.
- * Beide alte (media_contentable_*) und neue (content_/parent_)
- * Spalten werden befüllt, damit die Tests sowohl gegen die
- * Doppelschreibungs-Welle als auch gegen den späteren Cleanup robust
- * laufen.
+ * E.7b 4e (ADR-0022): nur noch neue content_- und parent_-Spalten,
+ * die alten media_contentable-Spalten sind gedroppt.
  */
 function attachToEntry(string $contentClass, int $contentId, Entry $entry): MediaContent
 {
     return MediaContent::create([
-        'media_content_id' => $contentId,
-        'media_contentable_id' => $entry->id,
-        'media_contentable_type' => $contentClass,
         'content_id' => $contentId,
         'content_type' => $contentClass,
         'parent_id' => $entry->id,
