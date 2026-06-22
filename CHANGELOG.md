@@ -10,6 +10,20 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Geändert (Block E.7b Sub-Welle 4f — Bilanz + Aufräumen)
+
+Abschluss des Cleanup-Branches:
+
+- **`tests/Feature/Services/ContentServiceDoubleWriteTest.php`**
+  umbenannt zu `ContentServicePivotInsertTest.php`. Der alte Name
+  war seit Welle 4d inhaltlich obsolet (Doppelschreibung beendet).
+- **`.werkbank/BRIEFINGS/03-block-e7b-bilanz.md`** angelegt — kurze
+  Bilanz des Branches inkl. Live-Deploy-Pfad und offener Punkte.
+- **Werkbank-Konventionen** erweitert: DocBlock-`*/`-Falle für
+  Wildcard-Pattern (`xxx_*/`) geschärft, SQLite-`dropColumn`-Falle
+  für Indizes und Composite-Constraints, Authorize-Sweep über
+  semantisch nachbarschaftliche Controller.
+
 ### Entfernt (Block E.7b Sub-Welle 4e — alte media_content-Spalten gedroppt)
 
 Abschluss des E.7b-Cleanups (ADR-0022). Die drei alten Pivot-

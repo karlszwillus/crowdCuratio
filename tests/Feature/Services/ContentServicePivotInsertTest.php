@@ -42,16 +42,16 @@ use Tests\TestCase;
 | Diese Datei hieß ursprünglich „DoubleWriteTest", weil die
 | attachToEntry-Aufrufer in Welle 2d alte media_contentable-Spalten
 | und neue content-/parent-Spalten parallel befüllt haben. Mit
-| Welle 4d ist die Doppelschreibung beendet; die Tests pinnen jetzt
-| nur noch die neuen Spalten. Datei-Umbenennung folgt im nächsten
-| Aufräumblock.
+| Welle 4d ist die Doppelschreibung beendet; in Welle 4f wurde
+| die Datei in „PivotInsertTest" umbenannt, weil sie inhaltlich
+| genau das ist: der Insert-Vertrag der Services gegen den Pivot.
 |
 | Der Gallery-Test bestätigt zusätzlich, dass content_type sauber
 | Gallery::class trägt — der historische Image::class-Schiefstand
 | ist mit der alten Spalte verschwunden.
 */
 
-it('TextService::create schreibt Pivot-Row mit content_*/parent_*', function () {
+it('TextService::create schreibt Pivot-Row mit content_- und parent_-Spalten', function () {
     /** @var TestCase $this */
     /** @var User $owner */
     $owner = User::factory()->create();
@@ -77,7 +77,7 @@ it('TextService::create schreibt Pivot-Row mit content_*/parent_*', function () 
     expect((int) $pivot->parent_id)->toBe($entry->id);
 });
 
-it('AudiovisualService::create schreibt Pivot-Row mit content_*/parent_*', function () {
+it('AudiovisualService::create schreibt Pivot-Row mit content_- und parent_-Spalten', function () {
     /** @var TestCase $this */
     /** @var User $owner */
     $owner = User::factory()->create();
