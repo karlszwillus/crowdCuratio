@@ -8,2055 +8,733 @@ die Versionierung folgt [Semantic Versioning 2.0.0](https://semver.org/lang/de/)
 Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 `Behoben`, `Sicherheit`.
 
+
 ## [Unreleased]
+
+Strukturelles Refactoring-Release. Schwerpunkte: Service-Layer-Extraktion
+aus den Fat Controllern (Project, Chapter, Entry, Content, Audiovisual)
+auf Basis von DTOs, Konsolidierung des Permission-Modells auf Spatie
+mit project-scoped Policies, Authorization-Härtung über alle
+Content-Controller, sauber polymorpher Refactor der `media_content`-
+Pivot-Tabelle und Anlage einer Architektur-Dokumentation für
+Entwickler. Begleitet von einem vorgezogenen Coverage-Push (von
+~27 % auf 55 %), einer kompletten Major-Upgrade-Welle (PHP 8.1 → 8.4,
+Laravel 8 → 12, Spatie- und Test-Tooling auf jeweils aktuellem Major)
+und mehreren Sicherheits-Sweeps zur Schließung von Authorization-
+Bypässen, Privilege-Escalation-Pfaden und Audit-Befunden in
+Drittabhängigkeiten.
 
 ### Hinzugefügt
 
-- **`docs/architecture.md`** angelegt. Beschreibt das Domänenmodell
-  (Project → Chapter → Entry → MediaContent → Content), das
-  Authorization-Modell (`OwnerScopedPolicy` + abgeschaltetes Spatie-
-  `Gate::before` über `register_permission_check_method => false`),
-  die Service-Layer-Struktur, die Routing-Schichtung und die Test-
-  Pyramide. Plus eine klare Abgrenzung, was nicht ins Dokument
-  gehört (PDF-Pipeline, Storage-Strategie, Frontend-Build,
-  utf8mb4-Migration, Bug-Historie). Für Entwickler gedacht, die am
-  Code arbeiten.
-
-### Sicherheit (Security-Sweep-III — Phase-4-Review-Findings)
-
-Sechs Lücken zweiter Ordnung aus den Phase-4-Reviewer-Subagents
-geschlossen. Eigener PR vor Phase-4-Abschluss (`docs/architecture.md`,
-KONTEXT-Bilanz, ADR-Index, TODO-Sync).
-
-**HIGH:**
-- **`ProjectController::resetValue`** — vorher `$request['subjectType']::findOrFail()`
-  ohne Whitelist + ohne Authorize. RCE-naher Vektor, weil ein
-  Angreifer beliebige Klassen-Strings durchschießen konnte. Jetzt:
-  Whitelist auf die sechs curating-relevanten Content-Modelle
-  (Chapter, Entry, Text, Image, Gallery, Audiovisual) + project-
-  scoped `authorize('update', $model)`.
-- **`ChapterController::index`** — Reader-Bypass via
-  `GET /chapters?id=42`: rendert die volle Edit-Hierarchie fremder
-  Projects. Welle-3- und Welle-4a-Hotfix-II hatten das übersehen,
-  weil `index` semantisch ein Listen-Endpunkt aussieht, aber
-  tatsächlich `Project::withEditTree()->findOrFail($request['id'])`
-  lädt. Jetzt: `authorize('view', $project)` direkt nach
-  Modell-Auflösung.
-- **`ProjectController::inviteUserForProject`** — Info-Leak: zeigte
-  Rollen + Permissions fremder User auf fremden Projects. Jetzt:
-  `Project::findOrFail($projectId)` + `authorize('update', $project)`
-  — gleicher Gate wie auf der Permission-Verwaltung in
-  `setPermissionForUserOnProject`.
-
-**MEDIUM:**
-- **`ProjectController::saveCommentProject` + `setCommentStatusProject`**
-  — beide hatten `Project $project` als toter Route-Model-Binding
-  (Route `POST /comment/project/{id}/save` hat `{id}`, nicht
-  `{project}`; `POST /comment/project/status` hat gar keinen
-  Project-Param). Laravel instantiierte ein leeres Project, kein
-  Authorize. Jetzt: `Project::findOrFail($request->route('id'))`
-  bzw. `CommentService::resolveProjectForComment($commentId)`
-  + `authorize('comment', $project)`.
-- **`ProjectController::getParentText`** — SQLi-Surface über die
-  String-Parameter `$table` und `$model`. Whitelist auf
-  `entries`/`images`/`texts` und `Entry::class`/`Text::class`/
-  `Image::class`.
-
-**Frontend-Setter-Folgesweep** geprüft: nur `.addImage`-Click hatte
-den entryId-Bug, der bereits im vorigen Hotfix gefixt wurde.
-`.addContent` setzt entryId korrekt für Text/Audiovisual/Gallery,
-`.addEntry` setzt chapterId korrekt. Keine analogen Lücken.
-
-**Pinning-Tests:** sechs neue Tests in
-`ProjectControllerAuthorizationTest`, `forgetCachedPermissions()`
-in jedem `beforeEach`-Lokal.
-
-### Geändert (Block E.7b Sub-Welle 4f — Bilanz + Aufräumen)
-
-Abschluss des Cleanup-Branches:
-
-- **`tests/Feature/Services/ContentServiceDoubleWriteTest.php`**
-  umbenannt zu `ContentServicePivotInsertTest.php`. Der alte Name
-  war seit Welle 4d inhaltlich obsolet (Doppelschreibung beendet).
-- **`.werkbank/BRIEFINGS/03-block-e7b-bilanz.md`** angelegt — kurze
-  Bilanz des Branches inkl. Live-Deploy-Pfad und offener Punkte.
-- **Werkbank-Konventionen** erweitert: DocBlock-`*/`-Falle für
-  Wildcard-Pattern (`xxx_*/`) geschärft, SQLite-`dropColumn`-Falle
-  für Indizes und Composite-Constraints, Authorize-Sweep über
-  semantisch nachbarschaftliche Controller.
-
-### Entfernt (Block E.7b Sub-Welle 4e — alte media_content-Spalten gedroppt)
-
-Abschluss des E.7b-Cleanups (ADR-0022). Die drei alten Pivot-
-Spalten `media_content_id`, `media_contentable_id`,
-`media_contentable_type` sind vollständig aus Schema, Modell und
-Tests entfernt. `media_content` führt nur noch die sauberen
-content_*/parent_*-Spalten.
-
-- **Migration** `2026_06_22_140000_drop_old_media_content_columns.php`:
-  dropt die drei Spalten. `down()` legt sie ohne NOT-NULL wieder an —
-  Daten gehen verloren, voller Rollback braucht Pre-Drop-Backup.
-- **`MediaContent::$fillable`**: alte Spalten-Keys entfernt.
-- **`AuditMediaContent`-Command** komplett auf neue Spalten
-  umgeschrieben — Type-Counts pro `content_type`, Orphan-Check der
-  `content_id`, Parent-Probe auf `parent_id` gegen Entry. Empfehlung-
-  Sektion ersetzt durch knappen Status.
-- **Tests aufgeräumt:**
-  - `tests/Feature/Database/MediaContentMorphColumnsTest.php`
-    gelöscht (historischer Backfill-Pinning für die 2a-Migration,
-    nach Spalten-Drop obsolet).
-  - `MediaContentMorphRelationsTest`, `ContentProjectNavigationTest`,
-    `TextPolicyTest`, `ImagePolicyTest`, `GalleryPolicyTest`,
-    `AudiovisualPolicyTest`, `ContentRouteAuthorizationTest`,
-    `AudiovisualServiceTest`, `CommentRetrieveTest`: alle Insert-
-    Stellen auf nur noch content_*/parent_*-Spalten umgestellt.
-
-Live-Deploy-Pfad (in der Migration dokumentiert):
-1. Backup `media_content`-Tabelle.
-2. `php artisan db:migrate-media-content` (Dry-run, Drift-Report).
-3. `php artisan db:migrate-media-content --apply` falls Drift.
-4. `php artisan migrate` (Spalten-Drop).
-
-### Hinzugefügt (Block E.7b Sub-Welle 4e-prep — db:migrate-media-content)
-
-Safety-Net-Command vor dem Spalten-Drop in Welle 4e:
-`php artisan db:migrate-media-content [--apply]`. Sucht Pivot-Rows
-in `media_content`, die in den neuen `content_*`/`parent_*`-Spalten
-leer sind, aber in den alten Werte haben — und kopiert sie rüber.
-Inklusive Gallery-Schiefstand-Fix (alte Tag-Spalte führte
-`Image::class` für Galleries, wird auf `Gallery::class` korrigiert).
-
-Default ist Dry-run mit Report (matched / fixable / unrecoverable /
-gallery_schiefstand); `--apply` schreibt die Korrekturen.
-Idempotent — Re-Runs sind sicher.
-
-In der Praxis sollte der Command nichts zu tun finden, weil die
-Welle-2a-Migration bereits einmalig gebackfilled hat und Welle 2d
-bis 4d in beide Spalten parallel geschrieben hat. Er ist
-Sicherheitsnetz für Drift-Fälle (manuelle DB-Bearbeitung,
-fehlgeschlagene Migration in 2a).
-
-### Behoben (Block E.7b Sub-Welle 4d-Followup-II — Service-Tests + HappyPath auf neue Spalten)
-
-Acht Tests fragten explizit die alten media_content-Spalten ab und
-sind nach 4d rot geworden:
-
-- `HappyPathTest::Owner kann ein Audio-File hochladen` und
-  `… einen Text-Block anlegen`: Pivot-Lookup auf `parent_id` /
-  `content_type`.
-- `AudiovisualServiceTest::create`, `GalleryServiceTest::create`,
-  `TextServiceTest::create`: analog.
-- `ContentServiceDoubleWriteTest`: alle drei `it()`-Blöcke geprüft.
-  Test-Name wird inhaltlich obsolet (Doppelschreibung beendet);
-  Datei behält ihren Namen vorerst und prüft nur noch die neuen
-  Spalten. Umbenennung kommt im nächsten Aufräumblock.
-
-Der Gallery-Test bestätigt, dass `content_type` jetzt sauber
-`Gallery::class` führt — der historische `Image::class`-Schiefstand
-verschwindet mit der alten Spalte.
-
-### Behoben (Block E.7b Sub-Welle 4d-Followup — alte Spalten nullable)
-
-Nach 4d-Commit brachen HappyPath-Tests mit
-`Integrity constraint violation: NOT NULL constraint failed:
-media_content.media_content_id`. Ursache: Services schreiben nur
-noch in `content_*`/`parent_*`-Spalten, die alten Spalten haben
-aber noch `NOT NULL`-Constraints — Insert fehlt der Wert.
-
-Migration `2026_06_22_120000_make_old_media_content_columns_nullable.php`
-nimmt die NOT-NULL-Constraints von `media_content_id`,
-`media_contentable_id`, `media_contentable_type`. Vollständiger
-Drop folgt in Welle 4e nach Backfill-Verifikation.
-
-### Geändert (Block E.7b Sub-Welle 4d — Service-Doppelschreibung entfernt)
-
-Sechs Services schreiben/lesen jetzt ausschließlich aus den neuen
-`content_*` / `parent_*`-Spalten. Die in Welle 2d eingeführte
-Doppelschreibung in die alten `media_contentable_*` /
-`media_content_id`-Spalten ist damit beendet.
-
-- **`TextService::attachToEntry`**: nur noch neue Spalten in
-  `MediaContent::firstOrCreate`.
-- **`TextService::detachFromEntries`**: Lookup auf `content_id` /
-  `content_type`.
-- **`AudiovisualService::attachToEntry`**: lastPosition über
-  `parent_id`, Insert nur in neue Spalten.
-- **`AudiovisualService::destroy`**: Pivot-Lookup auf `content_id`
-  / `content_type`.
-- **`GalleryService::attachToEntry`**: lastPosition über
-  `parent_id`, Insert mit korrekter `content_type = Gallery::class`
-  (löst den historischen Image-Schiefstand sauber auf).
-- **`GalleryService::detachFromEntries`**: behebt den latenten Bug,
-  bei dem die alte Variante `media_contentable_id` auf der
-  `$galleryId` suchte (Entry-Spalte mit Gallery-ID-Wert) und
-  zusätzlich auf `Gallery::class` filterte (alte Tag-Spalte hielt
-  aber `Image::class`). Die Methode fand also nie etwas und ließ
-  Pivot-Leichen liegen.
-- **`ImageService::detachFromEntries`**: Lookup auf
-  `content_id` / `content_type`. Findet typischerweise nichts,
-  weil Images über Gallery verknüpft sind, nicht direkt.
-- **`ContentReorderService::reorderContent`**: Drag-and-Drop
-  zwischen Entries schreibt auf `parent_id` statt
-  `media_contentable_id`.
-- **`LogService::getParentText`**: Manual-Join auf
-  `media_content.content_id` / `parent_id`, Diskriminator auf
-  `content_type`.
-
-`MediaContent::$fillable` behält die alten Spalten-Keys noch,
-weil Tests in `tests/Feature/Database/`,
-`tests/Feature/Models/` und `tests/Feature/Http/`
-sie aktuell beim Anlegen von Pivot-Rows mitliefern. Cleanup
-zusammen mit dem Spalten-Drop in Welle 4e.
-
-### Entfernt (Block E.7b Sub-Welle 4c — tote Model-Beziehungen)
-
-Cleanup der konsumentenlosen Eloquent-Beziehungen auf den alten
-`media_contentable_*` / `media_content_id`-Spalten:
-
-- **`MediaContent::media()`** — morphTo ohne Spalten-Argument
-  (default `media_id`/`media_type`, beides existiert nicht im
-  Schema). Toter Code seit Anbeginn.
-- **`Comment::media()`** — morphToMany via
-  `media_contentable_id`. Keine Konsumenten in app/, resources/
-  oder tests/.
-- **`Text::medias()`** + **`Text::entry()`** — morphMany auf die
-  toten `media_id`/`media_type`-Spalten bzw. morphToMany via
-  `media_contentable_id`. Beide konsumentenlos. `Text::mediaContents()`
-  (Welle 2c, via `content_id`/`content_type`) ist die einzige aktive
-  Beziehung.
-- **`Image::medias()`**, **`Image::entry()`**,
-  **`Image::parentEntry()`** — drei tote Beziehungen analog.
-  `Image::mediaContents()`, `Image::gallery()` und `Image::project()`
-  bleiben.
-
-`MediaContent::$fillable` behält die alten Spalten-Keys bis zur
-Service-Doppelschreibung-Entfernung in Welle 4d / Spalten-Drop in
-Welle 4e.
-
-### Geändert (Block E.7b Sub-Welle 4b — ProjectController auf neue Spalten)
-
-Fortsetzung des E.7b-Cleanup-Fadens (ADR-0022). Sammelt die letzten
-Lesungen der alten `media_contentable_*` / `media_content_id`-Spalten
-in den Controllern auf die neuen `content_*` / `parent_*`-Spalten um.
-Doppelschreibung in den Services (4d offen) hält die alten Spalten
-parallel — bis Welle 4e droppt.
-
-- **`ProjectController::getParentText`**: Manual-Join auf
-  `media_content.content_id` (statt `media_content_id`),
-  `media_content.parent_id` (statt `media_contentable_id`) und
-  Diskriminator-Where auf `content_type`.
-- **`ProjectController::allData`** Translation-Status-Sammler: drei
-  Diskriminator-Vergleiche und drei `find()`-Calls in der Schleife
-  über `$entry->mediaContent` von `media_contentable_type` /
-  `media_content_id` auf `content_type` / `content_id` umgestellt.
-  Der Gallery-Pfad nutzt jetzt sauber `content_type == 'Gallery'`
-  statt des historischen `'Image'`-Schiefstands.
-
-### Behoben (Block E.7b Sub-Welle 4a-Hotfix-II.d — Owner-Bypass-Bug + Translation-Test-Reflection)
-
-Nach II.c-Verifikation gefunden:
-
-- **`saveText` / `saveImage` / `saveGallery` / Audiovisual `store`
-  schlossen Project-Owner aus**, weil die Defense-in-Depth-Hürde
-  `hasPermissionTo('edit')` als ersten Schritt auch dann blockierte,
-  wenn der nachgelagerte `authorize('update', $model)`-Gate über
-  den Owner-Shortcut der OwnerScopedPolicy durchgegangen wäre.
-  Drei HappyPath-Tests brachen: Owner kann kein Audio hochladen,
-  keinen Text-Block anlegen, kein Bild in Gallery hochladen.
-- Fix: Top-Level-Defense-in-Depth in den vier Methoden entfernt.
-  Nur dort, wo kein Modell-Argument für ein project-scoped
-  authorize() vorhanden ist — `translationMode + originId/copyrightId`
-  in `saveText` und `saveImage` (Source-Translation auf global
-  geteilten Sources) — bleibt `hasPermissionTo('edit')` als Reader-
-  Schutz.
-- **Image-Create-Pfad** in `saveImage` gate'd jetzt über `Entry`
-  statt `Gallery`, weil frisch angelegte Galleries oft noch keine
-  Pivot-Verbindung haben und `Gallery::project()` null gibt.
-
-- **`ContentControllerTranslationTest`** rief `translateField` und
-  `saveTranslatedText` direkt auf — die sind in II.b auf `private`
-  reduziert. Reflection-Helper `invokeTranslateField` /
-  `invokeSaveTranslatedText` analog `invokeHistory` in
-  `ProjectControllerLogTest`. Tests testen weiterhin direkt die
-  privaten Helper, bis ein TranslationService in einer späteren
-  Welle extrahiert wird.
-
-### Tests (Block E.7b Sub-Welle 4a-Hotfix-II.c — Pinning-Tests für vier-Controller-Sweep)
-
-Charakterisierungs-Tests für die in II.a + II.b gegateten Methoden.
-Eine neue Datei `tests/Feature/Http/ContentRouteAuthorizationTest.php`
-mit 16 Tests pinnt die kritischsten Vektoren:
-
-- **ChapterController**: edit, commentChapter, setCommentStatusChapter
-  als Reader auf fremdem Project → 403.
-- **EntryController**: edit, commentEntry, setCommentStatusEntry
-  analog → 403.
-- **ContentController**: saveText (Reader ohne globale edit-Permission
-  + Editor mit edit aber ohne Project-Einladung), editText/editImage/
-  editGallery (Read-Pfade), commentText, setCommentStatusText,
-  updateCommentStatus (URL-Trigger) → 403.
-- **AudiovisualController**: store (Reader ohne edit-Permission),
-  commentAudiovisual → 403.
-- **Happy-Path Sanity**: Owner darf editText auf eigenem Text;
-  eingeladener Reader mit comment-Permission darf commentEntry.
-
-Setup-Konvention aus ADR-0023:
-`app(PermissionRegistrar)->forgetCachedPermissions()` im
-beforeEach — verhindert dass Tests durch inkonsistenten Spatie-
-Permission-Cache fälschlich grün laufen (siehe Welle-4a-Hotfix-
-Test-Verfälschung).
-
-### Sicherheit (Block E.7b Sub-Welle 4a-Hotfix-II.b — ContentController + AudiovisualController Authorize-Sweep)
-
-Abschluss des 4-Controller-Sweeps. Alle public Schreib- und
-JSON-API-Methoden in ContentController und AudiovisualController
-haben jetzt project-scoped `authorize`-Gates.
-
-ContentController gegated:
-- **`editText` / `editImage` / `editGallery`** — JSON-API für die
-  Edit-Maske; vorher konnten fremde Inhaltsdaten gezogen werden.
-  `authorize('view', $text|$image|$gallery)`.
-- **`saveText`** — vorgelagert `hasPermissionTo('edit')`
-  (Defense-in-Depth, schließt Reader sofort raus); im Update-Pfad
-  `authorize('update', $text)`, im Create-Pfad
-  `authorize('update', $entry)` auf den Ziel-Entry.
-- **`saveImage`** — analog: globale `edit`-Permission als Hürde,
-  dann `authorize('update', $image|$gallery)` je nach Pfad.
-- **`saveGallery`** — analog: globale Hürde + Gate auf Gallery
-  oder Entry.
-- **`commentText` / `commentImage` / `commentGallery`** —
-  StoreCommentRequest prüft nur Auth-User; project-scoped Gate
-  nachgereicht.
-- **`getTextComment` / `getImageComment`** — Modell laden +
-  `authorize('view', ...)`.
-- **`saveCommentText` / `saveCommentImage` / `saveCommentGallery`**
-  — `authorize('comment', $text|$image|$gallery)`.
-- **`setCommentStatusText` / `setCommentStatusImage`** — vorher
-  toter Route-Model-Binding (`Text $text` / `Image $image` ohne
-  Route-Param), jetzt Comment via `$request['id']` laden, Project
-  via `CommentService::resolveProjectForComment()` auflösen,
-  `authorize('comment', $project)`.
-- **`updateCommentStatus($id, $status)`** — URL-basierter Comment-
-  Status-Trigger; Project-Resolution + `authorize('comment')`.
-- **`resetText`** — `authorize('update', $text)` vor dem Reset.
-
-AudiovisualController gegated:
-- **`store`** — globale `edit`-Permission + `authorize('update',
-  $audiovisual)` im Update-Pfad bzw. `authorize('update', $entry)`
-  im Create-Pfad.
-- **`saveCommentAudiovisual`** — `authorize('comment', $audiovisual)`.
-- **`commentAudiovisual`** — analog.
-
-Strukturelle Konsequenzen:
-- **`translateField` und `saveTranslatedText` auf `private`**
-  reduziert. Methoden haben keine eigene Route, werden nur intern
-  aus `saveText` / `saveImage` aufgerufen. Auth läuft vorgelagert
-  über die Aufrufer. Sources sind global geteilt — kein project-
-  scoped Gate möglich, aber durch globale `edit`-Permission
-  geschützt (Reader nicht erreichbar).
-- **Image-Create-Pfad** in `saveImage` lädt das Gallery-Modell
-  vor dem Service-Call und gate dagegen.
-- **Text/Audiovisual-Create-Pfade** laden Entry-Modell vor und gate.
-
-Pinning-Tests für die kritischsten Vektoren folgen in einer
-kleinen Folge-Welle (Hotfix-II.c).
-
-### Sicherheit (Block E.7b Sub-Welle 4a-Hotfix-II.a — ChapterController + EntryController Authorize-Sweep)
-
-Nach dem Welle-4a-Hotfix (Spatie's Gate::before abgeschaltet) waren
-die zuvor ungegated Methoden in den Content-nahen Controllern
-*schlimmer* dran — vorher gab es pseudo-Auth durch Spatie's Bypass,
-jetzt war gar kein Schutz mehr drin. Sweep über ChapterController
-und EntryController, II.b folgt mit ContentController +
-AudiovisualController.
-
-- **`ChapterController::edit($id)`** — JSON-API für Edit-Maske;
-  vorher konnten fremde Chapter-Daten gelesen werden.
-  `authorize('view', $chapter)`.
-- **`ChapterController::commentChapter`** — `StoreCommentRequest`
-  prüft nur Auth-User; project-scoped Gate nachgereicht.
-  `authorize('comment', $chapter)`.
-- **`ChapterController::getChapterComment($id)`** — Comments
-  fremder Chapter gelesen. `authorize('view', $chapter)`.
-- **`ChapterController::saveComment`** — Chapter immer laden +
-  `authorize('comment')` auch im `name=edit`-Pfad. Vorher konnten
-  fremde Comments editiert werden.
-- **`ChapterController::setCommentStatusChapter`** — Signature
-  bekam einen `Chapter $chapter`-Parameter ohne `{chapter}`-Route-
-  Param (Route-Model-Binding band ein leeres Modell — toter
-  Auth-Hook). Jetzt: Comment via `$request['id']` laden, Project
-  via `CommentService::resolveProjectForComment()` auflösen,
-  `authorize('comment', $project)`.
-- **Analog `EntryController`**: `show($id)`, `edit($id)`,
-  `commentEntry`, `getEntryComment`, `saveCommentEntry`,
-  `setCommentStatusEntry` mit `authorize`-Gates versorgt; bei den
-  Comment-Pfaden derselbe Resolver-Helper genutzt.
-- **`ChapterPolicy::comment()` + `EntryPolicy::comment()`**:
-  neue project-scoped Methode für die Comment-Pfade (analog
-  `ProjectPolicy::comment`).
-- **`CommentService::resolveProjectForComment(int $commentId): ?Project`**:
-  neuer Helper, navigiert vom Comment via `commentable_type`/
-  `commentable_id` zum Project. Für die `setCommentStatus*`-
-  Endpunkte, die kein Modell in der Route haben und früher mit
-  totem Route-Model-Binding ausgestattet waren.
-
-### Sicherheit (Block E.7b Sub-Welle 4a-Hotfix — Spatie Gate::before Reader-Bypass)
-
-- **KRITISCH: Globale `view`-Permission von Spatie umging alle
-  project-scoped Policies.** Karl-Befund vom 2026-06-21: Reader
-  Rolf (Zugriff nur Projekt 18/19) konnte `/projects/20/edit`
-  öffnen, obwohl `ProjectController::edit` seit Welle-3-Hotfix
-  `$this->authorize('view', $project)` ruft. Tinker-Diagnose:
-  `$policy->view($rolf, $project) = 0` korrekt nein, aber
-  `$rolf->can('view', $project) = 1` falsch ja. Dazwischen
-  Spatie's `Gate::before`-Hook, den Spatie's
-  `PermissionRegistrar::registerPermissions()` per Default
-  registriert. Der Hook ruft `checkPermissionTo('view')`
-  ohne Modell-Argument — Reader hat die globale Permission
-  `view`, gibt true zurück, Policy wird übersprungen.
-
-  Effekt: alle in Block D PR 2 / E.7a / E.7b aufgebauten
-  project-scoped Policies waren in der Live-App effektiv tot.
-  Die Tests waren grün, weil im Test-Setup der Permission-Cache
-  vermutlich nicht initialisiert ist und `checkPermissionTo`
-  intern eine Exception wirft, die Laravel als false interpretiert.
-
-  Fix:
-  - `config/permission.php`: `'register_permission_check_method' => false`
-    — Spatie registriert das `Gate::before` nicht mehr, Policies
-    entscheiden allein.
-  - 4 Policy-Methoden umgestellt: `ProjectPolicy::viewAny`,
-    `ProjectPolicy::create`, `ChapterPolicy::create`,
-    `EntryPolicy::create` von `$user->can(PermissionName::*)` auf
-    `$user->hasPermissionTo(PermissionName::*->value)` — geht
-    direkt über Spatie's Trait an die DB, ohne Gate-Roundtrip.
-  - 3 Blade-Stellen in `roles/index.blade.php`: `@can('edit')`,
-    `@can('delete')`, `@can('add')` auf
-    `@hasPermissionTo(...)` umgestellt (Spatie-Blade-Directive).
-  - Zwei neue Pinning-Tests in `ProjectControllerAuthorizationTest`:
-    expliziter Reader-Bypass-Test mit primärem Permission-Cache
-    und `givePermissionTo(VIEW)` (simuliert volle Live-Bedingungen).
-  - ADR-0023 dokumentiert den Trade-off (Spatie Gate::before vs.
-    project-scoped Policies).
-
-### Geändert (Block E.7b Sub-Welle 4a — Views minimal-invasiv auf neue Spalten)
-
-- **`MediaContent::text()/image()/gallery()/audiovisual()` belongsTo
-  liest jetzt aus `content_id` statt aus `media_content_id`.** Während
-  der Doppelschreibungs-Welle 2d sind beide gleichwertig befüllt, in
-  Welle 4e fällt die alte Spalte weg. Die alten Accessor-Namen (z.B.
-  `$item->text`, `$item->gallery`) bleiben in den Blades nutzbar; nur
-  der Foreign-Key wechselt darunter. Der Diskriminator-Check
-  (Gallery vs. Image vs. Text) bleibt Sache der Aufrufer.
-- **`MediaContent::entry()` belongsToMany auf `parent_id`** statt
-  `media_contentable_id`.
-- **`Entry::mediaContent()` hasMany auf `parent_id`** statt
-  `media_contentable_id`. Eager-Loads in Project-Scopes
-  (`chapters.entries.mediaContent.*`) bleiben unverändert nutzbar.
-- **`chapters/index.blade.php`, `preview/index.blade.php`,
-  `preview/pdf.blade.php`: Diskriminator-Check auf `content_type`**
-  statt `media_contentable_type`. Markup unverändert.
-  Beifang: Gallery-Pfad triggerte historisch auf
-  `'App\Models\Image'` (alte Tag-Spalte hatte den Schiefstand);
-  jetzt korrekt auf `'App\Models\Gallery'`.
-- **`contents/comment.blade.php`: Type-Label und URL-Param `?type=`
-  auf `content_type`.** Beifang: Gallery-Kommentare zeigten in der
-  Comment-Übersicht historisch "Image" als Type-Label — jetzt
-  steht korrekt "Gallery". URL-Param `?type=Gallery` wird vom
-  Edit-Pfad gleichwertig akzeptiert wie der alte `?type=Image`.
-
-### Sicherheit (Block E.7b Sub-Welle 3-Hotfix — ProjectController Authorize-Sweep)
-
-- **KRITISCH: `ProjectController::setPermissionForUserOnProject`
-  ohne Authorize-Gate.** Bisher konnte jeder eingeloggte User
-  via direktem POST `/project/permission` einem beliebigen User
-  volle Rechte auf jedes Projekt vergeben. Privilege Escalation
-  in derselben Klasse wie NF-SEC-202 (Phase 2.5). Beim
-  Welle-3-Smoke entdeckt via Reader-URL-Manipulation; der Sweep
-  über alle `ProjectController`-Methoden hat den darunterliegenden
-  Befund freigelegt. Jetzt mit `$this->authorize('update', $project)`.
-- **Sieben weitere ungegated Project-Pfade** geschlossen:
-  - `show($project)` — Reader sah fremde Projects via
-    `/projects/{id}`.
-  - `edit(Request, $project)` — Reader sah fremde Edit-Masken
-    via `/projects/{id}/edit` (Karls konkreter Smoke-Befund).
-  - `getDetails($project, $id)` — Activity-Log-Diffs fremder
-    Projects.
-  - `previewProject(Request)` — Web-Preview fremder Projects.
-  - `downloadPreview(Request)` — PDF-Download fremder Projects.
-  - `projectMetadata(Request)` — Impressum/AGB-Aggregation
-    fremder Projects.
-  - `givePermissionToUser($id)` — Info-Leak: Permission-IDs
-    eines beliebigen Users auf ein beliebiges Projekt
-    herausgeben. Gate analog setPermissionForUserOnProject mit
-    `update`.
-
-  Alle sechs `show`/`edit`/`preview`/`metadata`-Pfade jetzt mit
-  `$this->authorize('view', $project)`. Damit greift Owner-
-  Shortcut, Admin via before(), Eingeladene mit `view`-Permission
-  durch — Fremde bekommen 403.
-- **Vier neue Charakterisierungs-Tests** in
-  `ProjectControllerAuthorizationTest`: show/edit/Owner-Edit/
-  setPermissionForUserOnProject (Privilege Escalation als
-  expliziter Test).
-
-  **Nachzug:** zwei nicht-Project-bound Methoden — `history($model, $id)`
-  ist nun `private` (war als `public` deklariert, hat aber keine
-  Route, einziger Caller ist `edit()`, das selbst gegated ist).
-  `getCurrentLog($id)` lädt `$id` als Text-ID, navigiert via
-  `Text::project()` aus Welle 2c und gated dann mit `view`. Damit
-  sind alle bekannten Authorize-Lücken im `ProjectController`
-  geschlossen.
-
-### Sicherheit (Block E.7b Sub-Welle 3 — Content-Policies)
-
-- **Vier neue Policy-Klassen** auf `OwnerScopedPolicy`-Basis:
-  `TextPolicy`, `ImagePolicy`, `GalleryPolicy`, `AudiovisualPolicy`.
-  Methoden `view`, `update`, `delete`, `comment` jeweils via
-  `Project`-Resolve aus dem Content-Modell (`$content->project()`
-  aus Sub-Welle 2c). Owner-Shortcut und Pivot-Lookup übernimmt
-  der `ProjectPermissionService`, Admin via `before()`.
-- **`OwnerScopedPolicy::checkViaProject(?Project)`** als neuer
-  Helper. Liefert `false`, wenn das Project nicht aufgelöst werden
-  kann (Race-Case zwischen Content-Create und attachToEntry, oder
-  Image ohne `gallery_id`).
-- **Registrierung in `AuthServiceProvider`** für alle vier
-  Content-Modelle. Damit greift `@can(...)` in Blades und
-  `$this->authorize(...)` in Controllern automatisch.
-- **Vier Pest-Test-Files** mit 5-7 Tests pro Policy (Owner /
-  Admin / Eingeladener-mit-edit / Eingeladener-nur-mit-view /
-  Fremder × view/update/delete + Negativtest für
-  fehlende Verknüpfung): `TextPolicyTest`, `ImagePolicyTest`,
-  `GalleryPolicyTest`, `AudiovisualPolicyTest`. Image-Test
-  pinnt explizit den indirekten Pfad via Gallery.
-- **Authorize-Calls in den Destroy-Pfaden** ergänzt:
-  `ContentController::destroyText/destroyImage/destroyGallery`
-  und `AudiovisualController::delete`. Vorher konnten diese
-  Endpunkte nur per `auth`-Middleware geschützt werden — ein
-  eingeladener Reader hätte zwar via UI keinen Delete-Button
-  gesehen, ein direkter HTTP-Aufruf hätte aber durchgehen
-  können. Jetzt blockt die Policy.
-
-  Comment-Authorize-Pfade und edit-Pfade folgen in einer
-  separaten Mini-Welle nach dem Smoke-Check.
-
-### Geändert (Block E.7b Sub-Welle 2d — Service-Doppelschreibung)
-
-- **`TextService::attachToEntry`, `AudiovisualService::attachToEntry`
-  und `GalleryService::attachToEntry`** schreiben jetzt parallel
-  in die alten `media_contentable_*`- und die neuen
-  `content_*`/`parent_*`-Spalten der `media_content`-Pivot-Tabelle.
-  Damit funktionieren alte Konsumenten (preview-Blade,
-  ContentController-Direktzugriffe) und neue Konsumenten
-  (Welle-3-Policies via `$content->project()`) während der
-  Übergangswelle parallel. Cleanup der alten Spalten + Konsumenten
-  in Sub-Welle 4 nach Smoke.
-- **GalleryService — Spezialfall:** der historische Schiefstand
-  bleibt in der alten `media_contentable_type=Image::class`-Spalte
-  erhalten (kein Verhaltens-Wechsel für die heute funktionierenden
-  Lesepfade), die neue `content_type`-Spalte trägt jetzt den
-  korrekten `Gallery::class`-Wert. Der latente `detachFromEntries`-
-  Bug (sucht nach `Gallery::class`, findet nie etwas, weil die
-  Rows `Image::class`-getaggt sind) wird in Sub-Welle 4 mit dem
-  Switch auf die neuen Spalten aufgelöst.
-- **Drei Pest-Tests** in `ContentServiceDoubleWriteTest`:
-  Text/Audiovisual/Gallery → jeweils Sicht auf alte + neue Spalten
-  nach `Service::create()`. Der Gallery-Test pinnt explizit, dass
-  die alte Spalte `Image::class` behält und die neue
-  `Gallery::class` trägt.
-
-### Geändert (Block E.7b Sub-Welle 2c — Content-Modelle mit project()-Navigation)
-
-- **`mediaContents()` und `project()` auf den vier Content-Modellen**
-  ergänzt (`Text`, `Image`, `Gallery`, `Audiovisual`). `mediaContents()`
-  ist eine `morphMany`-Beziehung auf die neuen Pivot-Spalten
-  `content_id` + `content_type`. `project()` navigiert vom Content
-  über den Pivot zum Entry → Chapter → Project. Bei Image ist der
-  Pfad indirekt: Image hängt über `gallery_id` an einer Gallery,
-  die wiederum am Entry — `Image::project()` delegiert deshalb an
-  `Gallery::project()`.
-- **`Image::gallery()`-Beziehung als `belongsTo` ergänzt.** Bisher
-  gab es nur die `Gallery::images()`-Richtung; der Rückweg fehlte
-  und wurde an mehreren Stellen umständlich nachgebaut.
-- **Sechs neue Pest-Tests** in `ContentProjectNavigationTest`:
-  - `Text::project()` über den Pivot (positiv/negativ)
-  - `Audiovisual::project()` über den Pivot (positiv)
-  - `Gallery::project()` über den Pivot (positiv)
-  - `Image::project()` indirekt über die Gallery (positiv/negativ)
-- **Alte Modell-Methoden** (`Text::entry()`, `Image::entry()`,
-  `Image::parentEntry()`, `Image::medias()` etc.) bleiben in Place
-  während der Übergangswelle. Cleanup in Sub-Welle 4 nach
-  Konsumenten-Umstellung.
-
-  Vorbereitung für die vier Content-Policies in Welle 3.
-
-### Geändert (Block E.7b Sub-Welle 2b — MediaContent Morph-Relations)
-
-- **`MediaContent::content()` und `MediaContent::parent()`** als
-  saubere `morphTo`-Beziehungen ergänzt. `content()` liest aus
-  `content_id` + `content_type`, `parent()` aus `parent_id` +
-  `parent_type` — also den in Sub-Welle 2a angelegten neuen
-  Spalten. Damit greift Laravels eingebaute Polymorphic-Mechanik
-  (z.B. `@can(...)` auf das geladene Modell) erstmals zuverlässig.
-- **Alte Beziehungen bleiben unverändert** (`text()`, `image()`,
-  `gallery()`, `audiovisual()`, `entry()`, `media()`) — sie werden
-  in Sub-Welle 2c/2d von Konsumenten abgelöst, in Sub-Welle 4
-  zusammen mit den alten Spalten gedroppt.
-- **`$fillable` erweitert** um die vier neuen Spalten, damit
-  Services in Sub-Welle 2d die Doppelschreibung durchführen
-  können.
-- **Vier Pest-Tests** in `MediaContentMorphRelationsTest`:
-  Text/Gallery/Audiovisual als content() plus Entry als parent().
-  Der Gallery-Test pinnt explizit den historischen Schiefstand-
-  Fix (alte `media_contentable_type` = `Image::class`, neue
-  `content_type` = `Gallery::class`).
-
-### Geändert (Block E.7b Sub-Welle 2a — media_content Morph-Columns)
-
-- **Neue Spalten `content_id`, `content_type`, `parent_id`,
-  `parent_type` auf `media_content`.** Wegbereiter für den
-  Schema-Refactor aus ADR-0022. Die alten Spalten (`media_content_id`,
-  `media_contentable_id`, `media_contentable_type`) bleiben für
-  die Übergangswelle stehen — Services schreiben in Sub-Welle 2d
-  doppelt, gelesen werden in 2b/2c die neuen Spalten. Cleanup der
-  alten Spalten erfolgt in Sub-Welle 4 nach Smoke.
-- **Daten-Backfill** in derselben Migration: `content_id` 1:1 aus
-  `media_content_id`, `parent_id` aus `media_contentable_id`,
-  `parent_type = Entry::class` für alle Bestands-Rows (laut
-  Audit-Parent-Probe), `content_type` mit Spezialfall für
-  `Image::class`-Tags mit Match in `galleries` → `Gallery::class`
-  (historischer Schiefstand aus `GalleryService::attachToEntry`,
-  jetzt sauber). Migration ist idempotent — nur Rows mit NULL
-  `content_id` werden geschrieben.
-- **Fünf Pest-Tests** in `MediaContentMorphColumnsTest`: Endzustand,
-  Text-Mapping, Image-zu-Gallery-Mapping, Audiovisual-Mapping,
-  Roundtrip down/up.
-
-### Hinzugefügt (Block E.7b Sub-Welle 1 — Voranalyse)
-
-- **`db:audit-media-content` Artisan-Command.** Read-only-Audit der
-  `media_content`-Pivot-Tabelle vor dem Schema-Refactor (ADR-0022).
-  Zählt Rows pro `media_contentable_type`-Wert, prüft die
-  Content-Tags gegen das jeweils erwartete Modell (Text gegen
-  `texts`, Audiovisual gegen `audiovisuals`, Image-Tags gegen
-  `galleries` — wegen des historischen Schiefstands, dass
-  `GalleryService::attachToEntry` `Image::class` als Type setzt),
-  und liefert die empirische Probe gegen Entry als gemeinsamen
-  Parent. Output ist Markdown auf STDOUT mit konkreter Mapping-
-  Empfehlung für die Schema-Migration (Sub-Welle 2). Read-only,
-  kein `--fix`-Modus — das Fix kommt durch die Migration in Sub-
-  Welle 2.
-
-  Voraussetzung für E.7b: vor jedem Schema-Eingriff brauchen wir
-  Klarheit über den IST-Stand der Pivot-Belegung. Aufgesetzt am
-  Stil von `db:audit-fk` (ADR-0018 / Phase 2 / E.3).
-
-### Geändert (AM-B-2 + AM-B-3 Mini-Fix — Preview-Spacing)
-
-- **`public/css/index.css` — drei Spacing-Stellschrauben am
-  Preview-Layout.** Smoke mit längerem Content zeigte: bei
-  mehrzeiligen Subtitle-/Description-Texten kollabiert der
-  CSS-Multicolumn-Container `.zweispaltig` vertikal nicht
-  zuverlässig, Folge-Sections (`.einspaltig` mit „Bereich"-
-  Header, Galerien) laufen visuell in den Tail der vorigen
-  Section. Drei Mini-Justierungen:
-  - `.hintergrundweiss` Padding `.5em` → `1.5em`.
-  - `.zweispaltig` `margin-bottom` `1em` → `2.5em`.
-  - `.einspaltig` bekommt `margin-top: 1.5em`; `.einspaltig h2`
-    von `margin: 3em 0 .8em` auf `1.5em 0 .8em` (Container-
-    Margin trägt jetzt mit).
-  Das ist bewusst ein defensiver CSS-Patch, kein Multicolumn-
-  Ersatz und keine HTML-Umstellung — die größere Layout-Welle
-  bleibt für die Design-Überarbeitung. Bug-Tags: AM-B-2 und
-  AM-B-3 von „kaputt" auf „mit Mini-Fix verbessert, Layout-
-  Refactor steht weiter in der UI/UX-Welle aus".
-
-### Doku (AM-D-2 retroaktiv als BEHOBEN markiert)
-
-- **AM-D-2 — Kommentar-Save schlägt still fehl: ✓ BEHOBEN.**
-  Re-Smoke am 2026-06-20 hat bestätigt, dass Kommentar-Save für
-  Entry/Chapter/Text/Image/Gallery/Audiovisual sauber funktioniert.
-  Der Bug war implizit gefixt durch Phase 4 / Block F, Commit
-  `70306dc` vom 2026-06-01 — die add-Pfade laden das Model jetzt
-  explizit aus `$request->id` statt aus dem Service-Container
-  (wo Laravel sonst eine leere Model-Instanz mit `id=null`
-  zurückgibt). `docs/smoke.md` Pfad 9 von „kaputt" auf „grün",
-  Grün-Zähler 8 → 9, Kaputt-Zähler 3 → 2 (nur noch AM-B-2 und
-  AM-B-3).
-
-### Sicherheit (Reader-Frontend-Härtung Juni 2026)
-
-- **`ProjectController::translateCurrentProject` ohne Authorize-Gate
-  geschlossen.** `/project/{id}/translate` war nur durch `auth`-
-  Middleware geschützt — jeder eingeloggte User konnte fremde
-  Project-Inhalte in der Übersetzungs-Maske sehen. Analog zum
-  editMetaData-Hotfix (Welle E.7a-Hotfix) Inline-Authorize via
-  `update`-Policy. Damit greift Owner ODER Admin ODER Eingeladener-
-  mit-edit-Logik wie für die anderen Update-Pfade. Im Smoke nach
-  E.7a-Hotfix entdeckt — derselbe Pfad-Klasse wie editMetaData,
-  beim ersten Sweep übersehen.
-- **Drei neue Charakterisierungs-Tests** in
-  `ProjectControllerAuthorizationTest`: Fremder → 403, Owner →
-  200/302, Admin → 200/302.
-
-### Geändert (Reader-Frontend-Härtung Juni 2026)
-
+- **`docs/architecture.md`** als Entwickler-orientierte Architektur-
+  Übersicht. Beschreibt das Domänenmodell (Project → Chapter → Entry
+  → MediaContent → Content), das Authorization-Modell
+  (`OwnerScopedPolicy` als Basisklasse, Spatie-`Gate::before`
+  abgeschaltet via `register_permission_check_method => false`),
+  die Service-Layer-Struktur, die Routing-Schichtung und die
+  Test-Pyramide. Inklusive expliziter Abgrenzung dessen, was nicht
+  ins Dokument gehört (PDF-Pipeline, Storage-Strategie, Frontend-
+  Build, utf8mb4-Migration, Bug-Historie).
+- **Service-Layer für die Content-Domäne.** Zehn neue Service-Klassen
+  unter `app/Services/` kapseln die Schreib- und Lesepfade, die
+  vorher in den Fat Controllern lebten:
+  - `ProjectImageService` — Logo-Upload für Projects mit
+    `Storage::fake`-tauglicher Schnittstelle und deterministischem
+    Dateinamen-Muster.
+  - `ProjectPermissionService` — zentralisiert die zehn
+    project-scoped Permission-Operationen (Listing berechtigter
+    User, Lesen globaler und Pivot-Permissions, Set-Semantik beim
+    Setzen, vollständiges Entfernen) plus
+    `userHasPermissionOnProject` und `listProjectsForUser` für die
+    Policy-Schicht.
+  - `ChapterService` und `EntryService` — Position-Calculation und
+    Translation-Verzweigung für die zwei Schreibpfade pro Modell.
+  - `ContentReorderService` — die drei Drag-and-Drop-Schreibpfade
+    über Chapter / Entry / MediaContent plus `resolveProject(...)`
+    für den Authorize-Gate.
+  - `CommentService` — die fünf Schreibpfade auf Comments
+    (`addComment`, `replyToComment`, `editComment`, `deleteComment`,
+    `setCommentStatus`) plus `dispatchSaveAction` für die
+    `btn_submit`-Switch-Logik und `resolveProjectForComment(int)`
+    für die Authorize-Auflösung der Comment-Status-Endpunkte.
+  - `SourceService` — `findOrCreateId(value, type): int` ersetzt
+    das `getSource`-Method-Duplikat in Project- und
+    ContentController.
+  - `TextService`, `ImageService`, `GalleryService` und
+    `AudiovisualService` (mit `resolveLink(?string, ?UploadedFile)`
+    für YouTube-URL-Konversion und Audio-Upload).
+  - `UserReactivationService`, `UserOnboardingService` und
+    `ProjectInvitationService` extrahiert aus dem ehemaligen
+    `RegisteredUserController::store`, dazu der `RoleResolver`-
+    Helper unter `app/Support/`.
+- **DTO-Schicht** unter `app/Data/` für die Mutations:
+  `ProjectData`, `ChapterData`, `EntryData`, `TextData`, `ImageData`,
+  `GalleryData` und `AudiovisualData`. Jeweils mit
+  `fromRequest(FormRequest, ...)`-Factory; ersetzt die
+  `mapData()`-Cargo-Helper in den Controllern.
+- **FormRequest-Welle für User-, Role- und Comment-Pfade.** Neue
+  Klassen unter `app/Http/Requests/`: `UpdateUserAsAdminRequest`,
+  `UpdateOwnProfileRequest`, `StoreRoleRequest`, `UpdateRoleRequest`,
+  `StoreCommentRequest` (für sieben Comment-Endpunkte über Project,
+  Chapter, Entry, Text, Image, Gallery, Audiovisual),
+  `StoreImageBlockRequest` und `StoreAudiovisualRequest` mit
+  MIME-Whitelist (jpeg, jpg, png, gif, webp für Bilder; mp3, mp4,
+  wav, ogg, m4a für Audio) und Size-Limit (4 MB / 20 MB).
+- **`App\Contracts\HasComments`-Interface** für die acht
+  commentable Modelle (Project, Chapter, Entry, MediaContent,
+  Text, Image, Gallery, Audiovisual). Garantiert den
+  `comments(): MorphMany`-Vertrag im Type-System, der vorher nur
+  durch den entfernten `CommentTrait` implizit war.
+- **`App\Policies\OwnerScopedPolicy`** als abstrakte Basisklasse:
+  trägt den `before()`-Admin-Shortcut, Service-Injection und einen
+  `check(User, Project, PermissionName)`-Helper sowie einen
+  `checkViaProject(?Project)`-Helper, der `false` liefert, wenn
+  das Project nicht aufgelöst werden kann. Vier neue
+  Content-Policies (`TextPolicy`, `ImagePolicy`, `GalleryPolicy`,
+  `AudiovisualPolicy`) leiten daraus ab und resolven das Project
+  über die polymorphe `mediaContents()`-Beziehung.
+- **`App\Support\PermissionName` und `App\Support\RoleName` als
+  Backed-Enums** (PHP 8.1+). Sieben Permission-Cases und vier
+  Rollen-Cases mit den Spatie-Namen als Werten. Harte Strings in
+  Policies, Services und Controllern durchgängig auf
+  Enum-Zugriffe umgestellt.
+- **`db:audit-media-content` und `db:migrate-media-content`**
+  Artisan-Commands. Der Audit-Command liefert Markdown-Output mit
+  Type-Counts, Orphan-Check und Parent-Probe für die `media_content`-
+  Pivot-Tabelle. Der Migrations-Command läuft Default als Dry-Run
+  mit Drift-Report (matched / fixable / unrecoverable /
+  gallery_schiefstand) und schreibt mit `--apply` die Korrekturen.
+  Beide sind idempotent.
+- **Architektur-Dokument** und **PHPDoc-`@property`-Annotationen**
+  an sieben Modellen (Audiovisual, Chapter, Entry, Gallery,
+  Project, Source, Text) mit DB-Feldern, Relations und den
+  dynamisch gesetzten Runtime-Snapshots. Voraussetzung für den
+  Eloquent-Strict-Mode-Switch.
+- **Test-Factories für die Content-Modelle** unter
+  `database/factories/`: `SourceFactory` (mit `origin()` / `copyright()`-
+  States), `TextFactory`, `ImageFactory` (mit Source-Refs, optional
+  `forGallery(id)`-State), `GalleryFactory`, `AudiovisualFactory`
+  (mit `audio()`-State). Pest-Helper `makeSource`, `makeText`,
+  `makeImage`, `makeGallery`, `makeAudiovisual` analog zu den
+  bestehenden `makeProject`/`makeChapter`/`makeEntry`-Helpern.
+- **Test-Suite von 58 auf knapp 400 grüne Pest-Tests gewachsen.**
+  Schwerpunkte:
+  - **Charakterisierungs-Tests** vor jeder Service-Extraktion
+    (Bootstrap-Migration, Content-Pfade, Comment-Pfade,
+    Translation-Pfade).
+  - **Service-Tests** für jeden der zehn neuen Services in
+    `tests/Feature/Services/`.
+  - **Policy-Tests** in `tests/Feature/Policies/` mit
+    Owner / Admin / Eingeladener-mit-edit / Eingeladener-nur-mit-view
+    / Fremdem als Achsen sowie expliziten Negativtests für die
+    bisher nicht negativ-getesteten `update`/`delete`/`restore`/
+    `publish`-Methoden.
+  - **Authorization-Pinning-Tests** für die Content-Controller
+    in `ContentRouteAuthorizationTest` (16 Tests über die
+    kritischsten Vektoren).
+  - **Comment-Charakterisierungs-Tests** und
+    **Content-Charakterisierungs-Tests** für die Refactor-Vorlauf-
+    Phasen.
+  - **HappyPath-Suite ausgebaut** und auf die neuen Spalten der
+    `media_content`-Pivot-Tabelle umgestellt.
+  - **Unit-Tests** für `LogService` (`highlightTextDifference`,
+    Switch-Cases via Reflection) und für die `RoleName`-/
+    `PermissionName`-Enums.
+  - **Rate-Limit-Tests** für die Guest-Auth-Routen
+    (`AuthRateLimitTest`).
+- **Schema- und Migrations-Pinning-Tests**:
+  `PermissionTableRenameTest`, `ProjectUserPermissionTest`,
+  `PermissionTableSeederStrictModeTest`,
+  `MediaContentMorphRelationsTest`, `MediaContentMorphColumnsTest`,
+  `ContentProjectNavigationTest`, `ContentServicePivotInsertTest`
+  (vormals `ContentServiceDoubleWriteTest`).
+- **CI-Coverage-Schwelle gestaffelt angehoben** von 25 % auf
+  30 %, dann auf 55 % nach Abschluss der Content-Service-Welle.
+  `composer.json` `test-coverage --min` entsprechend
+  nachgezogen. Coverage am Phase-Ende effektiv bei 66,9 %.
+
+### Geändert
+
+- **Application-Bootstrap auf die Laravel-11+-Closure-API
+  umgestellt.** `bootstrap/app.php` ist jetzt
+  `Application::configure(basePath: ...)->withRouting(...)
+  ->withMiddleware(...)->withExceptions(...)->create()`. Die
+  `web`-Group bekommt `Language` per `$middleware->web(append: …)`
+  angehängt, Custom-Aliase (`role`, `permission`,
+  `role_or_permission`, `guest`) werden im `$middleware->alias(...)`-
+  Block registriert, `TrimStrings`-Ausnahmen und der
+  Guest-Redirect zur `route('login')` direkt im Bootstrap-Closure.
+- **Service-Layer-Refactor der Fat Controller per Constructor-
+  Injection.** `ProjectController`, `ChapterController`,
+  `EntryController`, `ContentController` und
+  `AudiovisualController` konsumieren die neuen Services über
+  readonly-Properties. Die Methoden-Bodies reduzieren sich auf
+  HTTP-Mapping und Service-Delegation. `ProjectController::store`
+  und `update` arbeiten gegen das `ProjectData`-DTO statt gegen
+  `$request[...]`-Reads; `saveText` / `saveImage` / `saveGallery` /
+  `AudiovisualController::store` delegieren die fachliche Arbeit
+  vollständig an die zugehörigen Content-Services.
+- **`RegisteredUserController::store` von ~115 Zeilen auf ~30
+  Zeilen reduziert** durch Extraktion der drei Verzweigungen
+  (Reaktivierung, Onboarding, Project-Invitation) in dedizierte
+  Services und durch Auslagerung des Role-Resolvers in einen
+  Support-Helper.
+- **Comment-Pfade konsolidiert.** Die `setStatus*`-Methoden
+  heißen jetzt `setCommentStatus*` (Project, Chapter, Entry, Text,
+  Image), `ContentController::updateStatus` heißt
+  `updateCommentStatus`. Route-Namen einheitlich auf
+  `comment.<model>.status`. Gallery- und Audiovisual-Methoden
+  entwirrt: Methoden, die einen neuen Kommentar anlegen, heißen
+  jetzt `comment<Model>`, Methoden, die eine Save-Submission routen,
+  heißen `saveComment<Model>` — symmetrisch zu den anderen
+  Modellen. Sieben Comment-Endpunkte sind auf
+  `StoreCommentRequest` umgestellt, die zugehörige
+  project-scoped Autorisierung bleibt im Controller, weil sie
+  das konkrete Modell braucht.
+- **`UserController::update` in Admin-Edit und Self-Edit
+  aufgespalten.** `PATCH /users/{user}` ist der reine Admin-Pfad
+  (Validation via `UpdateUserAsAdminRequest`, Authorization durch
+  `role:Admin`-Middleware). `PATCH /profile` (neu) ist der
+  Self-Edit-Pfad — das `roles`-Feld ist hier strukturell nicht
+  zugelassen, optionaler Passwort-Wechsel mit Verifikation des
+  alten Passworts über eine Closure-Rule. Die Profile-View zeigt
+  jetzt auf `profile.update` (vorher `users.update`), HTTP-Methode
+  korrigiert auf `PATCH`.
+- **`RoleController::store` und `update` nutzen FormRequests** mit
+  `authorize()` = `hasRole(Admin)` als Defense-in-Depth zur
+  Constructor-Middleware. Vorher inline `$this->validate(...)`.
+- **Permission-Modell auf Spatie konsolidiert.** Das frühere
+  Drei-Welten-Konstrukt (Spatie + custom `UserHasPermission` +
+  globale Gate-Closures) ist auf Spatie zentralisiert:
+  - Die Pivot-Tabelle `user_has_permissions` ist umbenannt zu
+    `project_user_permissions`. Schema/Indizes/FKs überleben den
+    `Schema::rename`-Lauf, eine reversible Migration trägt das
+    auf MySQL und SQLite identisch um.
+  - Das Custom-Modell `UserHasPermission` ist umbenannt zu
+    `ProjectUserPermission` (Datei und Klasse), Tabellen-Bindung
+    explizit gesetzt.
+  - Das Custom-Modell `App\Models\Role` und der Wrapper
+    `App\Models\RoleHasPermission` sind gelöscht; alle Aufrufer
+    nutzen jetzt `Spatie\Permission\Models\Role` und Spatie's
+    `permissions()`-Relation.
+  - `ProjectPolicy::view` und `::comment` sind project-scoped und
+    delegieren an `ProjectPermissionService::userHasPermissionOnProject`
+    (Owner-Shortcut, Admin via `before()`, sonst Pivot-Lookup).
+    `ChapterPolicy` und `EntryPolicy` analog — Eingeladene mit
+    `edit`/`delete`/`view`-Permission greifen jetzt überall durch
+    statt nur in den Project-Pfaden.
+- **`ProjectController::getAllProjects` auf den Service
+  verschlankt.** Die 25-Zeilen-Query (Admin-Pfad inline +
+  Nicht-Admin-Pfad über `invitations.guest_id`) ist auf einen
+  Service-Call zusammengeschmolzen. Eingeladene werden jetzt
+  über die Permissions-Tabelle resolved (konsistent mit der
+  Permission-Welt) statt über `invitations`.
+- **`media_content`-Pivot sauber polymorph.** Die alten Spalten
+  `media_content_id`, `media_contentable_id`,
+  `media_contentable_type` sind durch `content_id`,
+  `content_type`, `parent_id`, `parent_type` ersetzt. Übergang
+  in mehreren Schritten:
+  - Neue Spalten in einer eigenen Migration angelegt, Daten-
+    Backfill in derselben Migration (`content_id` 1:1 aus
+    `media_content_id`, `parent_id` aus `media_contentable_id`,
+    `parent_type = Entry::class`, `content_type` mit Spezialfall
+    für historisch falsch getaggte Gallery-Rows).
+  - `MediaContent::content()` und `MediaContent::parent()` als
+    saubere `morphTo`-Beziehungen ergänzt;
+    `MediaContent::text()/image()/gallery()/audiovisual()` liest
+    aus `content_id`, `MediaContent::entry()` aus `parent_id`,
+    `Entry::mediaContent()` aus `parent_id`.
+  - `mediaContents()` und `project()` auf den vier Content-
+    Modellen ergänzt — `project()` navigiert vom Content über
+    den Pivot zum Entry → Chapter → Project. `Image::project()`
+    delegiert an `Gallery::project()`, weil Images über
+    `gallery_id` hängen. `Image::gallery()` als `belongsTo`
+    ergänzt — der Rückweg fehlte vorher.
+  - Services schreiben in einem Doppelschreibungs-Übergang
+    parallel in alte und neue Spalten, danach ausschließlich in
+    die neuen.
+  - Controller- und View-Reads (`ProjectController::getParentText`,
+    `allData`, `chapters/index.blade.php`, `preview/index.blade.php`,
+    `preview/pdf.blade.php`, `contents/comment.blade.php`) sind
+    auf `content_type` / `content_id` / `parent_id` umgestellt;
+    Diskriminator-Vergleiche und URL-Parameter folgen.
+  - Eine Followup-Migration nimmt die NOT-NULL-Constraints von
+    den alten Spalten, eine weitere droppt sie vollständig.
+    `MediaContent::$fillable` führt nur noch die neuen Spalten,
+    `AuditMediaContent` ist komplett auf neue Spalten
+    umgeschrieben.
+  - Beifang: der historische Gallery-Schiefstand
+    (`GalleryService::attachToEntry` setzte
+    `media_contentable_type=Image::class`) ist beim Backfill auf
+    `Gallery::class` korrigiert; ein latenter Bug in
+    `GalleryService::detachFromEntries` (suchte unter
+    `Gallery::class`, fand Rows aber als `Image::class`) ist
+    damit strukturell weg. Gallery-Kommentare zeigen jetzt
+    korrekt „Gallery" als Type-Label statt „Image".
+- **Major-Upgrade-Welle: Stack auf den aktuellen Stand gehoben.**
+  Sieben sequenzielle Sprünge in dedizierten Branches:
+  - PHP 8.1 → 8.2 → 8.3 → 8.4 (mit verschränktem PHP-8.4-+-
+    Laravel-9-Sprung in einem Branch, weil Larastan v1 an
+    PHPStan-BetterReflection-Stubs für PHP 8.4 hängenblieb und
+    Larastan v2 Laravel 9 voraussetzt).
+  - Laravel 8 → 9 → 10 → 11 → 12 (`laravel/framework ^12`).
+  - Spatie-Pakete auf jeweils kompatiblen Major:
+    `spatie/laravel-permission ^6` (Middleware-Namespace
+    `Middlewares\*` → `Middleware\*` Singular),
+    `spatie/laravel-activitylog ^4` (neue API-Konvention mit
+    `getActivitylogOptions(): LogOptions`, 18 Modelle entsprechend
+    angepasst, zwei neue Schema-Spalten `batch_uuid` und `event`
+    per `vendor:publish`), `spatie/laravel-translatable ^6`,
+    `spatie/laravel-welcome-notification ^2.5`,
+    `spatie/laravel-ignition ^2`.
+  - Test-Tooling: Pest 1 → 2 → 3, PHPUnit 9 → 10 → 11,
+    `nunomaduro/collision` ^6 → ^7 → ^8, `pestphp/pest-plugin-
+    laravel` synchron.
+  - Larastan v1 → v2 → v3 (Repo-Move `nunomaduro/larastan` →
+    `larastan/larastan ^3`, bringt PHPStan v2 mit), Pint im
+    Laravel-Preset, Carbon v2 → v3 (Methodennamen-Wechsel in
+    `MyCustomWelcomeNotification`).
+  - Container-Stack: Ubuntu 22.04 jammy → 24.04 noble, Node 20
+    LTS → 22 LTS, PCOV als Coverage-Driver, idempotenter
+    `storage:link`-Auto-Setup im `start-container`.
+  - `bootstrap/app.php`-Aliase nachgezogen, `app/Http/Kernel.php`,
+    `app/Console/Kernel.php` und `app/Exceptions/Handler.php`
+    sind durch den Closure-Bootstrap obsolet.
+  - 18 Modelle: `$fillable`-PHPDoc von `@var array<int, string>`
+    auf `@var list<string>` (PHPStan-v2-Kovarianz), 51
+    `@var \App\Models\User`-Hints in fünf Test-Dateien für die
+    Larastan-v2-Inferenz, 45 `@var \Tests\TestCase $this`-Hints
+    in zwei Pest-3-Test-Dateien.
+  - `CreateAdminUserSeeder` von `env()` auf `config()` umgestellt
+    (Larastan-v3-Regel `noEnvCallsOutsideOfConfig`); neue
+    `config/admin.php`.
+  - `laravelcollective/html` (abandoned) raus, native Blade-Forms
+    in `roles/create.blade.php` und `roles/edit.blade.php`
+    (`@csrf`, `@method('PATCH')`, `@checked`, `old('field',
+    $model->field)`-Fallback).
+  - `facade/ignition` → `spatie/laravel-ignition`,
+    `swiftmailer/swiftmailer` durch Symfony Mailer ersetzt,
+    `fideloper/proxy` durch
+    `Illuminate\Http\Middleware\TrustProxies` (Laravel-eigene
+    Implementation).
+  - Larastan-Baseline regeneriert: vormals 198 v1-Einträge, im
+    Verlauf v2-130, dann 15 v3-Einträge nach dem PHPDoc-Sweep
+    und vier Smell-Fixes im `ProjectController`.
+- **CI auf Hard-Fail für `composer audit`.** Der Soft-Fail-
+  Übergang aus dem Sicherheitsnetz-Release ist abgeschlossen — ein
+  neuer CVE im Lock bricht ab jetzt den Build. `continue-on-error:
+  true` und `|| true` sind raus.
+- **`php artisan config:cache` läuft im CI-Pest-Job vor der
+  Suite.** Defense-in-Depth gegen `env()`-Calls außerhalb von
+  `config/`: Larastan fängt das statisch, der Cache-Step fängt es
+  dynamisch.
+- **Rate-Limit auf den Guest-Auth-Routen.** `POST /login`,
+  `POST /forgot-password` und `POST /reset-password` tragen jetzt
+  `throttle:6,1` als zusätzliche Middleware. Verhindert Credential-
+  Stuffing auf Login und Spam auf den Password-Reset-Endpunkten.
+- **Eloquent-Strict-Mode voll aktiviert.**
+  `Model::shouldBeStrict()` im `AppServiceProvider` bündelt
+  `preventLazyLoading`, `preventAccessingMissingAttributes` und
+  `preventSilentlyDiscardingAttributes` in einem Aufruf. Aktiv
+  nur außerhalb von Production.
+- **`role:Admin`-Middleware statt `'admin'`-Alias** in User- und
+  Role-Controller-Methoden (`index`, `edit`, `destroy` etc.).
+  Konsistent mit Spatie-Permission. Custom-Alias-Registrierung
+  in `bootstrap/app.php` entfernt; Settings-Route-Group
+  nachgezogen.
 - **„Übersetzen"- und „Projekt-Metadaten"-Buttons in
-  `chapters/index.blade.php` hinter `@can('update', $project)`.**
-  Vorher zeigten beide Buttons sich auch Readern. Backend blockte
-  seit E.7a-Hotfix sauber via Policy, der Frontend-Klick lief
-  damit in 403/leere Seite — UX-mäßig irritierend. Mit dem
-  Frontend-Gate sehen Reader die Buttons gar nicht mehr.
-- **jQuery-Sortable-Init in `chapters/index.blade.php` hinter
-  `@can('update', $project)`.** Reader konnten Chapter/Entries/
-  Content via Drag-and-Drop visuell verschieben; Backend
-  (`chapter.drag` → `ChapterController::saveDragAndDrop` mit
-  `$this->authorize('update', $project)`) lehnte den POST mit 403
-  ab, der UI-Zustand blieb aber verschoben bis zum nächsten
-  Refresh. Mit dem Frontend-Gate wird die Sortable-Mechanik für
-  Reader gar nicht erst initialisiert.
+  `chapters/index.blade.php`** hinter `@can('update', $project)`.
+  Vorher zeigten sie sich auch Readern; das Backend blockte sauber
+  via Policy, der Frontend-Klick lief damit in 403/leere Seite —
+  UX-mäßig irritierend. Mit dem Frontend-Gate sehen Reader die
+  Buttons gar nicht mehr.
+- **jQuery-Sortable-Init in `chapters/index.blade.php`** hinter
+  `@can('update', $project)`. Reader konnten Chapter/Entries/
+  Content via Drag-and-Drop visuell verschieben; das Backend
+  lehnte den POST sauber ab, der UI-Zustand blieb aber bis zum
+  Refresh verschoben. Sortable wird für Reader gar nicht mehr
+  initialisiert.
+- **Spacing am Preview-Layout (`public/css/index.css`).** Drei
+  Mini-Justierungen am `.hintergrundweiss`/`.zweispaltig`/
+  `.einspaltig`-Block fangen den Multicolumn-Kollaps bei
+  längeren Subtitle-/Description-Texten ab. Defensiver
+  CSS-Patch, kein Multicolumn-Ersatz und keine HTML-Umstellung.
+- **`LogService::__construct`: `'App\Models\gallery'` →
+  `Gallery::class`.** Der kleine `g` war ein Tippfehler, der auf
+  einem case-sensitive Linux-Filesystem zur
+  `ClassNotFoundException` geführt hätte.
+- **`LogService::highlightTextDifference` und
+  `ProjectController::highlightTextDifference`** von PascalCase
+  auf camelCase umbenannt (sechs Aufrufer in zwei Dateien).
+  Konsistent mit Laravel- und PSR-12-Standard.
+- **Redundante `'created_at' => now()`-Zuweisungen entfernt** in
+  vier Eloquent-Mass-Assignment-Pfaden. Eloquent setzt Timestamps
+  automatisch — das manuelle Setzen war Cargo und wird unter
+  `preventSilentlyDiscardingAttributes` als
+  `MassAssignmentException` sichtbar. Query-Builder-Pfade
+  behalten ihr `'created_at'`, weil der Query Builder keine
+  Timestamps automatisch setzt.
+- **`Text::$fillable` bereinigt** — `'id'` und `'position'` raus.
+  Die `position`-Spalte ist seit einer früheren Migration nicht
+  mehr in der DB, die Mass-Assignment-Liste hatte sie aber nie
+  verloren; unter Strict-Mode löste das eine
+  `MissingAttributeException` aus. Schema-Bereinigung der toten
+  Spalte verbleibt für einen separaten Schema-Refactor.
+- **Inkonsistenz-Bug in `saveGallery` mitkorrigiert**: der direkte
+  Update-Pfad las vorher `$request['title']` / `subtitle` /
+  `description`, das Frontend schickt aber nur die
+  `galleryTitle`-Variante. `GalleryData::fromRequest` akzeptiert
+  beide Varianten und priorisiert die `gallery*`-Prefix-Form.
+- **`ChapterController::getChapterComment` konsistent zu den
+  anderen `get*Comment`-Methoden.** Project, Entry, Text und
+  Image geben das `getComments`-Array direkt zurück; Chapter
+  machte `redirect()->back()->with(['comments' => …])`. Jetzt
+  symmetrisch.
+- **`MyCustomWelcomeNotification`-Konstruktor** auf
+  `Carbon $validUntil` statt `CarbonInterface $validUntil`. Die
+  Eltern-Klasse typed die Property selbst als `Carbon`; die
+  redundante `$this->validUntil = $validUntil`-Zuweisung nach
+  `parent::__construct()` ist mit raus.
+- **`[Unreleased]`-Block des Changelog konsolidiert.** Die zuvor
+  chronologisch protokollierten ~50 Refactor-Schritte sind zu
+  thematisch kohärenten Keep-a-Changelog-Sektionen
+  zusammengefasst, organisationsinternes Vokabular ist
+  entfernt. Inhaltlich verlustfrei, lesbar für externe Reviewer.
 
-### Sicherheit (Composer-Audit-Hotfix Juni 2026)
+### Entfernt
 
-- **guzzlehttp/guzzle 7.10.5 → 7.12.1 und guzzlehttp/psr7 2.x → 2.12.1.**
-  Drei CVEs aus dem `composer audit`-Lauf vom 2026-06-20:
-  - `CVE-2026-55767` (medium) — Dot-only cookie domains match all hosts
-    (`guzzlehttp/guzzle <7.12.1`).
-  - `CVE-2026-55568` (medium) — Silent HTTPS proxy downgrade to cleartext
-    (`guzzlehttp/guzzle <7.12.1`).
-  - `CVE-2026-55766` (medium) — CRLF injection in HTTP start-line
-    serialization (`guzzlehttp/psr7 <2.12.1`).
+- **Drei toter Bootstrap-Boilerplate-Dateien gelöscht** durch die
+  Laravel-11+-Closure-API-Umstellung:
+  - `app/Http/Kernel.php` (Middleware-Stack, Middleware-Groups
+    und Aliase wandern in `bootstrap/app.php`).
+  - `app/Console/Kernel.php` (Custom-Commands unter
+    `app/Console/Commands/` werden in Laravel 11+ automatisch
+    geladen).
+  - `app/Exceptions/Handler.php` (60 LoC, ausschließlich
+    Boilerplate; `$dontFlash` für Passwort-Felder wandert in den
+    `withExceptions(...)`-Closure).
+- **Sechs Stock-Middleware-Subklassen aus `app/Http/Middleware/`
+  gelöscht** — alle waren 1:1-Subklassen der Framework-Defaults
+  ohne projekt-spezifische Logik: `Authenticate`, `EncryptCookies`,
+  `PreventRequestsDuringMaintenance`, `TrimStrings`,
+  `TrustProxies`, `VerifyCsrfToken`. Verhalten wandert in die
+  Bootstrap-Closures.
+- **`App\Http\Middleware\IsAdmin` gelöscht.** Custom-Middleware,
+  die `auth()->user()->hasRole('Admin')` prüfte — exakt das macht
+  Spatie's `RoleMiddleware` per `role:Admin`-Alias.
+- **`App\Models\Role`, `App\Models\RoleHasPermission` und
+  `App\Models\UserHasPermission` gelöscht** (vormals umbenannt
+  zu `ProjectUserPermission`, dann durch Spatie's eigene Modelle
+  und Pivot-Tabelle ersetzt). Custom-Wrapper ohne Mehrwert.
+- **`app/Traits/CommentTrait.php` gelöscht.** Die fünf
+  Trait-Methoden (`commentAsUser`, `replyAsUser`, `editAsUser`,
+  `deleteAsUser`, `status`) wandern in den `CommentService`. Die
+  `comments()`-MorphMany-Relation lebte schon direkt in den acht
+  Modellen; der Trait war nur noch Methoden-Container.
+- **Cargo- und tote Helper aus den Fat Controllern**: `mapData()`
+  in `ProjectController`, `ContentController` und
+  `AudiovisualController`; fünf `protected`-Permission-Helper aus
+  `ProjectController` (`getUsersForThisProject`,
+  `getCurrentUsersPermissions`, `getSelectedPermissionUser`,
+  `getSelectedPermissionUserPluck`, `getRoleSelectedUser`); die
+  Upload-/Translation-/Comment-Helper `setImage`, `attachMedia`,
+  `detachMedia`, `updateText`, `updateImage`, `uploadAudio`,
+  `youtubeID` aus `ContentController` und `AudiovisualController`;
+  der duplizierte `getSource`-Helper. Tote Imports
+  (`Storage`-Facade, `UploadTrait`, `MediaContent`, `Str`,
+  `App\Models\Image`, `Mpdf\Pdf`, `Invitation`, `ModelHasRole`)
+  aufgeräumt.
+- **Tote Eloquent-Beziehungen auf den abgelösten Pivot-Spalten**:
+  `MediaContent::media()`, `Comment::media()`, `Text::medias()`,
+  `Text::entry()`, `Image::medias()`, `Image::entry()`,
+  `Image::parentEntry()`. Alle ohne Konsumenten in `app/`,
+  `resources/` oder `tests/`.
+- **Auskommentierter Switch-Case-Block** (22 Zeilen toter Code)
+  in der ehemaligen `CommentTrait::commentAsUser`.
 
-  Direkte Production-Auswirkung in crowdCuratio gering — Guzzle wird
-  nur über transitive Abhängigkeiten von Laravel/Sanctum/Translatable
-  genutzt und nicht für outgoing HTTP-Calls in Anwendungslogik. Trotzdem
-  Hard-Fix, weil sonst `composer audit` rot bleibt und nachfolgende
-  CI-Läufe blockt. Update über
+### Behoben
 
-      composer update guzzlehttp/guzzle guzzlehttp/psr7 --with-dependencies
-
-  composer.lock-Diff enthält den Pin-Sprung.
-
-### Behoben (Quick-Win-Welle Stakeholder-Bugs Juni 2026)
-
-- **Neuanlage von Gallery, Text, Image und Audio/Video lieferte 404.**
-  Direkte Folge des Laravel-11-Sprungs (Phase 3 / Block F): Die
-  Middleware `ConvertEmptyStringsToNull` ist seitdem
-  Default-Bestandteil der `web`-Gruppe und schreibt leere Hidden-
-  Inputs (Neuanlage: `galleryId=""`, `textId=""`, `imageId=""`,
-  `audiovisualId=""`) zu `null` um. Die Update-Weichen in
+- **Neuanlage von Gallery, Text, Image und Audio/Video lieferte
+  404.** Direkte Folge des Laravel-11-Sprungs: Die Middleware
+  `ConvertEmptyStringsToNull` schreibt seitdem leere
+  Hidden-Inputs zu `null` um. Die Update-Weichen in
   `ContentController::saveGallery|saveText|saveImage` und
   `AudiovisualController::store` folgten dem Pattern
   `isset($request['xId']) && $request['xId'] !== ''`. Bei `null`
   ist `isset` über den Request-Bag-Key `true` und `null !== ''`
-  ebenfalls `true` — der Code lief in den Update-Pfad, rief
-  `Model::findOrFail(null)` auf, das warf `ModelNotFoundException`
-  und Laravel rendert das als HTTP 404 → Custom-404-Page. Edit-
-  Pfad ging weiter durch, weil dort die ID gefüllt war. Fix in
-  vier Controller-Methoden plus zwei translationMode-Branches:
+  ebenfalls — der Code lief in den Update-Pfad, rief
+  `Model::findOrFail(null)` auf und Laravel rendert die
+  resultierende `ModelNotFoundException` als HTTP 404. Fix in
+  vier Controller-Methoden plus zwei `translationMode`-Branches:
   `$request->filled('xId')` ersetzt die alten Pattern. Sieben
   Pest-Tests in `ContentControllerEmptyIdFilledTest` pinnen das
-  Verhalten — fünf für die Neuanlage-Pfade, zwei für die
-  Update-Pfade als Schutz vor Über-Korrektur.
-- **AM-D-1 — hardcoded Default-Impressum aus Project-Preview/PDF
-  raus.** `resources/views/preview/index.blade.php` und
-  `resources/views/preview/pdf.blade.php` zeigten unten immer die
-  Schreinerstraße samt E-Mail-Adresse, unabhängig vom Projekt.
-  Jetzt: Footer-Block rendert nur, wenn `$project->imprint` nach
+  Verhalten.
+- **Hardcoded Default-Impressum aus Project-Preview/PDF raus.**
+  `preview/index.blade.php` und `preview/pdf.blade.php` zeigten
+  unten immer dieselbe Adresse, unabhängig vom Projekt. Jetzt
+  rendert der Footer-Block nur, wenn `$project->imprint` nach
   `strip_tags` nicht leer ist.
-- **AM-D-3-Rest — `roles` beim Admin-Invite nicht mehr `required`.**
-  `RegisterRequest::rules()` hatte `roles` zwingend, der
-  RegisteredUserController-Pfad ignoriert das beim Admin-Invite
-  aber sowieso (setzt die Admin-Rolle direkt). Stakeholder mussten
-  trotz Admin-Haken eine Default-Rolle wählen. Conditional Rule
-  via `$rolesRule = $this->boolean('adminUser') ? 'sometimes' :
-  'required';`. Drei Pest-Tests in `RegisterRequestTest` pinnen
+- **`RegisterRequest::roles`-Rule für den Admin-Invite-Pfad
+  entschärft.** Der Controller-Pfad ignoriert beim Admin-Invite
+  die Rolle ohnehin (setzt Admin direkt). Conditional Rule via
+  `$rolesRule = $this->boolean('adminUser') ? 'sometimes' :
+  'required';`. Drei Pest-Tests in `RegisterRequestTest` fixieren
   das.
-- **AM-D-4-Rest — Welcome-Page-Register-Link für Gäste raus.**
-  `resources/views/welcome.blade.php` Z. 406 zeigte einen
-  Register-Link für Nicht-Eingeloggte, der durch NF-SEC-202 in
+- **Welcome-Page-Register-Link für Gäste raus.**
+  `resources/views/welcome.blade.php` zeigte einen Register-Link
+  für Nicht-Eingeloggte, der durch den Registrierungs-Lockdown in
   einen Login-Redirect lief — UX-mäßig irreführend.
-- **Gallery-/Audiovisual-Form-IDs eindeutig + Doppel-Include
-  weg.** Drei Form-Tags in `Entry/index.blade.php`,
-  `contents/gallery.blade.php` und `contents/audiovisual.blade.php`
-  hatten alle `id="entry_frm"`. Die `resetEntryForm`/
-  `setEntryFormUpdate`-Helper in `chapters/index.blade.php`
-  konnten dadurch das `_method=PATCH`-Override aus dem Entry-Form
-  auf das Gallery-Form übergreifen lassen. Zusätzlich lud
-  `contents/index.blade.php` Z. 86 das Gallery-Modal transitiv
-  und `chapters/index.blade.php` Z. 664 noch einmal direkt — das
-  Gallery-Modal war doppelt im DOM. Gallery- und Audiovisual-
-  Form bekommen jetzt eigene IDs (`gallery_frm`,
-  `audiovisual_frm`), der Doppel-Include ist raus.
-
-### Sicherheit (Permission-Welt nachschärfen — Block E, Welle E.7a-Hotfix)
-
-- **`ProjectController::editMetaData` ohne Authorize-Gate geschlossen.**
-  `/project/{id}/metadata` war nur durch `auth`-Middleware geschützt
-  — Reader konnten fremde Project-Metadaten samt Permissions-
-  Verwaltung sehen. Inline-Authorize via `update`-Policy. Damit
-  greift dieselbe Owner/Admin/Eingeladener-mit-edit-Logik wie für
-  die regulären Update-Pfade. Im Smoke nach E.7a aufgedeckt
-  (analog zum Block-D-Architecture-Review-BLOCKER).
-- **Latenter View-Bug behoben:** die `projects.create.blade.php`-
-  View las `$listPermissions` (Zeile 168), das `editMetaData`
-  aber nicht an die View übergab. Bei Admin griff der
-  `Auth::user()->isAdmin()`-Short-Circuit vorher und der Bug fiel
-  nie auf; mit dem Owner- oder Eingeladenen-Pfad lief das
-  `in_array`-Statement und crashte mit `Undefined variable`.
-  Variable wird jetzt analog `ProjectController::edit` via
-  `UserService::getAllUsers` befüllt.
-- **Drei neue Charakterisierungs-Tests** in
-  `ProjectControllerAuthorizationTest`: Fremder → 403, Owner →
-  200/302, Admin → 200/302.
-
-### Geändert (Permission-Welt nachschärfen — Block E, Welle E.7a)
-
-- **`ChapterPolicy` und `EntryPolicy` project-scoped via Service.**
-  Vorher reiner Owner-Check (`$user->id === $chapter->project->user_id`)
-  — Eingeladene mit `edit`/`delete`/`view`-Permission auf dem Pivot
-  fielen durch. Jetzt geht `view`/`update`/`delete`/`createIn`
-  durch `ProjectPermissionService::userHasPermissionOnProject`,
-  das den Owner-Shortcut intern abdeckt und zusätzlich den Pivot-
-  Lookup macht. Admin via `before()` unverändert.
-  **Verhaltens-Wechsel:** ein Eingeladener mit `edit`-Permission
-  kann jetzt Chapter und Entries editieren — vorher nur der
-  Project-Owner. Das war ein im Architecture-Review identifiziertes
-  Authorization-Loch.
-- **Neue Basisklasse `App\Policies\OwnerScopedPolicy`.** Abstract,
-  trägt `before()`-Admin-Shortcut, Service-Injection und einen
-  `check(User, Project, PermissionName)`-Helper. Wiederverwendbar
-  für die noch ausstehenden Content-Policies (Text/Image/Gallery/
-  Audiovisual), die in E.7b folgen, sobald die `media_content`-
-  Polymorphie eine einheitliche `project()`-Ableitung pro Modell
-  zulässt.
-
-### Hinzugefügt (Permission-Welt nachschärfen — Block E, Welle E.7a)
-
-- **`tests/Feature/Policies/ChapterPolicyTest.php`** (neu) — sieben
-  Pest-Tests: Owner / Admin (`before`) / Eingeladener-mit-view /
-  Eingeladener-mit-edit / Eingeladener-nur-mit-view (kein
-  Edit-Recht) / Fremder.
-- **`tests/Feature/Policies/EntryPolicyTest.php`** (neu) — sechs
-  Tests, gleiche Boundaries plus transitiver Chapter→Project-Pfad.
-- **`tests/Feature/Policies/ProjectPolicyTest.php`** um acht
-  Negativtests erweitert: `update`/`delete`/`restore`/`publish`
-  jeweils Owner ✓ + Fremder ✗ (Architecture-Review-Befund —
-  diese Methoden waren bisher nicht negativ-getestet).
-
-### Geändert (Permission-Welt nachschärfen — Block E, Welle E.6)
-
-- **Sieben Comment-Endpunkte auf `StoreCommentRequest` umgestellt.**
-  Vorher hatte jede der sieben Controller-Methoden (Project,
-  Chapter, Entry, Text, Image, Gallery, Audiovisual) ein
-  identisches `$request->validate(['comment' => 'required'])`
-  inline. Ein gemeinsamer FormRequest deckt das ab — typisiert,
-  authorize-prüfbar, FormRequest-Konvention aus ADR-0017 auch hier
-  eingelöst. Die project-scoped Autorisierung (`authorize('comment',
-  $model)`) bleibt im Controller, weil sie das konkrete Modell
-  braucht.
-
-### Hinzugefügt (Permission-Welt nachschärfen — Block E, Welle E.6)
-
-- **`tests/Feature/Http/Requests/StoreCommentRequestTest.php`** —
-  vier Pest-Tests: Authorize-Boundary (auth/guest) und Rule-Set
-  (`comment` + `id` jeweils required).
-
-### Geändert (Permission-Welt nachschärfen — Block E, Welle E.5)
-
-- **`RegisteredUserController::store` von ~115 Zeilen auf ~30
-  Zeilen verschlankt.** Vier neue Klassen kapseln jetzt die drei
-  Verzweigungen plus den Role-Resolver:
-  - `App\Support\RoleResolver` (Helper) — vorher Private-Methode
-    im Controller. Akzeptiert Single-String, Array, Role-Name,
-    numerische Role-ID; löst alles in konkrete `Role`-Instanzen
-    auf.
-  - `App\Services\UserReactivationService` — kapselt den
-    `if ($userExists)`-Pfad mit `DB::table`-Update auf
-    `deleted_at = null`.
-  - `App\Services\UserOnboardingService` — User-Erzeugung per
-    Property-Setter inkl. Privilege-Check für `is_admin` /
-    `create_project` (NF-SEC-202), Rollen-Sync, Welcome-Mail.
-  - `App\Services\ProjectInvitationService` — Permission-Lookup
-    über Spatie-Relation, `ProjectUserPermission`-Pivot-Inserts,
-    Invitation-Eintrag.
-- **Latenter Bug behoben:** `now()->addDay(3)` in der Welcome-
-  Notification-Logik hat das `3`-Argument still verworfen (die
-  Carbon-Methode nimmt keine Parameter). Welcome-Tokens waren
-  faktisch nur einen Tag gültig statt drei. Jetzt `addDays(3)`,
-  gefangen durch Larastan im strict-Mode der neuen Service-Klasse.
-
-### Hinzugefügt (Permission-Welt nachschärfen — Block E, Welle E.5)
-
-- **Vier neue Pest-Test-Files** mit insgesamt 18 Tests:
-  - `tests/Feature/Support/RoleResolverTest.php` (5)
-  - `tests/Feature/Services/UserReactivationServiceTest.php` (4)
-  - `tests/Feature/Services/UserOnboardingServiceTest.php` (6)
-  - `tests/Feature/Services/ProjectInvitationServiceTest.php` (4)
-
-
-
-### Sicherheit (composer audit — Laravel Framework)
-
-- **`laravel/framework` von 12.61.0 auf 12.62.0** angehoben.
-  GHSA-crmm-hgp2-wgrp (Temporary Signed URL Path Confusion,
-  Severity medium). Nur Lockfile-Update — `composer.json` hat
-  `^12.0` und deckt den Bereich ab. composer audit jetzt grün.
-
-### Geändert (Permission-Welt nachschärfen — Block E, Welle E.4)
-
-- **`RoleController::store` und `::update` nutzen FormRequests.**
-  Vorher inline `$this->validate(...)` mit hartkodierten Rules.
-  Jetzt `StoreRoleRequest` und `UpdateRoleRequest` in
-  `app/Http/Requests/`, jeweils mit `authorize()` =
-  `hasRole(Admin)` als Defense-in-Depth zur Constructor-Middleware.
-  Plus typisierte `$validated`-Daten statt `$request->input(...)`.
-  Bringt die FormRequest-Konvention aus ADR-0017 auch im
-  Rollen-CRUD an.
-
-### Hinzugefügt (Permission-Welt nachschärfen — Block E, Welle E.4)
-
-- **Zwei Pest-Test-Files** in `tests/Feature/Http/Requests/`
-  (`StoreRoleRequestTest`, `UpdateRoleRequestTest`):
-  Authorize-Boundaries (Admin/Reader/Guest) und Rule-Set-
-  Charakterisierung.
-
-### Geändert (Permission-Welt nachschärfen — Block E, Welle E.3)
-
-- **`UserController::update` und das eigene Profil sind jetzt
-  zwei klar getrennte Pfade.** Vorher hatte eine einzige Methode
-  beide Use-Cases mit `if (old_password != '')`-Verzweigung und
-  einem Caller-Admin-Guard auf dem `roles`-Feld bewältigt. Nach
-  dem Split:
-  - **`PATCH /users/{user}`** ist der reine Admin-Edit-Pfad —
-    Validation via neuem `UpdateUserAsAdminRequest`,
-    Authorization durch `role:Admin`-Middleware im Constructor.
-    Felder: `firstName`, `lastName`, optional `roles`,
-    `adminUser`, `createProject`.
-  - **`PATCH /profile`** (neu) ist der Self-Edit-Pfad —
-    Validation via neuem `UpdateOwnProfileRequest`. Target ist
-    immer der eingeloggte User; das `roles`-Feld ist
-    *strukturell* nicht zugelassen (keine Rule, keine
-    `validated`-Daten). Optionaler Passwort-Wechsel mit
-    Verifikation des alten Passworts über eine Closure-Rule.
-- **`resources/views/users/profile.blade.php`** zeigt jetzt auf
-  `profile.update` statt `users.update`. Methode auf `PATCH`
-  korrigiert (vorher `PUT`).
-- **`UserController::__construct`-Middleware-Liste** um `update`
-  erweitert — Admin-only, weil Self-Edit jetzt strukturell über
-  die andere Route läuft.
-
-### Hinzugefügt (Permission-Welt nachschärfen — Block E, Welle E.3)
-
-- **`UpdateUserAsAdminRequest` und `UpdateOwnProfileRequest`** in
-  `app/Http/Requests/`.
-- **Zwei Pest-Test-Files** in `tests/Feature/Http/Requests/`:
-  Authorize-Boundaries (Admin/Reader/Guest) und Rule-Set-
-  Charakterisierung. Self-Edit-Tests in
-  `tests/Feature/Http/UserControllerTest.php` auf
-  `PATCH /profile` umgezogen.
-
-### Behoben (Permission-Welt nachschärfen — Block E, Welle E.2)
-
+- **Gallery- und Audiovisual-Form-IDs eindeutig.** Drei Form-Tags
+  in `Entry/index.blade.php`, `contents/gallery.blade.php` und
+  `contents/audiovisual.blade.php` hatten alle
+  `id="entry_frm"`. Die `resetEntryForm`/`setEntryFormUpdate`-
+  Helper konnten dadurch das `_method=PATCH`-Override aus dem
+  Entry-Form auf das Gallery-Form übergreifen lassen. Zusätzlich
+  war das Gallery-Modal doppelt im DOM (`contents/index.blade.php`
+  + `chapters/index.blade.php`). Form-IDs auf `gallery_frm` und
+  `audiovisual_frm` umgestellt, der Doppel-Include ist raus.
+- **`addImage`-Click setzt jetzt entryId.** Der Hidden-Input wurde
+  beim Öffnen des Image-Upload-Modals nicht befüllt, der Save-
+  Pfad lief deshalb in den Create-ohne-Entry-Vektor und scheiterte
+  am Authorize-Gate. `.addImage`-Click-Handler setzt entryId
+  jetzt analog zu `.addContent` und `.addEntry`.
+- **`now()->addDay(3)` korrigiert zu `addDays(3)`** in der
+  Welcome-Notification-Logik. Die Carbon-Methode `addDay()` nimmt
+  keine Parameter — Welcome-Tokens waren faktisch nur einen Tag
+  gültig statt drei. Larastan im Strict-Mode der neuen
+  Service-Klasse hat den latenten Bug freigelegt.
+- **`CommentRetrieve::getComments` initialisiert `$pathReply`
+  defensiv.** Für `App\Models\MediaContent` (was
+  `ContentController::getTextComment` / `getImageComment` als
+  Class durchreichen) gab es keinen Switch-Case, `$pathReply`
+  blieb undefined. Bei leerer Comment-Liste fiel das nicht auf,
+  bei einem MediaContent mit Kommentaren wäre der Aufruf
+  gecrasht. Defensiver Default `$pathReply = '';` am Methoden-
+  Anfang.
+- **Lazy-Loading-Verletzungen unter Strict-Mode behoben** in
+  `ContentController::listComments` (die View greift auf
+  `$comment->project->name`, `$comment->user->name` und
+  `$comment->content->media_contentable_type` zu — jetzt eager
+  geladen) und in `LogService::history` / `LogService::textLog`
+  (`$activity->causer->name` ohne `with('causer')`).
+- **Blade-Expressions in HTML-Kommentaren werden jetzt nicht mehr
+  ausgewertet.** Vier Stellen in drei Blade-Templates hatten
+  auskommentierten HTML-Code, in dem `{{ ... }}`-Expressions
+  stehengeblieben sind. Blade interpretiert solche Expressions
+  auch innerhalb von HTML-Kommentaren — der Kommentar versteckt
+  nur das gerenderte HTML, nicht die PHP-Auswertung. Im
+  `chapters/index.blade.php`-Fall löste das eine
+  `MissingAttributeException` auf `$item->alt` aus. HTML-
+  Kommentare durch Blade-Kommentare `{{-- ... --}}` ersetzt.
+- **Soft-Delete-Bypass in den Content-Schreibpfaden beseitigt.**
+  `destroyText` / `destroyImage` / `destroyGallery` liefen
+  vorher über `DB::table()->update(['deleted_at' => now()])` —
+  das umgeht die SoftDeletes-Trait-Hooks (Observer, Activity-
+  Log etc.). Alle vier Stellen auf Eloquent-Builder-`delete()`
+  umgestellt; Verhalten identisch, Trait-Hook-Chain greift jetzt
+  korrekt.
 - **`PermissionTableSeeder` Strict-Mode-fest gemacht.** Vorher
   schickte der Seeder `permission_id` und `position` durch ein
   `updateOrCreate`-Array an `PermissionDescription`, dessen
-  `$fillable = ['description']` beides nicht zulässt. In Production
-  lief das still durch (Strict-Mode dort aus), in Dev/CI war es
-  eine latente `MassAssignmentException` — entdeckt im
-  Architecture-Review nach Block D. Pfad jetzt über expliziten
-  Query plus Property-Setter, identisch zum Test-Setup-Pattern.
-  Zwei Pest-Tests in `PermissionTableSeederStrictModeTest`
-  fixieren den Erst- und den Re-Run unter aktivem `shouldBeStrict()`.
-
-### Geändert (Permission-Welt nachschärfen — Block E, Welle E.1)
-
-- **`App\Models\Role` gelöscht.** Custom-Modell parallel zu Spatie's
-  `Role` ohne Mehrwert. Aufrufer in `ProjectController`,
-  `ChapterController`, `RegisteredUserController` und einem Test
-  auf `Spatie\Permission\Models\Role` umgestellt.
-- **`App\Models\RoleHasPermission` gelöscht.** Wurde nur an einer
-  Stelle (Project-Invite-Pfad in `RegisteredUserController::store`)
-  als Wrapper für die `role_has_permissions`-Pivot-Tabelle genutzt.
-  Pfad umgeschrieben auf Spatie's `permissions()`-Relation am
-  Role-Modell mit eager-load — funktional identisch, ein
-  Custom-Modell weniger.
-- **Neue `App\Support\RoleName`-Backed-Enum** analog
-  `PermissionName`. Vier Cases (`ADMIN`, `READER`, `EDITOR`,
-  `REVIEWER`) mit den Spatie-Rollen-Namen als String-Werten.
-  Harte Strings (`'Admin'` in Policies, Service, Controllern)
-  durchgängig auf Enum-Zugriffe umgestellt — Umbenennungen sind
-  jetzt typ-sicher, nicht mehr nur per grep.
-
-### Entfernt (Permission-Welt nachschärfen — Block E, Welle E.1)
-
-- **`tests/Feature/Refactor/AdminRoutesCharacterizationTest.php`
-  gelöscht.** Die Charakterisierung war für die
-  IsAdmin-Middleware-Migration in Block D PR 1 gedacht und nach
-  PR 2 redundant — die User- und Role-Controller-Tests decken
-  denselben Pfad ab.
-
-### Hinzugefügt (Permission-Welt nachschärfen — Block E, Welle E.1)
-
-- **`tests/Unit/Support/RoleNameTest.php`** — drei Pest-Tests
-  fixieren Cases, `all()`-Helper und die exakte Schreibweise der
-  Rollen-Namen (Case-Sensitivity ist kritisch, weil Spatie
-  Rollen per Strict-Match sucht).
-
-### Sicherheit (npm-audit-Hotfix Frontend)
-
-- **`axios` komplett aus dem Frontend-Stack entfernt** — schließt
-  17 CVEs (CSRF, SSRF, Prototype-Pollution mit Auth-Bypass-
-  Implikationen, mehrere DoS-Pfade). Das Paket war Laravel-Default-
-  Setup, wurde aber im App-Code nirgends genutzt — alle AJAX-Calls
-  laufen über jQuery (`$.ajax`/`$.get`).
-- **`lodash` aus den `devDependencies` entfernt.** Die transitive
-  Version aus Laravel-Mix (4.17.21, gepatcht) bleibt aktiv —
-  vorher hing eine veraltete 4.17.19 mit drei Prototype-Pollution-
-  CVEs direkt in der dependency-Liste.
-- **`alpinejs` von 2.7.3 auf 3.15.12 gehoben.** 2.x ist EOL. Drei
-  Template-Stellen (`navigation.blade.php`, `dropdown.blade.php`)
-  sind syntaktisch zwischen 2 und 3 identisch; `Alpine.start()` in
-  `resources/js/app.js` explizit aufgerufen (in 3.x Pflicht, in
-  2.x lief das automatisch).
-- **`resources/js/bootstrap.js` aufgeräumt** — `window.axios`- und
-  `window._`-Globale entfernt. Kommentar erklärt den Grund und den
-  empfohlenen Pfad für künftige AJAX-Calls (`fetch()` statt
-  externer Lib).
-
-Verbleibende ~106 npm-Vulnerabilities liegen im Laravel-Mix-Stack
-(Webpack/Babel/PostCSS-Dependencies). Mix ist deprecated und wird
-in Phase 5 durch Vite ersetzt — das löst den Rest strukturell auf.
-Ein Major-Bump-Fix ohne Mix→Vite-Migration würde den Build brechen.
-
-### Sicherheit (Authorization-Bypass-Hotfix)
-
-- **`UserController::update` ohne Authorization-Gate geschlossen.**
-  Vor dem Hotfix war die Methode weder per `role:Admin`-Middleware
-  noch per `authorize()`-Aufruf geschützt — jeder eingeloggte User
-  konnte via `PATCH /users/{anderer}` mit `roles=['Admin']` fremde
-  User editieren und ihnen die Admin-Rolle zuweisen
-  (Privilege-Escalation analog zum vorherigen `/register`-Pfad).
-  Neue `App\Policies\UserPolicy` regelt die Erlaubnis:
-  Admin via `before()`, sonst nur Self-Edit. Inline-Authorize
-  `$this->authorize('update', $user)` im Controller. Zusätzlich
-  greift im Body ein Caller-Admin-Guard auf das `roles`-Feld —
-  ein Self-Edit-Caller kann sich nicht selbst eine Admin-Rolle
-  zuweisen.
-- **`RoleController::store/show/update` ohne Backend-Gate
-  geschlossen.** Vor dem Hotfix waren nur `index/edit/destroy` per
-  `role:Admin` geschützt; via Direkt-POST/PATCH konnte ein Reader
-  neue Rollen anlegen oder bestehende ändern. Constructor-
-  Middleware-Liste erweitert auf den vollen Resource-Pfad
-  `index/create/store/show/edit/update/destroy`.
-- **Drei Charakterisierungs-Tests pro Bypass** fixieren das
-  geschlossene Verhalten und schützen vor Regression:
-  Reader→fremder User→403, Reader→Self-Edit→200/302, Reader→Self
-  mit `roles=['Admin']` ändert die eigene Rolle nicht, Reader→
-  `POST /roles`→403, Reader→`PATCH /roles/{id}`→403,
-  Reader→`GET /roles/{id}`→403.
-
-### Hinzugefügt (Permission-Harmonisierung — Block D, PR 2 / Welle 2c)
-
-- **`UserControllerTest`** in `tests/Feature/Http/` — neun
-  Pest-Tests fixieren das Verhalten der `users.*`-Routen unter
-  `role:Admin`: Index/Edit/Destroy mit Admin- und Reader-Boundaries,
-  Update inkl. Rollen-Sync und Password-Change-Pfad mit
-  Validierung des alten Passworts, plus Resend-Invitation und
-  Profile.
-- **`RoleControllerTest`** in `tests/Feature/Http/` — elf Tests
-  für Index/Show/Create/Store/Update/Destroy und die zwei
-  Custom-Routes (`customizedDelete` mit User-Reassignment und
-  `roleHasUsers`-JSON), inkl. Admin/Reader-Authorization.
-- **`RegisteredUserControllerCharacterizationTest`** erweitert
-  um sechs Tests: Create-Form-Authorization (Admin sieht Form,
-  Reader 403), Project-Permission-Pfad (Pivot-Eintrag wird
-  geschrieben), Reaktivierung soft-deletetes User, Admin-Invite
-  mit `adminUser=true` (Spatie-Admin-Rolle wird gesetzt), und
-  NF-SEC-202-Schutz gegen Privilege-Escalation durch Reader.
-- **`ProjectPermissionServiceTest`** erweitert um zwei Tests
-  für `getSelectedPermissionUserPluck` und `getRoleSelectedUser`.
-
-Coverage damit von **55 %** (Block-H-Schwelle) auf **66,9 %**.
-Schwerpunkte: User-, Role- und Register-Controller waren
-heute unter 20 % abgedeckt — die Kombination aus
-Authorization-, Service- und Custom-Route-Tests bringt sie auf
-~80 %+.
-
-### Geändert (Permission-Harmonisierung — Block D, PR 2 / Welle 2b)
-
-- **Pivot-Tabelle umbenannt: `user_has_permissions` →
-  `project_user_permissions`.** Die alte Bezeichnung kollidierte
-  semantisch mit Spatie's `user_has_permissions`-Tabelle aus dem
-  Standard-Schema, die eine andere Bedeutung hat (globale
-  Per-User-Permissions). Die neue Bezeichnung macht den Pivot
-  eindeutig zur Projekt-Zuordnung. `Schema::rename` läuft auf
-  MySQL und SQLite identisch, Spalten/Indizes/FKs überleben.
-- **Modell `App\Models\UserHasPermission` → `App\Models\ProjectUserPermission`
-  umbenannt** (Datei und Klasse). Tabellen-Bindung explizit auf
-  `project_user_permissions`. Alle Aufrufer in Controllern,
-  Services, Models und Tests sind nachgezogen.
-
-### Hinzugefügt (Permission-Harmonisierung — Block D, PR 2 / Welle 2b)
-
-- **Migration**
-  `2026_06_02_000000_rename_user_has_permissions_to_project_user_permissions.php`
-  mit reversiblem `down()`.
-- **`PermissionTableRenameTest`** in `tests/Feature/Database/`.
-  Drei Pest-Tests fixieren Endzustand, Migrations-Roundtrip
-  (down/up) und Spalten-Set der neuen Tabelle.
-- **`ProjectUserPermissionTest`** in `tests/Unit/Models/`. Zwei
-  Tests fixieren Tabellen-Bindung und Fillable-Set des neuen
-  Modells.
-
-### Behoben (Permission-Harmonisierung — Block D, PR 2 / Smoke-Fix)
-
+  `$fillable = ['description']` beides nicht zulässt. In
+  Production lief das still durch (Strict-Mode dort aus), in
+  Dev/CI war es eine latente `MassAssignmentException`. Pfad
+  jetzt über expliziten Query plus Property-Setter.
 - **Einladung neuer User auf `/register` brach mit
-  `RoleDoesNotExist: no role named '20'`** ab, sobald das Form
+  `RoleDoesNotExist: no role named '20'` ab,** sobald das Form
   eine Role-ID als String schickte. Spatie v6 interpretiert
-  Strings, die an `assignRole()` gehen, strikt als Rollen-Namen
-  — ein numerischer String wie `'20'` löste daher den Lookup als
-  Name aus statt als ID. Neuer Helper
-  `RegisteredUserController::resolveRoles()` löst das Input
-  (Single-String, Array, Name, numerische ID) zu konkreten
-  `Role`-Instanzen auf, bevor sie an `assignRole` und die
-  nachfolgende `RoleHasPermission`-Abfrage gehen. Drei
-  Charakterisierungs-Tests in `RegisteredUserControllerCharacterizationTest`
-  fixieren das Verhalten für die drei Eingabewege (Name als Array,
-  ID als Array, Name als Single-String).
-
-### Geändert (Permission-Harmonisierung — Block D, PR 2 / Welle 2a)
-
-- **`ProjectPolicy::view` und `::comment` sind jetzt project-scoped.**
-  Vorher prüfte `view` nur Owner-Identität, `comment` nur die
-  globale `comment`-Permission — Eingeladene mit project-scoped
-  Permissions waren außen vor (bei `view`) bzw. globale
-  Comment-Inhaber durften auf jedem fremden Project kommentieren
-  (bei `comment`). Beide Methoden gehen jetzt über
-  `ProjectPermissionService::userHasPermissionOnProject(User,
-  Project, PermissionName)` — Owner-Shortcut, Admin via
-  `before()`, sonst Lookup gegen den project-scoped Pivot.
-- **`ProjectController::getAllProjects` ist auf den Service
-  verschlankt.** Die 25-Zeilen-Query (Admin-Pfad inline + Nicht-
-  Admin-Pfad über `invitations.guest_id`) ist auf einen
-  Service-Call zusammengeschmolzen.
-  `ProjectPermissionService::listProjectsForUser` resolved
-  Eingeladene jetzt über `user_has_permissions` (konsistent mit
-  der Permission-Welt) statt über `invitations`. Funktional
-  äquivalent, weil `setForUserOnProject` beides anlegt.
-
-### Hinzugefügt (Permission-Harmonisierung — Block D, PR 2 / Welle 2a)
-
-- **`ProjectPolicyTest`** in `tests/Feature/Policies/`. Neun
-  Pest-Tests für `view`/`comment`/`viewAny` mit Owner /
-  Eingeladenem-mit-Permission / Eingeladenem-ohne /
-  Fremdem / Admin-via-before, plus `viewAny` mit und ohne
-  `view`-Permission. Fixiert die project-scoped Authorization.
-- **`ProjectControllerAuthorizationTest`** in `tests/Feature/Http/`.
-  Fünf Pest-Tests für die Index-Filterung (Owner / Eingeladener
-  / Fremder, plus Admin sieht alles) und für die `/comment/project`-
-  Route (Owner / Eingeladener-mit-comment / Fremder → 403).
-- **`ProjectPermissionServiceTest`** um sechs Tests erweitert für
-  die neuen Service-Methoden `userHasPermissionOnProject` und
-  `listProjectsForUser`.
-
-### Geändert (Permission-Harmonisierung — Block D, PR 1)
-
-- **`ProjectController`: Drei-Wege-Authorization auf einen Pfad
-  konsolidiert.** Die drei `middleware('permission:add|view|comment')`-
-  Aufrufe im Konstruktor sind raus; Authorization läuft jetzt
-  durchgehend über die `ProjectPolicy`. `index()` und `create()`
-  rufen `$this->authorize(...)` als erstes Statement; `commentProject`
-  und `getProjectComment` `authorize('comment', $project)` nach
-  dem `findOrFail`. `StoreProjectRequest::authorize()` delegiert
-  an `ProjectPolicy::create`. Neue Policy-Methode `comment()`
-  übernimmt die Prüfung der `comment`-Permission.
-- **`ProjectPolicy::viewAny` verschärft auf `$user->can(VIEW)`.**
-  Reproduziert die Semantik der früheren `permission:view`-Route-
-  Middleware exakt. Initial-Version der D.4-Auflösung ließ jeden
-  Auth-User durch, was eine funktionale Regression war
-  (`getAllProjects()` macht im Anschluss Annahmen über die
-  User-Rolle und crasht 500 ohne sie). Die feinere, project-scoped
-  Sicht (User sieht nur Projects, in denen er Owner oder
-  eingeladen ist) wandert mit einem späteren PR in den
-  `ProjectPermissionService`.
-- **`PermissionName` Final-Class → Backed-Enum** (PHP 8.1+).
-  Sieben Cases (`VIEW`, `ADD`, `EDIT`, `DELETE`, `PUBLISH`,
-  `COMMENT`, `INVITE`) mit den unveränderten String-Werten.
-  `PermissionName::all()` bleibt als String-Array-Helper für die
-  Seeder- und Test-Setup-Pfade kompatibel. Laravel-Gate und
-  Spatie-Permission v6 akzeptieren `BackedEnum` direkt; alle 12
-  Aufrufer (drei Policies, neun Tests) bleiben strukturell wie
-  sie waren — `$user->can(PermissionName::ADD)` ist jetzt
-  typ-sicher statt ein Magic-String.
-- **`role:Admin`-Middleware statt `'admin'`-Alias**: User- und
-  Role-Controller-Methoden (`index`, `edit`, `destroy`) sind
-  jetzt mit `middleware('role:Admin')` geschützt — konsistent mit
-  Spatie-Permission. Vorher liefen sie über die Custom
-  `IsAdmin`-Middleware (`$middleware->alias('admin', IsAdmin::class)`).
-
-### Entfernt (Permission-Harmonisierung — Block D, PR 1)
-
-- **`App\Http\Middleware\IsAdmin` gelöscht**. Custom-Middleware
-  prüfte `auth()->user()->hasRole('Admin')` — exakt das macht
-  Spatie's `RoleMiddleware` per `role:Admin`-Alias. Plus
-  `'admin'`-Alias-Registrierung in `bootstrap/app.php`
-  entfernt. Erste Welle der Drei-Welten-Auflösung aus ADR-0005
-  (NF-ARCH-017). Settings-Route-Group in `routes/web.php`
-  nachgezogen — der `'admin'`-Alias war hier vergessen worden
-  und wäre nach dem Alias-Drop rot geworden (`auth + role:Admin`
-  jetzt direkt im Group-Array).
-- **`permission:add` / `permission:view` / `permission:comment`-
-  Middleware aus `ProjectController::__construct` entfernt.**
-  Authorization läuft durchgehend über `ProjectPolicy` (siehe
-  oben).
-
-### Hinzugefügt (Permission-Harmonisierung — Block D, PR 1)
-
-- **`AdminRoutesCharacterizationTest`** in
-  `tests/Feature/Refactor/`. Acht Pest-Tests fixieren das
-  Authorization-Verhalten der heute mit `IsAdmin` (jetzt
-  `role:Admin`) geschützten Routen: User- und
-  Role-Controller-`index`/`edit`-Pfade je einmal mit
-  Admin-Rolle (200/302) und einmal mit Reader-Rolle (403).
-  Charakterisierung vor dem Middleware-Wechsel, dadurch
-  abgesichert nach dem Wechsel. Ergänzt um vier weitere Tests
-  für `ProjectController::index`/`create` (Admin und Reader
-  dürfen `index`, Reader darf `create` nicht — 403, Admin darf
-  `create`).
-- **`ProjectPolicy::comment()`** ergänzt. Spiegelt das Verhalten
-  der bisherigen `permission:comment`-Middleware (`$user->can(COMMENT)`).
-
-
-### Geändert
-
-- **CI-Coverage-Schwelle auf 55 % angehoben.** `composer.json`
-  `test-coverage --min` von 30 auf 55. Sichert die durch die
-  Content-Service-Welle erreichte Coverage gegen Rückrutsch —
-  jeder folgende Service-Schnitt muss die 55 % halten.
-
-### Hinzugefügt (Coverage-Push)
-
-- **`CommentRetrieveTest` ergänzt** um die fehlenden
-  Class-Switch-Pfade (Text, Image, Gallery, Audiovisual) plus
-  einen MediaContent-Fallback-Test, der den default-leeren
-  `pathReply`-Pfad sichert. Damit ist `CommentRetrieve::getComments`
-  vollständig durch Pest abgedeckt.
-- **`ProjectControllerLogTest`** in
-  `tests/Feature/Controllers/`. Vier Pest-Tests rufen
-  `ProjectController::allData` und `::history` direkt auf
-  (über `app(ProjectController::class)`), decken Translation-
-  Counter (0 % / 50 %) und Activity-Log-Filter ab.
-- **`ContentControllerTranslationTest`**. Vier Pest-Tests für
-  `translateField` (Source-Übersetzung auf `name`-Feld) und
-  `saveTranslatedText` (Text-Body-Übersetzung, `undefined`-
-  Sentinel, Script-Tag-Filter) — beide Methoden waren bislang
-  un-Pest-getested und Translation-Refactor-Material.
-
-### Hinzugefügt (Content-Service-Welle)
-
-- **`SourceService`** in `app/Services/`. Kapselt die
-  find-or-create-Logik für Source-Zeilen
-  (`findOrCreateId(value, type): int`). Löst das `getSource`-
-  Method-Duplikat, das vorher in `ProjectController` und
-  `ContentController` gelebt hat. Drei Pest-Tests in
-  `tests/Feature/Services/SourceServiceTest.php`.
-- **`TextService`** + **`TextData`-DTO** in `app/Services/`
-  und `app/Data/`. Service-Methoden `create(TextData,
-  entryId)`, `update(Text, TextData)` und `destroy(Text)`.
-  Übernimmt Body-Bereinigung (Script-Tag-Filter), Source-
-  Lookups und `MediaContent`-Attach an Entry. Fünf Pest-Tests
-  in `tests/Feature/Services/TextServiceTest.php`.
-- **`ImageService`** + **`ImageData`-DTO**. Methoden `create`
-  (mit File-Upload und Gallery-Positionierung), `update` (mit
-  optionalem neuen File), `destroy`. Upload-Logik (vorher
-  `setImage`-Helper) wandert mit in den Service. Fünf Pest-
-  Tests in `tests/Feature/Services/ImageServiceTest.php`.
-- **`GalleryService`** + **`GalleryData`-DTO`. Methoden
-  `create` (mit `MediaContent`-Attach), `update` (direkter Pfad
-  und Translation-Pfad), `destroy`. Vier Pest-Tests in
-  `tests/Feature/Services/GalleryServiceTest.php`.
-- **`AudiovisualService`** + **`AudiovisualData`-DTO**.
-  Methoden `create` / `update` / `destroy` plus
-  `resolveLink(?string, ?UploadedFile): string` für
-  YouTube-URL-Konversion und Audio-Upload. `youtubeID`- und
-  `uploadAudio`-Helper wandern aus dem Controller in den
-  Service. Sieben Pest-Tests in
-  `tests/Feature/Services/AudiovisualServiceTest.php`.
-
-### Geändert (Content-Service-Welle)
-
-- **`ContentController` und `AudiovisualController` per
-  Constructor-Injection auf die fünf Services umgestellt.**
-  `saveText` / `saveImage` / `saveGallery` und
-  `AudiovisualController::store` reduzieren sich auf
-  HTTP-Mapping und Service-Delegation. Die jeweiligen
-  `destroy*`-Methoden nutzen `Service::destroy(Model)`.
-- **Inkonsistenz-Bug in `saveGallery` mitkorrigiert**: der
-  direkte Update-Pfad las vorher `$request['title']` /
-  `$request['subtitle']` / `$request['description']` — das
-  Frontend schickt aber nur die `galleryTitle`-Variante (das
-  haben wir im F.1-Charakterisierungs-Test dokumentiert).
-  `GalleryData::fromRequest` akzeptiert beide Varianten und
-  priorisiert die `gallery*`-Prefix-Form.
-
-### Behoben (Content-Service-Welle)
-
-- **NF-LAR-009 — Soft-Delete-Bypass in den Content-Schreibpfaden
-  beseitigt.** `destroyText` / `destroyImage` / `destroyGallery`
-  liefen vorher über `DB::table()->update(['deleted_at' => now()])`
-  bzw. `update(['deleted_at' => now()])` direkt auf der DB-Spalte
-  — das umgeht die SoftDeletes-Trait-Hooks (Observer,
-  Activity-Log etc.). Alle vier Stellen auf Eloquent-Builder-
-  `delete()` umgestellt; Verhalten identisch, Trait-Hook-Chain
-  greift jetzt korrekt.
-
-### Entfernt (Content-Service-Welle)
-
-- **Cargo-Methoden aus `ContentController` und
-  `AudiovisualController`**: `mapData` in beiden Controllern,
-  `setImage` (File-Upload-Helper), `attachMedia`, `detachMedia`,
-  `updateText`, `updateImage`, `uploadAudio`, `youtubeID`. Alle
-  wandern als Service-interne Verantwortung in die fünf
-  Content-Services. Toter `protected getSource`-Helper in
-  `ProjectController` und `ContentController` durch
-  `SourceService::findOrCreateId` ersetzt.
-- **Tote Imports** in beiden Controllern (`Storage`-Facade,
-  `UploadTrait`, `MediaContent`, `Str`, `SourceService` nach
-  letzter Refactor-Welle) aufgeräumt.
-
-### Hinzugefügt (Block-F-Vorbereitung)
-
-- **Fünf Test-Factories für die Content-Modelle** in
-  `database/factories/`: `SourceFactory` (mit `origin()`-/
-  `copyright()`-States), `TextFactory` (mit zwei Source-Refs für
-  origin/copyright), `ImageFactory` (mit Source-Refs, optional
-  `forGallery(id)`-State), `GalleryFactory`, `AudiovisualFactory`
-  (mit `audio()`-State). Damit sind die Content-Modelle erstmals
-  in Tests setupbar — vorher fehlte das Material, um saveText/
-  saveImage/saveGallery/Audiovisual::store charakterisierungs-
-  fähig zu machen.
-- **Pest-Helper** für die fünf Modelle in `tests/Pest.php`:
-  `makeSource`, `makeText`, `makeImage`, `makeGallery`,
-  `makeAudiovisual`. Konsistent zum bestehenden `makeProject`/
-  `makeChapter`/`makeEntry`-Stil.
-- **Content-Charakterisierungs-Tests** in
-  `tests/Feature/Refactor/ContentCharacterizationTest.php`.
-  13 Pest-Tests fixieren das beobachtbare Verhalten der
-  ContentController- und AudiovisualController-Schreibpfade
-  vor der Service-Extraktion (F.2–F.9): saveText/Image/Gallery
-  im Update-Pfad, editText/editImage als JSON, destroyText/
-  Image/Gallery (Soft-Delete), AudiovisualController::store
-  im Update-Pfad (inkl. YouTube-URL-Konversion), audiovisual.
-  delete (Soft-Delete), plus drei Factory-Smoke-Tests. Die
-  Create-Pfade sind komplex (File-Upload + attachMedia), kommen
-  in einer zweiten Welle wenn die Services da sind.
-
-
-### Behoben
-
-- **`CommentRetrieve::getComments` initialisiert `$pathReply`
-  defensiv.** Die Methode setzt im switch-Statement je nach
-  `$class` einen `$pathReply` (Save-Route für die spätere
-  Reply-Submission im Frontend). Für `App\Models\MediaContent`
-  — was `ContentController::getTextComment` /
-  `getImageComment` als Class durchreichen — gibt es keinen
-  Case, sodass `$pathReply` undefined blieb. Bei leerer
-  Comment-Liste fiel das nicht auf (foreach läuft nicht), bei
-  einem MediaContent mit Kommentaren wäre der Aufruf gecrasht.
-  Defensiver Default `$pathReply = '';` am Methoden-Anfang.
-- **`ChapterController::getChapterComment` konsistent zu den
-  anderen `get*Comment`-Methoden.** Project, Entry, Text und
-  Image geben das `getComments`-Array direkt zurück (Laravel
-  serialisiert das als JSON für den AJAX-Aufrufer). Nur
-  Chapter machte `redirect()->back()->with(['comments' => …])`
-  — ein Pattern-Bruch, der unter den Frontend-AJAX-Pfaden für
-  Verwirrung sorgte. Jetzt symmetrisch.
-
-### Hinzugefügt (CommentService-Extraktion)
-
-- **`CommentService`** in `app/Services/`. Kapselt die fünf
-  Schreibpfade auf Comments — `addComment`, `replyToComment`,
-  `editComment`, `deleteComment`, `setCommentStatus` — plus
-  `dispatchSaveAction`, der die `btn_submit`-Switch-Logik
-  (Edit/Delete/Reply) zentralisiert, die heute in sieben
-  Controller-Methoden über die fünf Comment-tragenden Controller
-  dupliziert war. Acht Pest-Tests in
-  `tests/Feature/Services/CommentServiceTest.php` decken die fünf
-  Methoden plus die vier dispatch-Switch-Pfade ab.
-- **Comment-Charakterisierungs-Tests** in
-  `tests/Feature/Refactor/CommentPfadeCharacterizationTest.php`.
-  Zehn Pest-Tests fixieren das beobachtbare Verhalten der
-  Comment-Endpunkte vor der Extraktion: Project / Chapter /
-  Entry für add, save-Switch (Edit/Delete/Reply) und
-  setStatus, plus der gemeinsame `updateStatus`-GET-Endpoint.
-  Content (Text/Image/Gallery) und Audiovisual sind strukturell
-  identisch, brauchen aber Source-/Audiovisual-Test-Factories,
-  die noch nicht existieren — Refactor läuft trotzdem über alle
-  fünf Controller, Smoke deckt sie ab.
-
-### Geändert (CommentService-Extraktion)
-
-- **Fünf Controller per Constructor-Injection auf
-  `CommentService`** umgestellt. `ProjectController`,
-  `ChapterController`, `EntryController`, `ContentController`
-  und `AudiovisualController` konsumieren den Service jetzt
-  über readonly-Properties. Alle 15 Comment-Endpunkt-Methoden
-  delegieren — die switch-cases auf `btn_submit` sind aus den
-  sieben Controller-Methoden raus und liegen einmal im Service
-  als `dispatchSaveAction`.
-
-### Geändert (Comment-Naming-Sweep)
-
-- **`setStatus*`-Method-Names auf `setCommentStatus*` umbenannt**
-  (Project, Chapter, Entry, Text, Image). Die Methoden setzen
-  einen Comment-Status, nicht den Status des jeweiligen Models —
-  der alte Name war historisch und irreführend. Plus
-  `ContentController::updateStatus` → `updateCommentStatus`. Die
-  passenden Route-Namen sind jetzt konsistent als
-  `comment.<model>.status` (vorher `<model>.status`, plus zwei
-  unbenannte Routes); die `update.status`-Route heißt jetzt
-  `comment.update.status`.
-- **Gallery- und Audiovisual-Method-Names entwirrt.** Die
-  Methoden waren paarweise vertauscht — `commentGallery` und
-  `commentAudiovisual` machten den Save-Switch, während
-  `galleryCommentSave` und `audiovisualCommentSave` den
-  Neu-Kommentar anlegten. Nach dem Sweep heißen Methoden, die
-  einen neuen Kommentar anlegen, `comment<Model>`, und Methoden,
-  die eine save-Submission routen, `saveComment<Model>` —
-  symmetrisch zu Project/Chapter/Entry/Text/Image. Bei
-  Audiovisual sind zusätzlich die Route-Namen vertauscht und der
-  `pathReply` / `pathComment`-Eintrag in `CommentRetrieve`
-  mit-korrigiert.
-- **Blade-Stelle in `chapters/index.blade.php`** auf die neuen
-  Route-Namen umgestellt (`comment.<model>.status`).
-- **`App\Contracts\HasComments`-Interface** für die acht
-  commentable Modelle (Project, Chapter, Entry, MediaContent,
-  Text, Image, Gallery, Audiovisual). Garantiert das
-  `comments(): MorphMany`-Vertrag im Type-System, der vorher nur
-  durch den entfernten `CommentTrait` implizit war.
-  `CommentService::addComment`/`replyToComment`/`dispatchSaveAction`
-  nehmen jetzt `HasComments $commentable` statt eines generischen
-  `Model` — Larastan kann den `->comments()`-Aufruf statisch
-  verifizieren. Die acht Modelle bekommen `: MorphMany` als
-  expliziten Return-Type auf der `comments()`-Methode.
-
-### Behoben
-
-- **Strict-Mode-Lazy-Loading-Verletzung in
-  `ContentController::listComments` (`/allComments`).** Die View
-  `contents.comment` greift auf `$comment->project->name`,
-  `$comment->user->name` und
-  `$comment->content->media_contentable_type` zu, das Controller-
-  Statement lud aber nur `user` (und das auch nur im Admin-Pfad)
-  eager — unter `Model::shouldBeStrict()` wirft das eine
-  `LazyLoadingViolationException`. Fix: beide Pfade laden jetzt
-  `user`, `project` und `content` mit `->with([...])` eager.
-
-### Entfernt (CommentService-Extraktion)
-
-- **`app/Traits/CommentTrait.php` gelöscht.** Die fünf
-  Trait-Methoden (`commentAsUser`, `replyAsUser`, `editAsUser`,
-  `deleteAsUser`, `status`) wandern in den `CommentService`.
-  Die `comments()`-MorphMany-Relation lebte schon direkt in den
-  acht Modellen (Project, Chapter, Entry, MediaContent, Text,
-  Image, Gallery, Audiovisual) — der Trait war nur noch
-  Methoden-Container, jetzt ersatzlos weg.
-- **`use CommentTrait;`-Aufrufe aus acht Modellen entfernt.**
-  Modell-Bodies sind dadurch dünner; mit dem Eloquent-Strict-
-  Mode passt die explizite Relation-Definition pro Modell
-  besser zu der Codebase als die implizite Trait-Aufklebung.
-
-**Phase 3 — Major-Upgrade-Welle abgeschlossen (2026-05-31).** Sieben
-sequenzielle Sprünge nach ADR-0003: PHP 8.1 → 8.2 → 8.3 → 8.4 in drei
-Schritten (mit verschränktem PHP-8.4-+-Laravel-9-Sprung wegen
-Larastan-v1-PHPStan-Inkompatibilität), Laravel 8 → 9 → 10 → 11 → 12 in
-vier Schritten. Spatie-Pakete in den jeweils kompatiblen Majors
-(Permission ^6, Activitylog ^4, Translatable ^6, Welcome-Notification
-^2.5, Ignition ^2). Tooling-Wellen: Larastan v1 → v2 → v3 (mit
-PHPStan v2, Repo-Move `nunomaduro/larastan` → `larastan/larastan`),
-Pest v1 → v2 → v3, PHPUnit 9 → 10 → 11, Carbon v3. Vier
-abandoned-Packages strukturell durch Major-Sprünge eliminiert
-(`swiftmailer/swiftmailer`, `facade/ignition`, `laravelcollective/html`,
-`fideloper/proxy`). Pest **58 grüne Tests** (vor Phase 3 waren es 40),
-Larastan-Baseline auf **15 Items** geschmolzen (Phase-2-Ende 198 v1;
-im Verlauf v2-130 → v3-15 nach PHPDoc-Welle und vier Smell-Fixes im
-`ProjectController`). Quick-Smoke Pfad 4 nach jedem Sprung grün.
-CVE-2025-27515 (Laravel File-Validation-Bypass) strukturell zu
-(Laravel 12 ≫ 10.48.29). Coverage 26,68 %, CI-Schwelle 25 %.
-
-Die einzelnen Sprünge werden unten in Block-G-zu-Block-B-Reihenfolge
-beschrieben.
-
-### Hinzugefügt
-
-- **Bootstrap-Charakterisierungs-Tests** in `tests/Feature/Refactor/`.
-  Drei Pest-Tests fixieren das beobachtbare Verhalten des Kernel-
-  Bootstraps an den drei Schichten, an denen der Switch greift:
-  Web-Stack-Middleware (Auth-Redirect auf einer geschützten
-  Resource-Route), Route-Middleware-Alias (`role:Admin` lehnt einen
-  Reader auf der Register-Route mit 403 ab), Exception-Rendering
-  (unbekannte Route → 404). Test-First-Doktrin in Aktion: erst die
-  Tests grün gegen den alten Kernel-Stil, dann der Refactor.
-- **Coverage-Vorlauf vor dem Refactor-Block.** Achtzehn neue
-  Pest-Tests in vier Files füllen die größten ungetesteten
-  Service-Pfade: fünf Konstruktor-Tests in
-  `tests/Unit/LogServiceTest.php` (Switch-Cases per Reflection),
-  vier Tests in `tests/Feature/Services/UserServiceTest.php`
-  (globale vs. project-scoped Permissions, Projekt-Isolation),
-  vier Tests in `tests/Feature/Services/CommentRetrieveTest.php`
-  (Comment-Render je commentable_type, Owner-Flag, Reply-
-  Schachtelung), fünf Tests in
-  `tests/Feature/Services/LogServiceTest.php` (history,
-  getParentText, textLog-Boundary). Coverage steigt von 26,68 %
-  auf 35 %.
-- **CI-Coverage-Schwelle auf 30 angehoben.** `composer.json`
-  `test-coverage --min` von 25 auf 30. Erster Schritt der
-  Coverage-Trajektorie auf 55 % bis Ende der Refactor-Welle.
-
-- **`ProjectImageService`** in `app/Services/`. Kapselt das Logo-
-  Upload für Projects: `store(?UploadedFile $image): ?string` legt
-  das Bild unter `/uploads/images/` auf der `public`-Disk ab und
-  liefert den generierten Dateinamen zurück (oder `null`, wenn
-  kein File übergeben wurde). Wird vom `ProjectController` per
-  Constructor-Injection genutzt; die `UploadTrait`-Klassen-Bindung
-  im Controller entfällt. Drei Pest-Tests in
-  `tests/Feature/Services/ProjectImageServiceTest.php` decken
-  null-Input, Happy-Path mit `Storage::fake('public')` und das
-  Dateinamen-Muster `YYYYMMDD_<unix-ts>.<ext>` ab.
-- **`ProjectPermissionService`** in `app/Services/`. Zentralisiert
-  die zehn project-scoped Permission-Operationen, die vorher als
-  `protected`-Helper über den `ProjectController` verteilt waren:
-  Listing der berechtigten User, Lesen der globalen Spatie-
-  Permissions und der project-scoped Pivot-Einträge, Set-Semantik
-  beim Setzen neuer Permissions (alte werden vorher gelöscht,
-  Invitation wird aufgeräumt und neu aufgesetzt), vollständiges
-  Entfernen eines Users aus einem Project. Sechs Pest-Tests in
-  `tests/Feature/Services/ProjectPermissionServiceTest.php` decken
-  die fünf Kern-Methoden ab.
-- **`ProjectData`-DTO** in `app/Data/`. Readonly-Klasse mit
-  Constructor-Property-Promotion und einer `fromRequest(FormRequest,
-  ?string $logo)`-Factory. Ersetzt das `mapData()`-Cargo im
-  `ProjectController`, das die `FormRequest`-Validation umgangen
-  und mit `isset($request[...])` wieder selbst gelesen hat. Der
-  Logo-Dateiname wird beim Bauen des DTOs vom
-  `ProjectImageService` reingereicht, nicht aus dem Request
-  rückgeführt — strukturelle Verstärkung der NF-SEC-007-Härtung.
-- **`ChapterService`** in `app/Services/`. Kapselt die zwei
-  Schreibpfade auf Chapter: `create(ChapterData, int $projectId)`
-  mit Position-Calculation (`max(position) + 1`, leere Projects
-  starten bei 1) und `update(Chapter, ChapterData)` mit
-  Translation-Verzweigung (direkter Schreibpfad vs.
-  `setTranslation('en', ...)`). Fünf Pest-Tests in
-  `tests/Feature/Services/ChapterServiceTest.php` decken die
-  Position-Logik und beide Update-Pfade ab, inkl. des
-  `'undefined'`-Sentinels für die Translation-Description.
-- **`ContentReorderService`** in `app/Services/`. Zentralisiert
-  die drei Drag-and-Drop-Schreibpfade über Chapter / Entry /
-  MediaContent plus `resolveProject(...)` für den Authorize-Gate
-  im Controller. Wird vom `ChapterController::saveDragAndDrop`
-  konsumiert und steht für den `EntryController` bereit. Sieben
-  Pest-Tests in
-  `tests/Feature/Services/ContentReorderServiceTest.php` decken
-  die Reorder-Operationen und alle Project-Resolution-Pfade ab.
-- **`ChapterData`-DTO** in `app/Data/`. Readonly-Klasse mit
-  `fromRequest(FormRequest)`-Factory. Normalisiert die
-  Frontend-Feldnamen (chapterTitle / chapterSubtitle /
-  chapterDescription) auf die Modell-Feldnamen und kapselt die
-  Translation-Flags (`translationChapter`, `isTranslated`), die
-  der `UpdateChapterRequest` zusätzlich trägt.
-- **`EntryService`** in `app/Services/`. Strukturell parallel zu
-  `ChapterService`: `create(EntryData, int $chapterId)` mit
-  Position-Calculation und `update(Entry, EntryData)` mit
-  Translation-Verzweigung. Fünf Pest-Tests in
-  `tests/Feature/Services/EntryServiceTest.php` decken die beiden
-  Pfade ab.
-- **`EntryData`-DTO** in `app/Data/`. Spiegelung von
-  `ChapterData` für die Entry-Mutations — normalisiert die
-  Frontend-Feldnamen (entryTitle / entrySubtitle /
-  entryDescription) und kapselt die Translation-Flags
-  (`translationEntry`, `isTranslated`).
-
-### Geändert (Service-Layer-Pilot)
-
-- **`ProjectController` per Constructor-Injection auf zwei
-  Services umgestellt.** Statt `use UploadTrait;` und zehn
-  privaten Helper-Methoden konsumiert der Controller jetzt
-  `ProjectImageService` und `ProjectPermissionService` über
-  readonly-Properties. `store()` und `update()` arbeiten gegen
-  das `ProjectData`-DTO statt gegen `$request[...]`-Reads.
-  `setPermissionForUserOnProject`, `givePermissionToUser`,
-  `inviteUserForProject`, `deleteUserFromProject` und
-  `editMetaData` delegieren an den Permission-Service —
-  `UserHasPermission`-, `Invitation`- und `ModelHasRole`-Reads
-  liegen nicht mehr im Controller.
-- **`ChapterController` per Constructor-Injection auf zwei
-  Services umgestellt.** `ChapterService` übernimmt
-  Position-Calculation in `store()` und die
-  Translation-Verzweigung in `update()`; `ContentReorderService`
-  übernimmt den `saveDragAndDrop`-Schreibpfad mitsamt der
-  Project-Auflösung für den Authorize-Gate. Beide Methoden
-  delegieren jetzt und sind nur noch HTTP-Mapping — der
-  Controller-Body schrumpft entsprechend. Die
-  `resolveDragTargetProject`-`protected`-Helper-Methode entfällt.
-- **`EntryController` per Constructor-Injection auf den
-  `EntryService` umgestellt.** `store()` und `update()` arbeiten
-  jetzt gegen das `EntryData`-DTO und delegieren Position-
-  Calculation und Translation-Verzweigung an den Service. Der
-  Controller-Body schrumpft entsprechend.
-
-### Entfernt (Service-Layer-Pilot)
-
-- **`ProjectController::mapData()` (32 LoC) entfällt.** Wird
-  durch `ProjectData::fromRequest()` ersetzt; der
-  `status`-Default kommt jetzt im `store()` als expliziter
-  `array_merge`-Eintrag dazu, nicht mehr aus einer
-  Helper-Methode.
-- **Fünf `protected`-Helper aus `ProjectController` entfallen**
-  — Body und Verantwortung wandern in den
-  `ProjectPermissionService`: `getUsersForThisProject`,
-  `getCurrentUsersPermissions`, `getSelectedPermissionUser`,
-  `getSelectedPermissionUserPluck` und `getRoleSelectedUser`.
-  Die letzten beiden waren ohnehin tot (keine Aufrufer im
-  Controller, keine Route-Bindings).
-- **Tote Imports im `ProjectController` aufgeräumt.**
-  `App\Models\Image` und `Mpdf\Pdf` waren als `use`-Statements
-  vorhanden, aber im Klassen-Body nicht referenziert. Plus die
-  jetzt obsoleten Imports `App\Models\Invitation`,
-  `App\Models\ModelHasRole`, `App\Models\UserHasPermission`
-  (wandern alle in den Permission-Service).
-
-### Geändert (Bootstrap-Migration)
-
-- **Application-Bootstrap auf Laravel-11+-Closure-API umgestellt.**
-  `bootstrap/app.php` ist jetzt
-  `Application::configure(basePath: ...)
-   ->withRouting(...)
-   ->withMiddleware(...)
-   ->withExceptions(...)
-   ->create()`. Die `web`-Group bekommt `Language` per
-  `$middleware->web(append: [...])` angehängt, die Custom-Aliase
-  (`role`, `permission`, `role_or_permission`, `admin`, `guest`)
-  werden im `$middleware->alias(...)`-Block registriert,
-  `TrimStrings`-Ausnahmen und der Guest-Redirect zur
-  `route('login')` werden direkt im Bootstrap-Closure gesetzt. Der
-  alte `bootstrap/app.php`-Application-Singleton-Stil mit drei
-  expliziten Kernel-Bindings entfällt.
-
-### Entfernt (Bootstrap-Migration)
-
-- **`app/Http/Kernel.php` und `app/Console/Kernel.php` gelöscht.**
-  Die Verantwortlichkeiten beider Klassen (Middleware-Stack,
-  Middleware-Groups, Route-Middleware-Aliase, Schedule, Commands)
-  wandern in die `bootstrap/app.php`-Closures. Custom-Commands
-  unter `app/Console/Commands/` werden in Laravel 11+ automatisch
-  geladen — der `$this->load(__DIR__.'/Commands')`-Aufruf war
-  nicht mehr nötig.
-- **`app/Exceptions/Handler.php` gelöscht** (60 LoC, ausschließlich
-  Boilerplate ohne Custom-Verhalten). `$dontFlash` für Passwort-
-  Felder wandert in den `withExceptions(function (Exceptions
-  $exceptions) { … })`-Closure. Das `app/Exceptions/`-Verzeichnis
-  ist damit weg.
-- **Sechs Stock-Middleware-Subklassen aus `app/Http/Middleware/`
-  gelöscht** — alle waren 1:1-Subklassen der Framework-Defaults
-  ohne projekt-spezifische Logik: `Authenticate` (Redirect-zur-
-  Login-Route wandert in `$middleware->redirectGuestsTo(...)`),
-  `EncryptCookies` (leere `$except`-Liste), `PreventRequestsDuringMaintenance`
-  (leere `$except`-Liste), `TrimStrings` (Passwort-Felder wandern
-  in `$middleware->trimStrings(except: [...])`), `TrustProxies`
-  (extends-Base ohne Override), `VerifyCsrfToken` (leere
-  `$except`-Liste).
-
-### Behoben
-
-- **Latente LazyLoading-Verletzung in `LogService::history` und
-  `LogService::textLog`.** Beide Methoden griffen auf
-  `$activity->causer->name` zu, ohne die `causer`-Relation
-  eager-zu-laden. Unter `Model::shouldBeStrict()` wirft das eine
-  `LazyLoadingViolationException`. Im realen Produktivpfad lief
-  das durch Glück: entweder wurden die Methoden nie über eine
-  Strict-Mode-getestete Route getriggert, oder Spatie's
-  LogsActivity-Hook hatte den `causer` schon im Hydrations-
-  Cache. Fix: `->with('causer')` in beiden Methoden ergänzt.
-
-- **Rate-Limit-Tests für die Guest-Auth-Routen.** Drei Pest-Feature-
-  Tests in `tests/Feature/AuthRateLimitTest.php` decken den neuen
-  `throttle:6,1`-Limiter auf `POST /login`,
-  `POST /forgot-password` und `POST /reset-password` ab — jeder
-  Test feuert sieben Requests aus derselben Session und verifiziert,
-  dass der siebte mit HTTP 429 abgelehnt wird.
-- **Erster Unit-Test-Slot im Projekt** (`tests/Unit/`). Drei Tests
-  für `LogService::highlightTextDifference` in
-  `tests/Unit/LogServiceTest.php` decken die größte ungetestete
-  Service-Methode ab (identische Strings, leerer Alt-String,
-  Diff-Markup-Verifikation) und liefern eine Vorlage für weitere
-  Unit-Tests in Phase 4.
-
-### Geändert
-
-- **Rate-Limit auf den Guest-Auth-Routen.** `POST /login`,
-  `POST /forgot-password` und `POST /reset-password` tragen jetzt
-  `throttle:6,1` als zusätzliche Middleware. Konsistent mit den
-  `verification.*`-Routen, die schon seit Breeze gedrosselt sind.
-  Verhindert Credential-Stuffing auf Login und Spam auf den
-  Password-Reset-Endpunkten.
-- **`composer audit` im CI auf Hard-Fail.** Der Soft-Fail-Übergang
-  aus Phase 2 ist abgeschlossen — die Laravel-8-CVEs sind durch
-  Phase 3 strukturell weg. Ein neuer CVE im Lock bricht ab jetzt
-  den Build statt nur einen Hinweis im Log zu hinterlassen.
-  `continue-on-error: true` und `|| true` raus.
-- **`php artisan config:cache` läuft im CI-Pest-Job vor der Suite.**
-  Defense-in-depth gegen versehentliche `env()`-Calls außerhalb von
-  `config/`: Larastan fängt das statisch, der zusätzliche Cache-
-  Step fängt es dynamisch.
-- **`MyCustomWelcomeNotification`-Konstruktor** auf
-  `Carbon $validUntil` statt `CarbonInterface $validUntil`. Die
-  Eltern-Klasse `Spatie\WelcomeNotification\WelcomeNotification`
-  typed die Property selbst als `Carbon`; die redundante
-  `$this->validUntil = $validUntil`-Zuweisung nach
-  `parent::__construct()` ist mit raus.
-- **`LogService::highlightTextDifference` und
-  `ProjectController::highlightTextDifference`** von PascalCase
-  auf camelCase umbenannt (sechs Aufrufer in zwei Dateien).
-  Konsistent mit Laravel- und PSR-12-Standard für Methodennamen.
-- **`LogService::__construct`: `'App\Models\gallery'` → `Gallery::class`.**
-  Der kleine `g` war ein Tippfehler aus der Phase-1-
-  Bestandsaufnahme, der auf einem case-sensitive Linux-Filesystem
-  einen `ClassNotFoundException` ausgelöst hätte. `::class` macht
-  solche Fallen strukturell unmöglich.
-- **`Text::$fillable` bereinigt** — `'id'` und `'position'` raus.
-  Die `texts.position`-Spalte ist seit der Migration
-  `2021_07_28_163554_drop_foreign_key_table` nicht mehr in der DB,
-  die Mass-Assignment-Liste hatte sie aber nie verloren — unter
-  Strict-Mode hat Spatie-Activitylog beim `save()` über
-  `$fillable` iteriert und auf das nicht-hydratisierte Attribut
-  zugegriffen, was eine `MissingAttributeException` ausgelöst hat.
-  `'id'` gehört grundsätzlich nicht in `$fillable` — Primary Key
-  wird von Eloquent verwaltet. Die Schema-Bereinigung der toten
-  `position`-Spalte selbst wandert in den Phase-4-Schema-Refactor
-  (ADR-0012).
-
-- **Eloquent Strict-Mode voll aktiviert.** `Model::shouldBeStrict()`
-  im `AppServiceProvider` bündelt jetzt drei Schutzschichten in
-  einem Aufruf statt nur `preventLazyLoading`: zusätzlich
-  `preventAccessingMissingAttributes` (wirft beim Zugriff auf
-  nicht-geladene oder nicht-existierende Spalten) und
-  `preventSilentlyDiscardingAttributes` (wirft, wenn `fill()` /
-  `create()` Felder erhält, die nicht in `$fillable` stehen). Weiter
-  nur außerhalb von Production aktiv (Sail-Dev, CI-Pest), damit
-  Live-User keine späte Regression erleben.
-- **`@property`-Annotationen an sieben Modellen.** Class-Level-
-  PHPDoc auf `Audiovisual`, `Chapter`, `Entry`, `Gallery`, `Project`,
-  `Source` und `Text` mit den jeweiligen DB-Feldern, Relations und
-  den Runtime-Snapshots (`$media_id`, `$image_list`, `$media`,
-  `$entry`), die in `ProjectController::allData()` dynamisch
-  zugewiesen werden. Voraussetzung für den Strict-Mode-Switch und
-  für den `@property`-getriebenen PHPStan-Inferenz-Pfad.
-- **`ProjectController::setImage()`** PHPDoc-Return `@return $this`
-  → `@return string`. Die Methode gab seit jeher den generierten
-  Filename als String zurück; der falsche Doc-Hint hatte den
-  Aufrufer-Check `if ($logo !== '')` zum stillen statischen
-  Phantom-Befund gemacht.
-- **`ProjectController::getSource()` + `ContentController::getSource()`
-  refaktoriert.** Die `$id = ''`-Variable und der unerreichbare
-  `return $this` am Methodenende sind raus, Early-Return aus der
-  Schleife, klarer `@return int`. Die Methode bleibt vorerst in
-  beiden Controllers dupliziert — Zusammenführung in einen
-  `SourceService` wandert in Phase 4.
-- **Redundante `'created_at' => now()`-Zuweisungen entfernt** in
-  vier Eloquent-Mass-Assignment-Pfaden: `Image::firstOrCreate`
-  (`ContentController::saveImage`), `Invitation::firstOrCreate`
-  (`ProjectController::setPermissionForUserOnProject`),
-  `UserHasPermission::create` + `Invitation::create`
-  (`RegisteredUserController::store`). Eloquent setzt Timestamps
-  automatisch — das manuelle Setzen war Cargo und wird unter
-  `preventSilentlyDiscardingAttributes` als
-  `MassAssignmentException` sichtbar. Query-Builder-Pfade
-  (`Source::insertGetId`, `Text::insertGetId`) behalten ihr
-  `'created_at'`, weil der Query Builder keine Timestamps
-  automatisch setzt.
-
-### Entfernt
-
-- **Auskommentierter Switch-Case-Block in `CommentTrait::commentAsUser`.**
-  Zweiundzwanzig Zeilen toter Code in einem `/* ... */`-Kommentar,
-  die seit der ersten Bestandsaufnahme in der Datei standen. Plus
-  den dazugehörigen `} else {` / `// }`-Marker, der den aktiven
-  Pfad eingerahmt hatte.
-
-### Behoben
-
-- **Blade-Expressions in HTML-Kommentaren werden jetzt nicht mehr
-  ausgewertet.** Vier Stellen in drei Blade-Templates
-  (`chapters/index.blade.php` Z. 409 + 475, `auth/register.blade.php`
-  Z. 102, `projects/description.blade.php` Z. 148) hatten
-  auskommentierten HTML-Code, in dem `{{ ... }}`-Expressions
-  stehengeblieben sind. Blade interpretiert solche Expressions auch
-  innerhalb von HTML-Kommentaren — der Kommentar versteckt nur das
-  gerenderte HTML, nicht die PHP-Auswertung. Im
-  `chapters/index.blade.php`-Fall hat das beim Quick-Smoke eine
-  `MissingAttributeException` auf `$item->alt` ausgelöst
-  (`$item` ist ein `MediaContent`, hat kein `alt`-Property). Fix:
-  HTML-Kommentare `<!-- ... -->` durch Blade-Kommentare
-  `{{-- ... --}}` ersetzt; Blade überspringt den Block jetzt
-  komplett.
-
-- **Laravel 11 → 12.** `composer.json` `laravel/framework` auf
-  `^12.0`. Spatie-Pakete (`permission ^6`, `activitylog ^4`,
-  `translatable ^6`, `welcome-notification ^2.5`,
-  `ignition ^2`) bleiben — alle Laravel-12-kompatibel mit den
-  Laravel-11-Versionen. Einziger erzwungener Begleitsprung:
-  Larastan (siehe folgender Punkt).
-- **`nunomaduro/larastan` → `larastan/larastan ^3`.** Repo-Move
-  beim v3-Major: das Paket lebt nicht mehr unter
-  `nunomaduro/larastan`, sondern unter `larastan/larastan`.
-  Composer-Constraint und der `include`-Pfad in `phpstan.neon`
-  (`./vendor/nunomaduro/larastan/extension.neon` →
-  `./vendor/larastan/larastan/extension.neon`) entsprechend
-  angepasst. v3 bringt PHPStan v2 mit — strengere Kovarianz-
-  Regeln auf überschriebenen PHPDoc-Property-Types und eine
-  neue Regel `larastan.noEnvCallsOutsideOfConfig`. Beides hat
-  in unserem Code Folgearbeiten ausgelöst (siehe folgende Punkte).
-- **`$fillable`-PHPDoc in 18 Modellen** von
-  `@var array<int, string>` auf `@var list<string>` umgestellt.
-  Eloquent-`Model::$fillable` ist im Basis-PHPDoc seit Längerem
-  als `list<string>` getypt; PHPStan v2 verlangt jetzt Kovarianz
-  und schimpft bei der älteren Form. Mechanische Welle in
-  `Audiovisual`, `Chapter`, `Comment`, `Entry`, `Gallery`,
-  `Image`, `Invitation`, `MediaContent`, `ModelHasPermission`,
-  `ModelHasRole`, `Permission`, `PermissionDescription`,
-  `Project`, `Role`, `Source`, `Text`, `User`
-  (zusätzlich `$hidden`), `UserHasPermission`.
-- **`CreateAdminUserSeeder` von `env()` auf `config()` umgestellt.**
-  Larastan v3 verbietet `env()`-Calls außerhalb des `config/`-
-  Verzeichnisses (`larastan.noEnvCallsOutsideOfConfig`), weil
-  sie nach `php artisan config:cache` `null` zurückgeben. Die
-  vier Stellen im Seeder (`ADMIN_EMAIL`, `ADMIN_PASSWORD`,
-  `ADMIN_NAME`, `ADMIN_LAST_NAME`) lesen jetzt aus
-  `config('admin.*')`; die ENV-Variablen werden in der neuen
-  `config/admin.php` einmalig gelesen. Inhaltlich keine
-  Änderung — Aufruf-Indirektion eine Schicht tiefer.
-- **`isset()` auf nicht-nullable Collection durch `isNotEmpty()`
-  ersetzt.** Drei Stellen in `ProjectController::history` und
-  `LogService::history` / `LogService::textLog` prüften
-  `isset($activity->changes)` als Heuristik für
-  „Activity-Eintrag hat Property-Diff". Spatie-Activity-`changes`
-  ist seit v4 eine Collection (nicht nullable) — `isset()`
-  liefert dort immer `true`, und PHPStan v2 sieht das jetzt
-  präzise genug, um zu meckern. Umgestellt auf
-  `$activity->changes->isNotEmpty()`, was die ursprüngliche
-  Absicht direkt ausdrückt.
-- **`ProjectController::getUsersForThisProject()` PHPDoc-Return
-  korrigiert.** Doc-Block sagte `@return bool`, die Methode gab
-  aber seit jeher ein indiziertes Array zurück. Auf
-  `@return array<int, array<string, mixed>>` angepasst — Bestands-
-  Bug aus der alten Baseline.
-- **Larastan-Baseline auf v3 regeneriert.** Vorher 130 v2-Einträge,
-  jetzt 15 v3-Einträge. Was bleibt: 11 Magic-Property-Accesses auf
-  Eloquent-Relations (`$entry->chapter->project`, `$activity->changes`-
-  ähnliche Inferenz-Lücken in vier Dateien), plus vier echte
-  Smell-Befunde in `ProjectController` (`setImage()`-Return-Typ-
-  Tippfehler, zwei `== ''`-Pfade mit toter Bedingung, ein
-  `view()`-Argument-Typ-Mismatch). Beides Phase-4-Hygiene:
-  `@property`-Annotationen am Class-Level der Models lösen den
-  Großteil ohne Code-Eingriff.
-
-### Anmerkung zur Verifikation (Block G)
-
-Pest grün auf PHP 8.4 + Laravel 12, Larastan v3 stabil (15 Items
-in Baseline, keine Bypass-Errors), Pint grün, Quick-Smoke Pfad 4
-(Login → Project anlegen → Bild-Upload → PDF-Export) grün. Spatie-
-Pakete unverändert — kein erzwungener Major-Bump in Block G.
-
-- **Laravel 10 → 11.** `composer.json` `laravel/framework` auf
-  `^11.0`. Mit ziehen: `nunomaduro/collision ^8`, `laravel/breeze ^2`,
-  `pestphp/pest ^3`, `pestphp/pest-plugin-laravel ^3`,
-  `phpunit/phpunit ^11`. Spatie-Pakete (`permission ^6`,
-  `activitylog ^4`, `translatable ^6`, `welcome-notification ^2.5`,
-  `ignition ^2`) bleiben — alle Laravel-11-kompatibel mit den
-  Laravel-10-Versionen.
-- **`laravelcollective/html` (abandoned) raus, native Blade-Forms.**
-  Die Library wurde nur in zwei Templates (`roles/create.blade.php`,
-  `roles/edit.blade.php`) genutzt — acht `Form::*`-Aufrufe. Umstellung
-  auf natives `<form>` mit `@csrf`, `@method('PATCH')`, `@checked` und
-  `old('field', $model->field)`-Fallback. Eine Dependency weniger, kein
-  externes Form-Builder-Paket mehr im Stack. ADR-0003 hatte das schon
-  vor dem Laravel-9-Sprung empfohlen, hier akut geworden weil
-  `laravelcollective/html` ^6.4 nicht Laravel-11-kompatibel ist.
-- **Pest-3-Inferenz für Larastan.** Pest 3 hat die Test-Case-Bindung
-  intern geändert, Larastan v2 sah `$this` in Pest-Closures nur noch
-  als PHPUnit-Default. 45 `/** @var \Tests\TestCase $this */`-Hints
-  in `AuthorizationTest.php` und `HappyPathTest.php` ergänzt, damit
-  `$this->actingAs(...)`, `$this->post(...)` etc. wieder als Laravel-
-  Methoden inferiert werden.
-- **Carbon v3 in `MyCustomWelcomeNotification`.** Methodennamen-
-  Wechsel: `diffInRealMinutes()` ist in v3 weg, ersetzt durch
-  `diffInMinutes(absolute: true)`. Plus Int-Cast für die Translation-
-  String-Interpolation.
-- **`Entry::getAllMediaAttribute()` aufgeräumt.** Vorher iterierte die
-  Methode über einen Relation-Builder direkt und gab den gleichen
-  Builder zurück — der `foreach`-Loop war toter Code, hat `$data`
-  befüllt und wegfallen lassen. Laravel-11-strict-Inferenz wirft das
-  jetzt sichtbar. Vereinfacht auf `return $this->mediaContent;`
-  (Property-Access auf die geladene Collection).
+  Strings, die an `assignRole()` gehen, strikt als Rollen-Namen.
+  Neuer Helper `RoleResolver` löst Single-String, Array, Name
+  und numerische ID zu konkreten `Role`-Instanzen auf, bevor sie
+  an Spatie gehen. Charakterisierungs-Tests fixieren die drei
+  Eingabewege.
+- **`Entry::getAllMediaAttribute()` aufgeräumt.** Vorher
+  iterierte die Methode über einen Relation-Builder und gab den
+  Builder dann unverändert zurück — der `foreach`-Loop war toter
+  Code. Vereinfacht auf `return $this->mediaContent;`.
 - **`MediaContent`-PHPDoc-Returns** korrigiert. Drei Methoden
-  (`image()`, `text()`, `audiovisual()`) deklarierten `MorphToMany`
-  als Return-Type, gaben aber `BelongsTo` zurück (Bestands-Bug aus
-  der alten Larastan-Baseline). Doc-Strings angepasst. Die eigentliche
-  Schema-/Relation-Entscheidung wartet auf ADR-0012 in Phase 4.
-- **Laravel 9 → 10.** `composer.json` `laravel/framework` auf `^10.0`.
-  Mit ziehen: `spatie/laravel-permission ^6`, `spatie/laravel-translatable
-  ^6`, `spatie/laravel-ignition ^2`, `nunomaduro/collision ^7`,
-  `laravel/breeze ^1.21`, `pestphp/pest ^2`, `pestphp/pest-plugin-laravel
-  ^2`, `phpunit/phpunit ^10`. Pest 2 + PHPUnit 10 ist ein paralleler
-  Major-Sprung, der mit Laravel 10 zusammen passiert.
-- **Spatie-Permission v5 → v6 Middleware-Namespace.**
-  `Spatie\Permission\Middlewares\*` → `Spatie\Permission\Middleware\*`
-  (Singular). Imports in `app/Http/Kernel.php` entsprechend angepasst.
-- **PHPUnit-10-Konfig** in `phpunit.xml` migriert auf das neue Schema —
-  `<coverage>`-Block umgestellt, deprecated Attribute entfernt.
-- **`.gitignore`** ergänzt um `.phpunit.cache/` (PHPUnit-10-Verzeichnis)
-  und `*.bak` (Backup-Pattern für Schema-Migrations).
-- **PHP 8.3 → 8.4 + Laravel 8 → 9 (verschränkt).** ADR-0003 hatte
-  PHP-erst-dann-Laravel festgelegt; an PHP 8.4 stieß Larastan v1 an
-  ein hartes PHPStan-Versions-Limit (`IS_READONLY`-Type-Mismatch in
-  PHPStan-BetterReflection-Stubs), und Larastan v2 verlangt Laravel 9.
-  Pragmatische Korrektur: beide Major-Sprünge in einem Branch
-  zusammengelegt. Elf Composer-Constraints simultan gebumpt:
-  `laravel/framework ^9`, `nunomaduro/larastan ^2`,
-  `spatie/laravel-{permission ^5, activitylog ^4, translatable ^5}`,
-  `laravelcollective/html ^6.4`, `laravel/breeze ^1.9`,
-  `nunomaduro/collision ^6`, `facade/ignition` raus →
-  `spatie/laravel-ignition ^1`, `fideloper/proxy` raus.
-- **Spatie-Activitylog v3 → v4 — neue API-Konvention.** Statische
-  Properties (`$logName`, `$logFillable`, `$logOnlyDirty`,
-  `$submitEmptyLogs`) sind in v4 entfernt, jedes Modell mit
-  `LogsActivity` braucht jetzt eine `getActivitylogOptions():
-  LogOptions`-Methode. 18 Modelle entsprechend angepasst, zwei neue
-  Schema-Spalten (`batch_uuid`, `event`) per veröffentlichten
-  Migrations in der DB ergänzt.
-- **`App\Http\Middleware\TrustProxies`** extends jetzt
-  `Illuminate\Http\Middleware\TrustProxies` (Laravel-9-eigene
-  Implementation, `fideloper/proxy` obsolet).
-- **Laravel-9-PHPDoc-Generics nachgezogen.** 30+ App-Stellen:
-  `@var array` → `@var array<int, string>` etc. auf
-  `$middleware`/`$middlewareGroups`/`$routeMiddleware`,
-  `$except` in 4 Middleware-Klassen, `$fillable` in 18 Modellen,
-  `$policies`/`$listen` in den Providern, plus
-  `App\Exceptions\Handler` Generics.
-- **Test-Suite-Annotationen.** 51 `/** @var \App\Models\User */`-
-  Hints in 5 Test-Dateien — Larastan-v2-Inferenz hatte
-  `User::factory()->create()` als `Illuminate\Database\Eloquent\Model`
-  gesehen und Folgeoperationen (`assignRole`, `givePermissionTo`,
-  `makeProject`-Helper, `actingAs`, `$user->email/id`) als Type-
-  Mismatch gemeldet.
-- **Larastan-Baseline komplett regeneriert** — 130 Einträge gegen
-  v2-Inferenz, ersetzt die Phase-2-Baseline (~200 v1-Einträge,
-  davon viele Duplikate). Phase-4-Plan „Larastan-Baseline aktiv
-  abbauen" gewinnt damit eine präzise Liste.
-- **PHP 8.2 → 8.3.** `composer.json` `require.php` von `^8.2` auf
-  `^8.3`. Container-Build neu unter `docker/8.3/`. CI-Workflow auf
-  allen vier Jobs auf PHP 8.3. Ubuntu noble und Node 22 bleiben aus
-  dem 8.2-Sprung stehen, ebenso der `chmod 0644`-Fix für die
-  `99-sail.ini` und der `storage:link`-Auto-Setup. Sprung verlief
-  ohne Code-Eingriff, kein Refactor nötig.
-- **PHP 8.1 → 8.2.** `composer.json` `require.php` von `^7.3|^8.0` auf
-  `^8.2`. Container-Build neu unter `docker/8.2/`. CI-Workflow auf allen
-  vier Jobs (Pest, composer audit, Larastan, Pint) auf PHP 8.2.
-- **Ubuntu 22.04 jammy → 24.04 noble.** Im selben Container-Sprung. Die
-  PPA-Quelle `ondrej/php` zieht jetzt aus dem noble-Pool. Defensive
-  Vorbereitung: `ubuntu`-User mit UID 1000 wird vor dem `sail`-User-
-  Anlegen entfernt, weil noble den User per Default mitliefert und es
-  sonst zur GID-Kollision käme.
-- **Node 20 LTS → Node 22 LTS.** NodeSource-Setup-Script auf
-  `setup_22.x`. Node 20 ist seit Oktober 2025 in Maintenance, Node 22
-  ist die aktive LTS bis Oktober 2027.
-- **`storage:link` läuft automatisch beim Container-Start.**
-  `docker/8.2/start-container` prüft idempotent, ob
-  `public/storage` als Symlink existiert, und legt ihn sonst an.
-  Ohne den Symlink bricht jeder File-Upload mit „failed to upload" —
-  beim PHP-8.2-Image-Rebuild verschwand der Symlink stillschweigend,
-  weil Composer keinen Post-Install-Hook für `storage:link` rufen
-  kann. Ab jetzt selbstreparierend.
-
-### Anmerkung zur Verifikation
-
-Pest 58 grün auf PHP 8.2, Larastan stabil, Pint grün, Coverage über
-25 %. Spatie-Activity-Stub-Lücken (`$created_at`) sind in der
-Larastan-Baseline aufgenommen — keine eigene Sache von uns, gehört zu
-Spatie-Phase-4-TODO.
-
-### Hinzugefügt
-
-- `app/Http/Requests/StoreImageBlockRequest.php` und
-  `app/Http/Requests/StoreAudiovisualRequest.php` als dedizierte
-  FormRequests für die Image- und Audio-/Video-Upload-Routen.
-- Sechs neue Pest-Tests in `tests/Feature/AuthorizationTest.php`
-  decken die Upload-Härtung, den Mass-Assignment-Schutz auf
-  `Project.user_id` und den Owner-Check vor Drag&Drop ab. Suite
-  jetzt 46 grün.
-
-### Geändert
-
-- **Upload-Routen** in `ContentController::saveImage` und
-  `AudiovisualController::store` laufen über die neuen
-  FormRequests mit MIME-Whitelist (jpeg, jpg, png, gif, webp für
-  Bilder; mp3, mp4, wav, ogg, m4a für Audio) und Size-Limit (4 MB
-  für Bilder, 20 MB für Audio).
-- **`AudiovisualController::uploadAudio()`** generiert den
-  Dateinamen jetzt durchgängig per `Str::random(10)`. Der
-  vorherige `getClientOriginalName()`-Zwischenwert war ein
-  Path-Traversal-Vektor.
-- **`UploadTrait::uploadOne()`** prüft den `disk`-Parameter
-  gegen eine Whitelist (`public`). Defensive Schicht für künftige
-  Aufrufer — die Disk-Wahl darf nie aus Request-Daten kommen.
-- **Drag&Drop-Reorder-Route** (`POST /drag`) prüft jetzt via
-  Project-Policy, ob der eingeloggte User Owner oder Admin des
-  Ziel-Projekts ist. Routen-Layout sonst unverändert; die
-  Zerlegung in drei dedizierte Reorder-Endpunkte (chapter,
-  entry, content) bleibt Refactoring-Material.
-
-- Acht Happy-Path-Tests in `tests/Feature/HappyPathTest.php` —
-  Project / Chapter / Entry / Text-Block / Image-Block /
-  Audio-Upload, dazu Admin-Invitation mit Notification-Dispatch
-  und Permission-Cascade über die Editor-Rolle. Erweitert die
-  Pest-Suite von 46 auf 54 grüne Tests. Sicherheitsnetz für den
-  bevorstehenden Major-Upgrade-Sprung — die Authorization-Suite
-  prüft „darf der User das?", diese Suite prüft „macht die App
-  das, was sie soll?".
-- Test-Helper `makeProject`, `makeChapter`, `makeEntry` liegen
-  zentral in `tests/Pest.php` und sind über Feature-Suites
-  hinweg verfügbar.
-- **PCOV** als Coverage-Driver im PHP-Container (`php8.1-pcov`
-  im Dockerfile, `pcov.directory = /var/www/html/app` in der
-  `php.ini`). Aktiv nur bei `--coverage` — kein Overhead im
-  normalen App-Lauf. Composer-Script `composer test-coverage`
-  läuft `pest --coverage --min=25` und schlägt fehl, wenn die
-  Coverage unter 25 % fällt. Aktueller Stand: **26.68 %** — die
-  Schwelle ist eng angesetzt, damit Coverage-Verlust durch
-  Phase-3-Refactorings im CI sofort sichtbar wird.
+  (`image()`, `text()`, `audiovisual()`) deklarierten
+  `MorphToMany`, gaben aber `BelongsTo` zurück.
+- **`MediaContentMorphRelationsTest`, `ContentProjectNavigationTest`,
+  `TextPolicyTest`, `ImagePolicyTest`, `GalleryPolicyTest`,
+  `AudiovisualPolicyTest`, `ContentRouteAuthorizationTest`,
+  `AudiovisualServiceTest`, `CommentRetrieveTest`** — alle Insert-
+  Stellen auf die neuen `content_*`/`parent_*`-Spalten umgestellt,
+  nachdem die alten Spalten aus dem Schema gefallen sind.
 
 ### Sicherheit
 
-- **Upload-Härtung in den Image- und Audio-Routen**
-  ([`3b69353`](https://github.com/berlinHistory/crowdCuratio/commit/3b69353)).
-  Vorher liefen `POST /image/store` und `POST /save-audiovisual`
-  ohne MIME- oder Size-Validation. Ein eingeloggter User konnte
-  beliebige Dateitypen hochladen — ausführbare Dateien wären als
-  zufällig benannte Files in der `public`-Disk gelandet, mit
-  potenzieller Wirkung je nach Web-Server-Konfiguration.
-- **Mass-Assignment-Schutz für `Project.user_id`**
-  ([`3b69353`](https://github.com/berlinHistory/crowdCuratio/commit/3b69353)).
-  Die Spalte ist nicht mehr in `Project::$fillable` — auch wenn
-  ein Request `user_id` mitsenden würde, kann sie nicht über
-  Mass-Assignment ins Modell wandern. Der Controller setzt
-  `user_id` ausschließlich aus `Auth::user()->id`.
-- **Owner-Check vor Drag&Drop-Reorder**
-  ([`3b69353`](https://github.com/berlinHistory/crowdCuratio/commit/3b69353)).
-  Bis zum Fix konnte jeder eingeloggte User Chapter, Entries und
-  MediaContent in fremden Projekten umsortieren oder zwischen
-  Chaptern verschieben — die Route war nur durch
-  `auth`-Middleware geschützt, ohne Project-Eigentums-Check.
+- **Authorization-Bypässe in vier Content-Controllern geschlossen.**
+  Nach der Permission-Modell-Konsolidierung und Abschaltung von
+  Spatie's `Gate::before` (siehe unten) zeigte sich, dass weite
+  Teile der `ChapterController`, `EntryController`,
+  `ContentController` und `AudiovisualController` ungated waren.
+  Project-scoped `authorize`-Gates ergänzt für ~25 Methoden über
+  die vier Controller — schwerpunktmäßig die JSON-API-Edit-Pfade
+  (`editText`, `editImage`, `editGallery`, `ChapterController::edit`,
+  `EntryController::show/edit`), die Save-Pfade (`saveText`,
+  `saveImage`, `saveGallery`, `AudiovisualController::store`) und
+  die kompletten Comment-Pfade (Add/Get/Save/Status für Chapter,
+  Entry, Text, Image, Gallery, Audiovisual). Comment-Status-
+  Endpunkte hatten zuvor totes Route-Model-Binding (Route-Param
+  hieß `{id}`, Signature erwartete `{chapter}`/`{text}` etc.) —
+  Laravel instantiierte ein leeres Modell statt zu authorisieren.
+  Resolution läuft jetzt über `CommentService::resolveProjectForComment`,
+  das vom Comment via `commentable_type`/`commentable_id` zum
+  Project navigiert.
+- **Reader-Bypass über Spatie's `Gate::before` strukturell
+  geschlossen.** Globale `view`-Permission von Spatie hat alle
+  project-scoped Policies umgangen: Spatie's
+  `PermissionRegistrar::registerPermissions()` registriert per
+  Default einen `Gate::before`-Hook, der `checkPermissionTo('view')`
+  ohne Modell-Argument prüft. Ein eingeladener Reader mit
+  globaler `view`-Permission gab in dem Hook true zurück, bevor
+  die project-scoped Policy überhaupt befragt wurde. Im
+  Test-Setup lief das durch Glück (Permission-Cache nicht hot,
+  `checkPermissionTo` wirft, Laravel interpretiert das als
+  false), live mit hot Cache war es offen. Fix:
+  `config/permission.php` setzt
+  `register_permission_check_method => false`. Vier Policy-
+  Methoden (`ProjectPolicy::viewAny`, `ProjectPolicy::create`,
+  `ChapterPolicy::create`, `EntryPolicy::create`) gehen jetzt
+  direkt über Spatie's `hasPermissionTo()` ans Trait, ohne
+  Gate-Roundtrip. Drei Blade-Stellen in `roles/index.blade.php`
+  auf `@hasPermissionTo(...)` umgestellt. Pinning-Tests mit
+  primärem Permission-Cache (`forgetCachedPermissions()` im
+  beforeEach) sichern den Pfad ab. Die Konvention
+  `forgetCachedPermissions()` im beforeEach ist als verbindliche
+  Test-Setup-Vorgabe etabliert.
+- **Owner-Bypass-Bug im Defense-in-Depth-Layer entschärft.** Beim
+  Authorize-Sweep über die vier Content-Controller war
+  `hasPermissionTo('edit')` als Top-Level-Defense-in-Depth-Hürde
+  vor den `authorize('update', $model)`-Aufrufen eingezogen
+  worden. Project-Owner ohne globale Editor-Rolle wurden dadurch
+  ausgeschlossen, drei HappyPath-Tests brachen. Top-Level-Hürde
+  in den vier `saveText`/`saveImage`/`saveGallery`/Audiovisual-
+  `store`-Methoden wieder rausgenommen — der Owner-Shortcut in
+  `OwnerScopedPolicy` fängt das ab. Nur dort, wo kein Modell-
+  Argument für ein project-scoped `authorize` vorhanden ist
+  (Source-Translation auf global geteilten Sources in `saveText`
+  und `saveImage`), bleibt `hasPermissionTo('edit')` als
+  Reader-Schutz.
+- **Authorization-Sweep über `ProjectController`.** Sieben
+  ungegated Pfade geschlossen: `show($project)`, `edit($project)`,
+  `getDetails`, `previewProject`, `downloadPreview`,
+  `projectMetadata`, `givePermissionToUser`. Plus kritisch:
+  `setPermissionForUserOnProject` ohne Authorize — jeder
+  eingeloggte User konnte einem beliebigen User volle Rechte auf
+  jedes Projekt vergeben (Privilege Escalation derselben Klasse
+  wie der frühere Register-Hotfix). Alle sechs Read-Pfade jetzt
+  mit `authorize('view', $project)`, die zwei Permission-Pfade
+  mit `authorize('update', $project)`. `history($model, $id)` auf
+  `private` reduziert (kein Route-Caller, einziger Aufrufer ist
+  `edit()`, das selbst gegated ist); `getCurrentLog($id)`
+  navigiert über `Text::project()` und gated mit `view`.
+- **Authorization-Sweep über User-, Role- und Translation-
+  Endpunkte.** `UserController::update` ohne Authorization-Gate
+  geschlossen: jeder eingeloggte User konnte via
+  `PATCH /users/{anderer}` mit `roles=['Admin']` fremde User
+  editieren und ihnen die Admin-Rolle zuweisen. Neue
+  `App\Policies\UserPolicy` regelt das (Admin via `before()`,
+  sonst Self-Edit), `authorize('update', $user)` im Controller,
+  Caller-Admin-Guard auf das `roles`-Feld. `RoleController::store/
+  show/update` waren vor dem Hotfix nicht per `role:Admin`-
+  Middleware geschützt (nur `index/edit/destroy` waren es) — via
+  Direkt-POST/PATCH konnte ein Reader neue Rollen anlegen oder
+  bestehende ändern. Constructor-Middleware-Liste auf den vollen
+  Resource-Pfad erweitert. `ProjectController::editMetaData` und
+  `::translateCurrentProject` waren nur durch `auth`-Middleware
+  geschützt; Reader konnten fremde Project-Metadaten samt
+  Permission-Verwaltung und Übersetzungs-Masken sehen. Inline-
+  Authorize via `update`-Policy. Charakterisierungs-Tests pro
+  Bypass sichern das geschlossene Verhalten.
+- **Security-Sweep über sechs Lücken zweiter Ordnung.** Aus den
+  Review-Subagents zum Phase-Abschluss:
+  - **`ProjectController::resetValue`** lief mit
+    `$request['subjectType']::findOrFail()` ohne Whitelist und
+    ohne Authorize — ein RCE-naher Vektor, weil ein Angreifer
+    beliebige Klassen-Strings durchschießen konnte. Jetzt:
+    Whitelist auf die sechs curating-relevanten Content-Modelle
+    (Chapter, Entry, Text, Image, Gallery, Audiovisual) plus
+    project-scoped `authorize('update', $model)`.
+  - **`ChapterController::index`** Reader-Bypass via
+    `GET /chapters?id=42`: rendert die volle Edit-Hierarchie
+    fremder Projects. `index` sieht semantisch wie ein Listen-
+    Endpunkt aus, lädt aber tatsächlich
+    `Project::withEditTree()->findOrFail($request['id'])`. Jetzt:
+    `authorize('view', $project)` direkt nach Modell-Auflösung.
+  - **`ProjectController::inviteUserForProject`** Info-Leak: zeigte
+    Rollen und Permissions fremder User auf fremden Projects.
+    Jetzt: `Project::findOrFail($projectId)` plus
+    `authorize('update', $project)` — gleicher Gate wie auf der
+    Permission-Verwaltung in `setPermissionForUserOnProject`.
+  - **`ProjectController::saveCommentProject` und
+    `setCommentStatusProject`** hatten `Project $project` als
+    totes Route-Model-Binding (Route-Param hieß `{id}` bzw. gar
+    nicht). Laravel instantiierte ein leeres Project, kein
+    Authorize. Jetzt: `Project::findOrFail($request->route('id'))`
+    bzw. `CommentService::resolveProjectForComment($commentId)`
+    plus `authorize('comment', $project)`.
+  - **`ProjectController::getParentText`** SQLi-Surface über die
+    String-Parameter `$table` und `$model`. Whitelist auf
+    `entries`/`images`/`texts` und `Entry::class`/`Text::class`/
+    `Image::class`.
+- **Privilege-Escalation und Owner-Checks aus dem Phase-Vorlauf.**
+  Vor dem Major-Sprung geschlossen:
+  - **Upload-Härtung in den Image- und Audio-Routen.** Vorher
+    liefen `POST /image/store` und `POST /save-audiovisual` ohne
+    MIME- oder Size-Validation; ein eingeloggter User konnte
+    beliebige Dateitypen hochladen. Dedizierte FormRequests
+    decken das jetzt mit MIME-Whitelist und Size-Limit ab.
+  - **`AudiovisualController::uploadAudio()`** generiert den
+    Dateinamen jetzt durchgängig per `Str::random(10)` — der
+    vorherige `getClientOriginalName()`-Zwischenwert war ein
+    Path-Traversal-Vektor.
+  - **`UploadTrait::uploadOne()`** prüft den `disk`-Parameter
+    gegen eine Whitelist (`public`).
+  - **Mass-Assignment-Schutz für `Project.user_id`** — die Spalte
+    ist nicht mehr in `Project::$fillable`. Der Controller setzt
+    `user_id` ausschließlich aus `Auth::user()->id`.
+  - **Owner-Check vor Drag-and-Drop-Reorder.** Bis zum Fix konnte
+    jeder eingeloggte User Chapter, Entries und MediaContent in
+    fremden Projekten umsortieren — die Route war nur durch
+    `auth`-Middleware geschützt. Project-Policy greift jetzt.
+- **`composer audit` und `npm audit` Hotfixes.**
+  - **`laravel/framework` 12.61.0 → 12.62.0** für
+    GHSA-crmm-hgp2-wgrp (Temporary Signed URL Path Confusion,
+    Severity medium).
+  - **`guzzlehttp/guzzle` 7.10.5 → 7.12.1 und `guzzlehttp/psr7`
+    2.x → 2.12.1** für drei CVEs aus dem Audit-Lauf:
+    `CVE-2026-55767` (medium, Dot-only cookie domains match all
+    hosts), `CVE-2026-55568` (medium, Silent HTTPS proxy
+    downgrade to cleartext), `CVE-2026-55766` (medium, CRLF
+    injection in HTTP start-line serialization). Direkte
+    Production-Auswirkung in crowdCuratio gering — Guzzle wird
+    nur über transitive Abhängigkeiten genutzt, kein outgoing
+    HTTP-Call in der Anwendungslogik. Hard-Fix, weil `composer
+    audit` sonst rot bleibt.
+  - **`axios` komplett aus dem Frontend-Stack entfernt** — 17
+    CVEs (CSRF, SSRF, Prototype-Pollution, mehrere DoS-Pfade).
+    Das Paket war Laravel-Default-Setup, wurde aber im App-Code
+    nirgends genutzt; alle AJAX-Calls laufen über jQuery.
+  - **`lodash` aus den `devDependencies` entfernt.** Die
+    transitive Version aus Laravel-Mix (4.17.21, gepatcht)
+    bleibt aktiv; vorher hing eine veraltete 4.17.19 mit drei
+    Prototype-Pollution-CVEs direkt in der dependency-Liste.
+  - **`alpinejs` von 2.7.3 auf 3.15.12 gehoben.** 2.x ist EOL.
+    Drei Template-Stellen syntaktisch unverändert übernommen;
+    `Alpine.start()` in `resources/js/app.js` explizit gerufen
+    (in 3.x Pflicht). Die verbleibenden npm-Vulnerabilities
+    liegen im Laravel-Mix-Stack (Webpack/Babel/PostCSS) und
+    werden mit der Vite-Migration strukturell aufgelöst.
+- **CVE-2025-27515 (Laravel File-Validation-Bypass) strukturell
+  zu** durch den Laravel-12-Sprung; das frühere Soft-Fail-
+  Konstrukt aus dem Sicherheitsnetz-Release ist abgeschlossen.
+- **Frontend-Setter-Folgesweep geprüft.** Nur der
+  `.addImage`-Click hatte den entryId-Bug, der bereits im
+  Image-Modal-Hotfix gefixt wurde. `.addContent` setzt entryId
+  korrekt für Text/Audiovisual/Gallery, `.addEntry` setzt
+  chapterId korrekt. Keine analogen Lücken.
 
 ## [0.9.0] — 2026-05-30 — Sicherheitsnetz
 
