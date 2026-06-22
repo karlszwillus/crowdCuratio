@@ -20,6 +20,9 @@ along with this program in the file LICENSE.
 If not, see <https://www.gnu.org/licenses/>.
  */
 
+use App\Models\Chapter;
+use App\Models\Comment;
+use App\Models\Project;
 use App\Models\ProjectUserPermission;
 use App\Models\User;
 use App\Support\PermissionName;
@@ -448,4 +451,153 @@ it('Spatie-Bypass: hasPermissionTo VIEW true, aber Gate::view auf fremdem Projec
     expect($stranger->hasPermissionTo(PermissionName::VIEW->value))->toBeTrue();
     // Project-scoped via Gate nein
     expect($stranger->can('view', $project))->toBeFalse();
+});
+
+/*
+|--------------------------------------------------------------------------
+| Security-Sweep-III (2026-06-22) — Phase-4-Review-Findings
+|--------------------------------------------------------------------------
+|
+| Drei HIGH + zwei MEDIUM-Lücken aus dem Phase-4-Reviewer-Befund.
+| Verifikation und Pinning analog zum Welle-3- und 4a-Hotfix-II-Block.
+*/
+
+it('Sweep-III: resetValue verlangt eine whitelisted subjectType', function () {
+    /** @var TestCase $this */
+    app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+    /** @var User $user */
+    $user = User::factory()->create();
+    $user->assignRole('Reader');
+
+    $this->actingAs($user);
+
+    $response = $this->post(route('log.reset'), [
+        'subjectType' => 'App\\Models\\User',
+        'subjectId' => 1,
+        'nameReset' => 'Hijacked',
+    ]);
+
+    $response->assertStatus(403);
+});
+
+it('Sweep-III: resetValue blockt Fremde auch bei korrekter subjectType', function () {
+    /** @var TestCase $this */
+    app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole('Reader');
+    /** @var User $stranger */
+    $stranger = User::factory()->create();
+    $stranger->assignRole('Reader');
+
+    $project = makeProject($owner);
+    $chapter = makeChapter($project);
+
+    $this->actingAs($stranger);
+
+    $response = $this->post(route('log.reset'), [
+        'subjectType' => Chapter::class,
+        'subjectId' => $chapter->id,
+        'nameReset' => 'Hijacked',
+    ]);
+
+    $response->assertStatus(403);
+});
+
+it('Sweep-III: ChapterController::index blockt Fremden via GET ?id=', function () {
+    /** @var TestCase $this */
+    app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole('Reader');
+    /** @var User $stranger */
+    $stranger = User::factory()->create();
+    $stranger->assignRole('Reader');
+
+    $project = makeProject($owner);
+
+    $this->actingAs($stranger);
+
+    $response = $this->get('/chapters?id='.$project->id);
+    $response->assertStatus(403);
+});
+
+it('Sweep-III: inviteUserForProject blockt Fremde', function () {
+    /** @var TestCase $this */
+    app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole('Reader');
+    /** @var User $stranger */
+    $stranger = User::factory()->create();
+    $stranger->assignRole('Reader');
+    /** @var User $target */
+    $target = User::factory()->create();
+    $target->assignRole('Reader');
+
+    $project = makeProject($owner);
+
+    $this->actingAs($stranger);
+
+    $response = $this->get(route('user.info', ['id' => $target->id, 'projectId' => $project->id]));
+    $response->assertStatus(403);
+});
+
+it('Sweep-III: saveCommentProject blockt Fremde', function () {
+    /** @var TestCase $this */
+    app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole('Reader');
+    /** @var User $stranger */
+    $stranger = User::factory()->create();
+    $stranger->assignRole('Reader');
+
+    $project = makeProject($owner);
+
+    $this->actingAs($stranger);
+
+    $response = $this->post(route('comment.project.save', ['id' => $project->id]), [
+        'btn_submit' => 'Edit',
+        'pk' => 1,
+        'value' => 'Hijacked',
+    ]);
+
+    $response->assertStatus(403);
+});
+
+it('Sweep-III: setCommentStatusProject blockt Fremde', function () {
+    /** @var TestCase $this */
+    app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole('Reader');
+    /** @var User $stranger */
+    $stranger = User::factory()->create();
+    $stranger->assignRole('Reader');
+
+    $project = makeProject($owner);
+    $comment = Comment::create([
+        'user_id' => $owner->id,
+        'project_id' => $project->id,
+        'comment' => 'Owner-Kommentar',
+        'status' => 0,
+        'commentable_id' => $project->id,
+        'commentable_type' => Project::class,
+    ]);
+
+    $this->actingAs($stranger);
+
+    $response = $this->post(route('comment.project.status'), [
+        'id' => $comment->id,
+        'status' => 1,
+    ]);
+
+    $response->assertStatus(403);
 });
