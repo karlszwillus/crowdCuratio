@@ -10,6 +10,18 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Hinzugefügt
+
+- **`docs/architecture.md`** angelegt. Beschreibt das Domänenmodell
+  (Project → Chapter → Entry → MediaContent → Content), das
+  Authorization-Modell (`OwnerScopedPolicy` + abgeschaltetes Spatie-
+  `Gate::before` über `register_permission_check_method => false`),
+  die Service-Layer-Struktur, die Routing-Schichtung und die Test-
+  Pyramide. Plus eine klare Abgrenzung, was nicht ins Dokument
+  gehört (PDF-Pipeline, Storage-Strategie, Frontend-Build,
+  utf8mb4-Migration, Bug-Historie). Für Entwickler gedacht, die am
+  Code arbeiten.
+
 ### Sicherheit (Security-Sweep-III — Phase-4-Review-Findings)
 
 Sechs Lücken zweiter Ordnung aus den Phase-4-Reviewer-Subagents
