@@ -27,7 +27,10 @@ use App\Http\Requests\StoreCommentRequest;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Audiovisual;
+use App\Models\Chapter;
+use App\Models\Entry;
 use App\Models\Gallery;
+use App\Models\Image;
 use App\Models\Permission;
 use App\Models\Project;
 use App\Models\Source;
@@ -606,9 +609,9 @@ class ProjectController extends Controller
         // Kombinationen.
         $allowedTables = ['entries', 'images', 'texts'];
         $allowedModels = [
-            \App\Models\Entry::class,
-            \App\Models\Text::class,
-            \App\Models\Image::class,
+            Entry::class,
+            Text::class,
+            Image::class,
         ];
         if (! in_array($table, $allowedTables, true)
             || ! in_array($model, $allowedModels, true)
@@ -652,15 +655,15 @@ class ProjectController extends Controller
         // Whitelist auf die fünf curating-relevanten Content-Modelle,
         // dann project-scoped authorize('update', $model).
         $whitelist = [
-            \App\Models\Chapter::class,
-            \App\Models\Entry::class,
-            \App\Models\Text::class,
-            \App\Models\Image::class,
-            \App\Models\Gallery::class,
-            \App\Models\Audiovisual::class,
+            Chapter::class,
+            Entry::class,
+            Text::class,
+            Image::class,
+            Gallery::class,
+            Audiovisual::class,
         ];
 
-        if (! isset($request['subjectType']) || is_null($request['subjectType'])) {
+        if (! $request->filled('subjectType')) {
             return redirect(session('links')[2]);
         }
 

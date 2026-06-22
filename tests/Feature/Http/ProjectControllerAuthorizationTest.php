@@ -20,6 +20,9 @@ along with this program in the file LICENSE.
 If not, see <https://www.gnu.org/licenses/>.
  */
 
+use App\Models\Chapter;
+use App\Models\Comment;
+use App\Models\Project;
 use App\Models\ProjectUserPermission;
 use App\Models\User;
 use App\Support\PermissionName;
@@ -495,7 +498,7 @@ it('Sweep-III: resetValue blockt Fremde auch bei korrekter subjectType', functio
     $this->actingAs($stranger);
 
     $response = $this->post(route('log.reset'), [
-        'subjectType' => \App\Models\Chapter::class,
+        'subjectType' => Chapter::class,
         'subjectId' => $chapter->id,
         'nameReset' => 'Hijacked',
     ]);
@@ -580,13 +583,13 @@ it('Sweep-III: setCommentStatusProject blockt Fremde', function () {
     $stranger->assignRole('Reader');
 
     $project = makeProject($owner);
-    $comment = \App\Models\Comment::create([
+    $comment = Comment::create([
         'user_id' => $owner->id,
         'project_id' => $project->id,
         'comment' => 'Owner-Kommentar',
         'status' => 0,
         'commentable_id' => $project->id,
-        'commentable_type' => \App\Models\Project::class,
+        'commentable_type' => Project::class,
     ]);
 
     $this->actingAs($stranger);
