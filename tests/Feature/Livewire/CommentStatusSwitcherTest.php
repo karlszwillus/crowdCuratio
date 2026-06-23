@@ -62,11 +62,7 @@ it('Owner kann den Comment-Status ueber die Volt-Komponente aendern', function (
     $owner->assignRole('Admin');
     $this->actingAs($owner);
 
-    $project = Project::create([
-        'user_id' => $owner->id,
-        'name' => json_encode(['de' => 'Pilot-Projekt']),
-        'status' => 'open',
-    ]);
+    $project = makeProject($owner);
 
     $comment = Comment::create([
         'user_id' => $owner->id,
@@ -94,11 +90,7 @@ it('Fremder User ohne Permission bekommt 403', function () {
     $owner = User::factory()->create();
     $owner->assignRole('Admin');
 
-    $project = Project::create([
-        'user_id' => $owner->id,
-        'name' => json_encode(['de' => 'Pilot-Projekt']),
-        'status' => 'open',
-    ]);
+    $project = makeProject($owner);
 
     $comment = Comment::create([
         'user_id' => $owner->id,
@@ -127,11 +119,7 @@ it('Ungueltiger Status wird stillschweigend verworfen', function () {
     $owner->assignRole('Admin');
     $this->actingAs($owner);
 
-    $project = Project::create([
-        'user_id' => $owner->id,
-        'name' => json_encode(['de' => 'Pilot-Projekt']),
-        'status' => 'open',
-    ]);
+    $project = makeProject($owner);
 
     $comment = Comment::create([
         'user_id' => $owner->id,
