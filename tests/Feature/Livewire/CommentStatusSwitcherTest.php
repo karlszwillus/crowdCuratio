@@ -24,7 +24,6 @@ use App\Models\Comment;
 use App\Models\Project;
 use App\Models\User;
 use App\Support\PermissionName;
-use Illuminate\Auth\Access\AuthorizationException;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -109,8 +108,13 @@ it('Fremder User ohne Permission bekommt 403', function () {
     Livewire::test('comment-status-switcher', [
         'comment' => $comment,
         'project' => $project,
-    ])->call('updateStatus', 4);
-})->throws(AuthorizationException::class);
+    ])
+        ->call('updateStatus', 4)
+        ->assertStatus(403);
+
+    // Status in der DB unveraendert geblieben.
+    expect((int) $comment->fresh()->status)->toBe(1);
+});
 
 it('Ungueltiger Status wird stillschweigend verworfen', function () {
     /** @var TestCase $this */
