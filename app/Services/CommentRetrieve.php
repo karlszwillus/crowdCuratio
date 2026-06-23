@@ -130,6 +130,10 @@ class CommentRetrieve
                 'replies' => $replies,
                 'created' => date('d.m.Y', strtotime($value->created_at)),
                 'path' => $pathReply,
+                // 5a.II: Eloquent-Instanz für die Volt-Komponente
+                // <livewire:comment-status-switcher>. Existierende
+                // Array-Konsumenten bleiben unberührt.
+                'model' => $value,
             ];
         }
 

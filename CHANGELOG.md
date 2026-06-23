@@ -151,6 +151,14 @@ Drittabhängigkeiten.
   30 %, dann auf 55 % nach Abschluss der Content-Service-Welle.
   `composer.json` `test-coverage --min` entsprechend
   nachgezogen. Coverage am Phase-Ende effektiv bei 66,9 %.
+- **Livewire 4 und Volt** als Komponenten-Stack eingeführt
+  (`livewire/livewire ^4.0`, `livewire/volt ^1.10`). Erster
+  Pilot: `<livewire:comment-status-switcher>` ersetzt den
+  jQuery-`$.ajax`-Handler `.update-status` für Kommentar-Status-
+  Wechsel in `projects/description.blade.php`. Die Single-File-
+  Volt-Komponente bindet den Policy-Check `comment(Project)` und
+  delegiert an `CommentService::setCommentStatus`. Drei Pest-Tests
+  decken Happy-Path, 403 für Reader und ungültige Status-Werte ab.
 
 ### Geändert
 - **Accessibility fixes** `<html lang>`-Attribut auf den vier Layouts ergänzt, die es

@@ -28,11 +28,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     <div class="form-group col-sm-8">
                         @if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
                             <label class="col-xs-6 control-label">{{$comment['user']}}</label>
-                            <select id="items_{{$comment['id']}}" class="update-status" name="status" data-id="{{$comment['id']}}" data-model="{{strtolower($comment['commentable_type'])}}" class="form-control" style="width:auto;">
-                                @foreach($comment['status'] as $k => $v)
-                                    <option value="{{$k}}" @if($k == $comment['stat']) selected="selected" @endif>{{$v}}</option>
-                                @endforeach
-                            </select>
+                            <livewire:comment-status-switcher
+                                :comment="$comment['model']"
+                                :project="$project"
+                                :key="'comment-status-'.$comment['id']"
+                            />
                         @else
                             {{$comment['user']}} <strong>{{$comment['status'][$comment['stat']]}}</strong>
                         @endif

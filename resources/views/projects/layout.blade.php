@@ -36,6 +36,8 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
     <link href="https://cdn.quilljs.com/1.1.6/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.quilljs.com/1.1.6/quill.js"></script> <!-- Create the editor container -->
+
+    @livewireStyles
 	<link rel="apple-touch-icon" sizes="180x180" href="{{ asset('css/favicon/apple-touch-icon.png') }}">
 	<link rel="icon" type="image/png" sizes="32x32" href="{{ asset('css/favicon/favicon-32x32.png') }}">
 	<link rel="icon" type="image/png" sizes="16x16" href="{{ asset('css/favicon/favicon-16x16.png') }}">
@@ -70,5 +72,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
     @include('layouts.navi')
     @yield('script')
 </div>
+
+@livewireScripts
 </body>
 </html>
