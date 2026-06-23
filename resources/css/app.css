@@ -15,3 +15,26 @@
 
 /* Design-Tokens — @theme-Block für die Tailwind-4-Utility-Generierung. */
 @import "./tokens.css";
+
+/*
+ * Brücken-Layer für Bootstrap-3/4-Klassen, die heute noch in
+ * Blade-Templates stehen. Ohne diesen Layer rendert Tailwind 4
+ * die alten Klassen ohne Farb-/Border-Effekt — Folge: Inhalte
+ * sind technisch da, aber kontrastarm bis unsichtbar.
+ *
+ * In Welle 5b/5c werden die Templates durch <x-card> und
+ * Komponenten-Bibliothek ersetzt; danach ist dieser Layer
+ * komplett überflüssig und wird gelöscht.
+ */
+@layer base {
+  .border-secondary {
+    border-color: var(--color-ink-500);
+  }
+  .text-secondary {
+    color: var(--color-ink-600);
+  }
+  /* Bootstrap-Konvention: leichte abgehobene Boxen für Karten und Listen-Items. */
+  .row.border {
+    background: #ffffff;
+  }
+}
