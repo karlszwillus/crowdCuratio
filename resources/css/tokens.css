@@ -1,0 +1,52 @@
+/*
+ * crowdCuratio Design Tokens (v3)
+ *
+ * Source of Truth: .werkbank/BRIEFINGS/redesign/version 3/tokens.md
+ * Tailwind-4-`@theme`-Block — diese Tokens stehen ab Phase 5 als
+ * CSS-Custom-Properties zur Verfügung; Tailwind generiert die
+ * passenden Utility-Klassen daraus (z. B. `text-ink-900`,
+ * `bg-primary`, `rounded-md`).
+ *
+ * Tokens hier ergänzen — nicht Hex-Werte in Templates schreiben.
+ */
+
+@theme {
+  /* Marke (Default-Theme: crowdCuratio) */
+  --color-primary: #c23934;
+  --color-primary-on: #ffffff;
+
+  /* Neutrale Skala — Text auf Hell */
+  --color-ink-900: #1b2330; /* Display, Headlines, primärer Text */
+  --color-ink-700: #374151; /* Body */
+  --color-ink-600: #4b5563; /* Sekundärer Text */
+  --color-ink-500: #6b7280; /* Muted (auf Hell — AA) */
+  --color-ink-400: #8a909c; /* Nur Large oder Caps-Labels */
+
+  /* Neutrale Skala — Text auf Dunkel */
+  --color-on-dark-300: #b0b6be; /* Muted auf Dunkel — AA */
+
+  /* Semantische Farben mit Hintergrund-Variante */
+  --color-success: #16744a;
+  --color-success-bg: #e7f4ee;
+  --color-warning: #a26b16;
+  --color-warning-bg: #fbf1dd;
+  --color-danger: #c0392b;
+  --color-danger-bg: #fae3e1;
+  --color-info: #2f5bd4;
+  --color-info-bg: #eaf0fc;
+
+  /* Spacing — Tailwind-Stufen 1 = 4px … 32 = 128px */
+  --spacing: 4px;
+
+  /* Border-Radii */
+  --radius-sm: 6px;
+  --radius-md: 9px;
+  --radius-lg: 14px;
+
+  /* Typografie-Skala */
+  --text-display: 46px;
+  --text-title: 26px;
+  --text-heading: 18px;
+  --text-body: 14.5px;
+  --text-caption: 12px;
+}

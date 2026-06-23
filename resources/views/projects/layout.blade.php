@@ -25,7 +25,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
     <meta name="csrf-token" content="{{ csrf_token() }}"/>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha/css/bootstrap.css"
           rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="{{ URL::asset('css/style.css') }}">
     <link rel="stylesheet" href="{{ URL::asset('css/sidebar.css') }}">
     <link rel="stylesheet" href="{{ URL::asset('css/crowdcuratio.css') }}">
