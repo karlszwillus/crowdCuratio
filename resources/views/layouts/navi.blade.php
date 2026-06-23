@@ -18,7 +18,7 @@ along with this program in the file LICENSE.
 If not, see <https://www.gnu.org/licenses/>. -->
 
 <nav class="navbar navbar-expand-lg p-3 my-3 border">
-		<img class="logo" src="//app.crowdcurat.io/css/images/crowdCuratio_logo.png" >
+		<img class="logo" src="//app.crowdcurat.io/css/images/crowdCuratio_logo.png" alt="crowdCuratio" >
     <ul class="nav nav-pills mr-auto">
         @if(isset(Auth::user()->currentRole) && Auth::user()->currentRole[0]->name == 'Admin')
             <li class="nav-item">

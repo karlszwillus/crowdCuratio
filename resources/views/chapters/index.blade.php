@@ -1090,6 +1090,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
             let entryId = $(this).attr("data-entryId");
             let gallery = $(this).attr("data-gallery");
             $('input[name="galleryId"]').val(id);
+            // Hotfix-Welle 0 (2026-06-23): entryId-Hidden-Input
+            // setzen, sonst läuft saveImage auf Entry::findOrFail(0)
+            // → 404 und Bild wird zwar gespeichert (über galleryId),
+            // aber die Authorize-Kette schlägt fehl und die
+            // Render-Seite zeigt das Bild nicht.
+            $('input[name="entryId"]').val(entryId);
             $('#chapterLbl').text(chapter);
             $('#entryLbl').text(entry);
             $('#galleryLbl').text(gallery);

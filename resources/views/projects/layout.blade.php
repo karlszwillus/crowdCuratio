@@ -18,7 +18,7 @@ along with this program in the file LICENSE.
 If not, see <https://www.gnu.org/licenses/>. -->
 
 <!DOCTYPE html>
-<html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <title>crowdCuratio</title>
     <!--  CSRF for all ajax call -->

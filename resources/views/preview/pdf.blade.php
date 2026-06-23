@@ -18,7 +18,7 @@ along with this program in the file LICENSE.
 If not, see <https://www.gnu.org/licenses/>. -->
 
 <!doctype html>
-<html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -663,7 +663,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
         <div id="hinweis">
             <div class="top-inner">
                 <p id="hinweistext">erstellt mit dem OpenSource Projekt </p>
-                <img src="{{ public_path().'/image/crowdCuratio.png' }}" id="logo2" width="1174" height="402" alt="" /></div>
+                <img src="{{ public_path().'/image/crowdCuratio.png' }}" id="logo2" width="1174" height="402" alt="crowdCuratio" /></div>
         </div>
     </div>
 

@@ -10,6 +10,42 @@ Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 
 ## [Unreleased]
 
+### Behoben
+
+- **Bildupload in Galerien zeigt das hochgeladene Bild nicht mehr
+  als nicht-vorhanden.** Der Klick auf das Plus-Icon einer Galerie
+  setzte den `galleryId`-Hidden-Input korrekt, ließ aber den
+  `entryId`-Hidden-Input leer. Der zugehörige Save-Pfad sucht den
+  Entry über die ID für den Authorize-Gate (`Entry::findOrFail((int)
+  $request['entryId'])`) — bei leerem Input wurde das zu
+  `findOrFail(0)` und der Upload schlug mit HTTP 404 fehl. Banner-
+  Echos aus älteren Save-Pfaden in der Session täuschten Erfolg vor;
+  das Bild war aber nicht angelegt. Click-Handler setzt jetzt auch
+  `entryId` analog zur Gallery-ID. Datei: `chapters/index.blade.php`.
+
+### Geändert (Accessibility-Quick-Wins)
+
+- **`<html lang>`-Attribut** auf den vier Layouts ergänzt, die es
+  bisher nicht hatten: `projects/layout.blade.php` (Editor-Haupt-
+  Layout), `preview/index.blade.php`, `preview/pdf.blade.php` und
+  `preview/copyright.blade.php`. Der Wert kommt aus
+  `app()->getLocale()` und wechselt mit dem Sprach-Switcher. Vorher
+  rendete der Editor ohne `lang`-Attribut, was Screenreader zur
+  falschen Aussprache des deutschen Inhalts zwang.
+- **Logo-`alt`-Attribut** auf vier `<img>`-Tags ergänzt: das
+  `crowdCuratio`-Logo im `navi.blade.php`-Header sowie die
+  Logo-Wiedergaben in den drei Preview-Templates (PDF, Reader-
+  Vorschau, Copyright-Beilage). Der Alt-Text ist konsistent
+  „crowdCuratio".
+- **Pflichtfeld-Markierung** um ein Sternchen ergänzt — der Lang-
+  Key `label_mandatory` rendert jetzt `* (Pflichtfeld)` statt
+  `(Pflichtfeld)`, der englische Key analog `* (Required)` statt
+  `(Mandatory)`. Damit wird die Pflichtfeld-Information nicht mehr
+  ausschließlich farbcodiert (verletzte WCAG 1.4.1), sondern trägt
+  auch typografisch eine Markierung. Der Sweep für `aria-required`-
+  Attribute auf den Inputs erfolgt strukturell in der Form-
+  Validation-Komponenten-Schicht.
+
 ### Hinzugefügt
 
 - **`docs/architecture.md`** angelegt. Beschreibt das Domänenmodell
