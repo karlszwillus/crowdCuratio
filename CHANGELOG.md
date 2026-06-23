@@ -8,7 +8,6 @@ die Versionierung folgt [Semantic Versioning 2.0.0](https://semver.org/lang/de/)
 Sektionen je Release: `Hinzugefügt`, `Geändert`, `Veraltet`, `Entfernt`,
 `Behoben`, `Sicherheit`.
 
-
 ## [Unreleased]
 
 Strukturelles Refactoring-Release. Schwerpunkte: Service-Layer-Extraktion
@@ -154,7 +153,9 @@ Drittabhängigkeiten.
   nachgezogen. Coverage am Phase-Ende effektiv bei 66,9 %.
 
 ### Geändert
-
+- **Accessibility fixes** `<html lang>`-Attribut auf den vier Layouts ergänzt, die es
+  bisher nicht hatten, **Logo-`alt`-Attribut** auf vier Logo-`<img>`-Tags ergänzt, 
+  **Pflichtfeld-Markierung** um ein Sternchen ergänzt.
 - **Application-Bootstrap auf die Laravel-11+-Closure-API
   umgestellt.** `bootstrap/app.php` ist jetzt
   `Application::configure(basePath: ...)->withRouting(...)
@@ -453,7 +454,8 @@ Drittabhängigkeiten.
   in der ehemaligen `CommentTrait::commentAsUser`.
 
 ### Behoben
-
+- **Bildupload in Galerien zeigt das hochgeladene Bild nicht mehr
+  als nicht-vorhanden.**
 - **Neuanlage von Gallery, Text, Image und Audio/Video lieferte
   404.** Direkte Folge des Laravel-11-Sprungs: Die Middleware
   `ConvertEmptyStringsToNull` schreibt seitdem leere

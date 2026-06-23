@@ -19,7 +19,7 @@
   "title": "Title",
   "show_product": "Show Product",
   "project_name": "Project Name",
-  "label_mandatory": "(Mandatory)",
+  "label_mandatory": "* (Required)",
   "project_thumbnail": "Project Thumbnail",
   "label_optional": "(Optional)",
   "add_project_thumbnail": "Add project thumbnail",

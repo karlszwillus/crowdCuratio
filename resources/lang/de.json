@@ -19,7 +19,7 @@
   "title": "Titel",
   "show_product": "Produkt anzeigen",
   "project_name": "Projekt Name",
-  "label_mandatory": "(Pflichtfeld)",
+  "label_mandatory": "* (Pflichtfeld)",
   "project_thumbnail": "Projektbild",
   "label_optional": "(Optional)",
   "add_project_thumbnail": "Projektbild hinzufügen",
