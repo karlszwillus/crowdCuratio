@@ -52,6 +52,22 @@ jobs:
           cp .env.example .env
           php artisan key:generate
 
+      - name: Setup Node.js 22
+        # Tests rendern Blade-Views, die `@vite()` aufrufen. Ohne
+        # public/build/manifest.json wirft Laravel eine Exception.
+        # public/build steht in .gitignore (Vite-Output), wir bauen
+        # also hier frisch.
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Build front-end assets (Vite)
+        run: npm run build
+
       - name: Run Pest
         # SQLite-In-Memory wird hier zur Laufzeit gesetzt, nicht in
         # phpunit.xml — so bleibt der lokale Pest-Lauf (gegen die

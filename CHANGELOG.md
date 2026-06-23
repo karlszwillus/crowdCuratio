@@ -156,6 +156,22 @@ Drittabhängigkeiten.
 - **Accessibility fixes** `<html lang>`-Attribut auf den vier Layouts ergänzt, die es
   bisher nicht hatten, **Logo-`alt`-Attribut** auf vier Logo-`<img>`-Tags ergänzt, 
   **Pflichtfeld-Markierung** um ein Sternchen ergänzt.
+- **Frontend-Build von Laravel Mix auf Vite umgestellt.**
+  `webpack.mix.js` entfällt, `vite.config.js` übernimmt mit
+  `laravel-vite-plugin` und `@tailwindcss/vite`. Layouts
+  (`layouts/app`, `layouts/guest`, `projects/layout`) referenzieren
+  Assets jetzt über `@vite([...])` statt über `asset('css/app.css')`
+  / `asset('js/app.js')`. **Tailwind CSS auf v4** angehoben; die
+  Tokens (Brand-Farben, Neutral-Skala, semantische Aliase, Spacing-
+  und Radius-Stufen) leben als CSS-Custom-Properties in
+  `resources/css/tokens.css` und werden über einen `@theme`-Block in
+  `resources/css/app.css` an Tailwind durchgereicht. CI baut die
+  Front-End-Assets vor dem Pest-Lauf (`npm ci && npm run build`),
+  damit `@vite()`-Direktiven das Manifest in `public/build/` finden;
+  `public/build/` ist .gitignored, das Manifest entsteht pro Build.
+  Charakterisierungs-Tests in `tests/Feature/Refactor/` halten den
+  Pre-Refactor-Stand der Frontend-Stack-relevanten Routen für
+  spätere Welle-5-Sub-Wellen fest.
 - **Application-Bootstrap auf die Laravel-11+-Closure-API
   umgestellt.** `bootstrap/app.php` ist jetzt
   `Application::configure(basePath: ...)->withRouting(...)
