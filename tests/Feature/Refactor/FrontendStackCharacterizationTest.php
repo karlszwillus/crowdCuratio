@@ -23,6 +23,7 @@ If not, see <https://www.gnu.org/licenses/>.
 declare(strict_types=1);
 
 use App\Models\User;
+use Illuminate\Support\Facades\Artisan;
 use Tests\TestCase;
 
 /**
@@ -38,10 +39,9 @@ use Tests\TestCase;
  * Bricht ein Test nach der Migration, fehlt ein Element strukturell
  * — kein Style-Drift.
  */
-
 beforeEach(function () {
-    \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'PermissionTableSeeder']);
-    \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'RoleTableSeeder']);
+    Artisan::call('db:seed', ['--class' => 'PermissionTableSeeder']);
+    Artisan::call('db:seed', ['--class' => 'RoleTableSeeder']);
 });
 
 it('login page renders form with email, password and submit button', function () {
