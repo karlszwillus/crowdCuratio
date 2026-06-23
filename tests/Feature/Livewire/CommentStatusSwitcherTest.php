@@ -23,8 +23,11 @@ If not, see <https://www.gnu.org/licenses/>.
 use App\Models\Comment;
 use App\Models\Project;
 use App\Models\User;
+use App\Support\PermissionName;
 use Illuminate\Auth\Access\AuthorizationException;
 use Livewire\Livewire;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 /*
@@ -41,8 +44,15 @@ use Tests\TestCase;
 */
 
 beforeEach(function () {
-    $this->artisan('db:seed', ['--class' => 'PermissionTableSeeder']);
-    $this->artisan('db:seed', ['--class' => 'RoleTableSeeder']);
+    foreach (PermissionName::all() as $permissionName) {
+        Permission::firstOrCreate(['name' => $permissionName, 'guard_name' => 'web']);
+    }
+
+    Role::firstOrCreate(['name' => 'Admin', 'guard_name' => 'web'])
+        ->syncPermissions(Permission::all());
+
+    Role::firstOrCreate(['name' => 'Reader', 'guard_name' => 'web'])
+        ->syncPermissions(Permission::where('name', 'view')->get());
 });
 
 it('Owner kann den Comment-Status ueber die Volt-Komponente aendern', function () {
