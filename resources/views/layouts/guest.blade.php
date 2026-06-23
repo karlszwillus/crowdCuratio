@@ -11,16 +11,15 @@
 
 
     <!-- Fonts -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap">
-
-    <!-- Styles -->
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}">
-
-    <!-- Scripts -->
-
+    <!-- Webfonts kommen über Vite-Bundle aus @fontsource — kein
+         Google-Fonts-Roundtrip mehr. Die alte Bootstrap-3-/jQuery-
+         Pipeline wird in einer der nächsten Sub-Wellen abgelöst;
+         hier bleibt sie als Bestand, weil der Editor sie noch
+         braucht. -->
     <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
-    <script src="{{ asset('js/app.js') }}"></script>
+
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
 </head>
 <body>

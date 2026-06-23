@@ -1,3 +1,17 @@
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+/*
+ * crowdCuratio — App-CSS-Einstiegspunkt
+ *
+ * Phase-5-Stack: Tailwind 4, gebaut über Vite. Design-Tokens
+ * liegen in tokens.css (Source of Truth aus tokens.md).
+ *
+ * Bootstrap 3 / 4 / Font-Awesome werden in den nächsten Sub-Wellen
+ * abgelöst. Bestehende Tailwind-2-Klassen funktionieren mit dem
+ * Tailwind-4-Upgrade-Tool weitgehend weiter; manuelle Anpassungen
+ * (z. B. `shadow-sm` → `shadow-xs`) macht das Upgrade-Tool im
+ * Migrations-Commit.
+ */
+
+@import "tailwindcss";
+
+/* Design-Tokens — @theme-Block für die Tailwind-4-Utility-Generierung. */
+@import "./tokens.css";
