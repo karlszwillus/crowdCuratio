@@ -179,11 +179,35 @@ Drittabhängigkeiten.
   Pflicht-ARIA-Attribute und Slot-Durchreichung. Komponenten sind in
   diesem Schritt noch nicht in produktive Views eingewebt — die
   Bibliothek liegt damit für den folgenden Bootstrap-Abbau bereit.
+- **Editor-Header-Navigation (`layouts/navi.blade.php`)** auf Tailwind 4
+  + Alpine umgestellt. Die Bootstrap-Dropdowns (`data-toggle="dropdown"`)
+  sind durch Alpine-Patterns ersetzt, die Top-Level-Items
+  (Einstellungen, Projekt, Nutzer, Kommentare, Sprache, User-Menü)
+  haben sichtbare Fokus-Ringe und korrekte
+  `aria-haspopup`/`aria-expanded`-Attribute. Der
+  `<x-ui.icon name="chevron-down">`-Wrapper liefert die Drop-Caret-Icons
+  aus dem Lucide-Set.
 
 ### Geändert
 - **Accessibility fixes** `<html lang>`-Attribut auf den vier Layouts ergänzt, die es
   bisher nicht hatten, **Logo-`alt`-Attribut** auf vier Logo-`<img>`-Tags ergänzt, 
   **Pflichtfeld-Markierung** um ein Sternchen ergänzt.
+- **Bootstrap-3/4-CDN-Links aus den Haupt-Layouts entfernt.** Weder
+  `layouts/guest.blade.php` noch `projects/layout.blade.php` laden das
+  Bootstrap-CSS oder das Bootstrap-3.3.7-JavaScript per CDN nach. Für die
+  Übergangsphase, bis alle Inhalts-Views auf die neue Komponenten-
+  Bibliothek (`<x-ui.*>`) umgezogen sind, liefert eine schmale
+  Tailwind-Compat-CSS-Schicht (`resources/css/compat-bootstrap.css`) die
+  strukturellen Bootstrap-Klassen — `container`, `container-fluid`,
+  `row`, `col-{xs|sm|md|lg}-*`, `btn`, `btn-{primary|secondary|danger|
+  success}`, `btn-block`, `btn-lg`, `btn-sm`, `form-control`,
+  `form-group`, `form-check-label`, `alert` und Varianten, `table`-
+  Familie, `nav`/`nav-link`/`nav-pills` sowie eine Minimal-Bedienung
+  für `dropdown-menu`/`dropdown-item`. Bootstrap-Spacing-Utilities
+  bleiben außerhalb: Tailwind hat eigene Klassen-Namen, kleine
+  Differenzen sind akzeptiert. Die Schicht fällt mit dem nächsten
+  Schritt, sobald die Inhalts-Views einzeln auf die neue Komponenten-
+  Bibliothek umgezogen sind.
 - **Frontend-Build von Laravel Mix auf Vite umgestellt.**
   `webpack.mix.js` entfällt, `vite.config.js` übernimmt mit
   `laravel-vite-plugin` und `@tailwindcss/vite`. Layouts

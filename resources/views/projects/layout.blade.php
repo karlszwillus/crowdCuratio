@@ -23,8 +23,6 @@ If not, see <https://www.gnu.org/licenses/>. -->
     <title>crowdCuratio</title>
     <!--  CSRF for all ajax call -->
     <meta name="csrf-token" content="{{ csrf_token() }}"/>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha/css/bootstrap.css"
-          rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="{{ URL::asset('css/style.css') }}">
     <link rel="stylesheet" href="{{ URL::asset('css/sidebar.css') }}">
@@ -49,7 +47,6 @@ If not, see <https://www.gnu.org/licenses/>. -->
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/RubaXa/Sortable/Sortable.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.24/js/dataTables.bootstrap4.min.js"></script>

@@ -1,0 +1,173 @@
+/*
+ * Temporäre Bootstrap-Compat-Schicht (Phase 5)
+ *
+ * Mappt die strukturellen Bootstrap-3/4-Klassen, die in noch nicht
+ * migrierten Views aktiv sind, auf Tailwind-4-Equivalente und eigene
+ * Tokens. Diese Datei ist bewusst eine Brücke: sobald alle Views auf
+ * die neue Komponenten-Bibliothek (<x-ui.*>) umgezogen sind, fällt
+ * dieser File wieder.
+ *
+ * Nicht in dieser Schicht: Bootstrap-Spacing-Utilities (mb-*, mt-*,
+ * p-*, m-*). Tailwind hat eigene gleichnamige Klassen mit leicht
+ * abweichenden Werten — wir akzeptieren die kleinen Drift-Stellen.
+ */
+
+@layer components {
+    /* ---------- Grid: Container ---------- */
+    .container {
+        @apply mx-auto w-full px-4;
+        max-width: 1200px;
+    }
+
+    .container-fluid {
+        @apply mx-auto w-full px-4;
+    }
+
+    /* ---------- Grid: Row + Spalten ---------- */
+    .row {
+        @apply -mx-2 flex flex-wrap;
+    }
+
+    .row > [class*="col-"] {
+        @apply px-2;
+    }
+
+    .col-xs-12, .col-sm-12, .col-md-12, .col-lg-12 { @apply w-full; }
+    .col-xs-6, .col-sm-6, .col-md-6, .col-lg-6 { @apply w-1/2; }
+    .col-xs-4, .col-sm-4, .col-md-4, .col-lg-4 { @apply w-1/3; }
+    .col-xs-8, .col-sm-8, .col-md-8, .col-lg-8 { @apply w-2/3; }
+    .col-xs-3, .col-sm-3, .col-md-3, .col-lg-3 { @apply w-1/4; }
+    .col-xs-9, .col-sm-9, .col-md-9, .col-lg-9 { @apply w-3/4; }
+    .col-xs-2, .col-sm-2, .col-md-2, .col-lg-2 { @apply w-1/6; }
+    .col-xs-10, .col-sm-10, .col-md-10, .col-lg-10 { @apply w-5/6; }
+    .col-xs-5, .col-sm-5, .col-md-5, .col-lg-5 { width: 41.6667%; }
+    .col-xs-7, .col-sm-7, .col-md-7, .col-lg-7 { width: 58.3333%; }
+    .col-xs-1, .col-sm-1, .col-md-1, .col-lg-1 { width: 8.3333%; }
+    .col-xs-11, .col-sm-11, .col-md-11, .col-lg-11 { width: 91.6667%; }
+
+    /* ---------- Buttons ---------- */
+    .btn {
+        @apply inline-flex items-center justify-center rounded-md px-4 py-2 text-body font-medium transition-colors;
+        @apply focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2;
+    }
+
+    .btn-primary {
+        @apply bg-primary text-primary-on hover:opacity-90 focus-visible:outline-primary;
+    }
+
+    .btn-secondary {
+        @apply bg-ink-900 text-white hover:opacity-90 focus-visible:outline-ink-900;
+    }
+
+    .btn-danger {
+        @apply bg-danger text-white hover:opacity-90 focus-visible:outline-danger;
+    }
+
+    .btn-success {
+        @apply bg-success text-white hover:opacity-90 focus-visible:outline-success;
+    }
+
+    .btn-block {
+        @apply flex w-full;
+    }
+
+    .btn-lg {
+        @apply px-5 py-2.5 text-heading;
+    }
+
+    .btn-sm {
+        @apply px-3 py-1.5 text-caption;
+    }
+
+    /* ---------- Forms ---------- */
+    .form-control {
+        @apply block w-full rounded-md border border-ink-400 px-3 py-2 text-body text-ink-900;
+        @apply placeholder:text-ink-500;
+        @apply focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary;
+    }
+
+    .form-group {
+        @apply mb-4;
+    }
+
+    .form-check-label {
+        @apply inline-block text-caption font-medium text-ink-700;
+    }
+
+    /* ---------- Alerts ---------- */
+    .alert {
+        @apply rounded-md border px-4 py-3 text-body;
+    }
+
+    .alert-success { @apply border-success/20 bg-success-bg text-success; }
+    .alert-warning { @apply border-warning/20 bg-warning-bg text-warning; }
+    .alert-danger { @apply border-danger/20 bg-danger-bg text-danger; }
+    .alert-info { @apply border-info/20 bg-info-bg text-info; }
+
+    /* ---------- Tabellen ---------- */
+    .table {
+        @apply w-full border-collapse text-body;
+    }
+
+    .table th,
+    .table td {
+        @apply border-b border-ink-400 px-3 py-2 text-left;
+    }
+
+    .table-bordered {
+        @apply border border-ink-400;
+    }
+
+    .table-bordered th,
+    .table-bordered td {
+        @apply border border-ink-400;
+    }
+
+    .table-striped tbody tr:nth-child(odd) {
+        @apply bg-ink-400/5;
+    }
+
+    /* ---------- Navigation ---------- */
+    .navbar {
+        @apply flex items-center;
+    }
+
+    .navbar-expand-lg {
+        @apply flex-row flex-wrap items-center justify-between;
+    }
+
+    .nav {
+        @apply flex flex-wrap;
+    }
+
+    .nav-item {
+        @apply list-none;
+    }
+
+    .nav-link {
+        @apply block px-3 py-2 text-body text-ink-900 hover:text-primary;
+    }
+
+    .nav-pills .nav-link {
+        @apply rounded-md;
+    }
+
+    /* ---------- Display-Utilities ---------- */
+    .d-flex { display: flex; }
+    .d-none { display: none; }
+    .d-block { display: block; }
+    .d-inline { display: inline; }
+    .d-inline-block { display: inline-block; }
+
+    /* ---------- Text-Utilities (Bootstrap-Namen) ---------- */
+    .text-muted { @apply text-ink-500; }
+
+    /* ---------- Dropdowns (Minimum, damit der Navi-Dropdown nicht fliegt) ---------- */
+    .dropdown-menu {
+        @apply absolute z-10 mt-1 min-w-[10rem] rounded-md border border-ink-400 bg-white py-1 shadow;
+    }
+
+    .dropdown-item {
+        @apply block px-4 py-2 text-body text-ink-900 hover:bg-ink-400/10;
+    }
+}
