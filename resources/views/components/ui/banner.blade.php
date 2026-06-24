@@ -47,7 +47,7 @@
 
     @if ($dismissible)
         <x-ui.icon-button
-            :label="__('close') ?? 'Schließen'"
+            :label="__('close')"
             variant="ghost"
             x-data
             @click="$el.closest('[role]')?.remove()"

@@ -28,7 +28,7 @@
         {{ $label }}
         @if ($required)
             <span aria-hidden="true" class="text-danger">*</span>
-            <span class="sr-only">({{ __('label_mandatory') ?? 'Pflichtfeld' }})</span>
+            <span class="sr-only">({{ __('label_mandatory') }})</span>
         @endif
     </label>
 

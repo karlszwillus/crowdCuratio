@@ -21,6 +21,7 @@ If not, see <https://www.gnu.org/licenses/>.
  */
 
 use Illuminate\Support\Facades\Blade;
+use Illuminate\View\ViewException;
 use Tests\TestCase;
 
 /*
@@ -80,7 +81,7 @@ it('Icon-Button erzwingt label und setzt aria-label', function () {
 it('Icon-Button ohne label wirft Exception', function () {
     /** @var TestCase $this */
     Blade::render('<x-ui.icon-button>X</x-ui.icon-button>');
-})->throws(\InvalidArgumentException::class);
+})->throws(ViewException::class, 'icon-button benötigt das Pflicht-Prop');
 
 // ---------- Input ----------
 
@@ -144,7 +145,7 @@ it('Toggle mit name fuegt Hidden-Input fuer Form-Submit hinzu', function () {
 it('Toggle ohne label wirft Exception', function () {
     /** @var TestCase $this */
     Blade::render('<x-ui.toggle/>');
-})->throws(\InvalidArgumentException::class);
+})->throws(ViewException::class, 'toggle benötigt das Pflicht-Prop');
 
 // ---------- Card ----------
 
