@@ -159,6 +159,26 @@ Drittabhängigkeiten.
   Volt-Komponente bindet den Policy-Check `comment(Project)` und
   delegiert an `CommentService::setCommentStatus`. Drei Pest-Tests
   decken Happy-Path, 403 für Reader und ungültige Status-Werte ab.
+- **UI-Komponenten-Bibliothek** unter `resources/views/components/ui/`
+  als anonyme Blade-Komponenten mit eingebauten Accessibility-Defaults:
+  `<x-ui.button>` (Varianten primary/secondary/ghost/danger, drei Größen,
+  sichtbarer Fokus-Ring), `<x-ui.icon-button>` (44 × 44 Min-Trefferfläche
+  nach WCAG 2.2, `aria-label` als Pflicht-Prop mit Laufzeit-Check),
+  `<x-ui.input>` (Label/Hint/Error verknüpft via `aria-describedby`,
+  sichtbarer `*` plus sr-only-Pflichtfeld-Hinweis, `aria-invalid` bei
+  Fehlern, `role="alert"` auf der Fehlermeldung),
+  `<x-ui.toggle>` (Alpine-getrieben mit `role="switch"`, `aria-checked`,
+  Tastatur-Toggle über Space, optionalem Hidden-Input für Form-Submit),
+  `<x-ui.card>` (Varianten chapter/abschnitt/inhalt für die im Glossar
+  festgehaltene Hierarchie, konfigurierbares Heading-Level) und
+  `<x-ui.banner>` (Typen success/info/warning/danger, automatisches
+  `aria-live="assertive"` plus `role="alert"` bei warning/danger,
+  optionaler Dismiss-Button). Begleitet von einem schmalen
+  `<x-ui.icon>`-Wrapper, der Lucide-SVGs inline und stilkonsistent über
+  `currentColor` rendert. 17 Pest-Render-Tests prüfen Variant-Klassen,
+  Pflicht-ARIA-Attribute und Slot-Durchreichung. Komponenten sind in
+  diesem Schritt noch nicht in produktive Views eingewebt — die
+  Bibliothek liegt damit für den folgenden Bootstrap-Abbau bereit.
 
 ### Geändert
 - **Accessibility fixes** `<html lang>`-Attribut auf den vier Layouts ergänzt, die es
