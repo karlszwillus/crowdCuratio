@@ -192,22 +192,25 @@ Drittabhängigkeiten.
 - **Accessibility fixes** `<html lang>`-Attribut auf den vier Layouts ergänzt, die es
   bisher nicht hatten, **Logo-`alt`-Attribut** auf vier Logo-`<img>`-Tags ergänzt, 
   **Pflichtfeld-Markierung** um ein Sternchen ergänzt.
-- **Bootstrap-3/4-CDN-Links aus den Haupt-Layouts entfernt.** Weder
+- **Bootstrap-CSS-CDN-Links aus den Haupt-Layouts entfernt.** Weder
   `layouts/guest.blade.php` noch `projects/layout.blade.php` laden das
-  Bootstrap-CSS oder das Bootstrap-3.3.7-JavaScript per CDN nach. Für die
-  Übergangsphase, bis alle Inhalts-Views auf die neue Komponenten-
-  Bibliothek (`<x-ui.*>`) umgezogen sind, liefert eine schmale
-  Tailwind-Compat-CSS-Schicht (`resources/css/compat-bootstrap.css`) die
-  strukturellen Bootstrap-Klassen — `container`, `container-fluid`,
-  `row`, `col-{xs|sm|md|lg}-*`, `btn`, `btn-{primary|secondary|danger|
-  success}`, `btn-block`, `btn-lg`, `btn-sm`, `form-control`,
-  `form-group`, `form-check-label`, `alert` und Varianten, `table`-
-  Familie, `nav`/`nav-link`/`nav-pills` sowie eine Minimal-Bedienung
-  für `dropdown-menu`/`dropdown-item`. Bootstrap-Spacing-Utilities
-  bleiben außerhalb: Tailwind hat eigene Klassen-Namen, kleine
-  Differenzen sind akzeptiert. Die Schicht fällt mit dem nächsten
-  Schritt, sobald die Inhalts-Views einzeln auf die neue Komponenten-
-  Bibliothek umgezogen sind.
+  Bootstrap-CSS-Bundle per CDN nach. Bootstrap-3.3.7-JS bleibt vorerst
+  in `projects/layout.blade.php` enthalten, weil x-editable, die Modal-
+  Trigger und der Bootstrap-3-Typeahead direkt darauf aufbauen — diese
+  drei Plugins werden in der nächsten Sub-Welle durch Alpine/Volt
+  ersetzt. Für die Übergangsphase liefert eine schmale Tailwind-Compat-
+  CSS-Schicht (`resources/css/compat-bootstrap.css`) die strukturellen
+  Bootstrap-Klassen — `container`, `container-fluid`, `row`,
+  `col-{xs|sm|md|lg}-*`, `btn`, `btn-{primary|secondary|danger|success}`,
+  `btn-block`, `btn-lg`, `btn-sm`, `form-control`, `form-group`,
+  `form-check-label`, `alert` und Varianten, `table`-Familie,
+  `nav`/`nav-link`/`nav-pills`, `dropdown-menu`/`dropdown-item` und die
+  Bootstrap-Modal-Familie (`.modal`, `.modal-dialog`, `.modal-content`,
+  Header/Body/Footer, `.modal-backdrop`, `.fade`). Bootstrap-Spacing-
+  Utilities bleiben außerhalb: Tailwind hat eigene Klassen-Namen,
+  kleine Differenzen sind akzeptiert. Die Schicht und der Bootstrap-3-
+  JS-Bestand fallen mit dem nächsten Schritt, sobald die Inhalts-Views
+  einzeln auf die neue Komponenten-Bibliothek umgezogen sind.
 - **Frontend-Build von Laravel Mix auf Vite umgestellt.**
   `webpack.mix.js` entfällt, `vite.config.js` übernimmt mit
   `laravel-vite-plugin` und `@tailwindcss/vite`. Layouts

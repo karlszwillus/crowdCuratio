@@ -170,4 +170,74 @@
     .dropdown-item {
         @apply block px-4 py-2 text-body text-ink-900 hover:bg-ink-400/10;
     }
+
+    /*
+     * ---------- Modals (Bootstrap-3-JS-getrieben) ----------
+     * `.modal` ist im Bootstrap-CSS default `display: none`. Ohne
+     * Bootstrap-CSS rutscht der Modal-Inhalt sonst in den Body-Flow.
+     * Bootstrap-JS setzt beim Öffnen `display: block` plus `.in`/`.show`.
+     * In der nächsten Sub-Welle ersetzen wir die Modals durch Volt/Alpine.
+     */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 1050;
+        overflow: hidden;
+        outline: 0;
+    }
+
+    .modal.in,
+    .modal.show {
+        display: block;
+    }
+
+    .modal-dialog {
+        @apply relative mx-auto my-8 w-auto max-w-lg;
+    }
+
+    .modal-content {
+        @apply relative rounded-md border border-ink-400 bg-white shadow-lg;
+    }
+
+    .modal-header {
+        @apply flex items-center justify-between border-b border-ink-400 px-4 py-3;
+    }
+
+    .modal-body {
+        @apply px-4 py-3;
+    }
+
+    .modal-footer {
+        @apply flex items-center justify-end gap-2 border-t border-ink-400 px-4 py-3;
+    }
+
+    .modal-backdrop {
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 1040;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .modal-backdrop.in,
+    .modal-backdrop.show {
+        opacity: 0.5;
+    }
+
+    /* `.fade` ist Bootstrap-Default für Modal- und Alert-Transitions. */
+    .fade {
+        opacity: 0;
+        transition: opacity 0.15s linear;
+    }
+
+    .fade.in,
+    .fade.show {
+        opacity: 1;
+    }
 }
