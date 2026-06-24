@@ -1481,11 +1481,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
         $.fn.editable.defaults.send = "always";
 
 
-        // Update Status: Comment-Status läuft jetzt über die Volt-Komponente
-        // <livewire:comment-status-switcher> in projects/description.blade.php.
-        // Der frühere $.ajax-POST-Pfad auf /comment/{id}/update/{status}
+        // Update Status: Comment-Status laeuft jetzt ueber die Volt-Komponente
+        // (comment-status-switcher) in projects/description.blade.php.
+        // Der fruehere $.ajax-POST-Pfad auf /comment/{id}/update/{status}
         // wird nicht mehr aus dem Frontend gerufen — die Route bleibt
-        // vorerst stehen (Route-Cleanup folgt in 5a.IV).
+        // vorerst stehen (Route-Cleanup folgt spaeter).
 
         $(document).ready(function (){
             $('.reply').hide();
