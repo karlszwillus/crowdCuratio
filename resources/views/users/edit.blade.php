@@ -88,7 +88,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
             <p class="mb-4">{{__('role_right')}}</p>
             <label for="is_admin" class="inline-flex items-center">
                 <input type="checkbox"
-                       class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                       class="rounded border-gray-300 text-primary shadow-sm focus:border-primary/40 focus:ring focus:ring-primary/30 focus:ring-opacity-50"
                        name="adminUser" value="1" id="hasAdminRight" @if($user->is_admin) checked @endif>
                 <span class="ml-2 text-sm text-gray-600">{{ __('is_admin')}}</span>
             </label>
@@ -111,7 +111,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
             <div class="block mt-4">
                 <label class="inline-flex items-center">
                     <input type="checkbox"
-                           class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                           class="rounded border-gray-300 text-primary shadow-sm focus:border-primary/40 focus:ring focus:ring-primary/30 focus:ring-opacity-50"
                            name="createProject" value="1" @if($user->create_project) checked @endif>
                     <span class="ml-2 text-sm text-gray-600">{{ __('create_project')}}</span>
                 </label>
