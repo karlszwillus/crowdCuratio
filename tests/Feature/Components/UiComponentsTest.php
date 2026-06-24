@@ -53,9 +53,8 @@ it('Button rendert Danger-Variant mit roter Flaeche', function () {
     /** @var TestCase $this */
     $html = Blade::render('<x-ui.button variant="danger">Löschen</x-ui.button>');
 
-    expect($html)
-        ->toContain('bg-danger')
-        ->not->toContain('bg-primary');
+    expect($html)->toContain('bg-danger');
+    expect(str_contains($html, 'bg-primary'))->toBeFalse();
 });
 
 it('Button mit disabled setzt aria-disabled', function () {
@@ -227,7 +226,6 @@ it('Icon ohne Match in Library rendert leeres SVG', function () {
     /** @var TestCase $this */
     $html = Blade::render('<x-ui.icon name="does-not-exist"/>');
 
-    expect($html)
-        ->toContain('<svg')
-        ->not->toContain('<path');
+    expect($html)->toContain('<svg');
+    expect(str_contains($html, '<path'))->toBeFalse();
 });
