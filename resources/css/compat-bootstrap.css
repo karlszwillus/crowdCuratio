@@ -342,4 +342,45 @@
     .ui-sortable-handle:active {
         cursor: grabbing;
     }
+
+    /*
+     * ---------- Editor-Layout-Container (Bestand aus crowdcuratio.css) ----------
+     * Die Editor-Seite hängt an einem 3-Spalten-Body-Grid mit fixen
+     * Anteilen. Die Klassen leben hier weiter, bis chapters/index auf
+     * Tailwind-Grid umgezogen ist.
+     */
+    .leftbar {
+        width: 10%;
+    }
+
+    .mainbar {
+        width: 68%;
+    }
+
+    .rightbar {
+        width: 20%;
+        margin-top: 12em;
+    }
+
+    .footer-background {
+        @apply rounded-md border border-ink-400 bg-ink-400/5;
+    }
+
+    /*
+     * Project-Card-Add-Buttons aus chapters/index: add_item/add_entry/
+     * add_chapter waren mit eigenen Hintergründen aus crowdcuratio.css
+     * versehen. Reduziert auf neutrale btn-Defaults — das reicht für
+     * Lesbarkeit, optisches Polishing kommt mit dem View-Umzug.
+     */
+    .btn-secondary.add_item,
+    .btn-secondary.add_entry,
+    .btn-secondary.add_chapter {
+        @apply font-medium;
+    }
+
+    .add_item:hover,
+    .add_entry:hover,
+    .add_chapter:hover {
+        @apply opacity-90;
+    }
 }
