@@ -187,18 +187,32 @@ Drittabhängigkeiten.
   `aria-haspopup`/`aria-expanded`-Attribute. Der
   `<x-ui.icon name="chevron-down">`-Wrapper liefert die Drop-Caret-Icons
   aus dem Lucide-Set.
+- **Volt-Komponente `<livewire:comment-text-editor>`** löst das
+  jQuery-Plugin x-editable für Inline-Edit der Kommentar-Texte ab.
+  Click-to-Edit mit Textarea, Speichern via `CommentService::editComment`,
+  Esc und Cancel-Button schließen ohne Schreibvorgang. Policy-Gate
+  `comment(Project)` greift sowohl beim Öffnen als auch beim Speichern.
+  Drei Pest-Tests decken Happy-Path, 403 für Reader und das stille
+  Verwerfen leerer Eingaben ab.
 
 ### Geändert
 - **Accessibility fixes** `<html lang>`-Attribut auf den vier Layouts ergänzt, die es
   bisher nicht hatten, **Logo-`alt`-Attribut** auf vier Logo-`<img>`-Tags ergänzt, 
   **Pflichtfeld-Markierung** um ein Sternchen ergänzt.
-- **Bootstrap-CSS-CDN-Links aus den Haupt-Layouts entfernt.** Weder
-  `layouts/guest.blade.php` noch `projects/layout.blade.php` laden das
-  Bootstrap-CSS-Bundle per CDN nach. Bootstrap-3.3.7-JS bleibt vorerst
-  in `projects/layout.blade.php` enthalten, weil x-editable, die Modal-
-  Trigger und der Bootstrap-3-Typeahead direkt darauf aufbauen — diese
-  drei Plugins werden in der nächsten Sub-Welle durch Alpine/Volt
-  ersetzt. Für die Übergangsphase liefert eine schmale Tailwind-Compat-
+- **Bootstrap-CSS- und Bootstrap-3-JS-CDN-Links aus den Haupt-Layouts
+  entfernt.** Weder `layouts/guest.blade.php` noch
+  `projects/layout.blade.php` laden Bootstrap-CSS oder Bootstrap-3.3.7-JS
+  per CDN nach. Das Modal-Plugin ist durch einen schmalen Vanilla-
+  Modal-Manager (`resources/js/modal.js`) ersetzt, der die im Bestand
+  etablierten Markup-Trigger (`data-toggle="modal"`, `data-dismiss="modal"`,
+  Klick außerhalb, Esc) sowie programmatische jQuery-Aufrufe
+  (`$('#xxx').modal('show'|'hide'|'toggle')`) über ein jQuery-Shim
+  bedient. **x-editable**, das Bootstrap-3-Form-Plugin für Inline-
+  Edit der Kommentar-Texte, ist durch die Volt-Komponente
+  `<livewire:comment-text-editor>` abgelöst — bestehende `data-url`-
+  Attribute und die `$('.comment-edit').editable({...})`-Init in
+  `chapters/index.blade.php` fallen, das x-editable-CSS- und
+  JS-Bundle entfällt komplett. Für die Übergangsphase liefert eine schmale Tailwind-Compat-
   CSS-Schicht (`resources/css/compat-bootstrap.css`) die strukturellen
   Bootstrap-Klassen — `container`, `container-fluid`, `row`,
   `col-{xs|sm|md|lg}-*`, `btn`, `btn-{primary|secondary|danger|success}`,

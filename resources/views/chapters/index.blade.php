@@ -1466,19 +1466,9 @@ If not, see <https://www.gnu.org/licenses/>. -->
         })
 
 
-        $('.comment-edit').editable({
-            tpl: "<textarea rows='3'name='comment' ></textarea>",
-        });
-
-
-        $.fn.editableform.buttons =
-            '<button type="submit" class="btn btn-primary btn-sm editable-submit">'+
-            '<i class="fa fa-fw fa-check"></i>'+
-            '</button>'+
-            '<button type="button" class="btn btn-default btn-sm editable-cancel">'+
-            '<i class="fa fa-fw fa-times"></i>'+
-            '</button>';
-        $.fn.editable.defaults.send = "always";
+        // Inline-Edit der Kommentar-Texte laeuft jetzt ueber die
+        // Volt-Komponente comment-text-editor in projects/description.
+        // x-editable und seine Form-Buttons fallen damit.
 
 
         // Update Status: Comment-Status laeuft jetzt ueber die Volt-Komponente

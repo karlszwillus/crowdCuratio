@@ -113,6 +113,10 @@ class CommentRetrieve
                         'comment' => $v->comment,
                         'ownerReply' => $ownerReply,
                         'created' => date('d.m.Y', strtotime($v->created_at)),
+                        // Eloquent-Instanz für die Volt-Komponente
+                        // <livewire:comment-text-editor>. Existierende
+                        // Array-Konsumenten bleiben unberührt.
+                        'model' => $v,
                     ];
                 }
             }
