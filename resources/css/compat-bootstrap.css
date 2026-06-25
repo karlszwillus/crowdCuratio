@@ -206,6 +206,26 @@
         display: block;
     }
 
+    /*
+     * Bootstrap-3-Collapse: `<div class="collapse">` ist im Original
+     * `display: none`. `<div class="collapse in">` markiert eine offene
+     * Akkordeon-Sektion und sollte vollständig sichtbar sein.
+     *
+     * Falle hier: Tailwind 4 generiert automatisch eine `.collapse`-
+     * Utility mit `visibility: collapse`. Da Utilities einen höheren
+     * Layer haben als Components, vererbt sich `visibility: collapse`
+     * an alle Kinder (visibility IST inheritable) und versteckt den
+     * gesamten Inhalt der Akkordeon-Sektion.
+     *
+     * `!important` ist hier nötig, damit die Tailwind-Utility nicht
+     * mehr greift, sobald die Sektion offen ist (`.in`/`.show`).
+     */
+    .collapse.in,
+    .collapse.show {
+        visibility: visible !important;
+        display: block !important;
+    }
+
     .modal-dialog {
         @apply relative mx-auto my-8 w-auto max-w-lg;
     }
