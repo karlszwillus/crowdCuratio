@@ -50,11 +50,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
-    {{-- Bootstrap-3.3.7-JS bleibt vorerst: x-editable und die Modal-
-         Trigger (data-toggle="modal", data-toggle="dropdown" in
-         Inhalts-Views) sind direkt darauf aufgebaut. Wird in der
-         nächsten Sub-Welle abgelöst (Alpine + Volt-Modals). --}}
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    {{-- Bootstrap-3.3.7-JS ist raus. Der Modal-Manager in
+         resources/js/modal.js bedient das bestehende `<div class="modal">`-
+         Markup und stellt einen jQuery-Shim für die programmatischen
+         `$('#xxx').modal('show')`-Aufrufe. x-editable lebt vorerst
+         weiter — es nutzt jQuery direkt, nicht Bootstrap-JS. --}}
     <script src="https://cdn.jsdelivr.net/gh/RubaXa/Sortable/Sortable.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.24/js/dataTables.bootstrap4.min.js"></script>

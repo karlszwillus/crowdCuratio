@@ -210,12 +210,31 @@
         @apply relative mx-auto my-8 w-auto max-w-lg;
     }
 
+    /* Bootstrap-3-Modifier für breite Dialoge — z. B. `bd-example-modal-xl`. */
+    .bd-example-modal-xl > .modal-dialog,
+    .modal-xl > .modal-dialog,
+    .modal-lg > .modal-dialog {
+        @apply max-w-4xl;
+    }
+
     .modal-content {
         @apply relative rounded-md border border-ink-400 bg-white shadow-lg;
     }
 
     .modal-header {
         @apply flex items-center justify-between border-b border-ink-400 px-4 py-3;
+    }
+
+    .modal-title {
+        @apply m-0 text-heading font-semibold text-ink-900;
+    }
+
+    /* Bootstrap-3-Close-Button (×). */
+    .modal-header .close,
+    button.close {
+        @apply -m-1 cursor-pointer rounded-md border-0 bg-transparent p-2 text-heading text-ink-700 hover:bg-ink-400/10;
+        line-height: 1;
+        appearance: none;
     }
 
     .modal-body {
@@ -234,11 +253,21 @@
         left: 0;
         z-index: 1040;
         background-color: rgba(0, 0, 0, 0.5);
+        opacity: 0;
+        transition: opacity 0.15s linear;
     }
 
     .modal-backdrop.in,
     .modal-backdrop.show {
         opacity: 0.5;
+    }
+
+    /*
+     * Body-Lock während ein Modal offen ist. Verhindert Background-Scroll
+     * und gibt dem Modal-Manager einen Hook (`body.modal-open`).
+     */
+    body.modal-open {
+        overflow: hidden;
     }
 
     /* `.fade` ist Bootstrap-Default für Modal- und Alert-Transitions. */

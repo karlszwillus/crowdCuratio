@@ -18,3 +18,9 @@ import Alpine from 'alpinejs';
 
 window.Alpine = Alpine;
 Alpine.start();
+
+// Vanilla-Modal-Manager — ersetzt das Bootstrap-3-Modal-Plugin.
+// Markup im Bestand bleibt unverändert (`<div class="modal fade">`),
+// programmatische `$('#xxx').modal('show')`-Aufrufe gehen über ein
+// jQuery-Shim in modal.js weiter.
+import './modal';
