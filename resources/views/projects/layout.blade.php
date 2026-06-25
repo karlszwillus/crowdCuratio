@@ -47,7 +47,6 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
     {{-- Bootstrap-3.3.7-JS ist raus. Der Modal-Manager in
          resources/js/modal.js bedient das bestehende `<div class="modal">`-
          Markup und stellt einen jQuery-Shim für die programmatischen

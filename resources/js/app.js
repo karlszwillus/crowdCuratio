@@ -35,3 +35,8 @@ import './typeahead';
 // in projects/index, users/index, contents/comment. Bietet Suche,
 // Sortierung per Header-Klick und Pagination.
 import './datatable';
+
+// Sortable-Shim — `.sortable(opts)` läuft jetzt über SortableJS (über
+// das `Sortable.min.js`-CDN-Bundle schon im Stack), nicht mehr über
+// jQuery-UI. Damit fällt jQuery-UI als Abhängigkeit.
+import './sortable-shim';

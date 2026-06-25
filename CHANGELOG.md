@@ -223,7 +223,11 @@ Drittabhängigkeiten.
   `commentList`) bekommen weiterhin Suche, Sortierung per Header-Klick
   und Pagination, jetzt aber ohne jQuery-DataTables-Bundle. Die
   deutschen UI-Strings aus den bestehenden `language`-Optionen werden
-  direkt übernommen. Für die
+  direkt übernommen. **jQuery-UI Sortable** ist durch einen Shim
+  (`resources/js/sortable-shim.js`) auf SortableJS umgebogen — die drei
+  `.sortable({...})`-Init-Aufrufe für Kapitel/Bereich/Inhalt in
+  `chapters/index.blade.php` laufen ohne Markup-Änderung weiter,
+  jQuery-UI fällt damit aus dem CDN-Stack. Für die
   Übergangsphase liefert eine schmale Tailwind-Compat-
   CSS-Schicht (`resources/css/compat-bootstrap.css`) die strukturellen
   Bootstrap-Klassen — `container`, `container-fluid`, `row`,
