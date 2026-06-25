@@ -83,7 +83,7 @@ it('Owner kann den Comment-Text ueber die Volt-Komponente bearbeiten', function 
         ->assertSet('editing', false)
         ->assertSet('text', 'Aktualisiert');
 
-    expect($comment->fresh()->comment)->toBe('Aktualisiert');
+    expect($comment->fresh()->getTranslation('comment', 'de'))->toBe('Aktualisiert');
 });
 
 it('Fremder User ohne Permission bekommt 403 beim startEdit', function () {
@@ -115,7 +115,7 @@ it('Fremder User ohne Permission bekommt 403 beim startEdit', function () {
         ->call('startEdit')
         ->assertStatus(403);
 
-    expect($comment->fresh()->comment)->toBe('Original');
+    expect($comment->fresh()->getTranslation('comment', 'de'))->toBe('Original');
 });
 
 it('Leerer Text wird stillschweigend verworfen', function () {
@@ -145,5 +145,5 @@ it('Leerer Text wird stillschweigend verworfen', function () {
         ->call('save')
         ->assertSet('editing', false);
 
-    expect($comment->fresh()->comment)->toBe('Original');
+    expect($comment->fresh()->getTranslation('comment', 'de'))->toBe('Original');
 });
