@@ -197,22 +197,25 @@ If not, see <https://www.gnu.org/licenses/>. -->
             });
         });
 
-        //autcomplete fields
+        // Autocomplete-Feld. In $(document).ready(...) gewrappt, weil
+        // der jQuery-Shim fuer typeahead (resources/js/typeahead.js) als
+        // Vite-Module-Script erst nach DOMContentLoaded verfuegbar ist.
         var path = "{{ route('autocomplete') }}";
-
-        $('#part_id').typeahead({
-            source: function (query, process) {
-                return $.get(path, {query: query}, function (data) {
-                    return process(data);
-                });
-            },
-            displayText: function (item) {
-                return `${item.id} - ${item.name} `;
-            },
-            afterSelect: function (item) {
-                $('#part_id').val(item.id);
-            },
-            fitToElement: true
+        $(function () {
+            $('#part_id').typeahead({
+                source: function (query, process) {
+                    return $.get(path, {query: query}, function (data) {
+                        return process(data);
+                    });
+                },
+                displayText: function (item) {
+                    return `${item.id} - ${item.name} `;
+                },
+                afterSelect: function (item) {
+                    $('#part_id').val(item.id);
+                },
+                fitToElement: true
+            });
         });
 
 
