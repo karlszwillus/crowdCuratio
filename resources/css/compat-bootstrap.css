@@ -384,6 +384,37 @@
     }
 
     /*
+     * ---------- Editor-Hierarchie: Bereich (entry) + Inhalt (item) ----------
+     * Im Bestand sind `.entry.group` und `.item.{text|image|gallery|
+     * audiovisual}.content` reine Markierungs-Klassen für Sortable und
+     * Click-Handler — sie hatten kein eigenes Styling im alten
+     * crowdcuratio.css und verließen sich auf Bootstrap-3-Defaults plus
+     * die jeweils umschließenden `.row.border`-Klassen.
+     *
+     * Damit sich die Inhalte gegen den weißen Body-Hintergrund klar
+     * abgrenzen, geben wir den beiden Hierarchie-Ebenen jetzt einen
+     * eigenen, dezenten Look. Fällt vollständig, sobald
+     * chapters/index.blade.php auf x-ui.card umgezogen ist.
+     */
+    .entry.group {
+        @apply mb-4 block rounded-md border border-ink-700 bg-ink-400/5 p-3;
+        list-style: none;
+    }
+
+    .item.content {
+        @apply block;
+        list-style: none;
+    }
+
+    /* Verstärkte Border-Farbe für die innere Inhalts-Box: das früher
+       genutzte .border-secondary (BS4) ist mit der Compat-Schicht auf
+       ink-400 gefallen — innerhalb von .item.content ziehen wir das
+       eine Stufe dunkler, damit die Boxen erkennbar bleiben. */
+    .item.content .border-secondary {
+        @apply border-ink-700;
+    }
+
+    /*
      * ---------- Editor-Layout-Container (Bestand aus crowdcuratio.css) ----------
      * Die Editor-Seite hängt an einem 3-Spalten-Body-Grid mit fixen
      * Anteilen. Die Klassen leben hier weiter, bis chapters/index auf
