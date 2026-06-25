@@ -217,7 +217,13 @@ Drittabhängigkeiten.
   ersetzt; die fünf bestehenden `$('#xxx').typeahead({...})`-Aufrufe in
   `chapters/index.blade.php` und `projects/index.blade.php`
   funktionieren ohne View-Edits weiter, Tastatur-Navigation (↑/↓/Enter/
-  Esc) und Klick-Outside-Schließen sind eingebaut. Für die
+  Esc) und Klick-Outside-Schließen sind eingebaut. **jQuery-DataTables**
+  ist ebenfalls durch einen Vanilla-Manager (`resources/js/datatable.js`)
+  ersetzt — die drei Tabellen-Aufrufe (`projectList`, `userList`,
+  `commentList`) bekommen weiterhin Suche, Sortierung per Header-Klick
+  und Pagination, jetzt aber ohne jQuery-DataTables-Bundle. Die
+  deutschen UI-Strings aus den bestehenden `language`-Optionen werden
+  direkt übernommen. Für die
   Übergangsphase liefert eine schmale Tailwind-Compat-
   CSS-Schicht (`resources/css/compat-bootstrap.css`) die strukturellen
   Bootstrap-Klassen — `container`, `container-fluid`, `row`,

@@ -29,3 +29,9 @@ import './modal';
 // hier ein jQuery-Shim, damit die fünf `$('#xxx').typeahead({...})`-
 // Aufrufe in den Editor-Views unverändert weiterlaufen.
 import './typeahead';
+
+// Vanilla-DataTable-Manager — ersetzt jquery.dataTables. jQuery-Shim
+// `$('#xxxList').DataTable({...})` für die drei bestehenden Aufrufe
+// in projects/index, users/index, contents/comment. Bietet Suche,
+// Sortierung per Header-Klick und Pagination.
+import './datatable';
