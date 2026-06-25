@@ -212,7 +212,13 @@ Drittabhängigkeiten.
   `<livewire:comment-text-editor>` abgelöst — bestehende `data-url`-
   Attribute und die `$('.comment-edit').editable({...})`-Init in
   `chapters/index.blade.php` fallen, das x-editable-CSS- und
-  JS-Bundle entfällt komplett. Für die Übergangsphase liefert eine schmale Tailwind-Compat-
+  JS-Bundle entfällt komplett. **Bootstrap-3-Typeahead** ist ebenfalls
+  durch einen schmalen Vanilla-Manager (`resources/js/typeahead.js`)
+  ersetzt; die fünf bestehenden `$('#xxx').typeahead({...})`-Aufrufe in
+  `chapters/index.blade.php` und `projects/index.blade.php`
+  funktionieren ohne View-Edits weiter, Tastatur-Navigation (↑/↓/Enter/
+  Esc) und Klick-Outside-Schließen sind eingebaut. Für die
+  Übergangsphase liefert eine schmale Tailwind-Compat-
   CSS-Schicht (`resources/css/compat-bootstrap.css`) die strukturellen
   Bootstrap-Klassen — `container`, `container-fluid`, `row`,
   `col-{xs|sm|md|lg}-*`, `btn`, `btn-{primary|secondary|danger|success}`,

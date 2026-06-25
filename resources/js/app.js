@@ -24,3 +24,8 @@ Alpine.start();
 // programmatische `$('#xxx').modal('show')`-Aufrufe gehen über ein
 // jQuery-Shim in modal.js weiter.
 import './modal';
+
+// Vanilla-Typeahead-Manager — ersetzt bootstrap-3-typeahead.js. Auch
+// hier ein jQuery-Shim, damit die fünf `$('#xxx').typeahead({...})`-
+// Aufrufe in den Editor-Views unverändert weiterlaufen.
+import './typeahead';
