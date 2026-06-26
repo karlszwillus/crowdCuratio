@@ -12,6 +12,10 @@ import '@fontsource/ibm-plex-sans/700.css';
 import '@fontsource/ibm-plex-mono/400.css';
 import '@fontsource/ibm-plex-mono/500.css';
 
+// Theme-Switch — setzt `data-theme` auf `<html>` vor Alpine-Init,
+// damit kein Flash zwischen Default- und persistiertem Theme entsteht.
+import './theme';
+
 // Alpine.js 3: explizites Start-up. In 2.x lief der Start
 // automatisch beim require, in 3.x muss er gefeuert werden.
 import Alpine from 'alpinejs';

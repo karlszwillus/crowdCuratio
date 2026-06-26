@@ -15,6 +15,22 @@
   --color-primary: #c23934;
   --color-primary-on: #ffffff;
 
+  /* Brand-Akzente — werden im Theme-Switch überschrieben */
+  --color-brand-bar: #c23934;   /* Akzent-Rail, aktive Marker */
+  --color-brand-line: #c23934;  /* Linien/Fokus */
+  --color-tint-bg: #f7e7e6;     /* Aktiver Tree-/Listen-Eintrag */
+  --color-tint-text: #a82f2b;   /* Text auf tint-bg */
+  --color-logo-bg: #c23934;     /* Logo-Kachel */
+  --color-logo-on: #ffffff;     /* Glyph auf Logo-Kachel */
+
+  /* Chrome (App-Shell) — werden im Theme-Switch überschrieben */
+  --color-chrome-bg: #1b2330;
+  --color-chrome-on: #f4f5f7;
+  --color-chrome-on-dim: #b0b6be;
+  --color-chrome-line: #2a3342;
+  --color-chrome-active: #262f3e;
+  --color-canvas-bg: #f4f5f6;
+
   /* Neutrale Skala — Text auf Hell */
   --color-ink-900: #1b2330; /* Display, Headlines, primärer Text */
   --color-ink-700: #374151; /* Body */
@@ -49,4 +65,34 @@
   --text-heading: 18px;
   --text-body: 14.5px;
   --text-caption: 12px;
+}
+
+/*
+ * Theme-Switch — zweite Marke „Aktives Museum" (Hell-Modus).
+ *
+ * `<html data-theme="aktivesMuseum">` schaltet auf gelben Brand-
+ * Akzent mit hellem App-Chrome. Tokens übersteuern die Defaults
+ * aus dem @theme-Block oben; alles, was nicht hier überschrieben
+ * ist (Semantik-Farben, Spacing, Radius, Typografie), bleibt
+ * unverändert.
+ *
+ * Quelle: tokens.md § 1 Marke / § 1.2 Chrome (v3-Briefing).
+ */
+[data-theme="aktivesMuseum"] {
+  --color-primary: #1b2330;
+  --color-primary-on: #ffffff;
+
+  --color-brand-bar: #f5cf11;
+  --color-brand-line: #9a7b00;
+  --color-tint-bg: #fdf3c4;
+  --color-tint-text: #7a5e00;
+  --color-logo-bg: #f5cf11;
+  --color-logo-on: #1b2330;
+
+  --color-chrome-bg: #efe9da;
+  --color-chrome-on: #1b2330;
+  --color-chrome-on-dim: #7a6f50;
+  --color-chrome-line: #e3dcc9;
+  --color-chrome-active: #fbf3cf;
+  --color-canvas-bg: #f7f4ec;
 }

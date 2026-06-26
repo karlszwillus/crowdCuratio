@@ -17,12 +17,17 @@
 
     // Tailwind-Klassen für den Switch. Die Hintergrundfarbe wechselt
     // per data-state="on|off" (gesetzt via Alpine `:data-state`).
+    //
+    // Off-Track bekommt zusätzlich eine 1-px-Inset-Border in ink-700 —
+    // zweiter visueller Kanal neben der Farbe, damit der „aus"-State
+    // auch ohne Farbwahrnehmung klar gegen den „an"-State steht
+    // (Mikro-Schärfung aus v3-Review, Opt. 7).
     $trackBase = 'relative inline-flex h-6 w-11 shrink-0 rounded-full '
                . 'transition-colors '
                . 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary '
                . 'disabled:opacity-50 disabled:cursor-not-allowed';
     $trackOn = 'bg-primary';
-    $trackOff = 'bg-ink-400';
+    $trackOff = 'bg-ink-400 shadow-[inset_0_0_0_1px_var(--color-ink-700)]';
 
     $thumbBase = 'pointer-events-none absolute top-0.5 left-0.5 h-5 w-5 rounded-full '
                . 'bg-white shadow transition-transform';

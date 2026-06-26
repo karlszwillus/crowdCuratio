@@ -25,6 +25,24 @@ Drittabhängigkeiten.
 
 ### Hinzugefügt
 
+- **Theme-Switch.** Zweite Markenidentität „Aktives Museum" als
+  alternativer Farbmodus, schaltbar über einen Toggle-Button im
+  Editor-Header. `<html data-theme="aktivesMuseum">` aktiviert den
+  Hell-Modus mit gelbem Brand-Akzent (`#f5cf11`) und hellem App-Chrome
+  (`#efe9da`); ohne Attribut bleibt die crowdCuratio-Default-Marke
+  (rot/dunkles Chrome) aktiv. Die Theme-Tokens (`--color-brand-bar`,
+  `--color-brand-line`, `--color-tint-bg`, `--color-tint-text`,
+  `--color-chrome-*`, `--color-canvas-bg`) sind in `tokens.css` als
+  Custom-Properties definiert und werden durch einen
+  `[data-theme="aktivesMuseum"]`-Selector überschrieben. Die Wahl
+  persistiert in `localStorage` (`cc-theme`) und wird vor Alpine-Init
+  angewendet, damit kein Flash sichtbar wird. Sonne-/Mond-Icon aus
+  Lucide markiert den aktuellen Modus.
+- **CI-Job `Pest Coverage (≥ 65 %)`** als Hard-Fail. Misst Pest-
+  Coverage mit `pcov` und bricht den Build, wenn die Schwelle gerissen
+  wird. `composer.json` `test-coverage --min` von 55 % auf 65 %
+  hochgezogen — die Schwelle ist damit kein lokales Versprechen mehr,
+  sondern der echte Anker im PR-Workflow.
 - **`docs/architecture.md`** als Entwickler-orientierte Architektur-
   Übersicht. Beschreibt das Domänenmodell (Project → Chapter → Entry
   → MediaContent → Content), das Authorization-Modell
