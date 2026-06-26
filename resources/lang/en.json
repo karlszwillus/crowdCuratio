@@ -1,5 +1,7 @@
 {
   "close": "Close",
+  "switch_theme_default": "Switch to crowdCuratio theme",
+  "switch_theme_alt": "Switch to Aktives Museum theme",
   "new_chapter": "Add new chapter",
   "save": "Save changes",
   "delete_project": "Delete Project",

@@ -80,6 +80,6 @@
       "@php artisan key:generate --ansi"
     ],
     "test": "@php vendor/bin/pest",
-    "test-coverage": "@php vendor/bin/pest --coverage --min=55"
+    "test-coverage": "@php vendor/bin/pest --coverage --min=65"
   }
 }

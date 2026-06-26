@@ -94,6 +94,22 @@ If not, see <https://www.gnu.org/licenses/>. -->
         </ul>
 
         <div class="flex items-center gap-3">
+            <button
+                type="button"
+                @click="$store.theme.toggle()"
+                :aria-pressed="$store.theme.current === 'aktivesMuseum'"
+                :aria-label="$store.theme.current === 'aktivesMuseum' ? '{{ __('switch_theme_default') }}' : '{{ __('switch_theme_alt') }}'"
+                class="flex h-9 w-9 items-center justify-center rounded-md text-ink-700 hover:bg-ink-400/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                title="Theme wechseln"
+            >
+                <template x-if="$store.theme.current === 'aktivesMuseum'">
+                    <x-ui.icon name="sun" :size="18"/>
+                </template>
+                <template x-if="$store.theme.current !== 'aktivesMuseum'">
+                    <x-ui.icon name="moon" :size="18"/>
+                </template>
+            </button>
+
             @if(!in_array(Route::currentRouteName(), ['translate', 'log.detail']))
                 <div x-data="{ open: false }" class="relative">
                     <button

@@ -141,6 +141,15 @@ it('Toggle mit name fuegt Hidden-Input fuer Form-Submit hinzu', function () {
         ->toContain('name="active"');
 });
 
+it('Toggle Off-Track hat einen Inset-Border als zweiten visuellen Kanal', function () {
+    /** @var TestCase $this */
+    $html = Blade::render('<x-ui.toggle label="Aktiv"/>');
+
+    // Mikro-Schaerfung aus v3-Review: Off-State muss neben der Farbe
+    // einen zweiten visuellen Kanal haben.
+    expect($html)->toContain('shadow-[inset_0_0_0_1px_var(--color-ink-700)]');
+});
+
 it('Toggle ohne label wirft Exception', function () {
     /** @var TestCase $this */
     Blade::render('<x-ui.toggle/>');
