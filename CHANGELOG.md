@@ -38,6 +38,12 @@ Drittabhängigkeiten.
   persistiert in `localStorage` (`cc-theme`) und wird vor Alpine-Init
   angewendet, damit kein Flash sichtbar wird. Sonne-/Mond-Icon aus
   Lucide markiert den aktuellen Modus.
+- **Tooltip-Shim** (`resources/js/tooltip-shim.js`) — Bootstrap-3-
+  `.tooltip()`-Plugin ist mit dem BS3-JS-Abbau gefallen; ein dünner
+  No-op-Shim fängt die noch verbliebenen `$('[data-toggle="tooltip"]')
+  .tooltip()`-Aufrufe in `chapters/index` und `roles/index` ab, sodass
+  der jQuery-deferred-Chain nicht mehr bricht. Native `title`-
+  Browser-Tooltips übernehmen den Hover-Hint.
 - **CI-Job `Pest Coverage (≥ 65 %)`** als Hard-Fail. Misst Pest-
   Coverage mit `pcov` und bricht den Build, wenn die Schwelle gerissen
   wird. `composer.json` `test-coverage --min` von 55 % auf 65 %

@@ -44,3 +44,8 @@ import './datatable';
 // das `Sortable.min.js`-CDN-Bundle schon im Stack), nicht mehr über
 // jQuery-UI. Damit fällt jQuery-UI als Abhängigkeit.
 import './sortable-shim';
+
+// Tooltip-Shim — Bootstrap-3-`.tooltip()`-Plugin ist mit BS3-JS gefallen,
+// die `document.ready`-Inits in chapters/index und roles/index brauchen
+// noch einen Aufruf, der nicht knallt. Native title-Tooltips greifen.
+import './tooltip-shim';
