@@ -16,12 +16,12 @@ import '@fontsource/ibm-plex-mono/500.css';
 // damit kein Flash zwischen Default- und persistiertem Theme entsteht.
 import './theme';
 
-// Alpine.js 3: explizites Start-up. In 2.x lief der Start
-// automatisch beim require, in 3.x muss er gefeuert werden.
-import Alpine from 'alpinejs';
-
-window.Alpine = Alpine;
-Alpine.start();
+// Alpine wird von Livewire 4 selbst gebündelt und gestartet. Eine
+// zweite Alpine-Instance hier wurde mit „Detected multiple instances
+// of Alpine running" im Browser sichtbar — `<template x-if>` rendert
+// dann leer, weil sich die zwei Instanzen die DOM-Walks streitig
+// machen. Wir reichen das Plugin-Registrieren über `alpine:init` an
+// Livewires Alpine; `window.Alpine` wird von Livewire selbst gesetzt.
 
 // Vanilla-Modal-Manager — ersetzt das Bootstrap-3-Modal-Plugin.
 // Markup im Bestand bleibt unverändert (`<div class="modal fade">`),
