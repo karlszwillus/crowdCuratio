@@ -15,3 +15,11 @@
 
 /* Design-Tokens — @theme-Block für die Tailwind-4-Utility-Generierung. */
 @import "./tokens.css";
+
+/*
+ * Bootstrap-Compat-Schicht — temporär. Mappt strukturelle Bootstrap-3/4-
+ * Klassen in nicht migrierten Inhalts-Views auf Tailwind-4-Patterns.
+ * Fällt, sobald die Views einzeln auf die neue Komponenten-Bibliothek
+ * (<x-ui.*>) umgezogen sind.
+ */
+@import "./compat-bootstrap.css";

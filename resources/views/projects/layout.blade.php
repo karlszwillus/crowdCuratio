@@ -23,16 +23,15 @@ If not, see <https://www.gnu.org/licenses/>. -->
     <title>crowdCuratio</title>
     <!--  CSRF for all ajax call -->
     <meta name="csrf-token" content="{{ csrf_token() }}"/>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0-alpha/css/bootstrap.css"
-          rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <link rel="stylesheet" href="{{ URL::asset('css/style.css') }}">
-    <link rel="stylesheet" href="{{ URL::asset('css/sidebar.css') }}">
-    <link rel="stylesheet" href="{{ URL::asset('css/crowdcuratio.css') }}">
+    {{-- Die alten public/css/{style,sidebar,crowdcuratio}.css definierten
+         Bootstrap-3-Overrides plus die Layout-Klassen .leftbar/.mainbar/
+         .rightbar. Die Layout-Klassen leben jetzt in compat-bootstrap.css,
+         der Rest war Bootstrap-3-Cosmetic, der die Tailwind-Tokens
+         überlagerte und damit das Button-Rendering kapert. Wird in der
+         Plugin-Ablösung endgültig gelöscht. --}}
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.24/css/dataTables.bootstrap4.min.css">
-    <link href="//cdnjs.cloudflare.com/ajax/libs/x-editable/1.5.0/bootstrap3-editable/css/bootstrap-editable.css" rel="stylesheet"/>
 
     <link href="https://cdn.quilljs.com/1.1.6/quill.snow.css" rel="stylesheet">
     <script src="https://cdn.quilljs.com/1.1.6/quill.js"></script> <!-- Create the editor container -->
@@ -48,13 +47,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    {{-- Bootstrap-3.3.7-JS ist raus. Der Modal-Manager in
+         resources/js/modal.js bedient das bestehende `<div class="modal">`-
+         Markup und stellt einen jQuery-Shim für die programmatischen
+         `$('#xxx').modal('show')`-Aufrufe. x-editable lebt vorerst
+         weiter — es nutzt jQuery direkt, nicht Bootstrap-JS. --}}
     <script src="https://cdn.jsdelivr.net/gh/RubaXa/Sortable/Sortable.min.js"></script>
-    <script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.10.24/js/dataTables.bootstrap4.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-3-typeahead/4.0.2/bootstrap3-typeahead.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/x-editable/1.5.0/bootstrap3-editable/js/bootstrap-editable.min.js"></script>
 
     <meta name="csrf-token" content="{{ csrf_token() }}" />
     <script type="text/javascript">

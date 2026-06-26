@@ -1,6 +1,6 @@
 <!--
 crowdCuratio - Curating together virtually
-Copyright (C)2022 - berlinHistory e.V.
+Copyright (C)2022, 2026 - berlinHistory e.V.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -17,78 +17,144 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>. -->
 
-<nav class="navbar navbar-expand-lg p-3 my-3 border">
-		<img class="logo" src="//app.crowdcurat.io/css/images/crowdCuratio_logo.png" alt="crowdCuratio" >
-    <ul class="nav nav-pills mr-auto">
-        @if(isset(Auth::user()->currentRole) && Auth::user()->currentRole[0]->name == 'Admin')
-            <li class="nav-item">
-                <a class="nav-link" href="{{route('settings.index')}}">{{__('setting')}}</a>
-            </li>
-        @endif
-        <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" aria-haspopup="true" aria-expanded="false">{{__('project')}}</a>
-            <div class="dropdown-menu">
-                <a class="dropdown-item" href="{{ route('projects.index') }}">{{__('all_projects')}}</a>
-                <a class="dropdown-item" href="{{ route('projects.create') }}">{{__('new_project')}}</a>
-            </div>
-        </li>
-        <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" aria-haspopup="true" aria-expanded="false">{{__('users')}}</a>
-            <div class="dropdown-menu">
-                @if(isset(Auth::user()->currentRole) && Auth::user()->currentRole[0]->name == 'Admin')
-                    <a class="dropdown-item" href="{{ route('users.index') }}">{{__('all_users')}}</a>
-                    <a class="dropdown-item" href="{{ route('register') }}">{{__('add_new')}}</a>
-                    <a class="dropdown-item" href="{{ route('roles.index') }}">{{__('roles')}}</a>
-                @endif
-                <a class="dropdown-item" href="{{ route('profile') }}">{{__('profile')}}</a>
-             </div>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link" href="{{route('all.comments')}}">{{__('comments')}}</a>
-        </li>
-    </ul>
-    <div class="topnav-right">
-        <div class=" w-100 order-3 dual-collapse2">
-            <ul class="navbar-nav ml-auto">
-                @if(!in_array(Route::currentRouteName(),['translate','log.detail']))
-                    <li class="nav-item dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                            {{ config('languages')[App::getLocale()] }}
-                        </a>
-                        <ul class="dropdown-menu">
-                            @foreach (Config::get('languages') as $lang => $language)
-                                @if ($lang != App::getLocale())
-                                    <li>
-                                        <a href="{{ route('lang.switch', $lang) }}">{{$language}}</a>
-                                    </li>
-                                @endif
-                            @endforeach
-                        </ul>
-                    </li>
-                @endif
-                <li class="nav-item">
-                    <div class="btn-group">
-                        <button class="btn btn-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            @if(isset(Auth::user()->name)){{ Auth::user()->name }} {{ Auth::user()->last_name }} @endif
-                        </button>
-                        <div class="dropdown-menu">
-                            <form method="POST" action="{{ route('logout') }}">
-                                @csrf
+<header class="mb-4 border-b border-ink-400 bg-white">
+    <nav class="mx-auto flex w-full max-w-screen-2xl items-center justify-between gap-4 px-6 py-3">
+        <a href="{{ route('projects.index') }}" class="shrink-0">
+            <img
+                class="h-10 w-auto"
+                src="//app.crowdcurat.io/css/images/crowdCuratio_logo.png"
+                alt="crowdCuratio"
+            >
+        </a>
 
-                                <x-dropdown-link :href="route('logout')"
-                                                 onclick="event.preventDefault();
-                                                this.closest('form').submit();">
-                                    {{ __('log_out') }}
-                                </x-dropdown-link>
-
-                            </form>
-                        </div>
-                    </div>
+        <ul class="flex flex-wrap items-center gap-1">
+            @if(isset(Auth::user()->currentRole) && Auth::user()->currentRole[0]->name == 'Admin')
+                <li>
+                    <a class="block rounded-md px-3 py-2 text-body text-ink-900 hover:bg-ink-400/10" href="{{route('settings.index')}}">
+                        {{__('setting')}}
+                    </a>
                 </li>
-            </ul>
+            @endif
+
+            <li x-data="{ open: false }" class="relative">
+                <button
+                    type="button"
+                    @click="open = !open"
+                    @click.outside="open = false"
+                    aria-haspopup="true"
+                    :aria-expanded="open"
+                    class="flex items-center gap-1 rounded-md px-3 py-2 text-body text-ink-900 hover:bg-ink-400/10"
+                >
+                    {{__('project')}}
+                    <x-ui.icon name="chevron-down" :size="14"/>
+                </button>
+                <div
+                    x-show="open"
+                    x-transition
+                    x-cloak
+                    class="absolute left-0 z-10 mt-1 min-w-[12rem] rounded-md border border-ink-400 bg-white py-1 shadow-md"
+                >
+                    <a class="block px-4 py-2 text-body text-ink-900 hover:bg-ink-400/10" href="{{ route('projects.index') }}">{{__('all_projects')}}</a>
+                    <a class="block px-4 py-2 text-body text-ink-900 hover:bg-ink-400/10" href="{{ route('projects.create') }}">{{__('new_project')}}</a>
+                </div>
+            </li>
+
+            <li x-data="{ open: false }" class="relative">
+                <button
+                    type="button"
+                    @click="open = !open"
+                    @click.outside="open = false"
+                    aria-haspopup="true"
+                    :aria-expanded="open"
+                    class="flex items-center gap-1 rounded-md px-3 py-2 text-body text-ink-900 hover:bg-ink-400/10"
+                >
+                    {{__('users')}}
+                    <x-ui.icon name="chevron-down" :size="14"/>
+                </button>
+                <div
+                    x-show="open"
+                    x-transition
+                    x-cloak
+                    class="absolute left-0 z-10 mt-1 min-w-[12rem] rounded-md border border-ink-400 bg-white py-1 shadow-md"
+                >
+                    @if(isset(Auth::user()->currentRole) && Auth::user()->currentRole[0]->name == 'Admin')
+                        <a class="block px-4 py-2 text-body text-ink-900 hover:bg-ink-400/10" href="{{ route('users.index') }}">{{__('all_users')}}</a>
+                        <a class="block px-4 py-2 text-body text-ink-900 hover:bg-ink-400/10" href="{{ route('register') }}">{{__('add_new')}}</a>
+                        <a class="block px-4 py-2 text-body text-ink-900 hover:bg-ink-400/10" href="{{ route('roles.index') }}">{{__('roles')}}</a>
+                    @endif
+                    <a class="block px-4 py-2 text-body text-ink-900 hover:bg-ink-400/10" href="{{ route('profile') }}">{{__('profile')}}</a>
+                </div>
+            </li>
+
+            <li>
+                <a class="block rounded-md px-3 py-2 text-body text-ink-900 hover:bg-ink-400/10" href="{{route('all.comments')}}">
+                    {{__('comments')}}
+                </a>
+            </li>
+        </ul>
+
+        <div class="flex items-center gap-3">
+            @if(!in_array(Route::currentRouteName(), ['translate', 'log.detail']))
+                <div x-data="{ open: false }" class="relative">
+                    <button
+                        type="button"
+                        @click="open = !open"
+                        @click.outside="open = false"
+                        aria-haspopup="true"
+                        :aria-expanded="open"
+                        class="flex items-center gap-1 rounded-md px-3 py-2 text-caption text-ink-700 hover:bg-ink-400/10"
+                    >
+                        {{ config('languages')[App::getLocale()] }}
+                        <x-ui.icon name="chevron-down" :size="14"/>
+                    </button>
+                    <div
+                        x-show="open"
+                        x-transition
+                        x-cloak
+                        class="absolute right-0 z-10 mt-1 min-w-[8rem] rounded-md border border-ink-400 bg-white py-1 shadow-md"
+                    >
+                        @foreach (Config::get('languages') as $lang => $language)
+                            @if ($lang != App::getLocale())
+                                <a class="block px-4 py-2 text-body text-ink-900 hover:bg-ink-400/10" href="{{ route('lang.switch', $lang) }}">{{$language}}</a>
+                            @endif
+                        @endforeach
+                    </div>
+                </div>
+            @endif
+
+            <div x-data="{ open: false }" class="relative">
+                <button
+                    type="button"
+                    @click="open = !open"
+                    @click.outside="open = false"
+                    aria-haspopup="true"
+                    :aria-expanded="open"
+                    class="flex items-center gap-1 rounded-md bg-ink-900 px-3 py-2 text-caption text-white hover:opacity-90"
+                >
+                    @if(isset(Auth::user()->name)){{ Auth::user()->name }} {{ Auth::user()->last_name }}@endif
+                    <x-ui.icon name="chevron-down" :size="14"/>
+                </button>
+                <div
+                    x-show="open"
+                    x-transition
+                    x-cloak
+                    class="absolute right-0 z-10 mt-1 min-w-[8rem] rounded-md border border-ink-400 bg-white py-1 shadow-md"
+                >
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button
+                            type="submit"
+                            class="block w-full px-4 py-2 text-left text-body text-ink-900 hover:bg-ink-400/10"
+                        >
+                            {{ __('log_out') }}
+                        </button>
+                    </form>
+                </div>
+            </div>
         </div>
-    </div>
-</nav>
+    </nav>
+</header>
+
 <div class="row">
     <div class="col-sm-2 leftbar">
         @yield('log')

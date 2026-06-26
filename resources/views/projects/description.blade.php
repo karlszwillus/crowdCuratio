@@ -42,7 +42,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     </div>
                     <div class="col-sm-12">
                         @if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
-                            <a href="#" id="comment_{{$comment['id']}}" data-type="text" data-pk="{{$comment['id']}}" data-button="btn_submit" data-name="edit" data-url="{{route('comment.save', $comment['id'])}}" data-original-title="Comment" class="comment-edit">{{$comment['comment']}}</a>
+                            <livewire:comment-text-editor
+                                :comment="$comment['model']"
+                                :project="$project"
+                                :key="'comment-text-'.$comment['id']"
+                            />
                         @else
                             {{$comment['comment']}}
                         @endif
@@ -59,7 +63,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
                             </div>
                             <div class="col-sm-12">
                                 @if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
-                                    <a href="#" data-type="text" data-pk="{{$reply['id']}}" data-button="btn_submit" data-name="edit" data-url="{{route('comment.save', $reply['id'])}}" data-original-title="Comment" class="comment-edit">{{$reply['comment']}}</a>
+                                    <livewire:comment-text-editor
+                                        :comment="$reply['model']"
+                                        :project="$project"
+                                        :key="'comment-text-reply-'.$reply['id']"
+                                    />
                                 @else
                                     {{$reply['comment']}}
                                 @endif

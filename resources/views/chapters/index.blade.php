@@ -1136,68 +1136,71 @@ If not, see <https://www.gnu.org/licenses/>. -->
             e.preventDefault();
         })
 
-        //Autocomplete Text
+        // Autocomplete-Felder. In $(document).ready(...) gewrappt, weil
+        // der jQuery-Shim fuer typeahead (resources/js/typeahead.js) als
+        // Vite-Module-Script erst nach DOMContentLoaded verfuegbar ist;
+        // ohne den Wrapper liefe der Aufruf direkt beim HTML-Parsing.
         var path = "{{ route('autocomplete') }}";
-        $('#copyrightText').typeahead({
-            source: function (query, process) {
-                return $.get(path, {query: query, type: 'Copyright'}, function (data) {
-                    return process(data);
-                });
-            },
-            displayText: function (item) {
-                console.log(item);
-                return `${item}`;
-            },
-            afterSelect: function (item) {
-                $('#copyrightText').val(item);
-            },
-            fitToElement: true
-        });
+        $(function () {
+            $('#copyrightText').typeahead({
+                source: function (query, process) {
+                    return $.get(path, {query: query, type: 'Copyright'}, function (data) {
+                        return process(data);
+                    });
+                },
+                displayText: function (item) {
+                    return `${item}`;
+                },
+                afterSelect: function (item) {
+                    $('#copyrightText').val(item);
+                },
+                fitToElement: true
+            });
 
-        $('#originText').typeahead({
-            source: function (query, process) {
-                return $.get(path, {query: query, type: 'Origin'}, function (data) {
-                    return process(data);
-                });
-            },
-            displayText: function (item) {
-                return `${Object.values(item)}`;
-            },
-            afterSelect: function (item) {
-                $('#originText').val(Object.values(item));
-            },
-            fitToElement: true
-        });
+            $('#originText').typeahead({
+                source: function (query, process) {
+                    return $.get(path, {query: query, type: 'Origin'}, function (data) {
+                        return process(data);
+                    });
+                },
+                displayText: function (item) {
+                    return `${Object.values(item)}`;
+                },
+                afterSelect: function (item) {
+                    $('#originText').val(Object.values(item));
+                },
+                fitToElement: true
+            });
 
-        //Autocomplete Image
-        $('#copyrightImage').typeahead({
-            source: function (query, process) {
-                return $.get(path, {query: query, type: 'Copyright'}, function (data) {
-                    return process(data);
-                });
-            },
-            displayText: function (item) {
-                return `${Object.values(item)}`;
-            },
-            afterSelect: function (item) {
-                $('#copyrightImage').val(Object.values(item));
-            },
-            fitToElement: true
-        });
+            $('#copyrightImage').typeahead({
+                source: function (query, process) {
+                    return $.get(path, {query: query, type: 'Copyright'}, function (data) {
+                        return process(data);
+                    });
+                },
+                displayText: function (item) {
+                    return `${Object.values(item)}`;
+                },
+                afterSelect: function (item) {
+                    $('#copyrightImage').val(Object.values(item));
+                },
+                fitToElement: true
+            });
 
-        $('#originImage').typeahead({
-            source: function (query, process) {
-                return $.get(path, {query: query, type: 'Origin'}, function (data) {
-                    return process(data);
-                });
-            },
-            displayText: function (item) {
-                return `${Object.values(item.name)}`;
-            },
-            afterSelect: function (item) {
-                $('#originImage').val(Object.values(item.name));
-            },
-            fitToElement: true
+            $('#originImage').typeahead({
+                source: function (query, process) {
+                    return $.get(path, {query: query, type: 'Origin'}, function (data) {
+                        return process(data);
+                    });
+                },
+                displayText: function (item) {
+                    return `${Object.values(item.name)}`;
+                },
+                afterSelect: function (item) {
+                    $('#originImage').val(Object.values(item.name));
+                },
+                fitToElement: true
+            });
         });
 
         //Add thumbnail
@@ -1466,26 +1469,16 @@ If not, see <https://www.gnu.org/licenses/>. -->
         })
 
 
-        $('.comment-edit').editable({
-            tpl: "<textarea rows='3'name='comment' ></textarea>",
-        });
+        // Inline-Edit der Kommentar-Texte laeuft jetzt ueber die
+        // Volt-Komponente comment-text-editor in projects/description.
+        // x-editable und seine Form-Buttons fallen damit.
 
 
-        $.fn.editableform.buttons =
-            '<button type="submit" class="btn btn-primary btn-sm editable-submit">'+
-            '<i class="fa fa-fw fa-check"></i>'+
-            '</button>'+
-            '<button type="button" class="btn btn-default btn-sm editable-cancel">'+
-            '<i class="fa fa-fw fa-times"></i>'+
-            '</button>';
-        $.fn.editable.defaults.send = "always";
-
-
-        // Update Status: Comment-Status läuft jetzt über die Volt-Komponente
-        // <livewire:comment-status-switcher> in projects/description.blade.php.
-        // Der frühere $.ajax-POST-Pfad auf /comment/{id}/update/{status}
+        // Update Status: Comment-Status laeuft jetzt ueber die Volt-Komponente
+        // (comment-status-switcher) in projects/description.blade.php.
+        // Der fruehere $.ajax-POST-Pfad auf /comment/{id}/update/{status}
         // wird nicht mehr aus dem Frontend gerufen — die Route bleibt
-        // vorerst stehen (Route-Cleanup folgt in 5a.IV).
+        // vorerst stehen (Route-Cleanup folgt spaeter).
 
         $(document).ready(function (){
             $('.reply').hide();

@@ -179,11 +179,68 @@ Drittabhängigkeiten.
   Pflicht-ARIA-Attribute und Slot-Durchreichung. Komponenten sind in
   diesem Schritt noch nicht in produktive Views eingewebt — die
   Bibliothek liegt damit für den folgenden Bootstrap-Abbau bereit.
+- **Editor-Header-Navigation (`layouts/navi.blade.php`)** auf Tailwind 4
+  + Alpine umgestellt. Die Bootstrap-Dropdowns (`data-toggle="dropdown"`)
+  sind durch Alpine-Patterns ersetzt, die Top-Level-Items
+  (Einstellungen, Projekt, Nutzer, Kommentare, Sprache, User-Menü)
+  haben sichtbare Fokus-Ringe und korrekte
+  `aria-haspopup`/`aria-expanded`-Attribute. Der
+  `<x-ui.icon name="chevron-down">`-Wrapper liefert die Drop-Caret-Icons
+  aus dem Lucide-Set.
+- **Volt-Komponente `<livewire:comment-text-editor>`** löst das
+  jQuery-Plugin x-editable für Inline-Edit der Kommentar-Texte ab.
+  Click-to-Edit mit Textarea, Speichern via `CommentService::editComment`,
+  Esc und Cancel-Button schließen ohne Schreibvorgang. Policy-Gate
+  `comment(Project)` greift sowohl beim Öffnen als auch beim Speichern.
+  Drei Pest-Tests decken Happy-Path, 403 für Reader und das stille
+  Verwerfen leerer Eingaben ab.
 
 ### Geändert
 - **Accessibility fixes** `<html lang>`-Attribut auf den vier Layouts ergänzt, die es
   bisher nicht hatten, **Logo-`alt`-Attribut** auf vier Logo-`<img>`-Tags ergänzt, 
   **Pflichtfeld-Markierung** um ein Sternchen ergänzt.
+- **Bootstrap-CSS- und Bootstrap-3-JS-CDN-Links aus den Haupt-Layouts
+  entfernt.** Weder `layouts/guest.blade.php` noch
+  `projects/layout.blade.php` laden Bootstrap-CSS oder Bootstrap-3.3.7-JS
+  per CDN nach. Das Modal-Plugin ist durch einen schmalen Vanilla-
+  Modal-Manager (`resources/js/modal.js`) ersetzt, der die im Bestand
+  etablierten Markup-Trigger (`data-toggle="modal"`, `data-dismiss="modal"`,
+  Klick außerhalb, Esc) sowie programmatische jQuery-Aufrufe
+  (`$('#xxx').modal('show'|'hide'|'toggle')`) über ein jQuery-Shim
+  bedient. **x-editable**, das Bootstrap-3-Form-Plugin für Inline-
+  Edit der Kommentar-Texte, ist durch die Volt-Komponente
+  `<livewire:comment-text-editor>` abgelöst — bestehende `data-url`-
+  Attribute und die `$('.comment-edit').editable({...})`-Init in
+  `chapters/index.blade.php` fallen, das x-editable-CSS- und
+  JS-Bundle entfällt komplett. **Bootstrap-3-Typeahead** ist ebenfalls
+  durch einen schmalen Vanilla-Manager (`resources/js/typeahead.js`)
+  ersetzt; die fünf bestehenden `$('#xxx').typeahead({...})`-Aufrufe in
+  `chapters/index.blade.php` und `projects/index.blade.php`
+  funktionieren ohne View-Edits weiter, Tastatur-Navigation (↑/↓/Enter/
+  Esc) und Klick-Outside-Schließen sind eingebaut. **jQuery-DataTables**
+  ist ebenfalls durch einen Vanilla-Manager (`resources/js/datatable.js`)
+  ersetzt — die drei Tabellen-Aufrufe (`projectList`, `userList`,
+  `commentList`) bekommen weiterhin Suche, Sortierung per Header-Klick
+  und Pagination, jetzt aber ohne jQuery-DataTables-Bundle. Die
+  deutschen UI-Strings aus den bestehenden `language`-Optionen werden
+  direkt übernommen. **jQuery-UI Sortable** ist durch einen Shim
+  (`resources/js/sortable-shim.js`) auf SortableJS umgebogen — die drei
+  `.sortable({...})`-Init-Aufrufe für Kapitel/Bereich/Inhalt in
+  `chapters/index.blade.php` laufen ohne Markup-Änderung weiter,
+  jQuery-UI fällt damit aus dem CDN-Stack. Für die
+  Übergangsphase liefert eine schmale Tailwind-Compat-
+  CSS-Schicht (`resources/css/compat-bootstrap.css`) die strukturellen
+  Bootstrap-Klassen — `container`, `container-fluid`, `row`,
+  `col-{xs|sm|md|lg}-*`, `btn`, `btn-{primary|secondary|danger|success}`,
+  `btn-block`, `btn-lg`, `btn-sm`, `form-control`, `form-group`,
+  `form-check-label`, `alert` und Varianten, `table`-Familie,
+  `nav`/`nav-link`/`nav-pills`, `dropdown-menu`/`dropdown-item` und die
+  Bootstrap-Modal-Familie (`.modal`, `.modal-dialog`, `.modal-content`,
+  Header/Body/Footer, `.modal-backdrop`, `.fade`). Bootstrap-Spacing-
+  Utilities bleiben außerhalb: Tailwind hat eigene Klassen-Namen,
+  kleine Differenzen sind akzeptiert. Die Schicht und der Bootstrap-3-
+  JS-Bestand fallen mit dem nächsten Schritt, sobald die Inhalts-Views
+  einzeln auf die neue Komponenten-Bibliothek umgezogen sind.
 - **Frontend-Build von Laravel Mix auf Vite umgestellt.**
   `webpack.mix.js` entfällt, `vite.config.js` übernimmt mit
   `laravel-vite-plugin` und `@tailwindcss/vite`. Layouts
