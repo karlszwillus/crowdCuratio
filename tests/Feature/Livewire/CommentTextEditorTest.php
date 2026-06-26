@@ -66,7 +66,7 @@ it('Owner kann den Comment-Text ueber die Volt-Komponente bearbeiten', function 
         'project_id' => $project->id,
         'commentable_id' => $project->id,
         'commentable_type' => Project::class,
-        'comment' => json_encode(['de' => 'Original']),
+        'comment' => ['de' => 'Original'],
         'status' => 1,
     ]);
 
@@ -99,7 +99,7 @@ it('Fremder User ohne Permission bekommt 403 beim startEdit', function () {
         'project_id' => $project->id,
         'commentable_id' => $project->id,
         'commentable_type' => Project::class,
-        'comment' => json_encode(['de' => 'Original']),
+        'comment' => ['de' => 'Original'],
         'status' => 1,
     ]);
 
@@ -132,7 +132,7 @@ it('Leerer Text wird stillschweigend verworfen', function () {
         'project_id' => $project->id,
         'commentable_id' => $project->id,
         'commentable_type' => Project::class,
-        'comment' => json_encode(['de' => 'Original']),
+        'comment' => ['de' => 'Original'],
         'status' => 1,
     ]);
 
