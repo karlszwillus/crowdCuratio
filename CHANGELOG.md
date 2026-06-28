@@ -235,6 +235,23 @@ Drittabhängigkeiten.
 
 ### Geändert
 
+- **`compat-bootstrap.css` → `bootstrap-utilities.css` umbenannt**
+  (Phase 5a.IV.c, Pragma-Shift). Die Datei war als temporäre Brücke
+  angelegt, deren Ablaufdatum der Name `compat-` suggerierte: alle
+  Views sollten Bootstrap-3-Klassen verlieren, bevor die Datei fällt.
+  In der Modal-Welle wurde sichtbar, dass eine strikte 1:1-Migration
+  der verbliebenen ~560 Klassen-Stellen (Grid `row`/`col-*`, Forms
+  `form-control`/`form-group`, Buttons `btn-*`, Alerts, Tables, …)
+  funktional nichts ändert — die Klassen leben als
+  `@layer components`-Custom-Utilities mit Tailwind-Tokens, geladen
+  würde nichts mehr aus einem fremden Bundle. Mit dem Rename ist die
+  Datei jetzt explizit als permanenter Teil der App-CSS-Schicht
+  markiert; der Header dokumentiert die Entscheidung und grenzt die
+  vier Modal-JS-Hook-Klassen (`.modal`, `.modal.in/.show`,
+  `.modal-backdrop`, `body.modal-open`) als Sonderfall ab.
+  Import-Pfad in `resources/css/app.css` aktualisiert, Kommentar in
+  `resources/views/projects/layout.blade.php` nachgezogen.
+
 - **Modal-Markup auf `<x-ui.modal>` migriert** (Phase 5a.IV.c, M3). Alle
   16 sichtbaren Modal-Stellen in den App-Views umgezogen: `audiovisualModal`,
   `galleryModal`, `imageModal`, `contentModal` (`contents/*.blade.php`),

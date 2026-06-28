@@ -26,10 +26,10 @@ If not, see <https://www.gnu.org/licenses/>. -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     {{-- Die alten public/css/{style,sidebar,crowdcuratio}.css definierten
          Bootstrap-3-Overrides plus die Layout-Klassen .leftbar/.mainbar/
-         .rightbar. Die Layout-Klassen leben jetzt in compat-bootstrap.css,
-         der Rest war Bootstrap-3-Cosmetic, der die Tailwind-Tokens
-         überlagerte und damit das Button-Rendering kapert. Wird in der
-         Plugin-Ablösung endgültig gelöscht. --}}
+         .rightbar. Die Layout-Klassen leben jetzt in bootstrap-utilities.css
+         (App-eigene Custom-Utilities mit Bootstrap-Klassennamen), der Rest
+         war Bootstrap-3-Cosmetic, der die Tailwind-Tokens überlagerte und
+         damit das Button-Rendering kapert. In 5a.IV.b endgültig gelöscht. --}}
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css">
 

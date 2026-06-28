@@ -1,15 +1,35 @@
 /*
- * Temporäre Bootstrap-Compat-Schicht (Phase 5)
+ * Bootstrap-benannte Custom-Utilities (Phase 5, Stand 5a.IV.c)
  *
- * Mappt die strukturellen Bootstrap-3/4-Klassen, die in noch nicht
- * migrierten Views aktiv sind, auf Tailwind-4-Equivalente und eigene
- * Tokens. Diese Datei ist bewusst eine Brücke: sobald alle Views auf
- * die neue Komponenten-Bibliothek (<x-ui.*>) umgezogen sind, fällt
- * dieser File wieder.
+ * App-eigene @layer-components-Klassen, deren Namen aus historischen
+ * Gründen aus Bootstrap-3/4 stammen — `row`, `col-{xs|sm|md|lg}-*`,
+ * `btn`, `btn-{primary|secondary|danger|success}`, `form-control`,
+ * `form-group`, `alert`, `table`, `nav`, `dropdown-menu` u. a.
+ *
+ * Funktional ist das hier nichts anderes als die in jedem Tailwind-
+ * Projekt üblichen Custom-Utilities (`container`, `prose`, …): die
+ * Klassen leben in unserem CSS, sind mit Tailwind-Tokens implementiert
+ * und werden von den App-Views direkt benutzt. Es wird nichts mehr aus
+ * einem fremden Bundle geladen.
+ *
+ * Historie: bis 5a.IV.b war das eine echte Compat-Schicht, die als
+ * Brücke gedacht war, bis alle Views auf <x-ui.*> umgezogen sind. In
+ * 5a.IV.c haben wir diese Strict-Migration verworfen — eine 1:1-
+ * Übersetzung von ~560 Klassen-Stellen auf rohe Tailwind-Klassen
+ * würde funktional nichts ändern und nur Diff-Lärm produzieren. Die
+ * Datei bleibt damit permanenter Teil der App-CSS-Schicht; das frühere
+ * "compat-bootstrap.css"-Naming hat das Ablaufdatum nur suggeriert.
  *
  * Nicht in dieser Schicht: Bootstrap-Spacing-Utilities (mb-*, mt-*,
  * p-*, m-*). Tailwind hat eigene gleichnamige Klassen mit leicht
  * abweichenden Werten — wir akzeptieren die kleinen Drift-Stellen.
+ *
+ * Ausnahme: die Modal-JS-Hook-Klassen (.modal, .modal.in/.show,
+ * .modal-backdrop, body.modal-open) sind keine reinen Utility-Klassen,
+ * sondern Hooks für resources/js/modal.js. Sie bleiben hier, weil sie
+ * direkt an den Klassennamen hängen, an die der JS-Manager hört. Das
+ * eigentliche Modal-Markup ist seit 5a.IV.c durch <x-ui.modal>
+ * abgelöst.
  */
 
 @layer components {
