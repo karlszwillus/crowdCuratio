@@ -537,141 +537,98 @@ If not, see <https://www.gnu.org/licenses/>. -->
     <hr class="mt-5 mb-5">
     <!-- Modal Chapter -->
 
-    <div class="modal fade bd-example-modal-xl" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
-         aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    {{__('add_new_element')}}
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class='row'>
-                        <div id="infoMsg" class="">
-
-                        </div>
-                        <div class="writeinfo"></div>
-                        <div class="col-xs-12">
-                            <form id="chapter_frm" name="projectForm"
-                                  action="{{ route('chapters.store') }}"
-                                  method="POST"
-                                  enctype="multipart/form-data">
-                                @csrf
-                                {{-- Phase 2 / D.12: _method-Override für die PATCH-Variante --}}
-                                <input name="_method" type="hidden" value="">
-                                <div class="col-xs-6">
-                                    <input name="projectId" id="projectId" type="hidden" class="form-control mb-3"
-                                           value="{{$project->id}}">
-                                    <input name="chapterId" type="hidden" class="form-control mb-3"
-                                           value="">
-                                    {{__('chapter_title')}}
-                                    <input name="chapterTitle" id="chapterTitle" type="text"
-                                           class="form-control mb-3 title-change"
-                                           placeholder="{{__('chapter_title')}}">
-                                </div>
-                                <div class="col-xs-12">
-                                    {{__('chapter_subtitle')}}
-                                    <input id="chapterSubtitle" name="chapterSubtitle" type="text"
-                                           class="form-control mb-3" placeholder="{{__('chapter_subtitle')}}">
-                                </div>
-                                <div class="col-xs-12">
-                                    {{__('chapter_description')}}
-                                    <div id="chapterDescription"></div>
-                                </div>
-                                <div class="col-xs-12 mt-4">
-                                    <button id="submit_chapter" type="submit" class="btn btn-primary float-right">{{__('save')}}</button>
-                                </div>
-                            </form>
-                        </div>
+    <x-ui.modal id="myModal" :title="__('add_new_element')">
+        <div class="row">
+            <div id="infoMsg" class=""></div>
+            <div class="writeinfo"></div>
+            <div class="col-xs-12">
+                <form id="chapter_frm" name="projectForm"
+                      action="{{ route('chapters.store') }}"
+                      method="POST"
+                      enctype="multipart/form-data">
+                    @csrf
+                    {{-- Phase 2 / D.12: _method-Override für die PATCH-Variante --}}
+                    <input name="_method" type="hidden" value="">
+                    <div class="col-xs-6">
+                        <input name="projectId" id="projectId" type="hidden" class="form-control mb-3"
+                               value="{{$project->id}}">
+                        <input name="chapterId" type="hidden" class="form-control mb-3"
+                               value="">
+                        {{__('chapter_title')}}
+                        <input name="chapterTitle" id="chapterTitle" type="text"
+                               class="form-control mb-3 title-change"
+                               placeholder="{{__('chapter_title')}}">
                     </div>
-                </div>
+                    <div class="col-xs-12">
+                        {{__('chapter_subtitle')}}
+                        <input id="chapterSubtitle" name="chapterSubtitle" type="text"
+                               class="form-control mb-3" placeholder="{{__('chapter_subtitle')}}">
+                    </div>
+                    <div class="col-xs-12">
+                        {{__('chapter_description')}}
+                        <div id="chapterDescription"></div>
+                    </div>
+                    <div class="col-xs-12 mt-4">
+                        <button id="submit_chapter" type="submit" class="btn btn-primary float-right">{{__('save')}}</button>
+                    </div>
+                </form>
             </div>
         </div>
-    </div>
-    <div class="modal fade bd-example-modal-xl" id="commentModal" tabindex="-1" role="dialog"
-         aria-labelledby="myModalLabel"
-         aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    {{__('add_new_element_comment')}}
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class='row'>
-                        <div id="headerComment"></div>
+    </x-ui.modal>
 
-                        <div id="listComment"></div>
-                        <form id="frmComment" action="" method="post">
-                            @csrf
-                            <input name="id" type="hidden" id="commentId">
-                            <input name="IdProjectComment" type="hidden" id="IdProjectComment">
-                            <div class="col-xs-12 mt-7">
-                                <textarea id="commentProjectId" name="comment" class="form-control mb-3"
-                                          placeholder="{{__('leave_comment')}}" onkeyup="enableButton()"></textarea>
-                            </div>
-                            <div class="col-xs-12">
-                                <button id="commentButton" type="submit" class="btn btn-primary float-right reply-comment" disabled>{{__('save')}}</button>
-                            </div>
-                        </form>
-                    </div>
+    <x-ui.modal id="commentModal" :title="__('add_new_element_comment')" size="lg">
+        <div class="row">
+            <div id="headerComment"></div>
+
+            <div id="listComment"></div>
+            <form id="frmComment" action="" method="post">
+                @csrf
+                <input name="id" type="hidden" id="commentId">
+                <input name="IdProjectComment" type="hidden" id="IdProjectComment">
+                <div class="col-xs-12 mt-7">
+                    <textarea id="commentProjectId" name="comment" class="form-control mb-3"
+                              placeholder="{{__('leave_comment')}}" onkeyup="enableButton()"></textarea>
                 </div>
-            </div>
+                <div class="col-xs-12">
+                    <button id="commentButton" type="submit" class="btn btn-primary float-right reply-comment" disabled>{{__('save')}}</button>
+                </div>
+            </form>
         </div>
-    </div>
-    <div class="modal fade" id="previewModal" tabindex="-1" role="dialog"
-         aria-labelledby="myModalLabel"
-         aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    {{__('create_html_output')}}
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class='row m-2'>
-                        <div id="headerComment"></div>
-                        <div id="listComment"></div>
-                        <form id="" action="{{route('preview')}}" method="get">
-                            @csrf
-                            <input name="project" type="hidden" value="{{$project->id}}">
-                            <div class="form-check">
-                                <input type="color" value="#EDBA0E" class="form-check-input color-element" name="colorAccent">
+    </x-ui.modal>
 
-                                <label class="form-check-label">{{__('color_accent')}}</label>
-                            </div>
-                            <div class="form-check">
-                                <input type="color" value="#EDBA0E" class="form-check-input color-element" name="colorChapter">
-
-                                <label class="form-check-label" >{{__('color_chapter')}}</label>
-                            </div>
-                            <div class="form-check mt-4">
-                                <input type="checkbox" class="form-check-input" name="backgroundSecond">
-                                <label class="form-check-label" >{{__('background_second')}}</label>
-                            </div>
-                            <div class="form-check mt-4">
-                                <input type="checkbox" class="form-check-input" name="collapse">
-                                <label class="form-check-label" >{{__('collapse')}}</label>
-                            </div>
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" name="pdf">
-                                <label class="form-check-label" >{{__('pdf')}}</label>
-                            </div>
-                            <div class="col-xs-12">
-                                <button type="submit" class="btn btn-primary" >{{__('html')}}</button>
-                            </div>
-                        </form>
-                    </div>
+    <x-ui.modal id="previewModal" :title="__('create_html_output')">
+        <div class="row m-2">
+            <div id="headerComment"></div>
+            <div id="listComment"></div>
+            <form id="" action="{{route('preview')}}" method="get">
+                @csrf
+                <input name="project" type="hidden" value="{{$project->id}}">
+                <div class="form-check">
+                    <input type="color" value="#EDBA0E" class="form-check-input color-element" name="colorAccent">
+                    <label class="form-check-label">{{__('color_accent')}}</label>
                 </div>
-            </div>
+                <div class="form-check">
+                    <input type="color" value="#EDBA0E" class="form-check-input color-element" name="colorChapter">
+                    <label class="form-check-label" >{{__('color_chapter')}}</label>
+                </div>
+                <div class="form-check mt-4">
+                    <input type="checkbox" class="form-check-input" name="backgroundSecond">
+                    <label class="form-check-label" >{{__('background_second')}}</label>
+                </div>
+                <div class="form-check mt-4">
+                    <input type="checkbox" class="form-check-input" name="collapse">
+                    <label class="form-check-label" >{{__('collapse')}}</label>
+                </div>
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" name="pdf">
+                    <label class="form-check-label" >{{__('pdf')}}</label>
+                </div>
+                <div class="col-xs-12">
+                    <button type="submit" class="btn btn-primary" >{{__('html')}}</button>
+                </div>
+            </form>
         </div>
-    </div>
+    </x-ui.modal>
     @include('Entry.index')
     @include('contents.index')
     {{-- Stakeholder-Fix Juni 2026: `@include('contents.gallery')` war

@@ -17,9 +17,23 @@
 @import "./tokens.css";
 
 /*
- * Bootstrap-Compat-Schicht — temporär. Mappt strukturelle Bootstrap-3/4-
- * Klassen in nicht migrierten Inhalts-Views auf Tailwind-4-Patterns.
- * Fällt, sobald die Views einzeln auf die neue Komponenten-Bibliothek
- * (<x-ui.*>) umgezogen sind.
+ * Bootstrap-benannte Custom-Utilities. Definiert App-eigene Utilities
+ * unter Klassennamen, die historisch aus Bootstrap-3/4 stammen
+ * (row, col-*, btn, form-control, …). Funktional sind das ganz normale
+ * @layer-components-Klassen — nichts wird mehr "geliehen". Den Namen
+ * compat-bootstrap.css haben wir in 5a.IV.c verworfen, weil er ein
+ * Ablaufdatum suggerierte, das es nicht gibt: die Datei bleibt
+ * permanenter Teil der App-CSS-Schicht.
  */
-@import "./compat-bootstrap.css";
+@import "./bootstrap-utilities.css";
+
+/*
+ * Alpine-Cloak: Elemente mit `x-cloak` sind initial verborgen, bis
+ * Alpine den ersten DOM-Walk gemacht hat. Ohne diese Regel würde ein
+ * `x-show`-Element vor der Hydrate-Phase kurz aufflackern. `!important`
+ * ist nötig, weil Alpine das Attribut beim Mount entfernt und der
+ * Selector dann nicht mehr matcht.
+ */
+[x-cloak] {
+    display: none !important;
+}

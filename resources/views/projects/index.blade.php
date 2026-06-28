@@ -95,85 +95,58 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
     <!-- Modal -->
 
-    <div class="modal fade bd-example-modal-xl" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
-         aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h1 class="modal-title"><i class="bi bi-save"></i> <i class="bi bi-reply"></i></h1>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <ul class="list-group" id="project_list">
+    <x-ui.modal id="myModal">
+        <x-slot:header>
+            <i class="bi bi-save"></i> <i class="bi bi-reply"></i>
+        </x-slot:header>
 
-                        @isset($data)
-                            @foreach ($data as $key => $value)
-                                <li class="list-group-item">
-                                    <input class="form-check-input project" type="checkbox" value=""
-                                           id="{{$value->id}}">
-                                    {{ $value->name }} <em>(by {{$value->user_name}})</em>
-                                </li>
-                            @endforeach
-                        @endisset
-                    </ul>
-                </div>
+        <ul class="list-group" id="project_list">
+            @isset($data)
+                @foreach ($data as $key => $value)
+                    <li class="list-group-item">
+                        <input class="form-check-input project" type="checkbox" value=""
+                               id="{{$value->id}}">
+                        {{ $value->name }} <em>(by {{$value->user_name}})</em>
+                    </li>
+                @endforeach
+            @endisset
+        </ul>
+    </x-ui.modal>
 
-            </div>
+    <x-ui.modal id="previewModal" :title="__('add_new_element_comment')">
+        <div class="row m-2">
+            <div id="headerComment"></div>
+            <hr style="width:100%;text-align:left;margin-left:0">
+            <div id="listComment"></div>
+            <form id="frm_preview" action="{{route('preview')}}" method="get">
+                @csrf
+                <input type="hidden" name="project" id="project">
+                <div class="form-check">
+                    <input type="color" value="#EDBA0E" class="form-check-input color-element" name="colorAccent">
+                    <label class="form-check-label">{{__('color_accent')}}</label>
+                </div>
+                <div class="form-check">
+                    <input type="color" value="#EDBA0E" class="form-check-input color-element" name="colorChapter">
+                    <label class="form-check-label" >{{__('color_chapter')}}</label>
+                </div>
+                <div class="form-check mt-4">
+                    <input type="checkbox" class="form-check-input" name="backgroundSecond">
+                    <label class="form-check-label" >{{__('background_second')}}</label>
+                </div>
+                <div class="form-check mt-4">
+                    <input type="checkbox" class="form-check-input" name="collapse">
+                    <label class="form-check-label" >{{__('collapse')}}</label>
+                </div>
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" name="pdf">
+                    <label class="form-check-label" >{{__('pdf')}}</label>
+                </div>
+                <div class="col-xs-12">
+                    <button type="submit" class="btn btn-primary" >{{__('html')}}</button>
+                </div>
+            </form>
         </div>
-    </div>
-
-    <div class="modal fade" id="previewModal" tabindex="-1" role="dialog"
-         aria-labelledby="myModalLabel"
-         aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    {{__('add_new_element_comment')}}
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class='row m-2'>
-                        <div id="headerComment"></div>
-                        <hr style="width:100%;text-align:left;margin-left:0">
-                        <div id="listComment"></div>
-                        <form id="frm_preview" action="{{route('preview')}}" method="get">
-                            @csrf
-                            <input type="hidden" name="project" id="project">
-                            <div class="form-check">
-                                <input type="color" value="#EDBA0E" class="form-check-input color-element" name="colorAccent">
-
-                                <label class="form-check-label">{{__('color_accent')}}</label>
-                            </div>
-                            <div class="form-check">
-                                <input type="color" value="#EDBA0E" class="form-check-input color-element" name="colorChapter">
-
-                                <label class="form-check-label" >{{__('color_chapter')}}</label>
-                            </div>
-                            <div class="form-check mt-4">
-                                <input type="checkbox" class="form-check-input" name="backgroundSecond">
-                                <label class="form-check-label" >{{__('background_second')}}</label>
-                            </div>
-                            <div class="form-check mt-4">
-                                <input type="checkbox" class="form-check-input" name="collapse">
-                                <label class="form-check-label" >{{__('collapse')}}</label>
-                            </div>
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" name="pdf">
-                                <label class="form-check-label" >{{__('pdf')}}</label>
-                            </div>
-                            <div class="col-xs-12">
-                                <button type="submit" class="btn btn-primary" >{{__('html')}}</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    </x-ui.modal>
 @endsection
 @section('script')
     <script type="text/javascript">

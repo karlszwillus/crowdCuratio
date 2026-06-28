@@ -238,3 +238,66 @@ it('Icon ohne Match in Library rendert leeres SVG', function () {
     expect($html)->toContain('<svg');
     expect(str_contains($html, '<path'))->toBeFalse();
 });
+
+// ---------- Modal ----------
+
+it('Modal rendert mit .modal-Klasse fuer den Vanilla-Modal-Manager', function () {
+    /** @var TestCase $this */
+    $html = Blade::render('<x-ui.modal id="testModal">Body-Inhalt</x-ui.modal>');
+
+    expect($html)
+        ->toContain('class="modal fade"')
+        ->toContain('id="testModal"')
+        ->toContain('role="dialog"')
+        ->toContain('aria-hidden="true"')
+        ->toContain('Body-Inhalt');
+});
+
+it('Modal mit title rendert Heading und verknuepft via aria-labelledby', function () {
+    /** @var TestCase $this */
+    $html = Blade::render('<x-ui.modal id="x" title="Inhalt anlegen">Body</x-ui.modal>');
+
+    expect($html)
+        ->toContain('aria-labelledby="x-title"')
+        ->toContain('id="x-title"')
+        ->toContain('<h2')
+        ->toContain('Inhalt anlegen');
+});
+
+it('Modal mit closable=true rendert dismiss-Button mit data-dismiss', function () {
+    /** @var TestCase $this */
+    $html = Blade::render('<x-ui.modal id="x">Body</x-ui.modal>');
+
+    expect($html)
+        ->toContain('data-dismiss="modal"')
+        ->toContain('aria-label="')
+        ->toContain('&times;');
+});
+
+it('Modal mit closable=false rendert keinen dismiss-Button', function () {
+    /** @var TestCase $this */
+    $html = Blade::render('<x-ui.modal id="x" :closable="false">Body</x-ui.modal>');
+
+    expect(str_contains($html, 'data-dismiss="modal"'))->toBeFalse();
+});
+
+it('Modal size=lg bekommt max-w-4xl', function () {
+    /** @var TestCase $this */
+    $html = Blade::render('<x-ui.modal id="x" size="lg">Body</x-ui.modal>');
+
+    expect($html)->toContain('max-w-4xl');
+});
+
+it('Modal mit Footer-Slot rendert <footer>', function () {
+    /** @var TestCase $this */
+    $html = Blade::render('<x-ui.modal id="x">Body<x-slot:footer>Save-Button</x-slot:footer></x-ui.modal>');
+
+    expect($html)
+        ->toContain('<footer')
+        ->toContain('Save-Button');
+});
+
+it('Modal ohne id wirft Exception', function () {
+    /** @var TestCase $this */
+    Blade::render('<x-ui.modal>Body</x-ui.modal>');
+})->throws(ViewException::class, 'x-ui.modal benötigt das Pflicht-Prop');

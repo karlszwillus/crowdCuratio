@@ -25,6 +25,20 @@ Drittabhängigkeiten.
 
 ### Hinzugefügt
 
+- **`<x-ui.modal>` als zentrale Modal-Komponente** (Phase 5a.IV.c).
+  Anonyme Blade-Komponente unter `resources/views/components/ui/modal.blade.php`.
+  Props: `id` (Pflicht, für JS-Manager), `title`, `size` (sm|md|lg),
+  `closable`, `labelledby`, `headingLevel`. Slots: `default` (Body),
+  `header` (komplexer Header z. B. mit Icons), `footer` (rechtsbündige
+  Aktions-Buttons). Markup-Outer (`<div class="modal fade" id="...">`)
+  bleibt wegen des Vanilla-Modal-Managers erhalten; Inner-Markup ist
+  rein Tailwind/Token-basiert ohne `.modal-dialog`/`.modal-content`/
+  `.modal-header`/`.modal-body`/`.modal-footer`. Sieben Pest-Render-
+  Tests in `tests/Feature/Components/UiComponentsTest.php` decken
+  `id`-Pflicht, Title→aria-labelledby-Verknüpfung, Dismiss-Button,
+  `closable=false`, `size=lg`, Footer-Slot und die `header`-Slot-
+  Precedence ab.
+
 - **Theme-Switch.** Zweite Markenidentität „Aktives Museum" als
   alternativer Farbmodus, schaltbar über einen Toggle-Button im
   Editor-Header. `<html data-theme="aktivesMuseum">` aktiviert den
@@ -220,6 +234,45 @@ Drittabhängigkeiten.
   Verwerfen leerer Eingaben ab.
 
 ### Geändert
+
+- **`compat-bootstrap.css` → `bootstrap-utilities.css` umbenannt**
+  (Phase 5a.IV.c, Pragma-Shift). Die Datei war als temporäre Brücke
+  angelegt, deren Ablaufdatum der Name `compat-` suggerierte: alle
+  Views sollten Bootstrap-3-Klassen verlieren, bevor die Datei fällt.
+  In der Modal-Welle wurde sichtbar, dass eine strikte 1:1-Migration
+  der verbliebenen ~560 Klassen-Stellen (Grid `row`/`col-*`, Forms
+  `form-control`/`form-group`, Buttons `btn-*`, Alerts, Tables, …)
+  funktional nichts ändert — die Klassen leben als
+  `@layer components`-Custom-Utilities mit Tailwind-Tokens, geladen
+  würde nichts mehr aus einem fremden Bundle. Mit dem Rename ist die
+  Datei jetzt explizit als permanenter Teil der App-CSS-Schicht
+  markiert; der Header dokumentiert die Entscheidung und grenzt die
+  vier Modal-JS-Hook-Klassen (`.modal`, `.modal.in/.show`,
+  `.modal-backdrop`, `body.modal-open`) als Sonderfall ab.
+  Import-Pfad in `resources/css/app.css` aktualisiert, Kommentar in
+  `resources/views/projects/layout.blade.php` nachgezogen.
+
+- **Modal-Markup auf `<x-ui.modal>` migriert** (Phase 5a.IV.c, M3). Alle
+  16 sichtbaren Modal-Stellen in den App-Views umgezogen: `audiovisualModal`,
+  `galleryModal`, `imageModal`, `contentModal` (`contents/*.blade.php`),
+  `entryModal` (`Entry/index.blade.php`), `roleModal` (`roles/index.blade.php`),
+  `termsConditionsModal`/`privacyModal`/`imprintModal`/`invitationModal`
+  (`settings/index.blade.php`), `myModal`/`previewModal` (`projects/index.blade.php`),
+  `userInvitation`/`userModal`/`newUserInvitation`/`newUser`
+  (`projects/create.blade.php`), `myModal` (`projects/element.blade.php`)
+  sowie `myModal`/`commentModal`/`previewModal` (`chapters/index.blade.php`).
+  Markup-Outer (`.modal.fade` plus `id`) bleibt identisch, sodass der
+  Vanilla-Modal-Manager weiter greift. Bootstrap-3-Compat-Schicht
+  (`resources/css/compat-bootstrap.css`) entsorgt parallel die strukturellen
+  Modal-Klassen `.modal-dialog`, `.modal-content`, `.modal-header`,
+  `.modal-title`, `.modal-body`, `.modal-footer`, `button.close` sowie
+  die `.bd-example-modal-xl > .modal-dialog`-Modifier. Was bleibt: nur die
+  JS-Hook-Klassen `.modal`/`.modal.in/.show`, `.modal-backdrop` und der
+  `body.modal-open`-Scroll-Lock-Hook — alles, woran der Vanilla-Modal-
+  Manager funktional gebunden ist. Das E-Mail-Template
+  `vendor/welcomeNotification/welcome.blade.php` ist absichtlich nicht
+  migriert (wird nicht im Browser gerendert).
+
 - **Accessibility fixes** `<html lang>`-Attribut auf den vier Layouts ergänzt, die es
   bisher nicht hatten, **Logo-`alt`-Attribut** auf vier Logo-`<img>`-Tags ergänzt, 
   **Pflichtfeld-Markierung** um ein Sternchen ergänzt.
@@ -579,6 +632,42 @@ Drittabhängigkeiten.
   in der ehemaligen `CommentTrait::commentAsUser`.
 
 ### Behoben
+
+- **Theme-Toggle-Icon im Navi-Header war unsichtbar** (Phase 5a.V,
+  T1 + T2 + T3). Drei Bugs überlagert:
+  - **T1 (View-Pattern):** Das ursprüngliche Markup hatte zwei
+    `<template x-if>` mit eingebetteter `<x-ui.icon>`-Blade-Komponente.
+    Das HTML-Standard-`<template>` hält seinen Inhalt außerhalb des
+    regulären DOM-Trees; der Alpine-Clone-Insert war in dieser
+    Konstellation unzuverlässig. Umgestellt auf `x-show` mit zwei
+    direkt im Button eingebetteten `<span>`-Wrappern (jeweils eine
+    Lucide-Variante). Plus globale
+    `[x-cloak] { display: none !important }`-Regel in
+    `resources/css/app.css` und `x-cloak` an beiden Spans, damit beim
+    Page-Load nicht beide Icons gleichzeitig aufflackern, bis der
+    Store-State hydriert ist.
+  - **T2 (Store-Race-Condition):** Browser-Verifikation zeigte, dass
+    `$store.theme` trotz T1-Fix leer war (`{}` statt
+    `{current, toggle, set}`). Ursache: Livewire 4 bringt sein eigenes
+    Alpine mit und startet es früh — das `alpine:init`-Event war
+    bereits gefeuert, als `resources/js/theme.js` als Vite-Module
+    geladen wurde und seinen Listener registrierte. Folge: der Store
+    wurde nie registriert; beide `x-show`-Bedingungen (gegen
+    `$store.theme.current`) evaluierten zu `undefined`, kombiniert mit
+    `x-cloak` blieben beide Icons unsichtbar. Robust gefixt: `theme.js`
+    prüft beim Module-Load, ob `window.Alpine` schon da ist, und
+    registriert dann sofort; sonst nimmt es den Listener wie bisher.
+  - **T3 (fehlender x-data-Scope):** Nach T2 war der Store da, aber
+    am Button waren `aria-pressed`/`aria-label` weiterhin `null` und
+    beide Spans behielten ihr `x-cloak`-Attribut. Ursache: Alpine
+    verarbeitet `@click`/`:aria-*`/`x-show` nur innerhalb eines
+    `x-data`-Scopes; der Theme-Button stand außerhalb. `x-data` direkt
+    am Button-Tag angebracht (leeres Scope reicht, der State lebt im
+    globalen `$store.theme`). Verifiziert per Browser-DOM-Check: Sun
+    sichtbar bei `aktivesMuseum`, Moon bei Default, `aria-pressed`
+    schaltet, `data-theme`-Attribut auf `<html>` wechselt, `cc-theme`
+    in localStorage persistiert.
+
 - **Bildupload in Galerien zeigt das hochgeladene Bild nicht mehr
   als nicht-vorhanden.**
 - **Neuanlage von Gallery, Text, Image und Audio/Video lieferte
