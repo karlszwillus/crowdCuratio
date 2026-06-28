@@ -84,7 +84,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
         </table>
     @endisset
 @endsection
-@section('script')
+@push('scripts')
     <script type="text/javascript">
 
         $(document).ready(function () {
@@ -107,4 +107,4 @@ If not, see <https://www.gnu.org/licenses/>. -->
         });
 
     </script>
-@endsection
+@endpush

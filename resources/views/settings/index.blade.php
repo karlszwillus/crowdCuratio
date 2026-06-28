@@ -177,7 +177,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
         </div>
     </x-ui.modal>
 @endsection
-@section('script')
+@push('scripts')
     <script>
         let Font = Quill.import('formats/font');
         Font.whitelist = ['times-new-roman', 'arial', 'Sans Serif'];
@@ -287,4 +287,4 @@ If not, see <https://www.gnu.org/licenses/>. -->
             }
         });
     </script>
-@endsection
+@endpush

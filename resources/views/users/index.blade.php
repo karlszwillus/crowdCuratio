@@ -78,7 +78,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
         </tbody>
     </table>
 @endsection
-@section('script')
+@push('scripts')
     <script>
         $(document).ready(function () {
             $('#userList').DataTable({
@@ -100,4 +100,4 @@ If not, see <https://www.gnu.org/licenses/>. -->
         });
 
     </script>
-@endsection
+@endpush

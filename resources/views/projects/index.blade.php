@@ -148,7 +148,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
         </div>
     </x-ui.modal>
 @endsection
-@section('script')
+@push('scripts')
     <script type="text/javascript">
 
         $(document).ready(function () {
@@ -213,5 +213,5 @@ If not, see <https://www.gnu.org/licenses/>. -->
             $('#project').val($(this).attr('data-project'));
         })
     </script>
-@endsection
+@endpush
 

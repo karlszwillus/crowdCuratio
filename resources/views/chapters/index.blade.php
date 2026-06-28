@@ -653,7 +653,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
         </div>
     @endif
 @endsection
-@section('script')
+@push('scripts')
     <script>
         $(".rotate").click(function() {
             $(this).toggleClass("down");
@@ -1564,4 +1564,4 @@ If not, see <https://www.gnu.org/licenses/>. -->
         @endcan {{-- Reader-Frontend-Härtung Juni 2026 (Sortable-Init-Gate) --}}
 
     </script>
-@endsection
+@endpush
