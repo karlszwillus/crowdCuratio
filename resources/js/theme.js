@@ -37,7 +37,15 @@ function applyTheme(name) {
     }
     try {
         window.localStorage.setItem(STORAGE_KEY, name);
-    } catch (e) { /* noop */ }
+    } catch (e) {
+        // localStorage kann werfen: Quota überschritten, Private-Mode
+        // im Safari, deaktivierte Cookies. Das Theme greift trotzdem
+        // (data-theme ist gesetzt), nur die Persistenz über Page-Reload
+        // hinaus fehlt. console.warn statt silent swallow, damit der
+        // Drift in DevTools sichtbar wird (Phase-5a-Code-Review H-3).
+        // eslint-disable-next-line no-console
+        console.warn('crowdCuratio theme persistence failed:', e);
+    }
 }
 
 // Frühe Anwendung — passiert vor Alpine.start().
