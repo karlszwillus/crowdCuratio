@@ -34,6 +34,29 @@ If not, see <https://www.gnu.org/licenses/>. -->
 @endsection
 
 @section('main')
+    {{-- Tree-Daten für die Live-Breadcrumb. Die <x-ui.breadcrumb>-
+         Komponente watcht im :tree-Modus window.location.hash und
+         leitet daraus den Pfad ab — Klick im Sidebar-Tree ändert
+         den Hash, Breadcrumb folgt automatisch. --}}
+    @php
+        $breadcrumbTree = [
+            'root' => ['label' => $project->name, 'href' => '#main-content'],
+            'chapters' => $data->chapters->mapWithKeys(fn ($chapter) => [
+                $chapter->id => [
+                    'label' => $chapter->name,
+                    'href' => '#anchor_Chapter_'.$chapter->id,
+                    'entries' => $chapter->entries->mapWithKeys(fn ($entry) => [
+                        $entry->id => [
+                            'label' => $entry->name,
+                            'href' => '#anchor_Entry_'.$entry->id,
+                        ],
+                    ])->toArray(),
+                ],
+            ])->toArray(),
+        ];
+    @endphp
+    <x-ui.breadcrumb :tree="$breadcrumbTree" />
+
     @if ($message = Session::get('success'))
         <div class="alert alert-success">
             <p>{{ $message }}</p>

@@ -29,6 +29,12 @@ import './theme';
 // jQuery-Shim in modal.js weiter.
 import './modal';
 
+// Live-Breadcrumb — registriert die Alpine-Komponente `ccBreadcrumb`,
+// die in <x-ui.breadcrumb :tree="..."> verwendet wird. Reagiert auf
+// hashchange und leitet aus dem Tree-Daten-Objekt den aktuellen Pfad
+// (Projekt > Kapitel > Abschnitt) ab.
+import './breadcrumb';
+
 // Vanilla-Typeahead-Manager — ersetzt bootstrap-3-typeahead.js. Auch
 // hier ein jQuery-Shim, damit die fünf `$('#xxx').typeahead({...})`-
 // Aufrufe in den Editor-Views unverändert weiterlaufen.

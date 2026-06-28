@@ -301,3 +301,93 @@ it('Modal ohne id wirft Exception', function () {
     /** @var TestCase $this */
     Blade::render('<x-ui.modal>Body</x-ui.modal>');
 })->throws(ViewException::class, 'x-ui.modal benötigt das Pflicht-Prop');
+
+// ---------- Breadcrumb ----------
+
+it('Breadcrumb rendert <nav aria-label="Breadcrumb"> mit <ol>', function () {
+    /** @var TestCase $this */
+    $html = Blade::render('<x-ui.breadcrumb :items="[[\'label\' => \'Start\', \'href\' => \'#\']]" />');
+
+    expect($html)
+        ->toContain('<nav aria-label="Breadcrumb"')
+        ->toContain('<ol')
+        ->toContain('Start');
+});
+
+it('Breadcrumb markiert den letzten Eintrag mit aria-current="page" und ohne Link', function () {
+    /** @var TestCase $this */
+    $html = Blade::render('<x-ui.breadcrumb :items="[
+        [\'label\' => \'Projekt\', \'href\' => \'#main-content\'],
+        [\'label\' => \'Kapitel 1\', \'href\' => \'#anchor_Chapter_1\'],
+    ]" />');
+
+    expect($html)
+        ->toContain('href="#main-content"')
+        ->toContain('aria-current="page"')
+        ->toContain('Kapitel 1');
+
+    // Der letzte Eintrag darf nicht als Link gerendert sein.
+    expect($html)->not->toContain('href="#anchor_Chapter_1"');
+});
+
+it('Breadcrumb mit leerem items-Array rendert kein <nav>', function () {
+    /** @var TestCase $this */
+    $html = Blade::render('<x-ui.breadcrumb :items="[]" />');
+
+    expect($html)->not->toContain('<nav');
+});
+
+it('Breadcrumb rendert Trenner zwischen Einträgen, aber nicht nach dem letzten', function () {
+    /** @var TestCase $this */
+    $html = Blade::render('<x-ui.breadcrumb :items="[
+        [\'label\' => \'A\', \'href\' => \'#a\'],
+        [\'label\' => \'B\', \'href\' => \'#b\'],
+        [\'label\' => \'C\', \'href\' => \'#c\'],
+    ]" />');
+
+    // Zwei Trenner-Slashes bei drei Einträgen.
+    expect(substr_count($html, 'aria-hidden="true"'))->toBe(2);
+});
+
+it('Breadcrumb im :tree-Modus rendert Alpine-Wrapper mit hashchange-Listener', function () {
+    /** @var TestCase $this */
+    $tree = [
+        'root' => ['label' => 'Projekt X', 'href' => '#main-content'],
+        'chapters' => [
+            1 => [
+                'label' => 'Kapitel A',
+                'href' => '#anchor_Chapter_1',
+                'entries' => [
+                    7 => ['label' => 'Abschnitt Z', 'href' => '#anchor_Entry_7'],
+                ],
+            ],
+        ],
+    ];
+
+    $html = Blade::render('<x-ui.breadcrumb :tree="$tree" />', ['tree' => $tree]);
+
+    expect($html)
+        ->toContain('x-data="ccBreadcrumb(')
+        ->toContain('x-init="syncFromHash()"')
+        ->toContain('@hashchange.window="syncFromHash()"')
+        ->toContain('<nav aria-label="Breadcrumb"')
+        // Tree-Daten landen als JSON inline im x-data-Aufruf.
+        ->toContain('Projekt X')
+        ->toContain('Kapitel A')
+        ->toContain('Abschnitt Z');
+});
+
+it('Breadcrumb bevorzugt :tree gegenüber :items, wenn beide gesetzt', function () {
+    /** @var TestCase $this */
+    $tree = ['root' => ['label' => 'Tree-Root', 'href' => '#x'], 'chapters' => []];
+    $items = [['label' => 'Static-Item', 'href' => '#y']];
+
+    $html = Blade::render(
+        '<x-ui.breadcrumb :tree="$tree" :items="$items" />',
+        ['tree' => $tree, 'items' => $items]
+    );
+
+    expect($html)
+        ->toContain('x-data="ccBreadcrumb(')
+        ->not->toContain('Static-Item');
+});
