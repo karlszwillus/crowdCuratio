@@ -48,7 +48,65 @@ falsche `Comment::chapter()`-Definition) und fünf Theme-Vollausbau-
 Themen (Logo-Tausch, Title-Tag, Mail-Templates, Card-Tokens, Tenant-
 Detection — siehe `werkbank/TODO.md`).
 
+**Phase-5b — Layout-Neuschnitt mit Sidebar-Struktur-Baum abgeschlossen.**
+Editor bekommt einen App-Shell-Refactor: neue `<x-layout>`-Komponente
+mit semantischen Landmarks (`<header>`, `<aside>`, `<main role="main">`,
+`<footer>`), Tailwind-Grid statt Bootstrap-3-Cols, dunkles Chrome und
+heller Content-Canvas. Linke Aside ist jetzt der dreistufige
+Sidebar-Tree (Projekt → Kapitel → Abschnitt) als Livewire-Volt-
+Komponente; Klick scrollt smooth zum Anker im Canvas. Oberhalb des
+Canvas schwebt ein Breadcrumb, der per Hash-Watcher auf den
+Tree-Klick reagiert (Deep-Links funktionieren mit). Die A11y-Pflöcke
+für die nächsten Wellen sind gesetzt: Skip-Link „Zum Inhalt springen"
+als erster Tab-Stop (WCAG 2.4.1), Strg+Pfeil-Reorder als Tastatur-
+Alternative zum SortableJS-Drag (WCAG 2.5.7) mit zentraler ARIA-Live-
+Region für Move-Announcements, Touch-Target-Mindestgröße 44×44 px
+auf allen Icon-only-Buttons (WCAG 2.5.8), 15 Editor-Aktionsbuttons
+von `<a href="">` auf semantisches `<button type="button">` migriert.
+Bestands-Endpoint `chapter.drag` nimmt sowohl Maus- als auch
+Tastatur-Reorders ohne Sicherheits-Refactor. Coverage hält bei 77,5 %.
+
 ### Hinzugefügt
+
+- **Tastatur- und Screenreader-Pflöcke für den Editor** (Phase 5b.2,
+  5b.5, 5b.6, 5b.7). Skip-Link „Zum Inhalt springen" als erster Tab-
+  Stop, slidet bei `:focus` sichtbar in die linke obere Ecke (WCAG
+  2.4.1, Bypass Blocks). 15 Editor-Aktionsbuttons von `<a href="">`
+  auf semantisches `<button type="button">` migriert — Tab-Tastatur
+  überspringt jetzt keine Aktionen mehr und Screenreader nennen sie
+  als Buttons statt „leere Links". Listen-Items (Kapitel, Abschnitt,
+  Inhalt) sind unter Update-Permission tab-fokussierbar mit Strg+Pfeil-
+  hoch/runter als Tastatur-Alternative zum SortableJS-Maus-Drag (WCAG
+  2.5.7); persistiert über den bestehenden `chapter.drag`-Endpoint,
+  Maus-Drag bleibt unangetastet. Zentrale ARIA-Live-Region im Layout
+  meldet jeden Move (WCAG 4.1.3) — Funktion `window.ccAnnounce(text)`
+  ist auch für künftige Async-Aktionen verfügbar. Icon-only-Buttons
+  haben jetzt 44×44 px Mindest-Klick-Fläche per `:has()`-Selector
+  ohne pro-Button-Patch (WCAG 2.5.8, Touch Targets).
+
+- **Sidebar-Struktur-Baum als Livewire-Komponente** (Phase 5b.3). Die
+  linke Aside im Editor zeigt jetzt einen dreistufigen Tree-View des
+  Projekts (Projekt → Kapitel → Abschnitt) als
+  `<livewire:sidebar-tree :project="$project">`-Volt-Komponente. Mount
+  lädt eager via `loadMissing(['chapters.entries'])`, Render-Output ist
+  reines Markup mit `<a href="#anchor_Chapter_{id}">`-Links auf die
+  bestehenden Anker im Content-Canvas. Klick scrollt smooth dank
+  `scroll-behavior: smooth` plus `scroll-margin-top` für die Anker.
+  Aside trägt `aria-label="Projektstruktur"`. Drei Pest-Tests pinnen
+  den Render-Pfad. Inhalts-Ebene (4.) bleibt aus der Sidebar raus
+  (Entscheidung 2.4 — sie lebt im Content-Canvas innerhalb der
+  Abschnitt-Karte).
+
+- **Live-Breadcrumb oberhalb des Content-Canvas** (Phase 5b.4 + 5b.4b).
+  Neue `<x-ui.breadcrumb>`-Komponente mit zwei Modi: statisch via
+  `:items` oder live via `:tree` mit Alpine-Hash-Watcher. Im Editor
+  liefert `chapters/index` die Tree-Daten an die Komponente; Klick im
+  Sidebar-Tree ändert den URL-Hash, Breadcrumb leitet daraus den Pfad
+  ab (Projekt > Kapitel > Abschnitt) und folgt automatisch. Deep-
+  Links beim Page-Load werden mit verarbeitet. Letzter Eintrag rendert
+  ohne `<a>` mit `aria-current="page"`. Sechs Pest-Tests decken
+  beide Modi und das Edge-Case-Verhalten (leere Items, Trenner-Anzahl)
+  ab.
 
 - **Coverage-Push von 65,3 % auf 77,5 %** (Phase 5a.V, Coverage-
   Welle). Über das Phase-5-Ende-Ziel von 70 % deutlich hinaus, gibt
@@ -325,6 +383,27 @@ Detection — siehe `werkbank/TODO.md`).
   Verwerfen leerer Eingaben ab.
 
 ### Geändert
+
+- **App-Shell-Layout auf semantische Komponente** (Phase 5b.1). Neue
+  `<x-layout>`-Komponente löst die alte `layouts/navi.blade.php` ab —
+  Tailwind-Grid statt Bootstrap-3-Cols, vier semantische Landmarks
+  (`<header>`, `<aside aria-label>`, `<main role="main" id="main-content">`,
+  `<footer>`), zentrale `@stack('scripts')`-Region für View-Beiträge
+  und eine zentrale `<div id="cc-live-announcer" role="status" aria-live="polite">`
+  für ARIA-Announcements. `projects/layout.blade.php` bleibt als
+  schlanker Brückenkopf bestehen: die 12+ `@extends('projects.layout')`-
+  Views in den App-Pfaden laufen unverändert weiter. Sub-View
+  `layouts/navi-header.blade.php` trägt den reinen Header-Anteil
+  (Logo, Navi-Items, Theme-Toggle). Vier Pinning-Tests sichern die
+  Section-Slot-Durchreichung.
+
+- **Script-Sections auf `@push('scripts')`** (Phase 5b.1). In den
+  zehn Editor-, Settings-, Translate-, Auth- und Index-Views ist
+  `@section('script') … @endsection` auf den idiomatischen
+  `@push('scripts') … @endpush`-Stack umgestellt. Stack wird in der
+  Layout-Komponente vor `</body>` ausgegeben (`@stack('scripts')`).
+  Robusterer Mechanismus für mehrere Beiträge pro Page — relevant
+  für die kommenden Komponenten-Wellen.
 
 - **`compat-bootstrap.css` → `bootstrap-utilities.css` umbenannt**
   (Phase 5a.IV.c, Pragma-Shift). Die Datei war als temporäre Brücke

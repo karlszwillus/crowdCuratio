@@ -366,7 +366,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
     @endif
 @endsection
-@section('script')
+@push('scripts')
     <script>
         $(document).ready(function () {
 
@@ -583,4 +583,4 @@ If not, see <https://www.gnu.org/licenses/>. -->
         @endisset
 
     </script>
-@endsection
+@endpush

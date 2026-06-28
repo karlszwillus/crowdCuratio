@@ -178,24 +178,3 @@ If not, see <https://www.gnu.org/licenses/>. -->
         </div>
     </nav>
 </header>
-
-<div class="row">
-    <div class="col-sm-2 leftbar">
-        @yield('log')
-    </div>
-    @if(View::hasSection('content'))
-        <div class="col-sm-10">
-            @yield('content')
-        </div>
-    @else
-        <div class="col-sm-7 mainbar">
-            @yield('main')
-        </div>
-        <div class="col-sm-3 rightbar">
-            @yield('sidebar')
-        </div>
-    @endif
-    <div class="col-sm-12">
-        @yield('footer')
-    </div>
-</div>

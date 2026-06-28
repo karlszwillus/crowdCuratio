@@ -80,7 +80,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
         </x-slot:footer>
     </x-ui.modal>
 @endsection
-@section('script')
+@push('scripts')
     <script>
         $(document).ready(function () {
 
@@ -155,4 +155,4 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
         })
     </script>
-@endsection
+@endpush

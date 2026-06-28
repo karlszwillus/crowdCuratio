@@ -23,6 +23,10 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
     @endpush
 @endonce
+@section('log')
+    <livewire:sidebar-tree :project="$project" :key="'sidebar-tree-'.$project->id" />
+@endsection
+
 @section('sidebar')
 
     @include('projects.description')
@@ -30,6 +34,29 @@ If not, see <https://www.gnu.org/licenses/>. -->
 @endsection
 
 @section('main')
+    {{-- Tree-Daten für die Live-Breadcrumb. Die <x-ui.breadcrumb>-
+         Komponente watcht im :tree-Modus window.location.hash und
+         leitet daraus den Pfad ab — Klick im Sidebar-Tree ändert
+         den Hash, Breadcrumb folgt automatisch. --}}
+    @php
+        $breadcrumbTree = [
+            'root' => ['label' => $project->name, 'href' => '#main-content'],
+            'chapters' => $data->chapters->mapWithKeys(fn ($chapter) => [
+                $chapter->id => [
+                    'label' => $chapter->name,
+                    'href' => '#anchor_Chapter_'.$chapter->id,
+                    'entries' => $chapter->entries->mapWithKeys(fn ($entry) => [
+                        $entry->id => [
+                            'label' => $entry->name,
+                            'href' => '#anchor_Entry_'.$entry->id,
+                        ],
+                    ])->toArray(),
+                ],
+            ])->toArray(),
+        ];
+    @endphp
+    <x-ui.breadcrumb :tree="$breadcrumbTree" />
+
     @if ($message = Session::get('success'))
         <div class="alert alert-success">
             <p>{{ $message }}</p>
@@ -88,9 +115,9 @@ If not, see <https://www.gnu.org/licenses/>. -->
                 <p>{!! $project->description !!}</p>
             </div>
         </div>
-        <ul class="list-group ui-sortable-chapter sortable_list_chapter connectedSortableChapter" id="groupsList">
+        <ul class="list-group ui-sortable-chapter sortable_list_chapter connectedSortableChapter" id="groupsList" data-reorder-element="chapter" data-reorder-url="{{ route('chapter.drag') }}" data-reorder-project="{{ $project->id }}">
             @foreach($data->chapters as $key => $chapter)
-                <li class="chapter group" data-chapter="{{$chapter->id}}" data-project="{{$project->id}}" id="{{$chapter->id}}">
+                <li class="chapter group" data-chapter="{{$chapter->id}}" data-project="{{$project->id}}" id="{{$chapter->id}}" @can('update', $project) tabindex="0" @endcan>
                     <div id="{{$chapter->id}}">
                         <div class="row border border-secondary p-4 mb-4 content">
                             <div style="float: left;" id="anchor_Chapter_{{$chapter->id}}">
@@ -124,10 +151,10 @@ If not, see <https://www.gnu.org/licenses/>. -->
 											<i class="bi-x-circle-fill m-2"></i></button>
 									@endif
 									@if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
-									<span data-toggle="tooltip" data-placement="top" title="{{__('edit_entry')}}"><a href="" data-id="{{$chapter->id}}"
+									<span data-toggle="tooltip" data-placement="top" title="{{__('edit_entry')}}"><button type="button" data-id="{{$chapter->id}}"
                                                                               data-toggle="modal"
                                                                               data-target="#myModal"
-                                                                              class="open-ModifyChapter"><i class="bi-pencil-square m-2"></i></a></span>
+                                                                              class="open-ModifyChapter"><i class="bi-pencil-square m-2"></i></button></span>
 									@endif
 									<a onclick="collapseExpand({{$chapter->id}})"  id="{{$chapter->id}}"
                                        aria-expanded="true" aria-controls="collapseChapter_{{$chapter->id}}"><i
@@ -138,9 +165,9 @@ If not, see <https://www.gnu.org/licenses/>. -->
                         </div>
                         <div class="collapse in" id="chapter_{{$chapter->id}}" aria-expanded="false">
                             @if(isset($chapter->entries) && count($chapter->entries) >0)
-                                <ul class="list-group ui-sortable-entry sortable_list_entry connectedSortableEntry" id="{{$chapter->id}}">
+                                <ul class="list-group ui-sortable-entry sortable_list_entry connectedSortableEntry" id="{{$chapter->id}}" data-reorder-element="entry" data-reorder-url="{{ route('chapter.drag') }}">
                                     @foreach($chapter->entries as $entry)
-                                        <li class="entry group" data-chapter="{{$chapter->id}}" data-entry="{{$entry->id}}">
+                                        <li class="entry group" data-chapter="{{$chapter->id}}" data-entry="{{$entry->id}}" @can('update', $project) tabindex="0" @endcan>
                                                 <div id="P-{{$project->id}}-C-{{$chapter->id}}-entry-{{$entry->id}}"
                                                              class="row border border-secondary p-4 mb-4 ml-auto w-11/12 content">
                                                             <div style="float: left;" id="anchor_Entry_{{$entry->id}}">
@@ -182,13 +209,13 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
                                                                     @if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
                                                                         <span data-toggle="tooltip"
-                                                                              data-placement="top" title="{{__('edit_entry')}}"><a
-                                                                                    href=""
+                                                                              data-placement="top" title="{{__('edit_entry')}}"><button
+                                                                                    type="button"
                                                                                     data-id="{{$entry->id}}"
                                                                                     data-toggle="modal"
                                                                                     data-target="#entryModal"
                                                                                     class="open-ModifyEntry"><i
-                                                                                        class="bi-pencil-square m-2"></i></a></span>
+                                                                                        class="bi-pencil-square m-2"></i></button></span>
                                                                     @endif
 
 
@@ -201,11 +228,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                         </div>
                                                     @if(isset($entry->mediaContent) && count($entry->mediaContent) > 0)
                                                         <div id="entry_{{$entry->id}}">
-                                                            <ul class="list-group  ui-sortable-content sortable_list_content connectedSortableContent" data-entry="{{$entry->id}}" id="{{$entry->id}}">
+                                                            <ul class="list-group  ui-sortable-content sortable_list_content connectedSortableContent" data-entry="{{$entry->id}}" id="{{$entry->id}}" data-reorder-element="content" data-reorder-url="{{ route('chapter.drag') }}">
                                                                 @foreach($entry->mediaContent as $item)
                                                                     @if($item->content_type == 'App\Models\Text')
                                                                         @isset($item->text->text)
-                                                                            <li class="item text content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}">
+                                                                            <li class="item text content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" @endcan>
                                                                                 <div class="row border border-secondary p-4 mb-4 ml-auto w-10/12">
                                                                                     <div id="anchor_MediaContent_{{$item->id}}">
                                                                                         <div class="text-scrollbar overflow-auto">
@@ -248,12 +275,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
                                                                                                 <span data-toggle="tooltip"
                                                                                                       data-placement="top"
-                                                                                                      title="{{_('edit_text')}}"><a
-                                                                                                            href=""
+                                                                                                      title="{{_('edit_text')}}"><button
+                                                                                                            type="button"
                                                                                                             data-id="{{$item->text->id}}"
                                                                                                             data-toggle="modal"
                                                                                                             data-target="#contentModal"
-                                                                                                            class="open-ModifyText"><i class="bi-pencil-square m-2"></i></a></span>
+                                                                                                            class="open-ModifyText"><i class="bi-pencil-square m-2"></i></button></span>
 																							@endif
                                                                                         </form>
                                                                                         <p class="metadata">
@@ -268,7 +295,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                     @endif
                                                                     @if($item->content_type == 'App\Models\Audiovisual')
                                                                         @isset($item->audiovisual->link)
-                                                                            <li class="item audiovisual content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}">
+                                                                            <li class="item audiovisual content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" @endcan>
                                                                                 <div class="row border border-secondary p-4 mb-4 ml-auto w-10/12">
                                                                                     <div id="anchor_MediaContent_{{$item->id}}">
                                                                                         @if($item->audiovisual->type == 'audio')
@@ -315,8 +342,8 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
                                                                                                 <span data-toggle="tooltip"
                                                                                                       data-placement="top"
-                                                                                                      title="{{_('edit_text')}}"><a
-                                                                                                            href=""
+                                                                                                      title="{{_('edit_text')}}"><button
+                                                                                                            type="button"
                                                                                                             data-id="{{$item->audiovisual->id}}"
                                                                                                             data-link="{{$item->audiovisual->link}}"
                                                                                                             data-copyright="{{$item->audiovisual->copyright}}"
@@ -326,7 +353,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                             data-target="#audiovisualModal"
                                                                                                             class="audiovisual-modify"> <i
                                                                                                                 class="bi-pencil-square m-2"></i>
-                                                                </a></span>
+                                                                </button></span>
                                                                                             @endif
                                                                                         </form>
                                                                                         <p class="metadata">
@@ -344,7 +371,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                          hat 'App\Models\Gallery' (ADR-0022). --}}
                                                                     @if(isset($item) && $item->content_type == 'App\Models\Gallery')
                                                                         @if(isset($item->gallery))
-                                                                            <li class="item gallery content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}">
+                                                                            <li class="item gallery content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" @endcan>
                                                                                 <div class="row border border-secondary p-4 mb-4 ml-auto w-10/12">
                                                                                     <div class="row">
                                                                                         <div class="">
@@ -379,8 +406,8 @@ If not, see <https://www.gnu.org/licenses/>. -->
  																								@if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
                                                                                                     <span data-toggle="tooltip"
                                                                                                           data-placement="top"
-                                                                                                          title="{{__('add_content')}}"> <a
-                                                                                                                href=""
+                                                                                                          title="{{__('add_content')}}"> <button
+                                                                                                                type="button"
                                                                                                                 class="addImage"
                                                                                                                 data-chapter="{{$chapter->name}}"
                                                                                                                 data-entry="{{$entry->name}}"
@@ -388,7 +415,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                                 data-entryId="{{$entry->id}}"
                                                                                                                 data-toggle="modal"
                                                                                                                 data-target="#imageModal"> <i
-                                                                                                                    class="bi bi-plus-circle m-2"></i> </a></span>
+                                                                                                                    class="bi bi-plus-circle m-2"></i> </button></span>
                                                                                                 @endif
                                                                                                 @if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
                                                                                                     <button type="submit"
@@ -403,14 +430,14 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
                                                                                                     <span data-toggle="tooltip"
                                                                                                           data-placement="top"
-                                                                                                          title="{{__('edit_image')}}"><a
-                                                                                                                href=""
+                                                                                                          title="{{__('edit_image')}}"><button
+                                                                                                                type="button"
                                                                                                                 data-id="{{$item->gallery->id}}"
                                                                                                                 data-toggle="modal"
                                                                                                                 data-target="#galleryModal"
                                                                                                                 class="open-ModifyGallery"> <i
                                                                                                                     class="bi-pencil-square m-2"></i>
-                                                                </a></span>
+                                                                </button></span>
                                                                                                 @endif
                                                                                             </form>
                                                                                         </div>
@@ -457,14 +484,14 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
                                                                                                         <span data-toggle="tooltip"
                                                                                                               data-placement="top"
-                                                                                                              title="{{__('edit_image')}}"><a
-                                                                                                                    href=""
+                                                                                                              title="{{__('edit_image')}}"><button
+                                                                                                                    type="button"
                                                                                                                     data-id="{{$image->id}}"
                                                                                                                     data-toggle="modal"
                                                                                                                     data-target="#imageModal"
                                                                                                                     class="open-ModifyImage"> <i
                                                                                                                         class="bi-pencil-square m-2"></i>
-                                                                </a></span>
+                                                                </button></span>
                                                                                                     @endif
                                                                                                 </form>
                                                                                                 <div class="metadata">
@@ -484,7 +511,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                             </ul>
                                                         </div>
                                             @else
-                                                <ul class="list-group  ui-sortable-content sortable_list_content connectedSortableContent" data-entry="{{$entry->id}}" id="{{$entry->id}}">
+                                                <ul class="list-group  ui-sortable-content sortable_list_content connectedSortableContent" data-entry="{{$entry->id}}" id="{{$entry->id}}" data-reorder-element="content" data-reorder-url="{{ route('chapter.drag') }}">
                                                    {{-- <li class="" data-content="" data-entry="{{$entry->id}}">
                                                     </li> --}}
                                                 </ul>
@@ -493,21 +520,21 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                 @if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
                                                     <span data-toggle="tooltip"
                                                           data-placement="top"
-                                                          title="{{__('add_content')}}"> <a
-                                                                href=""
+                                                          title="{{__('add_content')}}"> <button
+                                                                type="button"
                                                                 class="addContent btn btn-secondary add_item"
                                                                 data-chapter="{{$chapter->name}}"
                                                                 data-entry="{{$entry->name}}"
                                                                 data-id="{{$entry->id}}"
                                                                 data-toggle="modal"
-                                                                data-target="#contentModal">{{__('new_element')}} <i class="bi bi-plus-circle-fill m-2"></i> </a></span>
+                                                                data-target="#contentModal">{{__('new_element')}} <i class="bi bi-plus-circle-fill m-2"></i> </button></span>
                                                 @endif
                                             </div>
                                         </li>
                                     @endforeach
                                 </ul>
                             @else
-                                <ul class="list-group ui-sortable-entry sortable_list_entry connectedSortableEntry" id="{{$chapter->id}}">
+                                <ul class="list-group ui-sortable-entry sortable_list_entry connectedSortableEntry" id="{{$chapter->id}}" data-reorder-element="entry" data-reorder-url="{{ route('chapter.drag') }}">
                                     <li>&nbsp;</li>
                                 </ul>
                             @endif
@@ -515,12 +542,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     </div>
                     @if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
                         <div class="mb-4">
-                        <span data-toggle="tooltip" data-placement="top" title="{{__('add_entry')}}"><a href=""
+                        <span data-toggle="tooltip" data-placement="top" title="{{__('add_entry')}}"><button type="button"
                                                                                                         class="addEntry btn btn-secondary add_entry"
                                                                                                         data-chapter="{{$chapter->name}}"
                                                                                                         data-id="{{$chapter->id}}"
                                                                                                         data-toggle="modal"
-                                                                                                        data-target="#entryModal">{{__('new_entry')}} <i class="bi bi-plus-circle-fill m-2"></i> </a></span>
+                                                                                                        data-target="#entryModal">{{__('new_entry')}} <i class="bi bi-plus-circle-fill m-2"></i> </button></span>
                         </div>
                     @endif
                 </li>
@@ -644,16 +671,16 @@ If not, see <https://www.gnu.org/licenses/>. -->
 @section('footer')
     @if(Auth::user()->can('publish', $project) || Auth::user()->can('preview'))
         <div class="footer-background p-3 my-3 border">
-            <a href="#" class="m-4" data-toggle="modal" data-target="#previewModal" target="_blank" >{{__('pdf')}} <i class="bi bi-file-earmark-pdf-fill"></i>
-            </a>
-            <a href="#" class="m-4" data-toggle="modal" data-target="#previewModal" target="_blank" >{{__('preview')}} <i class="bi bi-globe"></i>
-            </a>
+            <button type="button" class="m-4" data-toggle="modal" data-target="#previewModal" >{{__('pdf')}} <i class="bi bi-file-earmark-pdf-fill"></i>
+            </button>
+            <button type="button" class="m-4" data-toggle="modal" data-target="#previewModal" >{{__('preview')}} <i class="bi bi-globe"></i>
+            </button>
 		<span class="right">	<a href="https://app.crowdcurat.io/downloads/html.zip" class="m-4"  target="_blank" >{{__('download')}} <i class="bi bi-globe"></i>
             </a></span>
         </div>
     @endif
 @endsection
-@section('script')
+@push('scripts')
     <script>
         $(".rotate").click(function() {
             $(this).toggleClass("down");
@@ -1564,4 +1591,4 @@ If not, see <https://www.gnu.org/licenses/>. -->
         @endcan {{-- Reader-Frontend-Härtung Juni 2026 (Sortable-Init-Gate) --}}
 
     </script>
-@endsection
+@endpush

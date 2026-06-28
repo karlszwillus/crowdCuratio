@@ -111,7 +111,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
             </div>
     </form>
 @endsection
-@section('script')
+@push('scripts')
     <script>
         $('#hasAdminRight').click(function (){
             if ($('#hasAdminRight').is(':checked')) {
@@ -122,4 +122,4 @@ If not, see <https://www.gnu.org/licenses/>. -->
         })
 
     </script>
-@endsection
+@endpush

@@ -29,6 +29,12 @@ import './theme';
 // jQuery-Shim in modal.js weiter.
 import './modal';
 
+// Live-Breadcrumb — registriert die Alpine-Komponente `ccBreadcrumb`,
+// die in <x-ui.breadcrumb :tree="..."> verwendet wird. Reagiert auf
+// hashchange und leitet aus dem Tree-Daten-Objekt den aktuellen Pfad
+// (Projekt > Kapitel > Abschnitt) ab.
+import './breadcrumb';
+
 // Vanilla-Typeahead-Manager — ersetzt bootstrap-3-typeahead.js. Auch
 // hier ein jQuery-Shim, damit die fünf `$('#xxx').typeahead({...})`-
 // Aufrufe in den Editor-Views unverändert weiterlaufen.
@@ -44,6 +50,17 @@ import './datatable';
 // das `Sortable.min.js`-CDN-Bundle schon im Stack), nicht mehr über
 // jQuery-UI. Damit fällt jQuery-UI als Abhängigkeit.
 import './sortable-shim';
+
+// ARIA-Live-Region-Announcer (WCAG 4.1.3): globale Funktion
+// window.ccAnnounce(message) füllt die zentrale Live-Region im
+// Layout. MUSS vor Modulen geladen werden, die die Funktion rufen.
+import './announcer';
+
+// Tastatur-Alternative für SortableJS-Drag (WCAG 2.5.7): Strg+Pfeil-
+// hoch/runter auf einem fokussierten Listen-Item bewegt es eine
+// Position. Persistiert über die gleiche `chapter.drag`-Route wie
+// der Maus-Drag.
+import './keyboard-reorder';
 
 // Tooltip-Shim — Bootstrap-3-`.tooltip()`-Plugin ist mit BS3-JS gefallen,
 // die `document.ready`-Inits in chapters/index und roles/index brauchen

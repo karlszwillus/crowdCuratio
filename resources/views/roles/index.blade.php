@@ -126,7 +126,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
         </div>
     </x-ui.modal>
 @endsection
-@section('script')
+@push('scripts')
     <script>
         //tooltip initialize
         $(function () {
@@ -177,4 +177,4 @@ If not, see <https://www.gnu.org/licenses/>. -->
         })
 
     </script>
-@endsection
+@endpush

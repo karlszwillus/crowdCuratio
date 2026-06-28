@@ -1,6 +1,6 @@
-<!--
+{{--
 crowdCuratio - Curating together virtually
-Copyright (C)2022 - berlinHistory e.V.
+Copyright (C)2022, 2026 - berlinHistory e.V.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -15,62 +15,35 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program in the file LICENSE.
 
-If not, see <https://www.gnu.org/licenses/>. -->
+If not, see <https://www.gnu.org/licenses/>.
+--}}
 
-<!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-<head>
-    <title>crowdCuratio</title>
-    <!--  CSRF for all ajax call -->
-    <meta name="csrf-token" content="{{ csrf_token() }}"/>
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-    {{-- Die alten public/css/{style,sidebar,crowdcuratio}.css definierten
-         Bootstrap-3-Overrides plus die Layout-Klassen .leftbar/.mainbar/
-         .rightbar. Die Layout-Klassen leben jetzt in bootstrap-utilities.css
-         (App-eigene Custom-Utilities mit Bootstrap-Klassennamen), der Rest
-         war Bootstrap-3-Cosmetic, der die Tailwind-Tokens überlagerte und
-         damit das Button-Rendering kapert. In 5a.IV.b endgültig gelöscht. --}}
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css">
+{{-- Brückenkopf zwischen den alten `@extends('projects.layout')`-Views
+     und der neuen `<x-layout>`-Komponente. Bestehende Views ändern
+     sich in dieser Welle nicht — sie befüllen weiterhin
+     `@section('log/main/sidebar/content/footer')` und werden hier
+     in die Slot-API der Komponente übersetzt. Saubere Komponenten-
+     Umstellung der Views erfolgt ab den späteren Sub-Wellen, dann
+     entfällt diese Hülle. --}}
 
-    <link href="https://cdn.quilljs.com/1.1.6/quill.snow.css" rel="stylesheet">
-    <script src="https://cdn.quilljs.com/1.1.6/quill.js"></script> <!-- Create the editor container -->
+<x-layout>
+    <x-slot:log>
+        @yield('log')
+    </x-slot:log>
 
-    @livewireStyles
-	<link rel="apple-touch-icon" sizes="180x180" href="{{ asset('css/favicon/apple-touch-icon.png') }}">
-	<link rel="icon" type="image/png" sizes="32x32" href="{{ asset('css/favicon/favicon-32x32.png') }}">
-	<link rel="icon" type="image/png" sizes="16x16" href="{{ asset('css/favicon/favicon-16x16.png') }}">
-	<link rel="manifest" href="{{ asset('css/favicon/site.webmanifest') }}">
-	<meta name="msapplication-TileColor" content="#da532c">
-	<meta name="theme-color" content="#ffffff">
+    <x-slot:main>
+        @yield('main')
+    </x-slot:main>
 
+    <x-slot:sidebar>
+        @yield('sidebar')
+    </x-slot:sidebar>
 
-    <!-- Scripts -->
-    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
-    {{-- Bootstrap-3.3.7-JS ist raus. Der Modal-Manager in
-         resources/js/modal.js bedient das bestehende `<div class="modal">`-
-         Markup und stellt einen jQuery-Shim für die programmatischen
-         `$('#xxx').modal('show')`-Aufrufe. x-editable lebt vorerst
-         weiter — es nutzt jQuery direkt, nicht Bootstrap-JS. --}}
-    <script src="https://cdn.jsdelivr.net/gh/RubaXa/Sortable/Sortable.min.js"></script>
+    <x-slot:content>
+        @yield('content')
+    </x-slot:content>
 
-    <meta name="csrf-token" content="{{ csrf_token() }}" />
-    <script type="text/javascript">
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            }
-        });
-    </script>
-
-</head>
-<body class="bg-canvas-bg">
-
-<div class="container-fluid">
-    @include('layouts.navi')
-    @yield('script')
-</div>
-
-@livewireScripts
-</body>
-</html>
+    <x-slot:footer>
+        @yield('footer')
+    </x-slot:footer>
+</x-layout>
