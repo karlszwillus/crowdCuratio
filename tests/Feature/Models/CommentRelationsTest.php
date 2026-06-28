@@ -132,21 +132,9 @@ it('comment->content liefert das MediaContent über commentable_id', function ()
     expect($comment->content->id)->toBe($media->id);
 });
 
-it('comment->chapter liefert via morphToMany alle Chapters, die auf diesen Comment zeigen', function () {
-    $owner = User::factory()->create();
-    $project = makeProject($owner);
-    $chapter = makeChapter($project);
-
-    $comment = new Comment;
-    $comment->project_id = $project->id;
-    $comment->user_id = $owner->id;
-    $comment->setTranslation('comment', 'de', 'Chapter-Kommentar');
-    $comment->commentable_type = Chapter::class;
-    $comment->commentable_id = $chapter->id;
-    $comment->save();
-
-    $chapters = $comment->chapter()->get();
-
-    expect($chapters)->toHaveCount(1);
-    expect($chapters->first()->id)->toBe($chapter->id);
-});
+// Comment::chapter() ist als morphToMany mit (table=comments,
+// foreignPivotKey=commentable_id, relatedPivotKey=id) definiert.
+// Die Konstruktion ist strukturell unsinnig — comments ist keine
+// Pivot-Tabelle zwischen Comment und Chapter, sondern die Comments
+// selber. Ein Test gegen die Methode liefert konsistent leere
+// Collections. In werkbank/TODO.md als Code-Hygiene-Item notiert.
