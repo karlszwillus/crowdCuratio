@@ -56,7 +56,9 @@ it('comment->project liefert das verknüpfte Project zurück', function () {
     $comment->save();
 
     expect($comment->project)->not->toBeNull();
-    expect($comment->project->id)->toBe($project->id);
+    /** @var \App\Models\Project $resolvedProject */
+    $resolvedProject = $comment->project;
+    expect($resolvedProject->id)->toBe($project->id);
 });
 
 it('comment->commentable liefert das verknüpfte Chapter über morphTo', function () {
@@ -74,6 +76,7 @@ it('comment->commentable liefert das verknüpfte Chapter über morphTo', functio
     $comment->commentable_id = $chapter->id;
     $comment->save();
 
+    /** @var Chapter $resolved */
     $resolved = $comment->commentable;
 
     expect($resolved)->toBeInstanceOf(Chapter::class);
@@ -105,6 +108,7 @@ it('comment->commentable liefert MediaContent, wenn der morph-Typ MediaContent i
     $comment->commentable_id = $media->id;
     $comment->save();
 
+    /** @var MediaContent $resolved */
     $resolved = $comment->commentable;
 
     expect($resolved)->toBeInstanceOf(MediaContent::class);

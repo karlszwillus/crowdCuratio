@@ -144,8 +144,10 @@ it('image() liefert das verknüpfte Image-Modell über content_id', function () 
         'position' => 0,
     ]);
 
-    expect($row->image)->toBeInstanceOf(Image::class);
-    expect($row->image->id)->toBe($image->id);
+    /** @var Image $resolved */
+    $resolved = $row->image;
+    expect($resolved)->toBeInstanceOf(Image::class);
+    expect($resolved->id)->toBe($image->id);
 });
 
 it('text() liefert das verknüpfte Text-Modell über content_id', function () {
@@ -163,8 +165,10 @@ it('text() liefert das verknüpfte Text-Modell über content_id', function () {
         'position' => 0,
     ]);
 
-    expect($row->text)->toBeInstanceOf(Text::class);
-    expect($row->text->id)->toBe($text->id);
+    /** @var Text $resolved */
+    $resolved = $row->text;
+    expect($resolved)->toBeInstanceOf(Text::class);
+    expect($resolved->id)->toBe($text->id);
 });
 
 it('gallery() liefert das verknüpfte Gallery-Modell über content_id', function () {
@@ -182,8 +186,10 @@ it('gallery() liefert das verknüpfte Gallery-Modell über content_id', function
         'position' => 0,
     ]);
 
-    expect($row->gallery)->toBeInstanceOf(Gallery::class);
-    expect($row->gallery->id)->toBe($gallery->id);
+    /** @var Gallery $resolved */
+    $resolved = $row->gallery;
+    expect($resolved)->toBeInstanceOf(Gallery::class);
+    expect($resolved->id)->toBe($gallery->id);
 });
 
 it('audiovisual() liefert das verknüpfte Audiovisual-Modell über content_id', function () {
@@ -201,8 +207,10 @@ it('audiovisual() liefert das verknüpfte Audiovisual-Modell über content_id', 
         'position' => 0,
     ]);
 
-    expect($row->audiovisual)->toBeInstanceOf(Audiovisual::class);
-    expect($row->audiovisual->id)->toBe($av->id);
+    /** @var Audiovisual $resolved */
+    $resolved = $row->audiovisual;
+    expect($resolved)->toBeInstanceOf(Audiovisual::class);
+    expect($resolved->id)->toBe($av->id);
 });
 
 it('entry() liefert via belongsToMany alle Entries, deren parent_id auf diesen MediaContent zeigt', function () {
@@ -221,7 +229,9 @@ it('entry() liefert via belongsToMany alle Entries, deren parent_id auf diesen M
     ]);
 
     expect($row->entry()->get())->toHaveCount(1);
-    expect($row->entry()->first()->id)->toBe($entry->id);
+    /** @var Entry $firstEntry */
+    $firstEntry = $row->entry()->first();
+    expect($firstEntry->id)->toBe($entry->id);
 });
 
 it('löscht beim Delete kaskadierend Text-/Gallery-/Comment-Kinder mit', function () {
