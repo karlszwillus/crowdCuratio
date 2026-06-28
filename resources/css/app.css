@@ -106,6 +106,25 @@ li.item.content:focus-visible {
 }
 
 /*
+ * Touch-Target-Mindestgröße (WCAG 2.5.8). Im Editor sitzen viele
+ * Icon-only-Buttons (Edit, Delete, Collapse) mit `<i class="bi-…">`
+ * als einzigem Inhalt — die sind ohne Padding ~16-24 px breit und
+ * damit auf Mobile (und für Menschen mit eingeschränkter Feinmotorik)
+ * zu klein. Diese Regel greift mit :has() auf Icon-only-Wrapper im
+ * `<button>` und `<a>` und setzt 44×44 px als Mindest-Klick-Fläche;
+ * Text-Buttons (`<i>…</i> Speichern`) bleiben unangetastet, weil
+ * dort das `<i>` nicht :only-child ist.
+ */
+button:has(> i:only-child[class*="bi-"]),
+a:has(> i:only-child[class*="bi-"]) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
+    min-width: 2.75rem;
+}
+
+/*
  * Skip-Link (WCAG 2.4.1, „Bypass Blocks"). Im Default visuell versteckt
  * via translateY(-150%), nicht via clip-path/sr-only — die Tailwind-
  * `focus:not-sr-only`-Modifier-Kette wurde im Browser-Smoke nicht
