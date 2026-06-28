@@ -26,3 +26,14 @@
  * permanenter Teil der App-CSS-Schicht.
  */
 @import "./bootstrap-utilities.css";
+
+/*
+ * Alpine-Cloak: Elemente mit `x-cloak` sind initial verborgen, bis
+ * Alpine den ersten DOM-Walk gemacht hat. Ohne diese Regel würde ein
+ * `x-show`-Element vor der Hydrate-Phase kurz aufflackern. `!important`
+ * ist nötig, weil Alpine das Attribut beim Mount entfernt und der
+ * Selector dann nicht mehr matcht.
+ */
+[x-cloak] {
+    display: none !important;
+}

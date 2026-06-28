@@ -102,12 +102,19 @@ If not, see <https://www.gnu.org/licenses/>. -->
                 class="flex h-9 w-9 items-center justify-center rounded-md text-ink-700 hover:bg-ink-400/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 title="Theme wechseln"
             >
-                <template x-if="$store.theme.current === 'aktivesMuseum'">
+                {{-- Beide Icons direkt im Button, per x-show getoggelt.
+                     Vorheriges Pattern (<template x-if> mit <x-ui.icon>)
+                     hat in der Praxis kein sichtbares Icon gerendert —
+                     vermutlich weil das Server-Side-Markup mit <template>
+                     den SVG-Inhalt aus dem regulären DOM-Tree heraushielt
+                     und Alpine den Clone-Insert nicht zuverlässig durchführt.
+                     Direkt-Embed + x-show ist hier robuster. --}}
+                <span x-show="$store.theme.current === 'aktivesMuseum'" x-cloak class="flex">
                     <x-ui.icon name="sun" :size="18"/>
-                </template>
-                <template x-if="$store.theme.current !== 'aktivesMuseum'">
+                </span>
+                <span x-show="$store.theme.current !== 'aktivesMuseum'" x-cloak class="flex">
                     <x-ui.icon name="moon" :size="18"/>
-                </template>
+                </span>
             </button>
 
             @if(!in_array(Route::currentRouteName(), ['translate', 'log.detail']))

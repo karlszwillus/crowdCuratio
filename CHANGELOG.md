@@ -632,6 +632,21 @@ Drittabhängigkeiten.
   in der ehemaligen `CommentTrait::commentAsUser`.
 
 ### Behoben
+
+- **Theme-Toggle-Icon im Navi-Header war unsichtbar** (Phase 5a.V, T1).
+  Der Button war im DOM und `$store.theme.toggle()` funktional, aber
+  die Sonne-/Mond-Icons rendern nicht — Ursache: das ursprüngliche
+  Pattern mit zwei `<template x-if>` plus eingebetteter `<x-ui.icon>`-
+  Blade-Komponente hat den SVG-Inhalt im HTML-Standard-`<template>`-
+  Element belassen, dessen Kinder der Browser nie ins reguläre DOM
+  hängt; der Alpine-Clone-Insert war in dieser Konstellation
+  unzuverlässig. Umgestellt auf `x-show` mit zwei direkt im Button
+  eingebetteten `<span>`-Wrappern (jeweils eine Lucide-Variante). Plus
+  globale `[x-cloak] { display: none !important }`-Regel in
+  `resources/css/app.css` und `x-cloak` an beiden Spans, damit beim
+  Page-Load nicht beide Icons gleichzeitig aufflackern, bis der
+  Store-State hydriert ist.
+
 - **Bildupload in Galerien zeigt das hochgeladene Bild nicht mehr
   als nicht-vorhanden.**
 - **Neuanlage von Gallery, Text, Image und Audio/Video lieferte
