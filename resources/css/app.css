@@ -69,3 +69,41 @@
         transition: none !important;
     }
 }
+
+/*
+ * Skip-Link (WCAG 2.4.1, „Bypass Blocks"). Im Default visuell versteckt
+ * via translateY(-150%), nicht via clip-path/sr-only — die Tailwind-
+ * `focus:not-sr-only`-Modifier-Kette wurde im Browser-Smoke nicht
+ * zuverlässig sichtbar (vermutlich :focus-Rendering-Edge-Case für
+ * Anker außerhalb der visuellen Tab-Order). Dieser Klassen-Block
+ * setzt die Sichtbarkeit explizit, ohne Tailwind-Modifier-Cascade.
+ *
+ * Ziel-Anker ist `<main id="main-content">` im <x-layout>.
+ */
+.skip-link {
+    position: absolute;
+    top: 0;
+    left: 1rem;
+    z-index: 100;
+    padding: 0.5rem 1rem;
+    background-color: var(--color-primary);
+    color: var(--color-primary-on);
+    border-radius: 0.375rem;
+    text-decoration: none;
+    font-weight: 500;
+    transform: translateY(-150%);
+    transition: transform 180ms ease-out;
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+    transform: translateY(1rem);
+    outline: 2px solid var(--color-primary-on);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .skip-link {
+        transition: none;
+    }
+}

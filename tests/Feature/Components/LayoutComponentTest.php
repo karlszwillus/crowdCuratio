@@ -94,6 +94,26 @@ BLADE);
         ->toContain('NUR-MAIN');
 });
 
+it('Layout rendert Skip-Link mit href="#main-content" als ersten Tab-Stop', function () {
+    /** @var TestCase $this */
+    $html = Blade::render(<<<'BLADE'
+<x-layout>
+    <x-slot:main>X</x-slot:main>
+</x-layout>
+BLADE);
+
+    expect($html)
+        ->toContain('href="#main-content"')
+        ->toContain('class="skip-link"')
+        ->toContain('Zum Inhalt springen');
+
+    // Der Skip-Link muss noch vor dem Header kommen, damit Tab als
+    // erstes auf ihm landet.
+    $skipPos = strpos($html, 'href="#main-content"');
+    $headerPos = strpos($html, '<header');
+    expect($skipPos)->toBeInt()->toBeLessThan($headerPos);
+});
+
 it('Layout-Komponente exponiert <header> und @livewireScripts vor </body>', function () {
     /** @var TestCase $this */
     $html = Blade::render(<<<'BLADE'

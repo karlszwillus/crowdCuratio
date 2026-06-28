@@ -79,6 +79,15 @@ If not, see <https://www.gnu.org/licenses/>.
 </head>
 <body class="bg-canvas-bg">
 
+    {{-- Skip-Link als erster Tab-Stop (WCAG 2.4.1). Im Default per
+         transform: translateY(-150%) versteckt, bei :focus springt
+         er nach unten ins Viewport. Style in resources/css/app.css
+         (.skip-link). Ziel ist der <main id="main-content">-Anker
+         weiter unten. --}}
+    <a href="#main-content" class="skip-link">
+        {{ __('skip_to_main') }}
+    </a>
+
     @include('layouts.navi-header')
 
     <div class="mx-auto w-full max-w-screen-2xl px-4">
