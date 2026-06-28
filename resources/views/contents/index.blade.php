@@ -23,14 +23,14 @@ If not, see <https://www.gnu.org/licenses/>. -->
         <div class="writeinfo"></div>
         <div class="col-xs-12">
             <div id="contentType">
-                <a href="" class="add-Text"><i class="bi bi-file-font"
-                                               style="font-size:80px;"></i>{{__('text')}} </a>
-                <a href="" class="add-Image m-7"><i class="bi bi-file-image"
-                                                    style="font-size:80px;"></i>{{__('gallery')}} </a>
-                <a href="" class="add-audio m-7"><i class="bi bi-file-earmark-play"
-                                                    style="font-size:80px;"></i>{{__('audio')}} </a>
-                <a href="" class="add-video m-7"><i class="bi bi bi-camera-video"
-                                                    style="font-size:80px;"></i> {{__('video')}} </a>
+                <button type="button" class="add-Text"><i class="bi bi-file-font"
+                                               style="font-size:80px;"></i>{{__('text')}} </button>
+                <button type="button" class="add-Image m-7"><i class="bi bi-file-image"
+                                                    style="font-size:80px;"></i>{{__('gallery')}} </button>
+                <button type="button" class="add-audio m-7"><i class="bi bi-file-earmark-play"
+                                                    style="font-size:80px;"></i>{{__('audio')}} </button>
+                <button type="button" class="add-video m-7"><i class="bi bi bi-camera-video"
+                                                    style="font-size:80px;"></i> {{__('video')}} </button>
             </div>
 
             <div id="addText" style="display: none;">

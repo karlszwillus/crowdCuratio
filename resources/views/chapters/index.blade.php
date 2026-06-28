@@ -151,10 +151,10 @@ If not, see <https://www.gnu.org/licenses/>. -->
 											<i class="bi-x-circle-fill m-2"></i></button>
 									@endif
 									@if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
-									<span data-toggle="tooltip" data-placement="top" title="{{__('edit_entry')}}"><a href="" data-id="{{$chapter->id}}"
+									<span data-toggle="tooltip" data-placement="top" title="{{__('edit_entry')}}"><button type="button" data-id="{{$chapter->id}}"
                                                                               data-toggle="modal"
                                                                               data-target="#myModal"
-                                                                              class="open-ModifyChapter"><i class="bi-pencil-square m-2"></i></a></span>
+                                                                              class="open-ModifyChapter"><i class="bi-pencil-square m-2"></i></button></span>
 									@endif
 									<a onclick="collapseExpand({{$chapter->id}})"  id="{{$chapter->id}}"
                                        aria-expanded="true" aria-controls="collapseChapter_{{$chapter->id}}"><i
@@ -209,13 +209,13 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
                                                                     @if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
                                                                         <span data-toggle="tooltip"
-                                                                              data-placement="top" title="{{__('edit_entry')}}"><a
-                                                                                    href=""
+                                                                              data-placement="top" title="{{__('edit_entry')}}"><button
+                                                                                    type="button"
                                                                                     data-id="{{$entry->id}}"
                                                                                     data-toggle="modal"
                                                                                     data-target="#entryModal"
                                                                                     class="open-ModifyEntry"><i
-                                                                                        class="bi-pencil-square m-2"></i></a></span>
+                                                                                        class="bi-pencil-square m-2"></i></button></span>
                                                                     @endif
 
 
@@ -275,12 +275,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
                                                                                                 <span data-toggle="tooltip"
                                                                                                       data-placement="top"
-                                                                                                      title="{{_('edit_text')}}"><a
-                                                                                                            href=""
+                                                                                                      title="{{_('edit_text')}}"><button
+                                                                                                            type="button"
                                                                                                             data-id="{{$item->text->id}}"
                                                                                                             data-toggle="modal"
                                                                                                             data-target="#contentModal"
-                                                                                                            class="open-ModifyText"><i class="bi-pencil-square m-2"></i></a></span>
+                                                                                                            class="open-ModifyText"><i class="bi-pencil-square m-2"></i></button></span>
 																							@endif
                                                                                         </form>
                                                                                         <p class="metadata">
@@ -342,8 +342,8 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
                                                                                                 <span data-toggle="tooltip"
                                                                                                       data-placement="top"
-                                                                                                      title="{{_('edit_text')}}"><a
-                                                                                                            href=""
+                                                                                                      title="{{_('edit_text')}}"><button
+                                                                                                            type="button"
                                                                                                             data-id="{{$item->audiovisual->id}}"
                                                                                                             data-link="{{$item->audiovisual->link}}"
                                                                                                             data-copyright="{{$item->audiovisual->copyright}}"
@@ -353,7 +353,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                             data-target="#audiovisualModal"
                                                                                                             class="audiovisual-modify"> <i
                                                                                                                 class="bi-pencil-square m-2"></i>
-                                                                </a></span>
+                                                                </button></span>
                                                                                             @endif
                                                                                         </form>
                                                                                         <p class="metadata">
@@ -406,8 +406,8 @@ If not, see <https://www.gnu.org/licenses/>. -->
  																								@if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
                                                                                                     <span data-toggle="tooltip"
                                                                                                           data-placement="top"
-                                                                                                          title="{{__('add_content')}}"> <a
-                                                                                                                href=""
+                                                                                                          title="{{__('add_content')}}"> <button
+                                                                                                                type="button"
                                                                                                                 class="addImage"
                                                                                                                 data-chapter="{{$chapter->name}}"
                                                                                                                 data-entry="{{$entry->name}}"
@@ -415,7 +415,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                                 data-entryId="{{$entry->id}}"
                                                                                                                 data-toggle="modal"
                                                                                                                 data-target="#imageModal"> <i
-                                                                                                                    class="bi bi-plus-circle m-2"></i> </a></span>
+                                                                                                                    class="bi bi-plus-circle m-2"></i> </button></span>
                                                                                                 @endif
                                                                                                 @if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
                                                                                                     <button type="submit"
@@ -430,14 +430,14 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
                                                                                                     <span data-toggle="tooltip"
                                                                                                           data-placement="top"
-                                                                                                          title="{{__('edit_image')}}"><a
-                                                                                                                href=""
+                                                                                                          title="{{__('edit_image')}}"><button
+                                                                                                                type="button"
                                                                                                                 data-id="{{$item->gallery->id}}"
                                                                                                                 data-toggle="modal"
                                                                                                                 data-target="#galleryModal"
                                                                                                                 class="open-ModifyGallery"> <i
                                                                                                                     class="bi-pencil-square m-2"></i>
-                                                                </a></span>
+                                                                </button></span>
                                                                                                 @endif
                                                                                             </form>
                                                                                         </div>
@@ -484,14 +484,14 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
                                                                                                         <span data-toggle="tooltip"
                                                                                                               data-placement="top"
-                                                                                                              title="{{__('edit_image')}}"><a
-                                                                                                                    href=""
+                                                                                                              title="{{__('edit_image')}}"><button
+                                                                                                                    type="button"
                                                                                                                     data-id="{{$image->id}}"
                                                                                                                     data-toggle="modal"
                                                                                                                     data-target="#imageModal"
                                                                                                                     class="open-ModifyImage"> <i
                                                                                                                         class="bi-pencil-square m-2"></i>
-                                                                </a></span>
+                                                                </button></span>
                                                                                                     @endif
                                                                                                 </form>
                                                                                                 <div class="metadata">
@@ -520,14 +520,14 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                 @if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
                                                     <span data-toggle="tooltip"
                                                           data-placement="top"
-                                                          title="{{__('add_content')}}"> <a
-                                                                href=""
+                                                          title="{{__('add_content')}}"> <button
+                                                                type="button"
                                                                 class="addContent btn btn-secondary add_item"
                                                                 data-chapter="{{$chapter->name}}"
                                                                 data-entry="{{$entry->name}}"
                                                                 data-id="{{$entry->id}}"
                                                                 data-toggle="modal"
-                                                                data-target="#contentModal">{{__('new_element')}} <i class="bi bi-plus-circle-fill m-2"></i> </a></span>
+                                                                data-target="#contentModal">{{__('new_element')}} <i class="bi bi-plus-circle-fill m-2"></i> </button></span>
                                                 @endif
                                             </div>
                                         </li>
@@ -542,12 +542,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     </div>
                     @if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
                         <div class="mb-4">
-                        <span data-toggle="tooltip" data-placement="top" title="{{__('add_entry')}}"><a href=""
+                        <span data-toggle="tooltip" data-placement="top" title="{{__('add_entry')}}"><button type="button"
                                                                                                         class="addEntry btn btn-secondary add_entry"
                                                                                                         data-chapter="{{$chapter->name}}"
                                                                                                         data-id="{{$chapter->id}}"
                                                                                                         data-toggle="modal"
-                                                                                                        data-target="#entryModal">{{__('new_entry')}} <i class="bi bi-plus-circle-fill m-2"></i> </a></span>
+                                                                                                        data-target="#entryModal">{{__('new_entry')}} <i class="bi bi-plus-circle-fill m-2"></i> </button></span>
                         </div>
                     @endif
                 </li>
@@ -671,10 +671,10 @@ If not, see <https://www.gnu.org/licenses/>. -->
 @section('footer')
     @if(Auth::user()->can('publish', $project) || Auth::user()->can('preview'))
         <div class="footer-background p-3 my-3 border">
-            <a href="#" class="m-4" data-toggle="modal" data-target="#previewModal" target="_blank" >{{__('pdf')}} <i class="bi bi-file-earmark-pdf-fill"></i>
-            </a>
-            <a href="#" class="m-4" data-toggle="modal" data-target="#previewModal" target="_blank" >{{__('preview')}} <i class="bi bi-globe"></i>
-            </a>
+            <button type="button" class="m-4" data-toggle="modal" data-target="#previewModal" >{{__('pdf')}} <i class="bi bi-file-earmark-pdf-fill"></i>
+            </button>
+            <button type="button" class="m-4" data-toggle="modal" data-target="#previewModal" >{{__('preview')}} <i class="bi bi-globe"></i>
+            </button>
 		<span class="right">	<a href="https://app.crowdcurat.io/downloads/html.zip" class="m-4"  target="_blank" >{{__('download')}} <i class="bi bi-globe"></i>
             </a></span>
         </div>
