@@ -141,7 +141,9 @@ it('comment->content liefert das MediaContent über commentable_id', function ()
     $comment->save();
 
     expect($comment->content)->not->toBeNull();
-    expect($comment->content->id)->toBe($media->id);
+    /** @var MediaContent $resolvedContent */
+    $resolvedContent = $comment->content;
+    expect($resolvedContent->id)->toBe($media->id);
 });
 
 // Comment::chapter() ist als morphToMany mit (table=comments,
