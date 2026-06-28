@@ -96,6 +96,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
         <div class="flex items-center gap-3">
             <button
                 type="button"
+                x-data
                 @click="$store.theme.toggle()"
                 :aria-pressed="$store.theme.current === 'aktivesMuseum'"
                 :aria-label="$store.theme.current === 'aktivesMuseum' ? '{{ __('switch_theme_default') }}' : '{{ __('switch_theme_alt') }}'"

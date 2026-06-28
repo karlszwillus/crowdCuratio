@@ -634,7 +634,7 @@ Drittabhängigkeiten.
 ### Behoben
 
 - **Theme-Toggle-Icon im Navi-Header war unsichtbar** (Phase 5a.V,
-  T1 + T2). Zwei Bugs überlagert:
+  T1 + T2 + T3). Drei Bugs überlagert:
   - **T1 (View-Pattern):** Das ursprüngliche Markup hatte zwei
     `<template x-if>` mit eingebetteter `<x-ui.icon>`-Blade-Komponente.
     Das HTML-Standard-`<template>` hält seinen Inhalt außerhalb des
@@ -657,6 +657,16 @@ Drittabhängigkeiten.
     `x-cloak` blieben beide Icons unsichtbar. Robust gefixt: `theme.js`
     prüft beim Module-Load, ob `window.Alpine` schon da ist, und
     registriert dann sofort; sonst nimmt es den Listener wie bisher.
+  - **T3 (fehlender x-data-Scope):** Nach T2 war der Store da, aber
+    am Button waren `aria-pressed`/`aria-label` weiterhin `null` und
+    beide Spans behielten ihr `x-cloak`-Attribut. Ursache: Alpine
+    verarbeitet `@click`/`:aria-*`/`x-show` nur innerhalb eines
+    `x-data`-Scopes; der Theme-Button stand außerhalb. `x-data` direkt
+    am Button-Tag angebracht (leeres Scope reicht, der State lebt im
+    globalen `$store.theme`). Verifiziert per Browser-DOM-Check: Sun
+    sichtbar bei `aktivesMuseum`, Moon bei Default, `aria-pressed`
+    schaltet, `data-theme`-Attribut auf `<html>` wechselt, `cc-theme`
+    in localStorage persistiert.
 
 - **Bildupload in Galerien zeigt das hochgeladene Bild nicht mehr
   als nicht-vorhanden.**
