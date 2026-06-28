@@ -25,6 +25,32 @@ Drittabhängigkeiten.
 
 ### Hinzugefügt
 
+- **Coverage-Push von 65,3 % auf Phase-5-Ziel ≥ 70 %**
+  (Phase 5a.V, Coverage-Welle). Vier neue Test-Files mit insgesamt
+  20 Cases, die ungetestete Stellen mit hohem Lift-pro-Aufwand
+  abdecken:
+  - `tests/Feature/Controllers/LanguageControllerTest.php` —
+    `LanguageController::switchLang`: Pinning für gültige und
+    ignorierte Sprachen.
+  - `tests/Feature/Policies/UserPolicyTest.php` — Admin-via-`before()`-
+    Override, Self-Edit für Nicht-Admins, Fremd-Edit-Verbot, volle
+    Gate-Auflösung über `Gate::can`.
+  - `tests/Feature/Controllers/PublicControllerTest.php` —
+    `PublicController::projectPolicy`/`projectTerms`: JSON-Response
+    mit dem jeweils aktiven Eintrag, inaktive Einträge ignoriert.
+  - `tests/Feature/Controllers/SettingControllerTest.php` — Admin-
+    Settings-Controller: View-Rendering mit/ohne Bestand, alle vier
+    `store()`-Pfade (Terms/Privacy/Imprint/Invitation), leerer
+    Aufruf, Forbidden für Nicht-Admins.
+
+  Begleitend `active` ins `$fillable` von `PrivacyPolicy` und
+  `TermsConditions` aufgenommen (plus `boolean`-Cast) — ohne diese
+  Ergänzung würde der Strict-Mode-Eloquent-Schutz das
+  Mass-Assignment im Test wegen `preventSilentlyDiscardingAttributes`
+  abbrechen. Settings-Modelle haben damit eine sauber
+  mass-assignable Aktivierungs-Flagge — auch für künftige Versionen-
+  Verwaltung.
+
 - **App-Shell-Theme-Switch visuell sichtbar** (Phase 5a.V, T4).
   Bis T3 war das Theme funktional schon vollständig — `data-theme`,
   `$store.theme`, `localStorage`, ARIA-States — aber die App sah in

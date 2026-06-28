@@ -1,0 +1,175 @@
+<?php
+
+/**
+crowdCuratio - Curating together virtually
+Copyright (C)2026 - berlinHistory e.V.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program in the file LICENSE.
+
+If not, see <https://www.gnu.org/licenses/>.
+ */
+
+use App\Models\Imprint;
+use App\Models\MailSetting;
+use App\Models\PrivacyPolicy;
+use App\Models\TermsConditions;
+use App\Models\User;
+use App\Support\RoleName;
+use Spatie\Permission\Models\Role;
+
+/*
+|--------------------------------------------------------------------------
+| SettingController — Admin-Settings (Terms/Privacy/Imprint/Invitation-Mail)
+|--------------------------------------------------------------------------
+|
+| Routes hinter auth+role:Admin. index() rendert die Settings-View mit
+| den jeweils ersten Datensätzen (oder null). store() ist ein Polymorph
+| über vier Request-Felder: termsConditions, privacyPolicy, firstname,
+| invitation — je nach gesetztem Feld wird in eines der vier Modelle
+| geschrieben.
+*/
+
+beforeEach(function () {
+    Role::firstOrCreate(['name' => RoleName::ADMIN->value, 'guard_name' => 'web']);
+    $this->admin = User::factory()->create();
+    $this->admin->assignRole(RoleName::ADMIN->value);
+    app()->setLocale('de');
+});
+
+it('rendert die Settings-View leer, wenn noch keine Datensätze existieren', function () {
+    $response = $this->actingAs($this->admin)
+        ->get(route('settings.index'));
+
+    $response->assertOk();
+    $response->assertViewIs('settings.index');
+    $response->assertViewHas('terms', null);
+    $response->assertViewHas('privacy', null);
+    $response->assertViewHas('mail', null);
+    $response->assertViewHas('imprint', null);
+});
+
+it('rendert die Settings-View mit den ersten Datensätzen', function () {
+    TermsConditions::create([
+        'terms_conditions' => ['de' => 'AGB-Text'],
+        'active' => 1,
+    ]);
+    PrivacyPolicy::create([
+        'privacy_policy' => ['de' => 'Datenschutz-Text'],
+        'active' => 1,
+    ]);
+
+    $response = $this->actingAs($this->admin)
+        ->get(route('settings.index'));
+
+    $response->assertOk();
+    $response->assertViewHas('terms');
+    $response->assertViewHas('privacy');
+});
+
+it('legt neue Terms-Conditions an', function () {
+    $response = $this->actingAs($this->admin)
+        ->from(route('settings.index'))
+        ->post(route('settings.store'), [
+            'termsConditions' => 'Neuer AGB-Entwurf',
+        ]);
+
+    $response->assertRedirect(route('settings.index'));
+    $response->assertSessionHas('success');
+    expect(TermsConditions::count())->toBe(1);
+    expect(TermsConditions::first()->getTranslation('terms_conditions', 'de'))
+        ->toBe('Neuer AGB-Entwurf');
+});
+
+it('aktualisiert existierende Terms-Conditions via idTerms', function () {
+    $terms = TermsConditions::create([
+        'terms_conditions' => ['de' => 'Alter Stand'],
+        'active' => 1,
+    ]);
+
+    $this->actingAs($this->admin)
+        ->from(route('settings.index'))
+        ->post(route('settings.store'), [
+            'idTerms' => $terms->id,
+            'termsConditions' => 'Aktualisierter Stand',
+        ]);
+
+    expect(TermsConditions::count())->toBe(1);
+    expect($terms->fresh()->getTranslation('terms_conditions', 'de'))
+        ->toBe('Aktualisierter Stand');
+});
+
+it('legt eine neue Privacy-Policy an', function () {
+    $this->actingAs($this->admin)
+        ->from(route('settings.index'))
+        ->post(route('settings.store'), [
+            'privacyPolicy' => 'Neuer Datenschutz-Text',
+        ]);
+
+    expect(PrivacyPolicy::count())->toBe(1);
+    expect(PrivacyPolicy::first()->getTranslation('privacy_policy', 'de'))
+        ->toBe('Neuer Datenschutz-Text');
+});
+
+it('legt ein Imprint an via firstname-Feld', function () {
+    $this->actingAs($this->admin)
+        ->from(route('settings.index'))
+        ->post(route('settings.store'), [
+            'firstname' => 'Max',
+            'lastname' => 'Mustermann',
+            'address' => 'Beispielstr. 1',
+            'postcode' => '10115',
+            'phone' => '+49 30 12345',
+            'fax' => '',
+            'email' => 'kontakt@example.org',
+        ]);
+
+    expect(Imprint::count())->toBe(1);
+    $imprint = Imprint::first();
+    expect($imprint->name)->toMatchArray(['firstname' => 'Max', 'lastname' => 'Mustermann']);
+    expect($imprint->address)->toMatchArray(['address' => 'Beispielstr. 1', 'postcode' => '10115']);
+    expect($imprint->contact)->toMatchArray(['phone' => '+49 30 12345', 'email' => 'kontakt@example.org']);
+});
+
+it('legt eine Invitation-Mail an', function () {
+    $this->actingAs($this->admin)
+        ->from(route('settings.index'))
+        ->post(route('settings.store'), [
+            'invitation' => 'Willkommen bei crowdCuratio',
+        ]);
+
+    expect(MailSetting::count())->toBe(1);
+    expect(MailSetting::first()->getTranslation('invitation', 'de'))
+        ->toBe('Willkommen bei crowdCuratio');
+});
+
+it('macht einen leeren store-Aufruf zu einem stillen Redirect', function () {
+    $response = $this->actingAs($this->admin)
+        ->from(route('settings.index'))
+        ->post(route('settings.store'), []);
+
+    $response->assertRedirect(route('settings.index'));
+    expect(TermsConditions::count())->toBe(0);
+    expect(PrivacyPolicy::count())->toBe(0);
+    expect(Imprint::count())->toBe(0);
+    expect(MailSetting::count())->toBe(0);
+});
+
+it('verbietet Nicht-Admins den Zugriff auf settings.index', function () {
+    $regular = User::factory()->create();
+
+    $response = $this->actingAs($regular)
+        ->get(route('settings.index'));
+
+    $response->assertForbidden();
+});
