@@ -633,19 +633,30 @@ Drittabhängigkeiten.
 
 ### Behoben
 
-- **Theme-Toggle-Icon im Navi-Header war unsichtbar** (Phase 5a.V, T1).
-  Der Button war im DOM und `$store.theme.toggle()` funktional, aber
-  die Sonne-/Mond-Icons rendern nicht — Ursache: das ursprüngliche
-  Pattern mit zwei `<template x-if>` plus eingebetteter `<x-ui.icon>`-
-  Blade-Komponente hat den SVG-Inhalt im HTML-Standard-`<template>`-
-  Element belassen, dessen Kinder der Browser nie ins reguläre DOM
-  hängt; der Alpine-Clone-Insert war in dieser Konstellation
-  unzuverlässig. Umgestellt auf `x-show` mit zwei direkt im Button
-  eingebetteten `<span>`-Wrappern (jeweils eine Lucide-Variante). Plus
-  globale `[x-cloak] { display: none !important }`-Regel in
-  `resources/css/app.css` und `x-cloak` an beiden Spans, damit beim
-  Page-Load nicht beide Icons gleichzeitig aufflackern, bis der
-  Store-State hydriert ist.
+- **Theme-Toggle-Icon im Navi-Header war unsichtbar** (Phase 5a.V,
+  T1 + T2). Zwei Bugs überlagert:
+  - **T1 (View-Pattern):** Das ursprüngliche Markup hatte zwei
+    `<template x-if>` mit eingebetteter `<x-ui.icon>`-Blade-Komponente.
+    Das HTML-Standard-`<template>` hält seinen Inhalt außerhalb des
+    regulären DOM-Trees; der Alpine-Clone-Insert war in dieser
+    Konstellation unzuverlässig. Umgestellt auf `x-show` mit zwei
+    direkt im Button eingebetteten `<span>`-Wrappern (jeweils eine
+    Lucide-Variante). Plus globale
+    `[x-cloak] { display: none !important }`-Regel in
+    `resources/css/app.css` und `x-cloak` an beiden Spans, damit beim
+    Page-Load nicht beide Icons gleichzeitig aufflackern, bis der
+    Store-State hydriert ist.
+  - **T2 (Store-Race-Condition):** Browser-Verifikation zeigte, dass
+    `$store.theme` trotz T1-Fix leer war (`{}` statt
+    `{current, toggle, set}`). Ursache: Livewire 4 bringt sein eigenes
+    Alpine mit und startet es früh — das `alpine:init`-Event war
+    bereits gefeuert, als `resources/js/theme.js` als Vite-Module
+    geladen wurde und seinen Listener registrierte. Folge: der Store
+    wurde nie registriert; beide `x-show`-Bedingungen (gegen
+    `$store.theme.current`) evaluierten zu `undefined`, kombiniert mit
+    `x-cloak` blieben beide Icons unsichtbar. Robust gefixt: `theme.js`
+    prüft beim Module-Load, ob `window.Alpine` schon da ist, und
+    registriert dann sofort; sonst nimmt es den Listener wie bisher.
 
 - **Bildupload in Galerien zeigt das hochgeladene Bild nicht mehr
   als nicht-vorhanden.**

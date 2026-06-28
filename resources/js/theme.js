@@ -43,7 +43,7 @@ function applyTheme(name) {
 // Frühe Anwendung — passiert vor Alpine.start().
 applyTheme(readStoredTheme());
 
-document.addEventListener('alpine:init', () => {
+function registerThemeStore() {
     if (!window.Alpine) return;
     window.Alpine.store('theme', {
         current: readStoredTheme(),
@@ -56,7 +56,26 @@ document.addEventListener('alpine:init', () => {
             applyTheme(this.current);
         },
     });
-});
+}
+
+/*
+ * Livewire 4 bringt sein eigenes Alpine mit und startet es früh —
+ * möglicherweise BEVOR dieses Vite-Module geladen ist. In dem Fall
+ * ist das `alpine:init`-Event bereits gefeuert, und ein nachträglich
+ * angemeldeter Listener bekommt es nicht mehr mit. Folge: der
+ * `theme`-Store wird nie registriert, $store.theme bleibt leer, die
+ * x-show-Bedingungen an den Sun-/Moon-Spans evaluieren beide zu
+ * undefined und beide Icons bleiben unsichtbar (kombiniert mit
+ * x-cloak).
+ *
+ * Robust: wenn Alpine bereits da ist, sofort registrieren; sonst
+ * auf alpine:init warten.
+ */
+if (window.Alpine) {
+    registerThemeStore();
+} else {
+    document.addEventListener('alpine:init', registerThemeStore);
+}
 
 window.crowdCuratioTheme = {
     apply: applyTheme,
