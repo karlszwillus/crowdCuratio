@@ -121,10 +121,22 @@ it('legt eine neue Privacy-Policy an', function () {
         ->toBe('Neuer Datenschutz-Text');
 });
 
-it('legt ein Imprint an via firstname-Feld', function () {
+it('aktualisiert ein existierendes Imprint via firstname-Feld', function () {
+    // Update-Pfad: das Settings-UI bietet nur "Imprint editieren", nicht
+    // "Imprint neu anlegen" — der erste Imprint kommt aus dem Seeder.
+    // Der Create-Pfad im Controller (`updateOrCreate(['id' => null], …)`)
+    // ist eine schmierige Konstruktion und wird hier nicht getestet;
+    // siehe Hygiene-Note in werkbank/TODO.md.
+    $imprint = Imprint::create([
+        'name' => ['firstname' => 'Alt', 'lastname' => 'Vorname'],
+        'address' => ['address' => 'Alt-Str. 0', 'postcode' => '00000'],
+        'contact' => ['phone' => '', 'fax' => '', 'email' => 'alt@example.org'],
+    ]);
+
     $this->actingAs($this->admin)
         ->from(route('settings.index'))
         ->post(route('settings.store'), [
+            'IdImprint' => $imprint->id,
             'firstname' => 'Max',
             'lastname' => 'Mustermann',
             'address' => 'Beispielstr. 1',
@@ -135,10 +147,10 @@ it('legt ein Imprint an via firstname-Feld', function () {
         ]);
 
     expect(Imprint::count())->toBe(1);
-    $imprint = Imprint::first();
-    expect($imprint->name)->toMatchArray(['firstname' => 'Max', 'lastname' => 'Mustermann']);
-    expect($imprint->address)->toMatchArray(['address' => 'Beispielstr. 1', 'postcode' => '10115']);
-    expect($imprint->contact)->toMatchArray(['phone' => '+49 30 12345', 'email' => 'kontakt@example.org']);
+    $updated = $imprint->fresh();
+    expect($updated->name)->toMatchArray(['firstname' => 'Max', 'lastname' => 'Mustermann']);
+    expect($updated->address)->toMatchArray(['address' => 'Beispielstr. 1', 'postcode' => '10115']);
+    expect($updated->contact)->toMatchArray(['phone' => '+49 30 12345', 'email' => 'kontakt@example.org']);
 });
 
 it('legt eine Invitation-Mail an', function () {
