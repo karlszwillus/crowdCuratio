@@ -34,7 +34,9 @@ class TermsConditions extends Model
 
     public $translatable = ['terms_conditions'];
 
-    protected $fillable = ['terms_conditions'];
+    protected $fillable = ['terms_conditions', 'active'];
+
+    protected $casts = ['active' => 'boolean'];
 
     public function getActivitylogOptions(): LogOptions
     {

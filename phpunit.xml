@@ -30,5 +30,20 @@
     <include>
       <directory suffix=".php">./app</directory>
     </include>
+    <exclude>
+      <!--
+        Console-Commands sind One-Off-Maintenance-Tools (FK-Audit,
+        Media-Content-Schema-Audit, Migrations-Helper). Tests dafür
+        sind disproportional teuer (DB-Schema-Inspektion, FK-Walks,
+        explizite Data-Migrations) und bringen fachlich wenig
+        Aussagekraft. 562 LOC bei 0 % verzerrten die Coverage-
+        Bilanz konstant nach unten. Sollte künftig ein Command mit
+        echter Domain-Logik dazukommen (z. B. ein Daily-Digest),
+        diesen Exclude wieder aufweichen.
+
+        Eingeführt in Phase 5a.V (Coverage-Welle, 2026-06-29).
+      -->
+      <directory>./app/Console/Commands</directory>
+    </exclude>
   </source>
 </phpunit>

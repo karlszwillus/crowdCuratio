@@ -21,8 +21,10 @@ If not, see <https://www.gnu.org/licenses/>.
  */
 
 use App\Models\Audiovisual;
+use App\Models\Comment;
 use App\Models\Entry;
 use App\Models\Gallery;
+use App\Models\Image;
 use App\Models\MediaContent;
 use App\Models\Text;
 use App\Models\User;
@@ -125,4 +127,143 @@ it('parent() liefert den Entry-Datensatz', function () {
     /** @var Entry $parent */
     $parent = $row->parent;
     expect($parent->id)->toBe($entry->id);
+});
+
+it('image() liefert das verknüpfte Image-Modell über content_id', function () {
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $entry = makeEntry(makeChapter(makeProject($owner)));
+    $image = makeImage();
+
+    /** @var MediaContent $row */
+    $row = MediaContent::create([
+        'content_id' => $image->id,
+        'content_type' => Image::class,
+        'parent_id' => $entry->id,
+        'parent_type' => Entry::class,
+        'position' => 0,
+    ]);
+
+    /** @var Image $resolved */
+    $resolved = $row->image;
+    expect($resolved)->toBeInstanceOf(Image::class);
+    expect($resolved->id)->toBe($image->id);
+});
+
+it('text() liefert das verknüpfte Text-Modell über content_id', function () {
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $entry = makeEntry(makeChapter(makeProject($owner)));
+    $text = Text::factory()->create();
+
+    /** @var MediaContent $row */
+    $row = MediaContent::create([
+        'content_id' => $text->id,
+        'content_type' => Text::class,
+        'parent_id' => $entry->id,
+        'parent_type' => Entry::class,
+        'position' => 0,
+    ]);
+
+    /** @var Text $resolved */
+    $resolved = $row->text;
+    expect($resolved)->toBeInstanceOf(Text::class);
+    expect($resolved->id)->toBe($text->id);
+});
+
+it('gallery() liefert das verknüpfte Gallery-Modell über content_id', function () {
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $entry = makeEntry(makeChapter(makeProject($owner)));
+    $gallery = makeGallery();
+
+    /** @var MediaContent $row */
+    $row = MediaContent::create([
+        'content_id' => $gallery->id,
+        'content_type' => Gallery::class,
+        'parent_id' => $entry->id,
+        'parent_type' => Entry::class,
+        'position' => 0,
+    ]);
+
+    /** @var Gallery $resolved */
+    $resolved = $row->gallery;
+    expect($resolved)->toBeInstanceOf(Gallery::class);
+    expect($resolved->id)->toBe($gallery->id);
+});
+
+it('audiovisual() liefert das verknüpfte Audiovisual-Modell über content_id', function () {
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $entry = makeEntry(makeChapter(makeProject($owner)));
+    $av = makeAudiovisual();
+
+    /** @var MediaContent $row */
+    $row = MediaContent::create([
+        'content_id' => $av->id,
+        'content_type' => Audiovisual::class,
+        'parent_id' => $entry->id,
+        'parent_type' => Entry::class,
+        'position' => 0,
+    ]);
+
+    /** @var Audiovisual $resolved */
+    $resolved = $row->audiovisual;
+    expect($resolved)->toBeInstanceOf(Audiovisual::class);
+    expect($resolved->id)->toBe($av->id);
+});
+
+it('entry() liefert via belongsToMany alle Entries, deren parent_id auf diesen MediaContent zeigt', function () {
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $entry = makeEntry(makeChapter(makeProject($owner)));
+    $text = Text::factory()->create();
+
+    /** @var MediaContent $row */
+    $row = MediaContent::create([
+        'content_id' => $text->id,
+        'content_type' => Text::class,
+        'parent_id' => $entry->id,
+        'parent_type' => Entry::class,
+        'position' => 0,
+    ]);
+
+    expect($row->entry()->get())->toHaveCount(1);
+    /** @var Entry $firstEntry */
+    $firstEntry = $row->entry()->first();
+    expect($firstEntry->id)->toBe($entry->id);
+});
+
+it('löscht beim Delete kaskadierend Text-/Gallery-/Comment-Kinder mit', function () {
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $entry = makeEntry(makeChapter(makeProject($owner)));
+    $text = Text::factory()->create();
+
+    /** @var MediaContent $row */
+    $row = MediaContent::create([
+        'content_id' => $text->id,
+        'content_type' => Text::class,
+        'parent_id' => $entry->id,
+        'parent_type' => Entry::class,
+        'position' => 0,
+    ]);
+
+    // Ein Top-Level-Comment auf das MediaContent
+    $comment = new Comment;
+    $comment->project_id = $entry->chapter->project_id;
+    $comment->user_id = $owner->id;
+    $comment->setTranslation('comment', 'de', 'Auf MediaContent');
+    $comment->commentable_type = MediaContent::class;
+    $comment->commentable_id = $row->id;
+    $comment->parent_id = null;
+    $comment->save();
+
+    expect(Text::find($text->id))->not->toBeNull();
+    expect(Comment::find($comment->id))->not->toBeNull();
+
+    $row->delete();
+
+    expect(Text::find($text->id))->toBeNull();
+    expect(Comment::find($comment->id))->toBeNull();
 });

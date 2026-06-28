@@ -20,6 +20,9 @@ along with this program in the file LICENSE.
 If not, see <https://www.gnu.org/licenses/>.
  */
 
+use App\Models\Entry;
+use App\Models\MediaContent;
+use App\Models\Text;
 use App\Models\User;
 use App\Services\LogService;
 use App\Support\PermissionName;
@@ -190,4 +193,61 @@ it('getParentText liefert für entries den chapter_name und entry_name als Join-
     // auf Substring statt strict equality.
     expect((string) $row->chapter_name)->toContain('Kapitel Eins');
     expect((string) $row->entry_name)->toContain('Entry Eins');
+});
+
+it('highlightTextDifference markiert neuen Anteil grün und alten Anteil rot', function () {
+    /** @var TestCase $this */
+    $service = new LogService('chapter');
+
+    $result = $service->highlightTextDifference('Hallo Welt', 'Hallo schöne Welt');
+
+    expect($result)
+        ->toHaveKey('old')
+        ->toHaveKey('new');
+
+    expect($result['new'])
+        ->toContain('background-color:#ccffcc')
+        ->toContain('schöne');
+
+    expect($result['old'])
+        ->toContain('background-color:#ffcccc')
+        ->toContain('<del');
+});
+
+it('highlightTextDifference packt identische Strings stabil in das Diff-Markup', function () {
+    /** @var TestCase $this */
+    $service = new LogService('chapter');
+
+    $result = $service->highlightTextDifference('gleicher Text', 'gleicher Text');
+
+    expect($result['old'])->toContain('gleicher Text');
+    expect($result['new'])->toContain('gleicher Text');
+});
+
+it('getParentText liefert für texts den Kontext via media_content-Join', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole('Admin');
+    $project = makeProject($owner);
+    $chapter = makeChapter($project, ['name' => 'Kapitel Texts']);
+    $entry = makeEntry($chapter, ['name' => 'Entry Texts']);
+    $text = makeText();
+
+    MediaContent::create([
+        'content_id' => $text->id,
+        'content_type' => Text::class,
+        'parent_id' => $entry->id,
+        'parent_type' => Entry::class,
+        'position' => 1,
+    ]);
+
+    $service = new LogService('text');
+    $result = $service->getParentText($text->id);
+
+    expect($result)->toHaveCount(1);
+
+    $row = $result->first();
+    expect((string) $row->chapter_name)->toContain('Kapitel Texts');
+    expect((string) $row->entry_name)->toContain('Entry Texts');
 });

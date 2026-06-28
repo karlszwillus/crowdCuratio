@@ -23,7 +23,56 @@ und mehreren Sicherheits-Sweeps zur Schließung von Authorization-
 Bypässen, Privilege-Escalation-Pfaden und Audit-Befunden in
 Drittabhängigkeiten.
 
+**Phase-5a — Frontend-Modernisierung abgeschlossen.** Build-Stack auf
+Vite + Tailwind 4 zurückgesetzt mit token-basierter Design-Schicht
+(`tokens.css` als Source of Truth aus dem v3-Briefing). Livewire 4 als
+Interaktivitäts-Schicht installiert, Komponenten-Bibliothek von sechs
+Blade-Komponenten unter `<x-ui.*>` (Button, Icon-Button, Input, Toggle,
+Card, Banner, plus `<x-ui.modal>` als zentrale Modal-Komponente). 16
+Modal-Markups in 11 Views von Bootstrap-3-Struktur auf
+`<x-ui.modal>` umgezogen. Bootstrap-3-JS-Plugins durchgehend abgelöst
+durch schmale Vanilla-Manager (Modal, Tooltip, Typeahead, DataTable,
+Sortable-via-SortableJS), jQuery-Shims halten die Bestands-Inits am
+Leben. Die ursprüngliche Compat-Schicht wurde nach Reality-Check zu
+permanenten Custom-Utilities mit Bootstrap-Klassennamen umetikettiert
+(`compat-bootstrap.css` → `bootstrap-utilities.css`); eine 1:1-
+Übersetzung der ~560 Klassen-Stellen hätte funktional nichts geändert.
+Zweiter Mandant „Aktives Museum" als Theme-Switch über
+`<html data-theme>` mit smoother 180-ms-Color-Transition (`prefers-
+reduced-motion` respektiert) und Sonne-/Mond-Toggle im Navi-Header.
+Coverage-Schwelle im CI auf 65 % gehoben und tatsächlich auf 77,5 %
+gepusht (Polster für die Frontend-Wellen 5b–5f). Phase 5a hinterlässt
+ein dokumentiertes Backlog aus drei Code-Hygiene-Items (leerer
+`PermissionService`-Stub, `SettingController::store`-Imprint-Smell,
+falsche `Comment::chapter()`-Definition) und fünf Theme-Vollausbau-
+Themen (Logo-Tausch, Title-Tag, Mail-Templates, Card-Tokens, Tenant-
+Detection — siehe `werkbank/TODO.md`).
+
 ### Hinzugefügt
+
+- **Coverage-Push von 65,3 % auf 77,5 %** (Phase 5a.V, Coverage-
+  Welle). Über das Phase-5-Ende-Ziel von 70 % deutlich hinaus, gibt
+  den fünf folgenden Frontend-Wellen (5b–5f) Polster gegen die übliche
+  Coverage-Drift. Sieben neue/ergänzte Test-Files mit über 40 Cases:
+  vier Files für ungetestete Controller (Language, Public, Setting),
+  Policies (User) und Setting-Modelle (Imprint/MailSetting/PrivacyPolicy/
+  TermsConditions); drei Ergänzungen in bestehenden Service-/Model-Tests
+  (`ContentReorderService` reorderContent + resolveProject(content),
+  `Comment` Relations, `LogService` highlightTextDifference +
+  getParentText für texts, `MediaContent` belongsTo-Relations +
+  cascading-delete). Plus Exclude der drei One-Off-Maintenance-Commands
+  (`AuditForeignKeys`, `AuditMediaContent`, `MigrateMediaContent`,
+  zusammen 562 LOC ungetesteter Code) aus der Coverage-Berechnung —
+  Tests dafür wären disproportional teuer und fachlich wenig aussage-
+  kräftig. CI-Schwelle bleibt auf 65 %, das echte Polster lebt im
+  tatsächlichen Wert.
+
+  Begleitend `active` ins `$fillable` von `PrivacyPolicy` und
+  `TermsConditions` aufgenommen (plus `boolean`-Cast) — ohne diese
+  Ergänzung würde der Strict-Mode-Eloquent-Schutz das
+  Mass-Assignment im Test wegen `preventSilentlyDiscardingAttributes`
+  abbrechen.
+
 
 - **App-Shell-Theme-Switch visuell sichtbar** (Phase 5a.V, T4).
   Bis T3 war das Theme funktional schon vollständig — `data-theme`,

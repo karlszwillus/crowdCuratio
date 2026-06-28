@@ -36,7 +36,9 @@ class PrivacyPolicy extends Model
 
     public $translatable = ['privacy_policy'];
 
-    protected $fillable = ['privacy_policy'];
+    protected $fillable = ['privacy_policy', 'active'];
+
+    protected $casts = ['active' => 'boolean'];
 
     public function getActivitylogOptions(): LogOptions
     {
