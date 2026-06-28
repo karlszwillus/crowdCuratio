@@ -211,7 +211,10 @@
   "new_entry": "Neuer Bereich",
   "new_element": "Neues Objekt",
   "description": "Beschreibung",
-  "download": "Zip Download"
+  "download": "Zip Download",
+  "history": "Verlauf",
+  "tools": "Werkzeuge",
+  "skip_to_main": "Zum Inhalt springen"
 
 
 }

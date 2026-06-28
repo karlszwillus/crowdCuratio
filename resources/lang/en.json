@@ -210,6 +210,9 @@
   "new_entry": "New Entry",
   "new_element": "New Element",
   "description": "Description",
-  "download": "Zip download"
+  "download": "Zip download",
+  "history": "History",
+  "tools": "Tools",
+  "skip_to_main": "Skip to main content"
 
 }
