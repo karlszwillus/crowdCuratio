@@ -42,9 +42,11 @@ beforeEach(function () {
 });
 
 it('comment->project liefert das verknüpfte Project zurück', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $project = makeProject($owner);
 
+    /** @var Comment $comment */
     $comment = new Comment;
     $comment->project_id = $project->id;
     $comment->user_id = $owner->id;
@@ -58,10 +60,12 @@ it('comment->project liefert das verknüpfte Project zurück', function () {
 });
 
 it('comment->commentable liefert das verknüpfte Chapter über morphTo', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $project = makeProject($owner);
     $chapter = makeChapter($project);
 
+    /** @var Comment $comment */
     $comment = new Comment;
     $comment->project_id = $project->id;
     $comment->user_id = $owner->id;
@@ -77,12 +81,14 @@ it('comment->commentable liefert das verknüpfte Chapter über morphTo', functio
 });
 
 it('comment->commentable liefert MediaContent, wenn der morph-Typ MediaContent ist', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $project = makeProject($owner);
     $chapter = makeChapter($project);
     $entry = makeEntry($chapter);
     $text = makeText();
 
+    /** @var MediaContent $media */
     $media = MediaContent::create([
         'content_id' => $text->id,
         'content_type' => Text::class,
@@ -106,12 +112,14 @@ it('comment->commentable liefert MediaContent, wenn der morph-Typ MediaContent i
 });
 
 it('comment->content liefert das MediaContent über commentable_id', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $project = makeProject($owner);
     $chapter = makeChapter($project);
     $entry = makeEntry($chapter);
     $text = makeText();
 
+    /** @var MediaContent $media */
     $media = MediaContent::create([
         'content_id' => $text->id,
         'content_type' => Text::class,

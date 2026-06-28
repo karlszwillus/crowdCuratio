@@ -27,6 +27,7 @@ use App\Models\TermsConditions;
 use App\Models\User;
 use App\Support\RoleName;
 use Spatie\Permission\Models\Role;
+use Tests\TestCase;
 
 /*
 |--------------------------------------------------------------------------
@@ -42,13 +43,27 @@ use Spatie\Permission\Models\Role;
 
 beforeEach(function () {
     Role::firstOrCreate(['name' => RoleName::ADMIN->value, 'guard_name' => 'web']);
-    $this->admin = User::factory()->create();
-    $this->admin->assignRole(RoleName::ADMIN->value);
     app()->setLocale('de');
 });
 
+/**
+ * Helper für die Admin-User-Anlage. Inline-Funktion statt Property auf
+ * $this, weil Pest-Test-Properties Larastan-Annotationen brauchen, die
+ * pro Case sowieso geschrieben werden müssen — also direkt lokal.
+ */
+function makeAdmin(): User
+{
+    /** @var User $admin */
+    $admin = User::factory()->create();
+    $admin->assignRole(RoleName::ADMIN->value);
+
+    return $admin;
+}
+
 it('rendert die Settings-View leer, wenn noch keine Datensätze existieren', function () {
-    $response = $this->actingAs($this->admin)
+    /** @var TestCase $this */
+    $admin = makeAdmin();
+    $response = $this->actingAs($admin)
         ->get(route('settings.index'));
 
     $response->assertOk();
@@ -69,7 +84,9 @@ it('rendert die Settings-View mit den ersten Datensätzen', function () {
         'active' => 1,
     ]);
 
-    $response = $this->actingAs($this->admin)
+    /** @var TestCase $this */
+    $admin = makeAdmin();
+    $response = $this->actingAs($admin)
         ->get(route('settings.index'));
 
     $response->assertOk();
@@ -78,7 +95,9 @@ it('rendert die Settings-View mit den ersten Datensätzen', function () {
 });
 
 it('legt neue Terms-Conditions an', function () {
-    $response = $this->actingAs($this->admin)
+    /** @var TestCase $this */
+    $admin = makeAdmin();
+    $response = $this->actingAs($admin)
         ->from(route('settings.index'))
         ->post(route('settings.store'), [
             'termsConditions' => 'Neuer AGB-Entwurf',
@@ -97,7 +116,9 @@ it('aktualisiert existierende Terms-Conditions via idTerms', function () {
         'active' => 1,
     ]);
 
-    $this->actingAs($this->admin)
+    /** @var TestCase $this */
+    $admin = makeAdmin();
+    $this->actingAs($admin)
         ->from(route('settings.index'))
         ->post(route('settings.store'), [
             'idTerms' => $terms->id,
@@ -110,7 +131,9 @@ it('aktualisiert existierende Terms-Conditions via idTerms', function () {
 });
 
 it('legt eine neue Privacy-Policy an', function () {
-    $this->actingAs($this->admin)
+    /** @var TestCase $this */
+    $admin = makeAdmin();
+    $this->actingAs($admin)
         ->from(route('settings.index'))
         ->post(route('settings.store'), [
             'privacyPolicy' => 'Neuer Datenschutz-Text',
@@ -133,7 +156,9 @@ it('aktualisiert ein existierendes Imprint via firstname-Feld', function () {
         'contact' => ['phone' => '', 'fax' => '', 'email' => 'alt@example.org'],
     ]);
 
-    $this->actingAs($this->admin)
+    /** @var TestCase $this */
+    $admin = makeAdmin();
+    $this->actingAs($admin)
         ->from(route('settings.index'))
         ->post(route('settings.store'), [
             'IdImprint' => $imprint->id,
@@ -154,7 +179,9 @@ it('aktualisiert ein existierendes Imprint via firstname-Feld', function () {
 });
 
 it('legt eine Invitation-Mail an', function () {
-    $this->actingAs($this->admin)
+    /** @var TestCase $this */
+    $admin = makeAdmin();
+    $this->actingAs($admin)
         ->from(route('settings.index'))
         ->post(route('settings.store'), [
             'invitation' => 'Willkommen bei crowdCuratio',
@@ -166,7 +193,9 @@ it('legt eine Invitation-Mail an', function () {
 });
 
 it('macht einen leeren store-Aufruf zu einem stillen Redirect', function () {
-    $response = $this->actingAs($this->admin)
+    /** @var TestCase $this */
+    $admin = makeAdmin();
+    $response = $this->actingAs($admin)
         ->from(route('settings.index'))
         ->post(route('settings.store'), []);
 
@@ -178,6 +207,8 @@ it('macht einen leeren store-Aufruf zu einem stillen Redirect', function () {
 });
 
 it('verbietet Nicht-Admins den Zugriff auf settings.index', function () {
+    /** @var TestCase $this */
+    /** @var User $regular */
     $regular = User::factory()->create();
 
     $response = $this->actingAs($regular)

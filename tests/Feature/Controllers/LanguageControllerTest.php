@@ -22,6 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 use App\Models\User;
 use Illuminate\Support\Facades\Session;
+use Tests\TestCase;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,6 +35,8 @@ use Illuminate\Support\Facades\Session;
 */
 
 it('switcht in eine konfigurierte Sprache und schreibt sie in die Session', function () {
+    /** @var TestCase $this */
+    /** @var User $user */
     $user = User::factory()->create();
 
     $response = $this->actingAs($user)
@@ -45,6 +48,8 @@ it('switcht in eine konfigurierte Sprache und schreibt sie in die Session', func
 });
 
 it('ignoriert eine nicht konfigurierte Sprache, ohne die Session zu schreiben', function () {
+    /** @var TestCase $this */
+    /** @var User $user */
     $user = User::factory()->create();
     Session::put('applocale', 'de');
 

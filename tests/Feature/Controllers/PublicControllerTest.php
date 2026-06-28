@@ -22,6 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 use App\Models\PrivacyPolicy;
 use App\Models\TermsConditions;
+use Tests\TestCase;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,6 +44,7 @@ it('liefert die aktive Privacy-Policy als JSON', function () {
         'active' => 1,
     ]);
 
+    /** @var TestCase $this */
     $response = $this->get(route('auth.policy'));
 
     $response->assertOk();
@@ -59,6 +61,7 @@ it('ignoriert inaktive Privacy-Einträge', function () {
         'active' => 1,
     ]);
 
+    /** @var TestCase $this */
     $response = $this->get(route('auth.policy'));
 
     $response->assertOk();
@@ -71,6 +74,7 @@ it('liefert die aktiven Terms-Conditions als JSON', function () {
         'active' => 1,
     ]);
 
+    /** @var TestCase $this */
     $response = $this->get(route('auth.terms'));
 
     $response->assertOk();
@@ -87,6 +91,7 @@ it('ignoriert inaktive Terms-Einträge', function () {
         'active' => 1,
     ]);
 
+    /** @var TestCase $this */
     $response = $this->get(route('auth.terms'));
 
     $response->assertOk();

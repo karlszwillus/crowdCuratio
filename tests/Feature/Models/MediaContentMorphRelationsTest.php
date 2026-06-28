@@ -130,10 +130,12 @@ it('parent() liefert den Entry-Datensatz', function () {
 });
 
 it('image() liefert das verknüpfte Image-Modell über content_id', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $entry = makeEntry(makeChapter(makeProject($owner)));
     $image = makeImage();
 
+    /** @var MediaContent $row */
     $row = MediaContent::create([
         'content_id' => $image->id,
         'content_type' => Image::class,
@@ -147,10 +149,12 @@ it('image() liefert das verknüpfte Image-Modell über content_id', function () 
 });
 
 it('text() liefert das verknüpfte Text-Modell über content_id', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $entry = makeEntry(makeChapter(makeProject($owner)));
     $text = Text::factory()->create();
 
+    /** @var MediaContent $row */
     $row = MediaContent::create([
         'content_id' => $text->id,
         'content_type' => Text::class,
@@ -164,10 +168,12 @@ it('text() liefert das verknüpfte Text-Modell über content_id', function () {
 });
 
 it('gallery() liefert das verknüpfte Gallery-Modell über content_id', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $entry = makeEntry(makeChapter(makeProject($owner)));
     $gallery = makeGallery();
 
+    /** @var MediaContent $row */
     $row = MediaContent::create([
         'content_id' => $gallery->id,
         'content_type' => Gallery::class,
@@ -181,10 +187,12 @@ it('gallery() liefert das verknüpfte Gallery-Modell über content_id', function
 });
 
 it('audiovisual() liefert das verknüpfte Audiovisual-Modell über content_id', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $entry = makeEntry(makeChapter(makeProject($owner)));
     $av = makeAudiovisual();
 
+    /** @var MediaContent $row */
     $row = MediaContent::create([
         'content_id' => $av->id,
         'content_type' => Audiovisual::class,
@@ -198,10 +206,12 @@ it('audiovisual() liefert das verknüpfte Audiovisual-Modell über content_id', 
 });
 
 it('entry() liefert via belongsToMany alle Entries, deren parent_id auf diesen MediaContent zeigt', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $entry = makeEntry(makeChapter(makeProject($owner)));
     $text = Text::factory()->create();
 
+    /** @var MediaContent $row */
     $row = MediaContent::create([
         'content_id' => $text->id,
         'content_type' => Text::class,
@@ -215,10 +225,12 @@ it('entry() liefert via belongsToMany alle Entries, deren parent_id auf diesen M
 });
 
 it('löscht beim Delete kaskadierend Text-/Gallery-/Comment-Kinder mit', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $entry = makeEntry(makeChapter(makeProject($owner)));
     $text = Text::factory()->create();
 
+    /** @var MediaContent $row */
     $row = MediaContent::create([
         'content_id' => $text->id,
         'content_type' => Text::class,

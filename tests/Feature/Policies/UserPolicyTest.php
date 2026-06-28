@@ -24,6 +24,7 @@ use App\Models\User;
 use App\Policies\UserPolicy;
 use App\Support\RoleName;
 use Spatie\Permission\Models\Role;
+use Tests\TestCase;
 
 /*
 |--------------------------------------------------------------------------
@@ -43,9 +44,11 @@ beforeEach(function () {
 });
 
 it('lässt einen Admin via before() jede Ability passieren', function () {
+    /** @var User $admin */
     $admin = User::factory()->create();
     $admin->assignRole(RoleName::ADMIN->value);
 
+    /** @var User $target */
     $target = User::factory()->create();
     $policy = new UserPolicy;
 
@@ -54,6 +57,7 @@ it('lässt einen Admin via before() jede Ability passieren', function () {
 });
 
 it('returns null via before() für Nicht-Admins (fällt auf method-Auflösung)', function () {
+    /** @var User $user */
     $user = User::factory()->create();
     $policy = new UserPolicy;
 
@@ -61,6 +65,7 @@ it('returns null via before() für Nicht-Admins (fällt auf method-Auflösung)',
 });
 
 it('erlaubt Self-Edit für Nicht-Admins', function () {
+    /** @var User $user */
     $user = User::factory()->create();
     $policy = new UserPolicy;
 
@@ -68,7 +73,9 @@ it('erlaubt Self-Edit für Nicht-Admins', function () {
 });
 
 it('verbietet Fremd-Edit für Nicht-Admins', function () {
+    /** @var User $user */
     $user = User::factory()->create();
+    /** @var User $target */
     $target = User::factory()->create();
     $policy = new UserPolicy;
 
@@ -76,9 +83,12 @@ it('verbietet Fremd-Edit für Nicht-Admins', function () {
 });
 
 it('lässt Admins via voller Gate-Auflösung passieren — auch beim Fremd-Edit', function () {
+    /** @var TestCase $this */
+    /** @var User $admin */
     $admin = User::factory()->create();
     $admin->assignRole(RoleName::ADMIN->value);
 
+    /** @var User $target */
     $target = User::factory()->create();
 
     // Volle Gate-Auflösung über $this->can() — schließt before() ein.
