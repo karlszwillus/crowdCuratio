@@ -25,6 +25,48 @@ Drittabhängigkeiten.
 
 ### Hinzugefügt
 
+- **App-Shell-Theme-Switch visuell sichtbar** (Phase 5a.V, T4).
+  Bis T3 war das Theme funktional schon vollständig — `data-theme`,
+  `$store.theme`, `localStorage`, ARIA-States — aber die App sah in
+  beiden Themes identisch aus, weil die Views ausschließlich generische
+  Ink-Tokens nutzten und die Chrome-/Canvas-/Brand-Tokens nirgends
+  referenziert waren (Tailwind 4 generiert Utilities on-demand, also
+  fehlten die Klassen sogar im CSS-Bundle).
+  - `layouts/navi.blade.php`: Header auf `bg-chrome-bg` /
+    `border-chrome-line`, Top-Level-Menü auf `text-chrome-on` /
+    `hover:bg-chrome-active`, sekundäre Buttons (Sprachwahl, Theme-
+    Toggle) auf `text-chrome-on-dim`, User-Menu-Button auf `bg-primary`
+    / `text-primary-on`. Dropdown-Panels bleiben absichtlich auf
+    `bg-canvas-bg` — sie öffnen über dem Chrome und sollen in beiden
+    Themes hell sein.
+  - `layouts/app.blade.php`, `layouts/guest.blade.php`,
+    `projects/layout.blade.php`: `<body>`-Background von `bg-gray-100`/
+    `bg-ink-400/5` auf `bg-canvas-bg` — der Editor-Body wechselt damit
+    mit dem Theme.
+  - Default-Theme zeigt jetzt das in den v3-Briefing-Tokens vorgesehene
+    dunkelblaue Pro-Tool-Chrome (`#1b2330`) mit hellem Editor-Body.
+    AM-Theme dreht das auf beige Chrome (`#efe9da`) mit warm-hellem
+    Editor-Body — geeignet als Markenidentität für den realen zweiten
+    Mandanten „Aktives Museum".
+  - Globale 180-ms-CSS-Transition auf `background-color` /
+    `border-color` / `color` / `fill` / `stroke` in `app.css`. Ohne
+    Transition zeigt der Browser beim Klick auf den Toggle für einen
+    Frame einen Mischzustand, was im hellen Modus als sichtbares
+    Flackern wahrgenommen wird. `prefers-reduced-motion: reduce`
+    schaltet die Transition komplett ab (WCAG 2.3.3).
+  - Browser-verifiziert: Toggle-Roundtrip auf `/projects/1/edit`,
+    `data-theme`-Attribut, `cc-theme`-Persistenz, ARIA-States,
+    computed colors für Header (`#1b2330` ↔ `#efe9da`), Border, Menü-
+    Text und User-Menu-Button.
+
+  **Nicht in dieser Welle** (Backlog für separate Wellen):
+  Logo-Tausch (CDN-PNG muss mandantenfähig werden), Title-Tag- und
+  Mail-Template-Branding, Reader-/Editor-Card-Tokens
+  (`bg-tint-bg`/`border-brand-line` für aktive Marker, Akzent-Linien
+  an Cards). „App-Shell-Switch" ist der bewusste Schnitt; ein
+  Voll-Theme-Switch folgt, wenn der erste reale AM-Onboarding-Use-Case
+  konkret wird.
+
 - **`<x-ui.modal>` als zentrale Modal-Komponente** (Phase 5a.IV.c).
   Anonyme Blade-Komponente unter `resources/views/components/ui/modal.blade.php`.
   Props: `id` (Pflicht, für JS-Manager), `title`, `size` (sm|md|lg),

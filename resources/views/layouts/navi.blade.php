@@ -17,7 +17,7 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>. -->
 
-<header class="mb-4 border-b border-ink-400 bg-white">
+<header class="mb-4 border-b border-chrome-line bg-chrome-bg">
     <nav class="mx-auto flex w-full max-w-screen-2xl items-center justify-between gap-4 px-6 py-3">
         <a href="{{ route('projects.index') }}" class="shrink-0">
             <img
@@ -30,7 +30,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
         <ul class="flex flex-wrap items-center gap-1">
             @if(isset(Auth::user()->currentRole) && Auth::user()->currentRole[0]->name == 'Admin')
                 <li>
-                    <a class="block rounded-md px-3 py-2 text-body text-ink-900 hover:bg-ink-400/10" href="{{route('settings.index')}}">
+                    <a class="block rounded-md px-3 py-2 text-body text-chrome-on hover:bg-chrome-active" href="{{route('settings.index')}}">
                         {{__('setting')}}
                     </a>
                 </li>
@@ -43,7 +43,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     @click.outside="open = false"
                     aria-haspopup="true"
                     :aria-expanded="open"
-                    class="flex items-center gap-1 rounded-md px-3 py-2 text-body text-ink-900 hover:bg-ink-400/10"
+                    class="flex items-center gap-1 rounded-md px-3 py-2 text-body text-chrome-on hover:bg-chrome-active"
                 >
                     {{__('project')}}
                     <x-ui.icon name="chevron-down" :size="14"/>
@@ -52,7 +52,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     x-show="open"
                     x-transition
                     x-cloak
-                    class="absolute left-0 z-10 mt-1 min-w-[12rem] rounded-md border border-ink-400 bg-white py-1 shadow-md"
+                    class="absolute left-0 z-10 mt-1 min-w-[12rem] rounded-md border border-ink-400 bg-canvas-bg py-1 shadow-md"
                 >
                     <a class="block px-4 py-2 text-body text-ink-900 hover:bg-ink-400/10" href="{{ route('projects.index') }}">{{__('all_projects')}}</a>
                     <a class="block px-4 py-2 text-body text-ink-900 hover:bg-ink-400/10" href="{{ route('projects.create') }}">{{__('new_project')}}</a>
@@ -66,7 +66,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     @click.outside="open = false"
                     aria-haspopup="true"
                     :aria-expanded="open"
-                    class="flex items-center gap-1 rounded-md px-3 py-2 text-body text-ink-900 hover:bg-ink-400/10"
+                    class="flex items-center gap-1 rounded-md px-3 py-2 text-body text-chrome-on hover:bg-chrome-active"
                 >
                     {{__('users')}}
                     <x-ui.icon name="chevron-down" :size="14"/>
@@ -75,7 +75,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     x-show="open"
                     x-transition
                     x-cloak
-                    class="absolute left-0 z-10 mt-1 min-w-[12rem] rounded-md border border-ink-400 bg-white py-1 shadow-md"
+                    class="absolute left-0 z-10 mt-1 min-w-[12rem] rounded-md border border-ink-400 bg-canvas-bg py-1 shadow-md"
                 >
                     @if(isset(Auth::user()->currentRole) && Auth::user()->currentRole[0]->name == 'Admin')
                         <a class="block px-4 py-2 text-body text-ink-900 hover:bg-ink-400/10" href="{{ route('users.index') }}">{{__('all_users')}}</a>
@@ -87,7 +87,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
             </li>
 
             <li>
-                <a class="block rounded-md px-3 py-2 text-body text-ink-900 hover:bg-ink-400/10" href="{{route('all.comments')}}">
+                <a class="block rounded-md px-3 py-2 text-body text-chrome-on hover:bg-chrome-active" href="{{route('all.comments')}}">
                     {{__('comments')}}
                 </a>
             </li>
@@ -100,7 +100,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                 @click="$store.theme.toggle()"
                 :aria-pressed="$store.theme.current === 'aktivesMuseum'"
                 :aria-label="$store.theme.current === 'aktivesMuseum' ? '{{ __('switch_theme_default') }}' : '{{ __('switch_theme_alt') }}'"
-                class="flex h-9 w-9 items-center justify-center rounded-md text-ink-700 hover:bg-ink-400/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                class="flex h-9 w-9 items-center justify-center rounded-md text-chrome-on-dim hover:bg-chrome-active focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 title="Theme wechseln"
             >
                 {{-- Beide Icons direkt im Button, per x-show getoggelt.
@@ -126,7 +126,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                         @click.outside="open = false"
                         aria-haspopup="true"
                         :aria-expanded="open"
-                        class="flex items-center gap-1 rounded-md px-3 py-2 text-caption text-ink-700 hover:bg-ink-400/10"
+                        class="flex items-center gap-1 rounded-md px-3 py-2 text-caption text-chrome-on-dim hover:bg-chrome-active"
                     >
                         {{ config('languages')[App::getLocale()] }}
                         <x-ui.icon name="chevron-down" :size="14"/>
@@ -153,7 +153,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     @click.outside="open = false"
                     aria-haspopup="true"
                     :aria-expanded="open"
-                    class="flex items-center gap-1 rounded-md bg-ink-900 px-3 py-2 text-caption text-white hover:opacity-90"
+                    class="flex items-center gap-1 rounded-md bg-primary px-3 py-2 text-caption text-primary-on hover:opacity-90"
                 >
                     @if(isset(Auth::user()->name)){{ Auth::user()->name }} {{ Auth::user()->last_name }}@endif
                     <x-ui.icon name="chevron-down" :size="14"/>
