@@ -89,6 +89,27 @@ it('edit rendert die chapters/index-View für den Owner', function () {
     $response->assertSee('Erstes Kapitel', false);
 });
 
+it('edit-View rendert die Sidebar-Tree-Komponente mit aria-label Projektstruktur', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole(RoleName::READER->value);
+    $project = makeProject($owner, ['name' => 'Sichtbares Projekt']);
+    $chapter = makeChapter($project, ['name' => 'Sichtbares Kapitel']);
+    makeEntry($chapter, ['name' => 'Sichtbarer Abschnitt']);
+
+    $response = $this->actingAs($owner)
+        ->get(route('projects.edit', $project));
+
+    $response->assertOk();
+    // Tree-Komponente sitzt im log-Slot der Layout-Komponente.
+    $response->assertSee('aria-label="Projektstruktur"', false);
+    // Erwartung: drei Ebenen sichtbar (Projekt, Kapitel, Abschnitt).
+    $response->assertSee('Sichtbares Projekt', false);
+    $response->assertSee('Sichtbares Kapitel', false);
+    $response->assertSee('Sichtbarer Abschnitt', false);
+});
+
 it('edit-View enthält die Chapter-Tree-Struktur für den geplanten Sidebar-Baum', function () {
     /** @var TestCase $this */
     /** @var User $owner */

@@ -23,6 +23,10 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
     @endpush
 @endonce
+@section('log')
+    <livewire:sidebar-tree :project="$project" :key="'sidebar-tree-'.$project->id" />
+@endsection
+
 @section('sidebar')
 
     @include('projects.description')

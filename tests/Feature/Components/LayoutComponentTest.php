@@ -55,7 +55,9 @@ BLADE);
         ->toContain('HISTORY-INHALT')
         ->toContain('EDITOR-INHALT')
         ->toContain('TOOLS-INHALT')
-        ->toContain('aria-label="Verlauf"')
+        // Linke Aside trägt seit 5b.3 das Tree-Label „Projektstruktur";
+        // die History wandert mit 5b.6 in den Drawer.
+        ->toContain('aria-label="Projektstruktur"')
         ->toContain('aria-label="Werkzeuge"');
 });
 
@@ -72,9 +74,9 @@ BLADE);
         ->toContain('id="main-content"')
         ->toContain('SETTINGS-INHALT')
         // Wenn $content gesetzt ist, fällt der Editor-Grid weg —
-        // weder aria-label="Verlauf" noch aria-label="Werkzeuge"
+        // weder aria-label="Projektstruktur" noch aria-label="Werkzeuge"
         // erscheinen, weil log/main/sidebar im else-Zweig liegen.
-        ->not->toContain('aria-label="Verlauf"')
+        ->not->toContain('aria-label="Projektstruktur"')
         ->not->toContain('aria-label="Werkzeuge"');
 });
 
