@@ -20,6 +20,9 @@ along with this program in the file LICENSE.
 If not, see <https://www.gnu.org/licenses/>.
  */
 
+use App\Models\Entry;
+use App\Models\MediaContent;
+use App\Models\Text;
 use App\Models\User;
 use App\Services\LogService;
 use App\Support\PermissionName;
@@ -231,11 +234,11 @@ it('getParentText liefert für texts den Kontext via media_content-Join', functi
     $entry = makeEntry($chapter, ['name' => 'Entry Texts']);
     $text = makeText();
 
-    \App\Models\MediaContent::create([
+    MediaContent::create([
         'content_id' => $text->id,
-        'content_type' => \App\Models\Text::class,
+        'content_type' => Text::class,
         'parent_id' => $entry->id,
-        'parent_type' => \App\Models\Entry::class,
+        'parent_type' => Entry::class,
         'position' => 1,
     ]);
 

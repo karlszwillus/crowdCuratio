@@ -22,7 +22,9 @@ If not, see <https://www.gnu.org/licenses/>.
 
 use App\Models\Chapter;
 use App\Models\Comment;
+use App\Models\Entry;
 use App\Models\MediaContent;
+use App\Models\Project;
 use App\Models\Text;
 use App\Models\User;
 
@@ -56,7 +58,7 @@ it('comment->project liefert das verknüpfte Project zurück', function () {
     $comment->save();
 
     expect($comment->project)->not->toBeNull();
-    /** @var \App\Models\Project $resolvedProject */
+    /** @var Project $resolvedProject */
     $resolvedProject = $comment->project;
     expect($resolvedProject->id)->toBe($project->id);
 });
@@ -96,7 +98,7 @@ it('comment->commentable liefert MediaContent, wenn der morph-Typ MediaContent i
         'content_id' => $text->id,
         'content_type' => Text::class,
         'parent_id' => $entry->id,
-        'parent_type' => \App\Models\Entry::class,
+        'parent_type' => Entry::class,
         'position' => 1,
     ]);
 
@@ -128,7 +130,7 @@ it('comment->content liefert das MediaContent über commentable_id', function ()
         'content_id' => $text->id,
         'content_type' => Text::class,
         'parent_id' => $entry->id,
-        'parent_type' => \App\Models\Entry::class,
+        'parent_type' => Entry::class,
         'position' => 1,
     ]);
 
