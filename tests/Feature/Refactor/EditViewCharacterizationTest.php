@@ -38,11 +38,15 @@ use Tests\TestCase;
 | 46,5 % (ProjectController) und wird durch 5b nicht systematisch
 | gehoben. Stattdessen werden die 5b-relevanten View-Anker festgehalten:
 |
-|   - `chapters/index`-View wird gerendert für edit
+|   - `chapters/index`-View wird (per @include aus `projects.edit`)
+|     gerendert für edit
 |   - Project-Tree-Daten (chapters → entries → contents) sind im View
 |     verfügbar — das ist die Grundlage für die neue Sidebar
-|   - getCurrentLog liefert History-Einträge für den geplanten Drawer
-|   - allData liefert JSON-Tree für AJAX-Pfade
+|   - show liefert die Reader-Sicht für ein eigenes Project
+|
+| `getCurrentLog`/`log.text` ist heute toter Code (Controller ruft
+| `new LogService;` ohne das erforderliche Model-Argument — Frontend
+| zieht die Route nicht). Kein Pinning hier, eigenes Backlog-Item.
 |
 | Wenn 5b die Render-Logik oder Daten-Struktur ändert, fallen die
 | Tests rot und zwingen einen bewussten Schnitt.
@@ -54,12 +58,21 @@ beforeEach(function () {
     }
     Role::firstOrCreate(['name' => RoleName::ADMIN->value, 'guard_name' => 'web'])
         ->syncPermissions(Permission::all());
+    // Reader-Rolle wird gebraucht, damit die Test-Owner eine assigned
+    // Role haben — `layouts/navi.blade.php` (Z. 31, Z. 80) liest heute
+    // `Auth::user()->currentRole[0]->name`, was bei leerer Collection
+    // mit „Undefined array key 0" crasht. Das ist der Realfall:
+    // jeder per Registrierung angelegte User bekommt eine Rolle. Der
+    // navi-Smell selbst ist eigenes Backlog-Item (TODO.md / Pre-Phase-6).
+    Role::firstOrCreate(['name' => RoleName::READER->value, 'guard_name' => 'web'])
+        ->syncPermissions([PermissionName::VIEW->value]);
 });
 
 it('edit rendert die chapters/index-View für den Owner', function () {
     /** @var TestCase $this */
     /** @var User $owner */
     $owner = User::factory()->create();
+    $owner->assignRole(RoleName::READER->value);
     $project = makeProject($owner);
     makeChapter($project, ['name' => 'Erstes Kapitel']);
 
@@ -67,14 +80,20 @@ it('edit rendert die chapters/index-View für den Owner', function () {
         ->get(route('projects.edit', $project));
 
     $response->assertOk();
-    $response->assertViewIs('chapters.index');
+    // ProjectController::edit returnt `view('projects.edit', ...)`.
+    // Die `projects.edit`-Blade includet `chapters.index`. Das Pinning
+    // sitzt deshalb auf `projects.edit` plus dem sichtbaren
+    // Chapter-Namen als Indiz, dass das Tree-Markup gerendert wurde.
+    $response->assertViewIs('projects.edit');
     $response->assertViewHas('project');
+    $response->assertSee('Erstes Kapitel', false);
 });
 
 it('edit-View enthält die Chapter-Tree-Struktur für den geplanten Sidebar-Baum', function () {
     /** @var TestCase $this */
     /** @var User $owner */
     $owner = User::factory()->create();
+    $owner->assignRole(RoleName::READER->value);
     $project = makeProject($owner);
     $chapter = makeChapter($project, ['name' => 'Kapitel mit Inhalt']);
     makeEntry($chapter, ['name' => 'Abschnitt A']);
@@ -95,8 +114,10 @@ it('edit verbietet fremde User mit 403', function () {
     /** @var TestCase $this */
     /** @var User $owner */
     $owner = User::factory()->create();
+    $owner->assignRole(RoleName::READER->value);
     /** @var User $stranger */
     $stranger = User::factory()->create();
+    $stranger->assignRole(RoleName::READER->value);
     $project = makeProject($owner);
 
     $response = $this->actingAs($stranger)
@@ -109,6 +130,7 @@ it('edit lässt Admin auf fremde Projects', function () {
     /** @var TestCase $this */
     /** @var User $owner */
     $owner = User::factory()->create();
+    $owner->assignRole(RoleName::READER->value);
     /** @var User $admin */
     $admin = User::factory()->create();
     $admin->assignRole(RoleName::ADMIN->value);
@@ -120,25 +142,11 @@ it('edit lässt Admin auf fremde Projects', function () {
     $response->assertOk();
 });
 
-it('getCurrentLog via log.text liefert OK für den geplanten History-Drawer', function () {
-    /** @var TestCase $this */
-    /** @var User $owner */
-    $owner = User::factory()->create();
-    $owner->assignRole(RoleName::ADMIN->value);
-    $project = makeProject($owner);
-
-    // log.text ist die heute existierende Route für getCurrentLog.
-    // Die View ist Drawer-Kandidat in 5b — Pinning auf den OK-Pfad.
-    $response = $this->actingAs($owner)
-        ->get(route('log.text', $project->id));
-
-    $response->assertOk();
-});
-
 it('show liefert die Reader-Sicht für ein eigenes Project', function () {
     /** @var TestCase $this */
     /** @var User $owner */
     $owner = User::factory()->create();
+    $owner->assignRole(RoleName::READER->value);
     $project = makeProject($owner);
 
     $response = $this->actingAs($owner)
