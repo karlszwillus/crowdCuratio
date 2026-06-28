@@ -51,6 +51,17 @@ import './datatable';
 // jQuery-UI. Damit fällt jQuery-UI als Abhängigkeit.
 import './sortable-shim';
 
+// ARIA-Live-Region-Announcer (WCAG 4.1.3): globale Funktion
+// window.ccAnnounce(message) füllt die zentrale Live-Region im
+// Layout. MUSS vor Modulen geladen werden, die die Funktion rufen.
+import './announcer';
+
+// Tastatur-Alternative für SortableJS-Drag (WCAG 2.5.7): Strg+Pfeil-
+// hoch/runter auf einem fokussierten Listen-Item bewegt es eine
+// Position. Persistiert über die gleiche `chapter.drag`-Route wie
+// der Maus-Drag.
+import './keyboard-reorder';
+
 // Tooltip-Shim — Bootstrap-3-`.tooltip()`-Plugin ist mit BS3-JS gefallen,
 // die `document.ready`-Inits in chapters/index und roles/index brauchen
 // noch einen Aufruf, der nicht knallt. Native title-Tooltips greifen.

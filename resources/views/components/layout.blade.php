@@ -118,6 +118,19 @@ If not, see <https://www.gnu.org/licenses/>.
         @endif
     </div>
 
+    {{-- Live-Region für ARIA-Announcements (WCAG 4.1.3). Wird heute
+         vom Tastatur-Reorder (resources/js/keyboard-reorder.js) und
+         später von weiteren Async-Aktionen befüllt. Globale Funktion
+         window.ccAnnounce(message) schreibt den Text rein, Screen-
+         Reader liest ihn höflich vor. --}}
+    <div
+        id="cc-live-announcer"
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        class="sr-only"
+    ></div>
+
     @livewireScripts
 
     {{-- View-spezifische Scripts. View-Files publishen via

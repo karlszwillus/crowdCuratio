@@ -91,6 +91,21 @@ html {
 }
 
 /*
+ * Tastatur-Fokus-Ring für die fokussierbaren Editor-Items
+ * (Chapter, Entry, Content). `tabindex="0"` setzen wir in Blade
+ * nur, wenn der User update-darf — der Ring fasst das visuelle
+ * Tastatur-Fokus-Affordance dazu. focus-visible greift nicht bei
+ * Maus-Klick, sondern nur bei echtem Tab/Strg+Pfeil-Fokus.
+ */
+li.chapter:focus-visible,
+li.entry:focus-visible,
+li.item.content:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 0.375rem;
+}
+
+/*
  * Skip-Link (WCAG 2.4.1, „Bypass Blocks"). Im Default visuell versteckt
  * via translateY(-150%), nicht via clip-path/sr-only — die Tailwind-
  * `focus:not-sr-only`-Modifier-Kette wurde im Browser-Smoke nicht

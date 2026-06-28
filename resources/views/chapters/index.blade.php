@@ -115,9 +115,9 @@ If not, see <https://www.gnu.org/licenses/>. -->
                 <p>{!! $project->description !!}</p>
             </div>
         </div>
-        <ul class="list-group ui-sortable-chapter sortable_list_chapter connectedSortableChapter" id="groupsList">
+        <ul class="list-group ui-sortable-chapter sortable_list_chapter connectedSortableChapter" id="groupsList" data-reorder-element="chapter" data-reorder-url="{{ route('chapter.drag') }}" data-reorder-project="{{ $project->id }}">
             @foreach($data->chapters as $key => $chapter)
-                <li class="chapter group" data-chapter="{{$chapter->id}}" data-project="{{$project->id}}" id="{{$chapter->id}}">
+                <li class="chapter group" data-chapter="{{$chapter->id}}" data-project="{{$project->id}}" id="{{$chapter->id}}" @can('update', $project) tabindex="0" @endcan>
                     <div id="{{$chapter->id}}">
                         <div class="row border border-secondary p-4 mb-4 content">
                             <div style="float: left;" id="anchor_Chapter_{{$chapter->id}}">
@@ -165,9 +165,9 @@ If not, see <https://www.gnu.org/licenses/>. -->
                         </div>
                         <div class="collapse in" id="chapter_{{$chapter->id}}" aria-expanded="false">
                             @if(isset($chapter->entries) && count($chapter->entries) >0)
-                                <ul class="list-group ui-sortable-entry sortable_list_entry connectedSortableEntry" id="{{$chapter->id}}">
+                                <ul class="list-group ui-sortable-entry sortable_list_entry connectedSortableEntry" id="{{$chapter->id}}" data-reorder-element="entry" data-reorder-url="{{ route('chapter.drag') }}">
                                     @foreach($chapter->entries as $entry)
-                                        <li class="entry group" data-chapter="{{$chapter->id}}" data-entry="{{$entry->id}}">
+                                        <li class="entry group" data-chapter="{{$chapter->id}}" data-entry="{{$entry->id}}" @can('update', $project) tabindex="0" @endcan>
                                                 <div id="P-{{$project->id}}-C-{{$chapter->id}}-entry-{{$entry->id}}"
                                                              class="row border border-secondary p-4 mb-4 ml-auto w-11/12 content">
                                                             <div style="float: left;" id="anchor_Entry_{{$entry->id}}">
@@ -228,11 +228,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                         </div>
                                                     @if(isset($entry->mediaContent) && count($entry->mediaContent) > 0)
                                                         <div id="entry_{{$entry->id}}">
-                                                            <ul class="list-group  ui-sortable-content sortable_list_content connectedSortableContent" data-entry="{{$entry->id}}" id="{{$entry->id}}">
+                                                            <ul class="list-group  ui-sortable-content sortable_list_content connectedSortableContent" data-entry="{{$entry->id}}" id="{{$entry->id}}" data-reorder-element="content" data-reorder-url="{{ route('chapter.drag') }}">
                                                                 @foreach($entry->mediaContent as $item)
                                                                     @if($item->content_type == 'App\Models\Text')
                                                                         @isset($item->text->text)
-                                                                            <li class="item text content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}">
+                                                                            <li class="item text content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" @endcan>
                                                                                 <div class="row border border-secondary p-4 mb-4 ml-auto w-10/12">
                                                                                     <div id="anchor_MediaContent_{{$item->id}}">
                                                                                         <div class="text-scrollbar overflow-auto">
@@ -295,7 +295,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                     @endif
                                                                     @if($item->content_type == 'App\Models\Audiovisual')
                                                                         @isset($item->audiovisual->link)
-                                                                            <li class="item audiovisual content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}">
+                                                                            <li class="item audiovisual content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" @endcan>
                                                                                 <div class="row border border-secondary p-4 mb-4 ml-auto w-10/12">
                                                                                     <div id="anchor_MediaContent_{{$item->id}}">
                                                                                         @if($item->audiovisual->type == 'audio')
@@ -371,7 +371,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                          hat 'App\Models\Gallery' (ADR-0022). --}}
                                                                     @if(isset($item) && $item->content_type == 'App\Models\Gallery')
                                                                         @if(isset($item->gallery))
-                                                                            <li class="item gallery content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}">
+                                                                            <li class="item gallery content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" @endcan>
                                                                                 <div class="row border border-secondary p-4 mb-4 ml-auto w-10/12">
                                                                                     <div class="row">
                                                                                         <div class="">
@@ -511,7 +511,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                             </ul>
                                                         </div>
                                             @else
-                                                <ul class="list-group  ui-sortable-content sortable_list_content connectedSortableContent" data-entry="{{$entry->id}}" id="{{$entry->id}}">
+                                                <ul class="list-group  ui-sortable-content sortable_list_content connectedSortableContent" data-entry="{{$entry->id}}" id="{{$entry->id}}" data-reorder-element="content" data-reorder-url="{{ route('chapter.drag') }}">
                                                    {{-- <li class="" data-content="" data-entry="{{$entry->id}}">
                                                     </li> --}}
                                                 </ul>
@@ -534,7 +534,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                     @endforeach
                                 </ul>
                             @else
-                                <ul class="list-group ui-sortable-entry sortable_list_entry connectedSortableEntry" id="{{$chapter->id}}">
+                                <ul class="list-group ui-sortable-entry sortable_list_entry connectedSortableEntry" id="{{$chapter->id}}" data-reorder-element="entry" data-reorder-url="{{ route('chapter.drag') }}">
                                     <li>&nbsp;</li>
                                 </ul>
                             @endif
