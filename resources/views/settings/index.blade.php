@@ -106,128 +106,76 @@ If not, see <https://www.gnu.org/licenses/>. -->
         </div>
     </div>
 
-    <!-- Modal -->
-    <div class="modal fade bd-example-modal-xl" id="termsConditionsModal" tabindex="-1" role="dialog" aria-labelledby="Terms Conditions"
-         aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    {{__('add_new_terms')}}
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+    <!-- Modale: Terms / Privacy / Imprint / Invitation -->
+    <x-ui.modal id="termsConditionsModal" :title="__('add_new_terms')" size="lg" labelledby="Terms Conditions">
+        <div class="row m-2">
+            <form action="{{route('settings.store')}}" name="contentForm"
+                  method="POST"
+                  enctype="multipart/form-data">
+                @csrf
+                <input type="hidden" name="idTerms" @isset($terms->id) value="{!! $terms->id !!}" @endisset>
+                <p class="mb-7">{{__('add_text')}}</p>
+                <div id="termsConditionsEditor"></div>
+                <div class="col-xs-12 mt-2">
+                    <button id="btn_text" type="submit" class="btn btn-primary float-right">{{__('save')}}</button>
                 </div>
-                <div class="modal-body">
-                    <div class="row m-2">
-                            <form action="{{route('settings.store')}}" name="contentForm"
-                                  method="POST"
-                                  enctype="multipart/form-data">
-                                @csrf
-                                <input type="hidden" name="idTerms" @isset($terms->id) value="{!! $terms->id !!}" @endisset>
-                                <p class="mb-7">{{__('add_text')}}</p>
-                                <div id="termsConditionsEditor"></div>
-                                <div class="col-xs-12 mt-2">
-                                    <button id="btn_text" type="submit" class="btn btn-primary float-right">{{__('save')}}</button>
-                                </div>
-                            </form>
-                    </div>
-                </div>
-            </div>
+            </form>
         </div>
-    </div>
+    </x-ui.modal>
 
-    <div class="modal fade bd-example-modal-xl" id="privacyModal" tabindex="-1" role="dialog" aria-labelledby="Privacy Policy"
-         aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    {{__('add_new_policy')}}
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+    <x-ui.modal id="privacyModal" :title="__('add_new_policy')" size="lg" labelledby="Privacy Policy">
+        <div class="row m-2">
+            <form action="{{route('settings.store')}}" method="POST"
+                  enctype="multipart/form-data">
+                @csrf
+                <div class="col-xs-12">
+                    <input type="hidden" name="idPrivacy" @isset($privacy->id) value="{{$privacy->id}}" @endisset>
+                    <p class="mb-7">{{__('add_text')}}</p>
+                    <div id="privacyPolicy"></div>
                 </div>
-                <div class="modal-body">
-                    <div class="row m-2">
-                        <form action="{{route('settings.store')}}" method="POST"
-                              enctype="multipart/form-data">
-                            @csrf
-                            <div class="col-xs-12">
-                                <input type="hidden" name="idPrivacy" @isset($privacy->id) value="{{$privacy->id}}" @endisset>
-                                <p class="mb-7">{{__('add_text')}}</p>
-                                <div id="privacyPolicy"></div>
-                            </div>
-                            <div class="col-xs-12 mt-2">
-                                <button id="btn_privacy" type="submit" class="btn btn-primary float-right">{{__('save')}}</button>
-                            </div>
-                        </form>
-                    </div>
+                <div class="col-xs-12 mt-2">
+                    <button id="btn_privacy" type="submit" class="btn btn-primary float-right">{{__('save')}}</button>
                 </div>
-            </div>
+            </form>
         </div>
-    </div>
+    </x-ui.modal>
 
-    <div class="modal fade bd-example-modal-xl" id="imprintModal" tabindex="-1" role="dialog" aria-labelledby="Imprint"
-         aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    {{__('add_new_imprint')}}
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+    <x-ui.modal id="imprintModal" :title="__('add_new_imprint')" labelledby="Imprint">
+        <div class="row">
+            <form action="{{route('settings.store')}}" method="post">
+                @csrf
+                <div class="col-xs-12">
+                    <input type="hidden" name="IdImprint" @isset($imprint->id) value="{{$imprint->id}}" @endisset>
+                    <input type="text" name="firstname" placeholder="Firstname" class="form-control mb-2" @isset($imprint->name['firstname']) value="{{$imprint->name['firstname']}}" @endisset/>
+                    <input type="text" name="lastname" placeholder="Lastname" class="form-control mb-2" @isset($imprint->name['lastname']) value="{{$imprint->name['lastname']}}" @endisset/>
+                    <input type="text" name="address" placeholder="Address" class="form-control mb-2" @isset($imprint->address['address']) value="{{$imprint->address['address']}}" @endisset/>
+                    <input type="text" name="postcode" placeholder="Postcode" class="form-control mb-2" @isset($imprint->address['postcode']) value="{{$imprint->address['postcode']}}" @endisset/>
+                    <input type="text" name="phone" placeholder="Phone" class="form-control mb-2" @isset($imprint->contact['phone']) value="{{$imprint->contact['phone']}}" @endisset/>
+                    <input type="text" name="fax" placeholder="Fax" class="form-control mb-2" @isset($imprint->contact['fax']) value="{{$imprint->contact['fax']}}" @endisset/>
+                    <input type="email" name="email" placeholder="E-mail" class="form-control mb-2" @isset($imprint->contact['email']) value="{{$imprint->contact['email']}}" @endisset/>
                 </div>
-                <div class="modal-body">
-                    <div class="row">
-                        <form action="{{route('settings.store')}}" method="post">
-                            @csrf
-                            <div class="col-xs-12">
-                                <input type="hidden" name="IdImprint" @isset($imprint->id) value="{{$imprint->id}}" @endisset>
-                                <input type="text" name="firstname" placeholder="Firstname" class="form-control mb-2" @isset($imprint->name['firstname']) value="{{$imprint->name['firstname']}}" @endisset/>
-                                <input type="text" name="lastname" placeholder="Lastname" class="form-control mb-2" @isset($imprint->name['lastname']) value="{{$imprint->name['lastname']}}" @endisset/>
-                                <input type="text" name="address" placeholder="Address" class="form-control mb-2" @isset($imprint->address['address']) value="{{$imprint->address['address']}}" @endisset/>
-                                <input type="text" name="postcode" placeholder="Postcode" class="form-control mb-2" @isset($imprint->address['postcode']) value="{{$imprint->address['postcode']}}" @endisset/>
-                                <input type="text" name="phone" placeholder="Phone" class="form-control mb-2" @isset($imprint->contact['phone']) value="{{$imprint->contact['phone']}}" @endisset/>
-                                <input type="text" name="fax" placeholder="Fax" class="form-control mb-2" @isset($imprint->contact['fax']) value="{{$imprint->contact['fax']}}" @endisset/>
-                                <input type="email" name="email" placeholder="E-mail" class="form-control mb-2" @isset($imprint->contact['email']) value="{{$imprint->contact['email']}}" @endisset/>
-                            </div>
-                            <div class="col-xs-12">
-                                <button type="submit" class="btn btn-primary float-right">{{__('save')}}</button>
-                            </div>
-                        </form>
-                    </div>
+                <div class="col-xs-12">
+                    <button type="submit" class="btn btn-primary float-right">{{__('save')}}</button>
                 </div>
-            </div>
+            </form>
         </div>
-    </div>
+    </x-ui.modal>
 
-    <div class="modal fade bd-example-modal-xl" id="invitationModal" tabindex="-1" role="dialog" aria-labelledby="Invitation E-mail"
-         aria-hidden="true">
-        <div class="modal-dialog modal-lg" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    {{__('add_new_invitation')}}
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
+    <x-ui.modal id="invitationModal" :title="__('add_new_invitation')" size="lg" labelledby="Invitation E-mail">
+        <div class="row m-2">
+            <form action="{{route('settings.store')}}" method="POST"
+                  enctype="multipart/form-data">
+                @csrf
+                <div class="col-xs-12">
+                    <input type="hidden" name="IdEmail" @isset($mail->id) value="{!! $mail->id !!}" @endisset>
+                    <div id="invitation"></div>
                 </div>
-                <div class="modal-body">
-                    <div class="row m-2">
-                        <form action="{{route('settings.store')}}" method="POST"
-                              enctype="multipart/form-data">
-                            @csrf
-                            <div class="col-xs-12">
-                                <input type="hidden" name="IdEmail" @isset($mail->id) value="{!! $mail->id !!}" @endisset>
-                                <div id="invitation"></div>
-                            </div>
-                            <div class="col-xs-12 mt-2">
-                                <button id="btn_invitation" type="submit" class="btn btn-primary float-right">{{__('save')}}</button>
-                            </div>
-                        </form>
-                    </div>
+                <div class="col-xs-12 mt-2">
+                    <button id="btn_invitation" type="submit" class="btn btn-primary float-right">{{__('save')}}</button>
                 </div>
-            </div>
+            </form>
         </div>
-    </div>
+    </x-ui.modal>
 @endsection
 @section('script')
     <script>

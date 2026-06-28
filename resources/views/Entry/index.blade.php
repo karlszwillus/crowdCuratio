@@ -17,57 +17,41 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>. -->
 
-<div class="modal fade bd-example-modal-xl" id="entryModal" tabindex="-1" role="dialog"
-     aria-labelledby="entryModalLabel"
-     aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                {{__('add_entry')}}
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class='row'>
-                    <div id="infoMsg" class="">
-
-                    </div>
-                    <div class="writeinfo"></div>
-                    <div class="col-xs-12">
-                        <span id="lblChapter"></span>
-                        <form id="entry_frm" name="entry_frm"
-                              action="{{ route('entries.store') }}"
-                              method="POST"
-                              enctype="multipart/form-data">
-                            @csrf
-                            {{-- Phase 2 / D.13: _method-Override für die PATCH-Variante --}}
-                            <input name="_method" type="hidden" value="">
-                            <div class="col mt-3">
-                                <input name="chapterId" id="chapterId" type="hidden" class="form-control mb-3"
-                                       value="">
-                                <input name="entryId" id="entryId" type="hidden" class="form-control mb-3"
-                                       value="">
-                                {{__('entry_title')}}
-                                <input name="entryTitle" id="entryTitle" type="text" class="form-control mb-3"
-                                       placeholder="{{__('entry_title')}}">
-                            </div>
-                            <div class="col">
-                                {{__('entry_subtitle')}}
-                                <input id="entrySubtitle" name="entrySubtitle" type="text"
-                                       class="form-control mb-3" placeholder="{{__('entry_subtitle')}}">
-                            </div>
-                            <div class="col">
-                                {{__('entry_description')}}
-                                <div id="entryDescription"></div>
-                            </div>
-                            <div class="col-xs-12 mt-4">
-                                <button id="submit_entry" type="submit" class="btn btn-primary float-right">{{__('save')}}</button>
-                            </div>
-                        </form>
-                    </div>
+<x-ui.modal id="entryModal" :title="__('add_entry')">
+    <div class="row">
+        <div id="infoMsg" class=""></div>
+        <div class="writeinfo"></div>
+        <div class="col-xs-12">
+            <span id="lblChapter"></span>
+            <form id="entry_frm" name="entry_frm"
+                  action="{{ route('entries.store') }}"
+                  method="POST"
+                  enctype="multipart/form-data">
+                @csrf
+                {{-- Phase 2 / D.13: _method-Override für die PATCH-Variante --}}
+                <input name="_method" type="hidden" value="">
+                <div class="col mt-3">
+                    <input name="chapterId" id="chapterId" type="hidden" class="form-control mb-3"
+                           value="">
+                    <input name="entryId" id="entryId" type="hidden" class="form-control mb-3"
+                           value="">
+                    {{__('entry_title')}}
+                    <input name="entryTitle" id="entryTitle" type="text" class="form-control mb-3"
+                           placeholder="{{__('entry_title')}}">
                 </div>
-            </div>
+                <div class="col">
+                    {{__('entry_subtitle')}}
+                    <input id="entrySubtitle" name="entrySubtitle" type="text"
+                           class="form-control mb-3" placeholder="{{__('entry_subtitle')}}">
+                </div>
+                <div class="col">
+                    {{__('entry_description')}}
+                    <div id="entryDescription"></div>
+                </div>
+                <div class="col-xs-12 mt-4">
+                    <button id="submit_entry" type="submit" class="btn btn-primary float-right">{{__('save')}}</button>
+                </div>
+            </form>
         </div>
     </div>
-</div>
+</x-ui.modal>

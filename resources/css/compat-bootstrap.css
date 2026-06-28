@@ -183,11 +183,25 @@
     }
 
     /*
-     * ---------- Modals (Bootstrap-3-JS-getrieben) ----------
-     * `.modal` ist im Bootstrap-CSS default `display: none`. Ohne
-     * Bootstrap-CSS rutscht der Modal-Inhalt sonst in den Body-Flow.
-     * Bootstrap-JS setzt beim Öffnen `display: block` plus `.in`/`.show`.
-     * In der nächsten Sub-Welle ersetzen wir die Modals durch Volt/Alpine.
+     * ---------- Modal-JS-Hooks (Phase 5a.IV.c) ----------
+     *
+     * Die strukturellen Bootstrap-3-Klassen (.modal-dialog, .modal-content,
+     * .modal-header, .modal-title, .modal-body, .modal-footer, button.close)
+     * sind in 5a.IV.c entfallen — die Views nutzen jetzt <x-ui.modal>, das
+     * das gesamte Inner-Markup mit Tailwind-Tokens direkt rendert.
+     *
+     * Was hier bleibt: nur die wenigen Klassen, an die der Vanilla-Modal-
+     * Manager (resources/js/modal.js) und das Markup-Outer (.modal.fade)
+     * funktional gebunden sind:
+     *   - .modal: Position + Default-Hidden
+     *   - .modal.in/.show: aktiver State (Show-Klasse setzt der Manager)
+     *   - .modal-backdrop: vom Manager dynamisch angelegtes Overlay
+     *   - body.modal-open: Body-Scroll-Lock-Hook
+     *
+     * Die einzige App-View, die noch Bootstrap-3-Modal-Markup hat, ist
+     * `vendor/welcomeNotification/welcome.blade.php` — das ist ein
+     * E-Mail-Template, wird nicht im Browser gerendert und ist
+     * absichtlich nicht migriert.
      */
     .modal {
         display: none;
@@ -224,45 +238,6 @@
     .collapse.show {
         visibility: visible !important;
         display: block !important;
-    }
-
-    .modal-dialog {
-        @apply relative mx-auto my-8 w-auto max-w-lg;
-    }
-
-    /* Bootstrap-3-Modifier für breite Dialoge — z. B. `bd-example-modal-xl`. */
-    .bd-example-modal-xl > .modal-dialog,
-    .modal-xl > .modal-dialog,
-    .modal-lg > .modal-dialog {
-        @apply max-w-4xl;
-    }
-
-    .modal-content {
-        @apply relative rounded-md border border-ink-400 bg-white shadow-lg;
-    }
-
-    .modal-header {
-        @apply flex items-center justify-between border-b border-ink-400 px-4 py-3;
-    }
-
-    .modal-title {
-        @apply m-0 text-heading font-semibold text-ink-900;
-    }
-
-    /* Bootstrap-3-Close-Button (×). */
-    .modal-header .close,
-    button.close {
-        @apply -m-1 cursor-pointer rounded-md border-0 bg-transparent p-2 text-heading text-ink-700 hover:bg-ink-400/10;
-        line-height: 1;
-        appearance: none;
-    }
-
-    .modal-body {
-        @apply px-4 py-3;
-    }
-
-    .modal-footer {
-        @apply flex items-center justify-end gap-2 border-t border-ink-400 px-4 py-3;
     }
 
     .modal-backdrop {

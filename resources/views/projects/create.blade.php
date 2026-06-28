@@ -207,79 +207,36 @@ If not, see <https://www.gnu.org/licenses/>. -->
     </button>-->
     <!-- Modal Chapter -->
 
-    <div class="modal fade bd-example-modal-xl" id="userInvitation" tabindex="-1" role="dialog"
-         aria-labelledby="myModalLabel"
-         aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    Add user
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class='row'>
-                        <div class="col-lg-12" id="detailUser">
-                            <form action="{{route('check.email')}}"
-                                  method="POST"
-                                  enctype="multipart/form-data" class="form-group form-inline" id="frmCheckEmail">
-                                @csrf
-                                <input name="project" @isset($project->id) value="{{$project->id}}"
-                                       @endisset type="hidden"/>
-                                <div class="form-group col-xs-8 mb-2">
-                                    <input type="email" class="form-control" name="userEmail" placeholder="User email"
-                                           style="width: 100% !important;">
-                                </div>
-                                <button id="" type="submit" class="btn btn-primary mb-2">{{__('invite')}}</button>
-                            </form>
-                        </div>
+    <x-ui.modal id="userInvitation" title="Add user">
+        <div class="row">
+            <div class="col-lg-12" id="detailUser">
+                <form action="{{route('check.email')}}"
+                      method="POST"
+                      enctype="multipart/form-data" class="form-group form-inline" id="frmCheckEmail">
+                    @csrf
+                    <input name="project" @isset($project->id) value="{{$project->id}}"
+                           @endisset type="hidden"/>
+                    <div class="form-group col-xs-8 mb-2">
+                        <input type="email" class="form-control" name="userEmail" placeholder="User email"
+                               style="width: 100% !important;">
                     </div>
-                </div>
+                    <button id="" type="submit" class="btn btn-primary mb-2">{{__('invite')}}</button>
+                </form>
             </div>
         </div>
-    </div>
+    </x-ui.modal>
 
 
-    <div class="modal fade bd-example-modal-xl" id="userModal" tabindex="-1" role="dialog"
-         aria-labelledby="myModalLabel"
-         aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    Add user permissions
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class='row'>
-                        <div id="infoMsg" class="">
-
-                        </div>
-                        <div class="writeinfo"></div>
-                        <div class="col-xs-12" id="editUserPermission">
-
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <x-ui.modal id="userModal" title="Add user permissions">
+        <div class="row">
+            <div id="infoMsg" class=""></div>
+            <div class="writeinfo"></div>
+            <div class="col-xs-12" id="editUserPermission"></div>
         </div>
-    </div>
+    </x-ui.modal>
 
-    <div class="modal fade bd-example-modal-xl" id="newUserInvitation" tabindex="-1" role="dialog"
-         aria-labelledby="myModalLabel"
-         aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    Add user
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class='row'>
+    <x-ui.modal id="newUserInvitation" title="Add user">
+        <div class="row">
                         @if(Session::get('user'))
                             <div class="col-lg-12">
                                 <p>{{__('email')}}</p>
@@ -360,69 +317,52 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                 </div>
                             </div>
                         @endif
-                    </div>
-                </div>
-            </div>
         </div>
-    </div>
+    </x-ui.modal>
 
-    <div class="modal fade bd-example-modal-xl" id="newUser" tabindex="-1" role="dialog"
-         aria-labelledby="myModalLabel"
-         aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    Add user
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class='row'>
-                        <div class="col-lg-12">
-                            <form action="{{ route('register') }}" method="POST">
-                                @csrf
-                                <input name="projectId" type="hidden" value="{{$project->id}}">
-                                <div class="block mt-4">
-                                    <label for="remember_me" class="inline-flex items-center">
-                                        <input id="policy" type="checkbox"
-                                               class="rounded border-gray-300 text-primary shadow-sm focus:border-primary/40 focus:ring focus:ring-primary/30 focus:ring-opacity-50"
-                                               name="policy">
-                                        <span class="ml-2 text-sm text-gray-600">{{ __('consent')}}</span>
-                                    </label>
-                                </div>
-                                <div class="form-group">
-                                    <label>{{__('first_name')}}</label>
-                                    <input name="firstName" type="text" class="form-control" aria-describedby="{{__('first_name')}}" placeholder="{{__('first_name')}}">
-                                </div>
-                                <div class="form-group">
-                                    <label>{{__('last_name')}}</label>
-                                    <input name="lastName" type="text" class="form-control" placeholder="{{__('last_name')}}">
-                                </div>
-                                <div class="form-group">
-                                    <label>{{__('email')}}</label>
-                                    <input name="email" type="email" class="form-control" value="{{Session::get('email')}}" placeholder="{{__('email')}}">
-                                </div>
-                                @isset($listRole)
-                                    <div class="col-auto my-1">
-                                        <label class="mr-sm-4" for="inlineFormCustomSelect">{{__('role')}}</label>
-                                        <select name="roles[]" class="custom-select mr-sm-4" >
-                                            @foreach($listRole as $key => $role)
-                                                <option value="{{ $key }}" {{ (old('roles.0') == $role ? "selected":"") }}>{{$role}}</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                @endisset
-                                <div class="modal-footer">
-                                    <button type="submit" class="btn btn-primary">{{__('save')}}</button>
-                                </div>
-                            </form>
-                        </div>
+    <x-ui.modal id="newUser" title="Add user">
+        <div class="row">
+            <div class="col-lg-12">
+                <form action="{{ route('register') }}" method="POST">
+                    @csrf
+                    <input name="projectId" type="hidden" value="{{$project->id}}">
+                    <div class="block mt-4">
+                        <label for="remember_me" class="inline-flex items-center">
+                            <input id="policy" type="checkbox"
+                                   class="rounded border-gray-300 text-primary shadow-sm focus:border-primary/40 focus:ring focus:ring-primary/30 focus:ring-opacity-50"
+                                   name="policy">
+                            <span class="ml-2 text-sm text-gray-600">{{ __('consent')}}</span>
+                        </label>
                     </div>
-                </div>
+                    <div class="form-group">
+                        <label>{{__('first_name')}}</label>
+                        <input name="firstName" type="text" class="form-control" aria-describedby="{{__('first_name')}}" placeholder="{{__('first_name')}}">
+                    </div>
+                    <div class="form-group">
+                        <label>{{__('last_name')}}</label>
+                        <input name="lastName" type="text" class="form-control" placeholder="{{__('last_name')}}">
+                    </div>
+                    <div class="form-group">
+                        <label>{{__('email')}}</label>
+                        <input name="email" type="email" class="form-control" value="{{Session::get('email')}}" placeholder="{{__('email')}}">
+                    </div>
+                    @isset($listRole)
+                        <div class="col-auto my-1">
+                            <label class="mr-sm-4" for="inlineFormCustomSelect">{{__('role')}}</label>
+                            <select name="roles[]" class="custom-select mr-sm-4" >
+                                @foreach($listRole as $key => $role)
+                                    <option value="{{ $key }}" {{ (old('roles.0') == $role ? "selected":"") }}>{{$role}}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    @endisset
+                    <x-slot:footer>
+                        <button type="submit" class="btn btn-primary">{{__('save')}}</button>
+                    </x-slot:footer>
+                </form>
             </div>
         </div>
-    </div>
+    </x-ui.modal>
 
     @endif
 @endsection

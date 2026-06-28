@@ -97,52 +97,34 @@ If not, see <https://www.gnu.org/licenses/>. -->
     </div>
 
     <!-- Modal window-->
-    <div class="modal fade bd-example-modal-xl" id="roleModal" tabindex="-1" role="dialog"
-         aria-labelledby="myModalLabel"
-         aria-hidden="true">
-        <div class="modal-dialog" role="document">
-            <div class="modal-content">
-                <div class="modal-header">
-                    Löschen
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div class='row'>
-                        <div id="infoMsg" class="">
+    <x-ui.modal id="roleModal" title="Löschen">
+        <div class="row">
+            <div id="infoMsg" class=""></div>
+            <div class="writeinfo"></div>
+            <div class="col-xs-12">
+                <form id="frmChangeRole"
+                      action=""
+                      method="POST"
+                      enctype="multipart/form-data">
+                    @csrf
+                    <input type="hidden" name="alternativeRole" id="alternativeRole" value=""/>
+                    <input type="hidden" name="deletedRole" id="deletedRole" value=""/>
+                    <span>Achtung! Diese Rolle ist vergeben! Welche andere Rolle sollen die betroffenen Nutzer erhalten?</span>
+                    <div class="row mt-7 mb-4">
+                        <x-label for="lblRole" class="col-sm-2 col-form-label">{{__('role')}}</x-label>
+                        <div class="col-sm-10">
+                            <select id="roleAlternative" name="roles" class="alt-role"
+                                    aria-label="Default select example">
 
-                        </div>
-                        <div class="writeinfo"></div>
-                        <div class="col-xs-12">
-                            <form id="frmChangeRole"
-                                  action=""
-                                  method="POST"
-                                  enctype="multipart/form-data">
-                                @csrf
-                                <input type="hidden" name="alternativeRole" id="alternativeRole" value=""/>
-                                <input type="hidden" name="deletedRole" id="deletedRole" value=""/>
-                                <span>Achtung! Diese Rolle ist vergeben! Welche andere Rolle sollen die betroffenen Nutzer erhalten?</span>
-                                <div class="row mt-7 mb-4">
-                                    <x-label for="lblRole" class="col-sm-2 col-form-label">{{__('role')}}</x-label>
-                                    <div class="col-sm-10">
-                                        <select id="roleAlternative" name="roles" class="alt-role"
-                                                aria-label="Default select example">
-
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div id="btnRoleDelete">
-
-                                </div>
-                            </form>
+                            </select>
                         </div>
                     </div>
-                </div>
+
+                    <div id="btnRoleDelete"></div>
+                </form>
             </div>
         </div>
-    </div>
+    </x-ui.modal>
 @endsection
 @section('script')
     <script>

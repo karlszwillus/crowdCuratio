@@ -25,6 +25,20 @@ Drittabhängigkeiten.
 
 ### Hinzugefügt
 
+- **`<x-ui.modal>` als zentrale Modal-Komponente** (Phase 5a.IV.c).
+  Anonyme Blade-Komponente unter `resources/views/components/ui/modal.blade.php`.
+  Props: `id` (Pflicht, für JS-Manager), `title`, `size` (sm|md|lg),
+  `closable`, `labelledby`, `headingLevel`. Slots: `default` (Body),
+  `header` (komplexer Header z. B. mit Icons), `footer` (rechtsbündige
+  Aktions-Buttons). Markup-Outer (`<div class="modal fade" id="...">`)
+  bleibt wegen des Vanilla-Modal-Managers erhalten; Inner-Markup ist
+  rein Tailwind/Token-basiert ohne `.modal-dialog`/`.modal-content`/
+  `.modal-header`/`.modal-body`/`.modal-footer`. Sieben Pest-Render-
+  Tests in `tests/Feature/Components/UiComponentsTest.php` decken
+  `id`-Pflicht, Title→aria-labelledby-Verknüpfung, Dismiss-Button,
+  `closable=false`, `size=lg`, Footer-Slot und die `header`-Slot-
+  Precedence ab.
+
 - **Theme-Switch.** Zweite Markenidentität „Aktives Museum" als
   alternativer Farbmodus, schaltbar über einen Toggle-Button im
   Editor-Header. `<html data-theme="aktivesMuseum">` aktiviert den
@@ -220,6 +234,28 @@ Drittabhängigkeiten.
   Verwerfen leerer Eingaben ab.
 
 ### Geändert
+
+- **Modal-Markup auf `<x-ui.modal>` migriert** (Phase 5a.IV.c, M3). Alle
+  16 sichtbaren Modal-Stellen in den App-Views umgezogen: `audiovisualModal`,
+  `galleryModal`, `imageModal`, `contentModal` (`contents/*.blade.php`),
+  `entryModal` (`Entry/index.blade.php`), `roleModal` (`roles/index.blade.php`),
+  `termsConditionsModal`/`privacyModal`/`imprintModal`/`invitationModal`
+  (`settings/index.blade.php`), `myModal`/`previewModal` (`projects/index.blade.php`),
+  `userInvitation`/`userModal`/`newUserInvitation`/`newUser`
+  (`projects/create.blade.php`), `myModal` (`projects/element.blade.php`)
+  sowie `myModal`/`commentModal`/`previewModal` (`chapters/index.blade.php`).
+  Markup-Outer (`.modal.fade` plus `id`) bleibt identisch, sodass der
+  Vanilla-Modal-Manager weiter greift. Bootstrap-3-Compat-Schicht
+  (`resources/css/compat-bootstrap.css`) entsorgt parallel die strukturellen
+  Modal-Klassen `.modal-dialog`, `.modal-content`, `.modal-header`,
+  `.modal-title`, `.modal-body`, `.modal-footer`, `button.close` sowie
+  die `.bd-example-modal-xl > .modal-dialog`-Modifier. Was bleibt: nur die
+  JS-Hook-Klassen `.modal`/`.modal.in/.show`, `.modal-backdrop` und der
+  `body.modal-open`-Scroll-Lock-Hook — alles, woran der Vanilla-Modal-
+  Manager funktional gebunden ist. Das E-Mail-Template
+  `vendor/welcomeNotification/welcome.blade.php` ist absichtlich nicht
+  migriert (wird nicht im Browser gerendert).
+
 - **Accessibility fixes** `<html lang>`-Attribut auf den vier Layouts ergänzt, die es
   bisher nicht hatten, **Logo-`alt`-Attribut** auf vier Logo-`<img>`-Tags ergänzt, 
   **Pflichtfeld-Markierung** um ein Sternchen ergänzt.
