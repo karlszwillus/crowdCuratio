@@ -387,6 +387,7 @@ it('Breadcrumb bevorzugt :tree gegenüber :items, wenn beide gesetzt', function 
         ['tree' => $tree, 'items' => $items]
     );
 
+    // @phpstan-ignore-next-line property.notFound (Pest-Magic ->not->)
     expect($html)
         ->toContain('x-data="ccBreadcrumb(')
         ->not->toContain('Static-Item');

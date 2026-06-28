@@ -69,6 +69,7 @@ it('Layout-Full-Width-Pfad rendert <main> ohne Sidebar wenn $content gesetzt', f
 </x-layout>
 BLADE);
 
+    // @phpstan-ignore-next-line property.notFound (Pest-Magic ->not->)
     expect($html)
         ->toContain('<main role="main"')
         ->toContain('id="main-content"')
