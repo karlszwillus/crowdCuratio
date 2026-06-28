@@ -11,7 +11,7 @@
 
     @livewireStyles
 </head>
-<body class="bg-ink-400/5">
+<body class="bg-canvas-bg">
 <div class="font-sans text-ink-900 antialiased">
     {{ $slot }}
 </div>

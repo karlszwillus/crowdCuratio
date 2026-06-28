@@ -13,8 +13,8 @@
 
     @livewireStyles
 </head>
-<body class="font-sans antialiased">
-<div class="min-h-screen bg-gray-100">
+<body class="bg-canvas-bg font-sans antialiased">
+<div class="min-h-screen bg-canvas-bg">
 @include('layouts.navigation')
 
 <!-- Page Heading -->

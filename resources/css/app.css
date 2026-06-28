@@ -37,3 +37,35 @@
 [x-cloak] {
     display: none !important;
 }
+
+/*
+ * Theme-Switch-Transition: weicher Wechsel zwischen den beiden Themes
+ * statt hartem Re-Paint. Beim Klick auf den Sonne-/Mond-Button wechseln
+ * --color-chrome-*, --color-canvas-bg, --color-primary u. a. simultan;
+ * ohne Transition zeigt der Browser für einen Frame einen Misch- oder
+ * Zwischenzustand, was als „Flackern" wahrgenommen wird (besonders
+ * sichtbar im hellen Modus, wo der Kontrast zwischen alten und neuen
+ * Werten am größten ist).
+ *
+ * Wir lassen 180 ms transition auf den drei farb-tragenden Properties.
+ * `transform`/`opacity` bleiben unangetastet, damit Alpine-Animationen
+ * (Dropdown-Slides, Hover-Lifts) ihre eigene Timing-Logik behalten.
+ *
+ * Für Nutzer mit `prefers-reduced-motion: reduce` ist die Transition
+ * abgeschaltet (WCAG 2.3.3).
+ */
+*,
+*::before,
+*::after {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-duration: 180ms;
+    transition-timing-function: ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        transition: none !important;
+    }
+}

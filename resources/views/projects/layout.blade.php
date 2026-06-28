@@ -64,7 +64,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
     </script>
 
 </head>
-<body>
+<body class="bg-canvas-bg">
 
 <div class="container-fluid">
     @include('layouts.navi')
