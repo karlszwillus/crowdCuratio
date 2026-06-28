@@ -71,23 +71,23 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     @isset($imprint->name)
                         <p> Angaben gem:</p>
                         <p>
-                            @isset($imprint->name['firstname']) {!! $imprint->name['firstname'] !!}@endisset @isset($imprint->name['lastname']) {!! $imprint->name['lastname'] !!}@endisset
+                            @isset($imprint->name['firstname']) {{ $imprint->name['firstname'] }}@endisset @isset($imprint->name['lastname']) {{ $imprint->name['lastname'] }}@endisset
                         </p>
                         <p>
-                            @isset($imprint->address['address']) {!! $imprint->address['address'] !!}@endisset
+                            @isset($imprint->address['address']) {{ $imprint->address['address'] }}@endisset
                         </p>
                         <p>
-                            @isset($imprint->address['postcode']) {!! $imprint->address['postcode'] !!}@endisset
+                            @isset($imprint->address['postcode']) {{ $imprint->address['postcode'] }}@endisset
                         </p>
                     <p class="mt-2"> Kontaktaufnahme: </p>
                         <p>
-                            @isset($imprint->contact['phone']) {!! $imprint->contact['phone'] !!}@endisset
+                            @isset($imprint->contact['phone']) {{ $imprint->contact['phone'] }}@endisset
                         </p>
                         <p>
-                            @isset($imprint->contact['fax']) {!! $imprint->contact['fax'] !!}@endisset
+                            @isset($imprint->contact['fax']) {{ $imprint->contact['fax'] }}@endisset
                         </p>
                         <p>
-                            @isset($imprint->contact['email']) {!! $imprint->contact['email'] !!}@endisset
+                            @isset($imprint->contact['email']) {{ $imprint->contact['email'] }}@endisset
                         </p>
                     @endisset
                 </div>
@@ -113,7 +113,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                   method="POST"
                   enctype="multipart/form-data">
                 @csrf
-                <input type="hidden" name="idTerms" @isset($terms->id) value="{!! $terms->id !!}" @endisset>
+                <input type="hidden" name="idTerms" @isset($terms->id) value="{{ $terms->id }}" @endisset>
                 <p class="mb-7">{{__('add_text')}}</p>
                 <div id="termsConditionsEditor"></div>
                 <div class="col-xs-12 mt-2">
@@ -167,7 +167,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                   enctype="multipart/form-data">
                 @csrf
                 <div class="col-xs-12">
-                    <input type="hidden" name="IdEmail" @isset($mail->id) value="{!! $mail->id !!}" @endisset>
+                    <input type="hidden" name="IdEmail" @isset($mail->id) value="{{ $mail->id }}" @endisset>
                     <div id="invitation"></div>
                 </div>
                 <div class="col-xs-12 mt-2">
