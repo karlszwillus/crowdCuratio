@@ -91,11 +91,22 @@ class SettingController extends Controller
         // Store imprint
         if (isset($request->firstname) && ! is_null($request->firstname)) {
 
-            Imprint::updateOrCreate(['id' => $request->IdImprint], [
+            // Sauberer Create/Update-Pfad statt
+            // Imprint::updateOrCreate(['id' => $request->IdImprint], …):
+            // bei fehlendem IdImprint resultierte das in ['id' => null]
+            // und war unter Eloquent-Strict-Mode kein zuverlässiger
+            // Create-Pfad. Befund aus Phase-5a-Security-Review (H-2).
+            $imprintData = [
                 'name' => ['firstname' => $request->firstname, 'lastname' => $request->lastname],
                 'address' => ['address' => $request->address, 'postcode' => $request->postcode],
                 'contact' => ['phone' => $request->phone, 'fax' => $request->fax, 'email' => $request->email],
-            ]);
+            ];
+
+            if (filled($request->IdImprint)) {
+                Imprint::findOrFail($request->IdImprint)->update($imprintData);
+            } else {
+                Imprint::create($imprintData);
+            }
 
             return redirect()->back()->with('success', __('message_add_imprint_success'));
         }

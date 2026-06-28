@@ -144,12 +144,32 @@ it('legt eine neue Privacy-Policy an', function () {
         ->toBe('Neuer Datenschutz-Text');
 });
 
-it('aktualisiert ein existierendes Imprint via firstname-Feld', function () {
-    // Update-Pfad: das Settings-UI bietet nur "Imprint editieren", nicht
-    // "Imprint neu anlegen" — der erste Imprint kommt aus dem Seeder.
-    // Der Create-Pfad im Controller (`updateOrCreate(['id' => null], …)`)
-    // ist eine schmierige Konstruktion und wird hier nicht getestet;
-    // siehe Hygiene-Note in werkbank/TODO.md.
+it('legt ein neues Imprint an, wenn kein IdImprint im Request liegt', function () {
+    /** @var TestCase $this */
+    $admin = makeAdmin();
+    $this->actingAs($admin)
+        ->from(route('settings.index'))
+        ->post(route('settings.store'), [
+            'firstname' => 'Max',
+            'lastname' => 'Mustermann',
+            'address' => 'Beispielstr. 1',
+            'postcode' => '10115',
+            'phone' => '+49 30 12345',
+            'fax' => '',
+            'email' => 'kontakt@example.org',
+        ]);
+
+    expect(Imprint::count())->toBe(1);
+    /** @var Imprint $imprint */
+    $imprint = Imprint::first();
+    expect($imprint->name)->toMatchArray(['firstname' => 'Max', 'lastname' => 'Mustermann']);
+    expect($imprint->contact['email'])->toBe('kontakt@example.org');
+});
+
+it('aktualisiert ein existierendes Imprint via IdImprint', function () {
+    // Update-Pfad mit existierendem Imprint. Nach dem Phase-5a-Review-
+    // Fix (filled-Branching statt updateOrCreate(['id' => null], …))
+    // ist auch der Create-Pfad sauber getestet (Case oben).
     $imprint = Imprint::create([
         'name' => ['firstname' => 'Alt', 'lastname' => 'Vorname'],
         'address' => ['address' => 'Alt-Str. 0', 'postcode' => '00000'],
