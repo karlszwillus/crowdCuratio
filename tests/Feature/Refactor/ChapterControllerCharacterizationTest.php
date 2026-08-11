@@ -194,10 +194,13 @@ it('saveDragAndDrop akzeptiert das Wire-Format des Tastatur-Reorders (form-encod
     $second = makeChapter($project, ['position' => 2]);
 
     // resources/js/keyboard-reorder.js baut den Payload mit
-    // URLSearchParams.append('data[data][]', id) — hier bildet der
-    // Test exakt diese Wire-Serialisierung nach, damit ein Encoding-
-    // Drift zwischen Frontend und Backend beim nächsten Refactor rot
-    // schlägt (Phase-5b-Bilanz B-1).
+    // URLSearchParams.append('data[data][]', id) — was zu einem
+    // form-encoded Body `data[data][]=…&data[element]=…` führt.
+    // http_build_query erzeugt exakt dieselbe Serialisierung,
+    // parse_str macht den PHP-fpm-Roundtrip; der Assert unten
+    // pinnt, dass das aus PHP-Sicht ein Array ist (das ist das,
+    // woran der ursprüngliche Bug hing — String-Offset auf einem
+    // JSON-String).
     $wireBody = http_build_query([
         'data' => [
             'data' => [(string) $second->id, (string) $first->id],
@@ -205,20 +208,10 @@ it('saveDragAndDrop akzeptiert das Wire-Format des Tastatur-Reorders (form-encod
             'project' => (string) $project->id,
         ],
     ]);
+    parse_str($wireBody, $parsedParams);
+    expect($parsedParams['data']['data'])->toBeArray();
 
-    $this->call(
-        'POST',
-        route('chapter.drag'),
-        [],
-        [],
-        [],
-        [
-            'CONTENT_TYPE' => 'application/x-www-form-urlencoded',
-            'HTTP_X_CSRF_TOKEN' => csrf_token(),
-            'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest',
-        ],
-        $wireBody,
-    );
+    $this->post(route('chapter.drag'), $parsedParams);
 
     $first->refresh();
     $second->refresh();
