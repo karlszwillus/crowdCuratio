@@ -21,6 +21,7 @@ If not, see <https://www.gnu.org/licenses/>.
  */
 
 use App\Models\Project;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Volt\Component;
 
 new class extends Component
@@ -29,6 +30,13 @@ new class extends Component
 
     public function mount(Project $project): void
     {
+        // Defense-in-Depth: die Volt-Komponente wird heute nur aus
+        // dem gegateten ProjectController::edit gerendert, aber ohne
+        // eigenen Gate wäre sie bei künftiger Wiederverwendung ein
+        // Bypass. Ein direkter Livewire-Update-Roundtrip wählt sonst
+        // beliebige Projekte als Prop.
+        Gate::authorize('view', $project);
+
         // Eager-Load nur was die Sidebar braucht — Kapitel und
         // Abschnitte, keine Inhalte (3 Ebenen laut Phase-5b § 2.4).
         // loadMissing greift nur, wenn die Relation noch nicht
