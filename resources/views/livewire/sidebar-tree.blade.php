@@ -21,6 +21,7 @@ If not, see <https://www.gnu.org/licenses/>.
  */
 
 use App\Models\Project;
+use App\Services\ProjectTreeService;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Volt\Component;
 
@@ -28,7 +29,7 @@ new class extends Component
 {
     public Project $project;
 
-    public function mount(Project $project): void
+    public function mount(Project $project, ProjectTreeService $tree): void
     {
         // Defense-in-Depth: die Volt-Komponente wird heute nur aus
         // dem gegateten ProjectController::edit gerendert, aber ohne
@@ -37,12 +38,11 @@ new class extends Component
         // beliebige Projekte als Prop.
         Gate::authorize('view', $project);
 
-        // Eager-Load nur was die Sidebar braucht — Kapitel und
-        // Abschnitte, keine Inhalte (3 Ebenen laut Phase-5b § 2.4).
-        // loadMissing greift nur, wenn die Relation noch nicht
-        // geladen ist; ProjectController::edit lädt bereits via
-        // withEditTree, dann ist das hier ein No-Op.
-        $this->project = $project->loadMissing(['chapters.entries']);
+        // Tree-Aufbau geht durch den ProjectTreeService (Single Source
+        // of Truth, den auch <x-ui.breadcrumb :tree> nutzt). Die
+        // Sidebar iteriert direkt über die eager-geladenen Relations
+        // am Project-Modell.
+        $this->project = $tree->sidebarTree($project);
     }
 }; ?>
 
