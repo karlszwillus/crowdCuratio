@@ -215,7 +215,8 @@
   "history": "Verlauf",
   "tools": "Werkzeuge",
   "skip_to_main": "Zum Inhalt springen",
-  "project_structure": "Projektstruktur"
+  "project_structure": "Projektstruktur",
+  "reorder_hint": "Verschieben mit Alt+↑/↓"
 
 
 }

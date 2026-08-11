@@ -182,6 +182,51 @@ it('saveDragAndDrop ordnet Chapter-Positionen neu, wenn element=chapter', functi
     expect($first->position)->toBe(2);
 });
 
+it('saveDragAndDrop akzeptiert das Wire-Format des Tastatur-Reorders (form-encoded Array)', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole('Admin');
+    $this->actingAs($owner);
+
+    $project = makeProject($owner);
+    $first = makeChapter($project, ['position' => 1]);
+    $second = makeChapter($project, ['position' => 2]);
+
+    // resources/js/keyboard-reorder.js baut den Payload mit
+    // URLSearchParams.append('data[data][]', id) — hier bildet der
+    // Test exakt diese Wire-Serialisierung nach, damit ein Encoding-
+    // Drift zwischen Frontend und Backend beim nächsten Refactor rot
+    // schlägt (Phase-5b-Bilanz B-1).
+    $wireBody = http_build_query([
+        'data' => [
+            'data' => [(string) $second->id, (string) $first->id],
+            'element' => 'chapter',
+            'project' => (string) $project->id,
+        ],
+    ]);
+
+    $this->call(
+        'POST',
+        route('chapter.drag'),
+        [],
+        [],
+        [],
+        [
+            'CONTENT_TYPE' => 'application/x-www-form-urlencoded',
+            'HTTP_X_CSRF_TOKEN' => csrf_token(),
+            'HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest',
+        ],
+        $wireBody,
+    );
+
+    $first->refresh();
+    $second->refresh();
+
+    expect($second->position)->toBe(1);
+    expect($first->position)->toBe(2);
+});
+
 it('saveDragAndDrop verschiebt Entries zwischen Kapiteln, wenn element=entry', function () {
     /** @var TestCase $this */
     /** @var User $owner */
