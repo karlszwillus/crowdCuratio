@@ -121,6 +121,9 @@ function attachContainer(container) {
 
         if (! sibling || sibling.tagName !== 'LI') return;
 
+        // DOM-Swap zunächst optimistisch — der Server-Roundtrip
+        // dauert 100–300 ms, den User visuell warten zu lassen wäre
+        // träge. Rollback bei Server-Fail weiter unten.
         if (event.key === 'ArrowUp') {
             container.insertBefore(item, sibling);
         } else {
@@ -132,17 +135,30 @@ function attachContainer(container) {
         // den Refokus für eine konsistente Tastatur-Erfahrung.
         item.focus();
 
+        // Vokabular aus dem Glossar: Projekt > Kapitel > Abschnitt > Inhalt.
+        const label = {
+            chapter: 'Kapitel',
+            entry: 'Abschnitt',
+            content: 'Inhalt',
+        }[container.dataset.reorderElement] ?? 'Eintrag';
+
         const persisted = await persistReorder(container);
         if (persisted) {
             const position = [...container.children].indexOf(item) + 1;
             const total = container.children.length;
-            // Vokabular aus dem Glossar: Projekt > Kapitel > Abschnitt > Inhalt.
-            const label = {
-                chapter: 'Kapitel',
-                entry: 'Abschnitt',
-                content: 'Inhalt',
-            }[container.dataset.reorderElement] ?? 'Eintrag';
             window.ccAnnounce(`${label} ist jetzt an Position ${position} von ${total}.`);
+        } else {
+            // Server hat abgelehnt (403, 419, 500) oder Netz ist tot.
+            // Der DOM-Zustand ist bereits geswapt und würde ohne
+            // Rollback bis zum nächsten Reload eine falsche Reihenfolge
+            // zeigen. Reset und Screen-Reader-Hinweis.
+            if (event.key === 'ArrowUp') {
+                container.insertBefore(sibling, item);
+            } else {
+                container.insertBefore(item, sibling);
+            }
+            item.focus();
+            window.ccAnnounce(`Verschieben von ${label} fehlgeschlagen, Reihenfolge zurückgesetzt.`);
         }
     });
 }

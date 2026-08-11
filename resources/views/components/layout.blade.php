@@ -91,7 +91,7 @@ If not, see <https://www.gnu.org/licenses/>.
     @include('layouts.navi-header')
 
     <div class="mx-auto w-full max-w-screen-2xl px-4">
-        @if($content !== null && trim($content) !== '')
+        @if($content !== null && trim((string) $content) !== '')
             {{-- Full-Width-Sektion (Settings, Index, Auth-Register, Translate). --}}
             <main role="main" id="main-content" class="py-4">
                 {{ $content }}
@@ -111,7 +111,7 @@ If not, see <https://www.gnu.org/licenses/>.
             </div>
         @endif
 
-        @if($footer !== null && trim($footer) !== '')
+        @if($footer !== null && trim((string) $footer) !== '')
             <footer class="border-t border-ink-400 py-4">
                 {{ $footer }}
             </footer>
