@@ -46,12 +46,19 @@ new class extends Component
     }
 }; ?>
 
-<nav aria-label="{{ __('project_structure') }}" class="text-body">
+<nav
+    aria-label="{{ __('project_structure') }}"
+    class="text-body"
+    x-data="{ active: window.location.hash }"
+    @hashchange.window="active = window.location.hash"
+>
     <ol class="space-y-1">
         <li>
             <a
                 href="#main-content"
                 class="block rounded-md px-2 py-1 font-medium text-ink-900 hover:bg-chrome-active"
+                :aria-current="active === '#main-content' || active === '' ? 'page' : null"
+                :class="(active === '#main-content' || active === '') && 'bg-chrome-active'"
             >
                 {{ $project->name }}
             </a>
@@ -63,6 +70,8 @@ new class extends Component
                             <a
                                 href="#anchor_Chapter_{{ $chapter->id }}"
                                 class="block rounded-md px-2 py-1 text-ink-800 hover:bg-chrome-active"
+                                :aria-current="active === '#anchor_Chapter_{{ $chapter->id }}' ? 'true' : null"
+                                :class="active === '#anchor_Chapter_{{ $chapter->id }}' && 'bg-chrome-active font-medium'"
                             >
                                 {{ $chapter->name }}
                             </a>
@@ -74,6 +83,8 @@ new class extends Component
                                             <a
                                                 href="#anchor_Entry_{{ $entry->id }}"
                                                 class="block rounded-md px-2 py-1 text-ink-700 hover:bg-chrome-active"
+                                                :aria-current="active === '#anchor_Entry_{{ $entry->id }}' ? 'true' : null"
+                                                :class="active === '#anchor_Entry_{{ $entry->id }}' && 'bg-chrome-active font-medium'"
                                             >
                                                 {{ $entry->name }}
                                             </a>
