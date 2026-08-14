@@ -100,9 +100,32 @@ If not, see <https://www.gnu.org/licenses/>. -->
                         x-show="open"
                         x-transition
                         x-cloak
-                        class="absolute right-0 z-30 mt-1 min-w-[12rem]
+                        class="absolute right-0 z-30 mt-1 min-w-[14rem]
                                rounded-md border border-line-200 bg-paper-0 py-1 shadow-popover"
                     >
+                        @if (Auth::user()->can('publish', $project) || Auth::user()->can('preview'))
+                            <button type="button"
+                                    data-toggle="modal"
+                                    data-target="#previewModal"
+                                    class="flex w-full items-center gap-2 px-4 py-2 text-left text-body text-ink-900 hover:bg-line-100/60">
+                                <x-icon name="file-text" size="4"/>
+                                <span>{{ __('pdf') }}</span>
+                            </button>
+                            <button type="button"
+                                    data-toggle="modal"
+                                    data-target="#previewModal"
+                                    class="flex w-full items-center gap-2 px-4 py-2 text-left text-body text-ink-900 hover:bg-line-100/60">
+                                <x-icon name="globe" size="4"/>
+                                <span>{{ __('preview') }}</span>
+                            </button>
+                            <a href="https://app.crowdcurat.io/downloads/html.zip"
+                               target="_blank" rel="noopener"
+                               class="flex w-full items-center gap-2 px-4 py-2 text-left text-body text-ink-900 hover:bg-line-100/60">
+                                <x-icon name="download" size="4"/>
+                                <span>{{ __('download') }}</span>
+                            </a>
+                            <div class="my-1 border-t border-line-100"></div>
+                        @endif
                         <form action="{{ route('projects.destroy', $project->id) }}" method="POST">
                             @csrf
                             @method('DELETE')
@@ -926,18 +949,9 @@ If not, see <https://www.gnu.org/licenses/>. -->
     @include('contents.image')
     @include('contents.audiovisual')
 @endsection
-@section('footer')
-    @if(Auth::user()->can('publish', $project) || Auth::user()->can('preview'))
-        <div class="footer-background p-3 my-3 border">
-            <button type="button" class="m-4" data-toggle="modal" data-target="#previewModal" >{{__('pdf')}} <x-icon name="file-earmark-pdf-fill" />
-            </button>
-            <button type="button" class="m-4" data-toggle="modal" data-target="#previewModal" >{{__('preview')}} <x-icon name="globe" />
-            </button>
-		<span class="right">	<a href="https://app.crowdcurat.io/downloads/html.zip" class="m-4"  target="_blank" >{{__('download')}} <x-icon name="globe" />
-            </a></span>
-        </div>
-    @endif
-@endsection
+{{-- Export-Buttons (PDF/Preview/Download) wandern seit Phase
+     5-D.6b-P3.15 ins ⋮-Menue neben 'Veroeffentlichen' in der
+     Editor-Chrome-Bar oben. Kein Footer-Block mehr am Seitenende. --}}
 @push('scripts')
     <script>
         $(".rotate").click(function() {
