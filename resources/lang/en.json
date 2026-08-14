@@ -226,6 +226,11 @@
   "uploading": "uploading",
   "text_content": "Text content",
   "metadata": "Metadata",
-  "create_new": "Create new"
+  "create_new": "Create new",
+  "main_navigation": "Main navigation",
+  "sections": "Sections",
+  "projects": "Projects",
+  "switch_theme": "Switch theme",
+  "language": "Language"
 
 }

@@ -227,7 +227,12 @@
   "uploading": "wird hochgeladen",
   "text_content": "Textinhalt",
   "metadata": "Metadaten",
-  "create_new": "Neu anlegen"
+  "create_new": "Neu anlegen",
+  "main_navigation": "Hauptnavigation",
+  "sections": "Bereiche",
+  "projects": "Projekte",
+  "switch_theme": "Thema wechseln",
+  "language": "Sprache"
 
 
 }
