@@ -681,10 +681,13 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                          imageModal bleibt für „Bild hinzufügen". --}}
                                                                                                 </form>
                                                                                                 {{-- Copyright + Quelle sichtbar am
-                                                                                                     Card-Fuss (P1.4 aus Review). --}}
+                                                                                                     Card-Fuss (P1.4). Innerhalb der
+                                                                                                     schmalen Gallery-Kachel stapeln
+                                                                                                     sich die beiden Felder
+                                                                                                     untereinander (P5-D.6b-Followup). --}}
                                                                                                 <div class="mt-3 border-t border-line-100 pt-2">
                                                                                                     @can('update', $project)
-                                                                                                        <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
+                                                                                                        <div class="grid grid-cols-1 gap-2">
                                                                                                             <div>
                                                                                                                 <label class="mb-1 block text-caption font-medium text-ink-700">
                                                                                                                     {{ __('copyright') }} <span class="text-danger" aria-hidden="true">*</span>

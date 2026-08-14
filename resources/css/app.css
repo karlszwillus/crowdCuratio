@@ -38,6 +38,17 @@
     display: none !important;
 }
 
+/* Scroll-Offset fuer sticky Editor-Chrome-Bar. Ohne diesen Wert
+ * springt der Browser bei Anchor-Links direkt an die Anker-
+ * Oberkante — und die sticky Bar (Breadcrumb + Segmented Control)
+ * ueberdeckt dann die ersten ~64 px des Ziel-Elements. */
+[id^="anchor_"] {
+    scroll-margin-top: 96px;
+}
+html {
+    scroll-behavior: smooth;
+}
+
 /* Textumbruch (P3.19): Ueberschriften und Fliesstext brechen mit
  * text-wrap: pretty — vermeidet einzelne Woerter in der letzten
  * Zeile und Trennungen mitten im Wort. */

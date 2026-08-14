@@ -88,7 +88,7 @@ new class extends Component
         {{ $project->name }}
     </h2>
 
-    <ol class="space-y-0.5">
+    <ol class="list-none space-y-0.5">
         @foreach ($project->chapters as $chapterIndex => $chapter)
             @php $chapterExpandedKey = 'chapter-'.$chapter->id; @endphp
             <li>
@@ -132,7 +132,7 @@ new class extends Component
                     <ol
                         x-show="isExpanded('{{ $chapterExpandedKey }}')"
                         x-collapse
-                        class="ml-6 mt-0.5 space-y-0.5"
+                        class="ml-6 mt-0.5 list-none space-y-0.5"
                     >
                         @foreach ($chapter->entries as $entry)
                             <li>
