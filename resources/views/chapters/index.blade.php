@@ -314,8 +314,8 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                     @if($item->content_type == 'App\Models\Text')
                                                                         @isset($item->text->text)
                                                                             <li class="item text content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
-                                                                                <div class="row border border-secondary p-4 mb-4 ml-auto w-10/12">
-                                                                                    <div id="anchor_MediaContent_{{$item->id}}">
+                                                                                <x-ui.block-card type="text" id="anchor_MediaContent_{{$item->id}}" class="ml-auto w-10/12">
+                                                                                    <div>
                                                                                         <div class="text-scrollbar overflow-auto">
                                                                                             @can('update', $project)
                                                                                                 <livewire:rich-text-editor
@@ -398,15 +398,15 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                             </div>
                                                                                         </details>
                                                                                     </div>
-                                                                                </div>
+                                                                                </x-ui.block-card>
                                                                             </li>
                                                                         @endisset
                                                                     @endif
                                                                     @if($item->content_type == 'App\Models\Audiovisual')
                                                                         @isset($item->audiovisual->link)
                                                                             <li class="item audiovisual content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
-                                                                                <div class="row border border-secondary p-4 mb-4 ml-auto w-10/12">
-                                                                                    <div id="anchor_MediaContent_{{$item->id}}">
+                                                                                <x-ui.block-card :type="$item->audiovisual->type === 'audio' ? 'audio' : 'video'" id="anchor_MediaContent_{{$item->id}}" class="ml-auto w-10/12">
+                                                                                    <div>
                                                                                         {{-- Player als eigenständige Volt-Komponente
                                                                                              (Phase 5c.6.c.3). Rendert audio/iframe
                                                                                              und aktualisiert sich beim Speichern
@@ -506,7 +506,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                             {!! date('d.m.Y', strtotime($item->audiovisual->created_at)) !!}
                                                                                         </p>
                                                                                     </div>
-                                                                                </div>
+                                                                                </x-ui.block-card>
                                                                             </li>
                                                                         @endisset
                                                                     @endif
@@ -516,7 +516,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                     @if(isset($item) && $item->content_type == 'App\Models\Gallery')
                                                                         @if(isset($item->gallery))
                                                                             <li class="item gallery content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
-                                                                                <div class="row border border-secondary p-4 mb-4 ml-auto w-10/12">
+                                                                                <x-ui.block-card type="gallery" class="ml-auto w-10/12">
                                                                                     <div class="row">
                                                                                         <div class="">
                                                                                             @can('update', $project)
@@ -692,7 +692,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                         </div>
                                                                                     @endforeach
 																					</div>
-                                                                                </div>
+                                                                                </x-ui.block-card>
                                                                             </li>
                                                                         @endif
                                                                     @endif

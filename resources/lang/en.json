@@ -246,6 +246,16 @@
   "editor_mode": "Editor mode",
   "edit": "Edit",
   "publish": "Publish",
-  "more_actions": "More actions"
+  "more_actions": "More actions",
+  "block_type_text": "Text",
+  "block_type_image": "Image",
+  "block_type_gallery": "Gallery",
+  "block_type_audio": "Audio",
+  "block_type_video": "Video",
+  "block_type_quote": "Quote",
+  "block_type_document": "Document",
+  "block_type_map": "Map",
+  "is_editing": "editing",
+  "older_versions": "Older versions"
 
 }

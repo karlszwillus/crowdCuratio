@@ -247,7 +247,17 @@
   "editor_mode": "Editor-Modus",
   "edit": "Bearbeiten",
   "publish": "Veröffentlichen",
-  "more_actions": "Weitere Aktionen"
+  "more_actions": "Weitere Aktionen",
+  "block_type_text": "Text",
+  "block_type_image": "Bild",
+  "block_type_gallery": "Galerie",
+  "block_type_audio": "Audio",
+  "block_type_video": "Video",
+  "block_type_quote": "Zitat",
+  "block_type_document": "Dokument",
+  "block_type_map": "Karte",
+  "is_editing": "wird bearbeitet",
+  "older_versions": "Ältere Versionen"
 
 
 }
