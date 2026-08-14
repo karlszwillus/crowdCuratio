@@ -149,14 +149,14 @@ If not, see <https://www.gnu.org/licenses/>. -->
         <ul class="list-group ui-sortable-chapter sortable_list_chapter connectedSortableChapter" id="groupsList" data-reorder-element="chapter" data-reorder-url="{{ route('chapter.drag') }}" data-reorder-project="{{ $project->id }}">
             @foreach($data->chapters as $key => $chapter)
                 <li class="chapter group" data-chapter="{{$chapter->id}}" data-project="{{$project->id}}" id="{{$chapter->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
-                    {{-- Kapitel als sanfte Zone: paper-0 (weiss) auf
-                         canvas-bg (paper-50) mit rounded-lg und
-                         grosszuegigem Padding. Kein Border — die
-                         Ebene ist als Zone erkennbar, nicht als Karte.
-                         Entry und Block-Cards liegen erhaben darin
-                         (border + shadow), damit klar wird was Zone
-                         und was Objekt ist. --}}
-                    <div id="{{$chapter->id}}" class="mb-8 rounded-lg bg-paper-0 p-8">
+                    {{-- Kapitel = Zone, keine Karte (Handoff v4 § P1.2).
+                         Kein Background, kein Border. Titel + Untertitel
+                         + Description sitzen offen auf dem Canvas; nur
+                         Entry und Block-Cards tragen Rahmen. Ein
+                         horizontaler Trenner unter der Kapitel-
+                         Beschreibung markiert den Uebergang zu den
+                         Entries. --}}
+                    <div id="{{$chapter->id}}" class="mb-10">
                         <header class="mb-4 flex items-start justify-between gap-4">
                             <div class="min-w-0 flex-1" id="anchor_Chapter_{{$chapter->id}}">
                                 @can('update', $project)
@@ -241,6 +241,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
                         @else
                             <p class="text-body text-ink-700">{!! $chapter->description !!}</p>
                         @endcan
+
+                        {{-- Trenner zwischen Kapitel-Kopf und Eintraegen,
+                             damit klar wird wo die Zone endet und die
+                             Objekte darin beginnen. --}}
+                        <hr class="my-6 border-t border-line-200" aria-hidden="true">
                         <div class="collapse in" id="chapter_{{$chapter->id}}" aria-expanded="false">
                             @if(isset($chapter->entries) && count($chapter->entries) >0)
                                 <ul class="list-group ui-sortable-entry sortable_list_entry connectedSortableEntry" id="{{$chapter->id}}" data-reorder-element="entry" data-reorder-url="{{ route('chapter.drag') }}">
