@@ -114,7 +114,7 @@ class Entry extends Model implements HasComments
      * Feldern (z. B. Description) `null` heraus und der Save
      * scheiterte mit 403 (Phase-5c.6.c.5-Followup).
      */
-    public function project(): ?\App\Models\Project
+    public function project(): ?Project
     {
         return $this->chapter?->project;
     }
