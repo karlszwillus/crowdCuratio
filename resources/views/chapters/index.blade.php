@@ -149,9 +149,13 @@ If not, see <https://www.gnu.org/licenses/>. -->
         <ul class="list-group ui-sortable-chapter sortable_list_chapter connectedSortableChapter" id="groupsList" data-reorder-element="chapter" data-reorder-url="{{ route('chapter.drag') }}" data-reorder-project="{{ $project->id }}">
             @foreach($data->chapters as $key => $chapter)
                 <li class="chapter group" data-chapter="{{$chapter->id}}" data-project="{{$project->id}}" id="{{$chapter->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
-                    <div id="{{$chapter->id}}">
-                        <div class="row border border-secondary p-4 mb-4 content">
-                            <div style="float: left;" id="anchor_Chapter_{{$chapter->id}}">
+                    <div id="{{$chapter->id}}" class="mb-6">
+                        {{-- Kapitel-Section-Header nach Handoff v4 § Screen 02.
+                             Kein Bootstrap-Row-Card mehr — Titel + Untertitel
+                             sind Section-Heading, Aktionen sitzen als Icon-
+                             Zeile oben rechts. --}}
+                        <header class="mb-3 flex items-start justify-between gap-4 border-b border-line-100 pb-3">
+                            <div class="min-w-0 flex-1" id="anchor_Chapter_{{$chapter->id}}">
                                 @can('update', $project)
                                     <livewire:inline-editor
                                         :model="$chapter"
@@ -167,146 +171,162 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                         :label="__('chapter_subtitle')"
                                         :key="'chapter-subtitle-'.$chapter->id"
                                     />
-                                    <livewire:rich-text-editor
-                                        :model="$chapter"
-                                        field="description"
-                                        rules="nullable|string"
-                                        :label="__('chapter_description')"
-                                        :key="'chapter-description-'.$chapter->id"
-                                    />
                                 @else
-                                    <h2>{!! $chapter->name !!}</h2>
-                                    <p>{!! $chapter->subtitle !!}</p>
-                                    <p>{!! $chapter->description !!}</p>
+                                    <h2 class="text-title font-semibold text-ink-900">{!! $chapter->name !!}</h2>
+                                    <p class="mt-1 text-body text-ink-500">{!! $chapter->subtitle !!}</p>
                                 @endcan
                             </div>
-                            <div class="ml-auto mr-3 icons">
-                                <form action="{{ route('chapters.destroy',$chapter->id) }}" method="POST"
-                                      class="mb-5">
-                                    @csrf
-                                    <input type="hidden" name="project" value="{!! $project->id !!}"/>
-                                    @method('DELETE')
 
-									<span data-toggle="tooltip"
-                                              data-placement="top"
-                                              title="ältere Versionen"><a
-                                                    href="{{route('projects.edit',['project'=> $project, 'log'=> $chapter->id, 'model' => 'Chapter'])}}"
-                                                    class="text-log"><x-icon name="clock-history" class="m-2" /></a></span>
+                            <form action="{{ route('chapters.destroy',$chapter->id) }}" method="POST"
+                                  class="flex shrink-0 items-center gap-1 text-ink-500">
+                                @csrf
+                                <input type="hidden" name="project" value="{!! $project->id !!}"/>
+                                @method('DELETE')
 
-                                    @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
-                                        <span data-toggle="tooltip" data-placement="top"
-                                              title="{{__('add_comment')}}"><a href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Chapter', 'comment' => $chapter->id])}}" class="addComment"> @if(isset($chapter->comments) && count($chapter->comments) > 0)
-                                                    <x-icon name="chat-dots-fill" class="m-2" /> @else <x-icon name="chat" class="m-2" />@endif
-											</a></span>
-                                    @endif
-									@if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
-                                        <button type="submit" onclick="return confirm('{{__('message_delete_confirm')}}')"
-                                                data-toggle="tooltip" data-placement="top" title="{{__('delete_chapter')}}">
-											<x-icon name="x-circle-fill" class="m-2" /></button>
-									@endif
-									{{-- Edit-Button für Chapter entfällt: Titel, Subtitel und
-									     Beschreibung werden per inline-editor-Volt-Komponente
-									     direkt im Kapitel-Card editiert (Phase 5c.6.a). Add-Modal
-									     (myModal) bleibt für „Kapitel hinzufügen". --}}
-									<a x-data="{ open: true }"
-                                       @click="open = !open; collapseExpand({{$chapter->id}})"
-                                       id="{{$chapter->id}}"
-                                       :aria-expanded="open"
-                                       aria-controls="collapseChapter_{{$chapter->id}}">
-                                        <x-icon x-show="open" name="chevron-down" size="4" />
-                                        <x-icon x-show="!open" x-cloak name="chevron-right" size="4" />
+                                <a href="{{route('projects.edit',['project'=> $project, 'log'=> $chapter->id, 'model' => 'Chapter'])}}"
+                                   title="{{ __('older_versions') }}"
+                                   class="inline-flex size-8 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
+                                    <x-icon name="rotate-ccw" size="4"/>
+                                </a>
+
+                                @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
+                                    <a href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Chapter', 'comment' => $chapter->id])}}"
+                                       title="{{ __('add_comment') }}"
+                                       class="addComment inline-flex size-8 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
+                                        @if(isset($chapter->comments) && count($chapter->comments) > 0)
+                                            <x-icon name="message-square-dot" size="4"/>
+                                        @else
+                                            <x-icon name="message-square" size="4"/>
+                                        @endif
                                     </a>
-								</form>
-								<p class="date">{!! date('d.m.Y', strtotime($chapter->created_at)) !!}</p>
-                            </div>
-                        </div>
+                                @endif
+
+                                @if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
+                                    <button type="submit"
+                                            onclick="return confirm('{{__('message_delete_confirm')}}')"
+                                            title="{{ __('delete_chapter') }}"
+                                            class="inline-flex size-8 items-center justify-center rounded-md hover:bg-danger-bg hover:text-danger">
+                                        <x-icon name="trash-2" size="4"/>
+                                    </button>
+                                @endif
+
+                                <a x-data="{ open: true }"
+                                   @click="open = !open; collapseExpand({{$chapter->id}})"
+                                   id="{{$chapter->id}}"
+                                   :aria-expanded="open"
+                                   aria-controls="collapseChapter_{{$chapter->id}}"
+                                   title="{{ __('collapse') }}"
+                                   class="inline-flex size-8 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
+                                    <x-icon x-show="open" name="chevron-down" size="4"/>
+                                    <x-icon x-show="!open" x-cloak name="chevron-right" size="4"/>
+                                </a>
+                            </form>
+                        </header>
+
+                        {{-- Kapitel-Beschreibung als Rich-Text-Editor,
+                             direkt unter dem Section-Header. --}}
+                        @can('update', $project)
+                            <livewire:rich-text-editor
+                                :model="$chapter"
+                                field="description"
+                                rules="nullable|string"
+                                :label="__('chapter_description')"
+                                :key="'chapter-description-'.$chapter->id"
+                            />
+                        @else
+                            <p class="text-body text-ink-700">{!! $chapter->description !!}</p>
+                        @endcan
                         <div class="collapse in" id="chapter_{{$chapter->id}}" aria-expanded="false">
                             @if(isset($chapter->entries) && count($chapter->entries) >0)
                                 <ul class="list-group ui-sortable-entry sortable_list_entry connectedSortableEntry" id="{{$chapter->id}}" data-reorder-element="entry" data-reorder-url="{{ route('chapter.drag') }}">
                                     @foreach($chapter->entries as $entry)
                                         <li class="entry group" data-chapter="{{$chapter->id}}" data-entry="{{$entry->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
-                                                <div id="P-{{$project->id}}-C-{{$chapter->id}}-entry-{{$entry->id}}"
-                                                             class="row border border-secondary p-4 mb-4 ml-auto w-11/12 content">
-                                                            <div style="float: left;" id="anchor_Entry_{{$entry->id}}">
-                                                                @can('update', $project)
-                                                                    <livewire:inline-editor
-                                                                        :model="$entry"
-                                                                        field="name"
-                                                                        rules="nullable|string|max:255"
-                                                                        :label="__('entry_title')"
-                                                                        :key="'entry-name-'.$entry->id"
-                                                                    />
-                                                                    <livewire:inline-editor
-                                                                        :model="$entry"
-                                                                        field="subtitle"
-                                                                        rules="nullable|string|max:255"
-                                                                        :label="__('entry_subtitle')"
-                                                                        :key="'entry-subtitle-'.$entry->id"
-                                                                    />
-                                                                    <livewire:rich-text-editor
-                                                                        :model="$entry"
-                                                                        field="description"
-                                                                        rules="nullable|string"
-                                                                        :label="__('entry_description')"
-                                                                        :key="'entry-description-'.$entry->id"
-                                                                    />
+                                            {{-- Entry-Section-Header (Handoff v4 § Screen 02).
+                                                 Bootstrap-Row-Card raus, Bezug zum umschließenden
+                                                 Kapitel bleibt über visuelle Hierarchie im Baum. --}}
+                                            <div id="P-{{$project->id}}-C-{{$chapter->id}}-entry-{{$entry->id}}" class="mb-4">
+                                                <header class="mb-3 flex items-start justify-between gap-4 border-b border-line-100 pb-3">
+                                                    <div class="min-w-0 flex-1" id="anchor_Entry_{{$entry->id}}">
+                                                        @can('update', $project)
+                                                            <livewire:inline-editor
+                                                                :model="$entry"
+                                                                field="name"
+                                                                rules="nullable|string|max:255"
+                                                                :label="__('entry_title')"
+                                                                :key="'entry-name-'.$entry->id"
+                                                            />
+                                                            <livewire:inline-editor
+                                                                :model="$entry"
+                                                                field="subtitle"
+                                                                rules="nullable|string|max:255"
+                                                                :label="__('entry_subtitle')"
+                                                                :key="'entry-subtitle-'.$entry->id"
+                                                            />
+                                                        @else
+                                                            <h3 class="text-heading font-semibold text-ink-900">{!! $entry->name !!}</h3>
+                                                            <p class="mt-1 text-body text-ink-500">{!! $entry->subtitle !!}</p>
+                                                        @endcan
+                                                    </div>
+
+                                                    <form action="{{ route('entries.destroy',$entry->id) }}"
+                                                          method="POST"
+                                                          class="flex shrink-0 items-center gap-1 text-ink-500">
+                                                        @csrf
+                                                        <input type="hidden" name="project" value="{!! $project->id !!}"/>
+                                                        @method('DELETE')
+
+                                                        <a href="{{route('projects.edit',['project'=> $project, 'log'=> $entry->id, 'model' => 'Entry'])}}"
+                                                           title="{{ __('older_versions') }}"
+                                                           class="inline-flex size-8 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
+                                                            <x-icon name="rotate-ccw" size="4"/>
+                                                        </a>
+
+                                                        @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
+                                                            <a href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Entry', 'comment' => $entry->id])}}"
+                                                               title="{{ __('add_comment') }}"
+                                                               class="inline-flex size-8 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
+                                                                @if(isset($entry->comments) && count($entry->comments) > 0)
+                                                                    <x-icon name="message-square-dot" size="4"/>
                                                                 @else
-                                                                    <h3>{!! $entry->name !!}</h3>
-                                                                    <p>{!! $entry->subtitle !!}</p>
-                                                                    <p>{!! $entry->description !!}</p>
-                                                                @endcan
-                                                            </div>
-                                                            <div class="ml-auto mr-3 icons">
-                                                                <form action="{{ route('entries.destroy',$entry->id) }}"
-                                                                      method="POST"
-                                                                      class="mb-5">
-                                                                    @csrf
-                                                                    <input type="hidden" name="project" value="{!! $project->id !!}"/>
-                                                                    @method('DELETE')
+                                                                    <x-icon name="message-square" size="4"/>
+                                                                @endif
+                                                            </a>
+                                                        @endif
 
-                                                                    <span data-toggle="tooltip"
-                                                                              data-placement="top"
-                                                                              title="ältere Versionen"><a
-                                                                                    href="{{route('projects.edit',['project'=> $project, 'log'=> $entry->id, 'model' => 'Entry'])}}"
-                                                                                    class="text-log"><x-icon name="clock-history" class="m-2" /></a></span>
+                                                        @if(in_array('edit', $listPermissions) || Auth::user()->can('delete', $project))
+                                                            <button type="submit"
+                                                                    onclick="return confirm('{{__('message_delete_confirm')}}')"
+                                                                    title="{{ __('delete_entry') }}"
+                                                                    class="inline-flex size-8 items-center justify-center rounded-md hover:bg-danger-bg hover:text-danger">
+                                                                <x-icon name="trash-2" size="4"/>
+                                                            </button>
+                                                        @endif
 
-                                                                    @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
-                                                                        <span data-toggle="tooltip" data-placement="top"
-                                                                              title="{{__('add_comment')}}"><a href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Entry', 'comment' => $entry->id])}}"> @if(isset($entry->comments) && count($entry->comments) > 0)
-                                                                                    <x-icon name="chat-dots-fill" class="m-2" />@else
-                                                                                    <x-icon name="chat" class="m-2" />@endif
-																			</a></span>
-                                                                    @endif
+                                                        <a x-data="{ open: true }"
+                                                           @click="open = !open; collapseExpandEntry({{$entry->id}})"
+                                                           role="button"
+                                                           :aria-expanded="open"
+                                                           aria-controls="entry_{{$entry->id}}"
+                                                           title="{{ __('collapse') }}"
+                                                           class="inline-flex size-8 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
+                                                            <x-icon x-show="open" name="chevron-down" size="4"/>
+                                                            <x-icon x-show="!open" x-cloak name="chevron-right" size="4"/>
+                                                        </a>
+                                                    </form>
+                                                </header>
 
- 																	@if(in_array('edit', $listPermissions) || Auth::user()->can('delete', $project))
-                                                                        <button type="submit"
-                                                                                onclick="return confirm('{{__('message_delete_confirm')}}')"
-                                                                                data-toggle="tooltip" data-placement="top"
-                                                                                title="{{__('delete_entry')}}">
-																			<x-icon name="x-circle-fill" class="m-2" />
-																	</button>
-                                                                    @endif
-
-                                                                    {{-- Edit-Button für Entry entfällt: Titel, Subtitel und
-                                                                         Beschreibung werden per inline-editor-Volt-Komponente
-                                                                         direkt im Entry-Card editiert (Phase 5c.6.b).
-                                                                         Add-Entry-Modal (entryModal) bleibt für „Eintrag
-                                                                         hinzufügen". --}}
-
-
-                                                                    <a x-data="{ open: true }"
-                                                                       @click="open = !open; collapseExpandEntry({{$entry->id}})"
-                                                                       class="panel-heading "
-                                                                       role="button"
-                                                                       :aria-expanded="open"
-                                                                       aria-controls="entry_{{$entry->id}}">
-                                                                        <x-icon x-show="open" name="chevron-down" size="4" />
-                                                                        <x-icon x-show="!open" x-cloak name="chevron-right" size="4" />
-                                                                    </a>
-																</form>
-                                                                <p class="date">{!! date('d.m.Y', strtotime($entry->created_at)) !!}</p>
-                                                            </div>
-                                                        </div>
+                                                @can('update', $project)
+                                                    <livewire:rich-text-editor
+                                                        :model="$entry"
+                                                        field="description"
+                                                        rules="nullable|string"
+                                                        :label="__('entry_description')"
+                                                        :key="'entry-description-'.$entry->id"
+                                                    />
+                                                @else
+                                                    <p class="text-body text-ink-700">{!! $entry->description !!}</p>
+                                                @endcan
+                                            </div>
                                                     @if(isset($entry->mediaContent) && count($entry->mediaContent) > 0)
                                                         <div id="entry_{{$entry->id}}">
                                                             <ul class="list-group  ui-sortable-content sortable_list_content connectedSortableContent" data-entry="{{$entry->id}}" id="{{$entry->id}}" data-reorder-element="content" data-reorder-url="{{ route('chapter.drag') }}">
@@ -314,7 +334,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                     @if($item->content_type == 'App\Models\Text')
                                                                         @isset($item->text->text)
                                                                             <li class="item text content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
-                                                                                <x-ui.block-card type="text" id="anchor_MediaContent_{{$item->id}}" class="ml-auto w-10/12">
+                                                                                <x-ui.block-card type="text" id="anchor_MediaContent_{{$item->id}}" class="mb-4">
                                                                                     <div>
                                                                                         <div class="text-scrollbar overflow-auto">
                                                                                             @can('update', $project)
@@ -405,7 +425,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                     @if($item->content_type == 'App\Models\Audiovisual')
                                                                         @isset($item->audiovisual->link)
                                                                             <li class="item audiovisual content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
-                                                                                <x-ui.block-card :type="$item->audiovisual->type === 'audio' ? 'audio' : 'video'" id="anchor_MediaContent_{{$item->id}}" class="ml-auto w-10/12">
+                                                                                <x-ui.block-card :type="$item->audiovisual->type === 'audio' ? 'audio' : 'video'" id="anchor_MediaContent_{{$item->id}}" class="mb-4">
                                                                                     <div>
                                                                                         {{-- Player als eigenständige Volt-Komponente
                                                                                              (Phase 5c.6.c.3). Rendert audio/iframe
@@ -516,7 +536,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                     @if(isset($item) && $item->content_type == 'App\Models\Gallery')
                                                                         @if(isset($item->gallery))
                                                                             <li class="item gallery content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
-                                                                                <x-ui.block-card type="gallery" class="ml-auto w-10/12">
+                                                                                <x-ui.block-card type="gallery" class="mb-4">
                                                                                     <div class="row">
                                                                                         <div class="">
                                                                                             @can('update', $project)
