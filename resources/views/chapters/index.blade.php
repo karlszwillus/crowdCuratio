@@ -149,12 +149,14 @@ If not, see <https://www.gnu.org/licenses/>. -->
         <ul class="list-group ui-sortable-chapter sortable_list_chapter connectedSortableChapter" id="groupsList" data-reorder-element="chapter" data-reorder-url="{{ route('chapter.drag') }}" data-reorder-project="{{ $project->id }}">
             @foreach($data->chapters as $key => $chapter)
                 <li class="chapter group" data-chapter="{{$chapter->id}}" data-project="{{$project->id}}" id="{{$chapter->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
-                    {{-- Kapitel ist keine Karte — Titel ist Section-H1
-                         (Handoff v4 § Screen 02, P1.2 aus Designer-
-                         Review). Nur Entry und Block-Cards tragen
-                         Rahmen; Kapitel-Ebene läuft ueber Typografie
-                         und Vertical-Rhythm. --}}
-                    <div id="{{$chapter->id}}" class="mb-8">
+                    {{-- Kapitel als sanfte Zone: paper-0 (weiss) auf
+                         canvas-bg (paper-50) mit rounded-lg und
+                         grosszuegigem Padding. Kein Border — die
+                         Ebene ist als Zone erkennbar, nicht als Karte.
+                         Entry und Block-Cards liegen erhaben darin
+                         (border + shadow), damit klar wird was Zone
+                         und was Objekt ist. --}}
+                    <div id="{{$chapter->id}}" class="mb-8 rounded-lg bg-paper-0 p-8">
                         <header class="mb-4 flex items-start justify-between gap-4">
                             <div class="min-w-0 flex-1" id="anchor_Chapter_{{$chapter->id}}">
                                 @can('update', $project)
