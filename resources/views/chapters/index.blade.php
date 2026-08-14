@@ -391,35 +391,25 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                             @endcan
                                                                                         </div>
                                                                                     </div>
-                                                                                    <div class="text-right icons">
+                                                                                    <div class="mt-3 flex items-center justify-end gap-1">
                                                                                         <form action="{{ route('text.delete',$item->text->id) }}"
                                                                                               method="POST" class="mb-5">
                                                                                             @csrf
                                                                                             <input type="hidden" name="project" value="{!! $project->id !!}"/>
                                                                                             @method('DELETE')
-                                                                                            <span data-toggle="tooltip"
-                                                                                                      data-placement="top"
-                                                                                                      title="ältere Versionen"><a
-                                                                                                            href="{{route('projects.edit',['project'=> $project, 'log'=> $item->text->id, 'model' => 'Text'])}}"
-                                                                                                            class="text-log"><x-icon name="clock-history" class="m-2" /></a></span>
+                                                                                            <a href="{{route('projects.edit',['project'=> $project, 'log'=> $item->text->id, 'model' => 'Text'])}}" title="{{ __(\'older_versions\') }}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900"><x-icon name="rotate-ccw" size="4"/></a>
                                                                                             @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                                                                 <span data-toggle="tooltip"
                                                                                                       data-placement="top"
                                                                                                       title="{{__('add_comment')}}"><a
                                                                                                             href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Text', 'comment' => $item->text->id, 'type' => 'Text'])}}"> @if(isset($item->text->comments) && count($item->text->comments) > 0)
-                                                                                                            <x-icon name="chat-dots-fill" class="m-2" /> @else
-                                                                                                            <x-icon name="chat" class="m-2" />@endif
+                                                                                                            <x-icon name="message-square-dot" size="4"/> @else
+                                                                                                            <x-icon name="message-square" size="4"/>@endif
 																									</a></span>
 																							@endif
 
  																								@if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
-                                                                                                <button type="submit"
-                                                                                                        onclick="return confirm('{{__('message_delete_confirm')}}')">
-                                                                                                    <x-icon name="x-circle-fill" class="m-2"
-                                                                                                       data-toggle="tooltip"
-                                                                                                       data-placement="top"
-                                                                                                       title="{{__('delete_text')}}" />
-                                                                                                </button>
+                                                                                                <button type="submit" onclick="return confirm(\'{{__(\'message_delete_confirm\')}}\')" title="{{__(\'delete_text\')}}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-danger-bg hover:text-danger"><x-icon name="trash-2" size="4"/></button>
                                                                                             @endif
 
                                                                                             {{-- Edit-Button für Text entfällt seit Phase 5c.6.c.4:
@@ -534,35 +524,25 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                             </p>
                                                                                         @endcan
                                                                                     </div>
-                                                                                    <div class="text-right icons">
+                                                                                    <div class="mt-3 flex items-center justify-end gap-1">
                                                                                         <form action="{{ route('audiovisual.delete',$item->audiovisual->id) }}"
                                                                                               method="POST" class="mb-5">
                                                                                             @csrf
                                                                                             <input type="hidden" name="project" value="{!! $project->id !!}"/>
                                                                                             @method('DELETE')
-                                                                                           <span data-toggle="tooltip"
-                                                                                                      data-placement="top"
-                                                                                                      title="ältere Versionen"><a
-                                                                                                            href="{{route('projects.edit',['project'=> $project, 'log'=> $item->audiovisual->id, 'model' => 'Audiovisual'])}}"
-                                                                                                            class="text-log"><x-icon name="clock-history" class="m-2" /></a></span>
+                                                                                           <a href="{{route('projects.edit',['project'=> $project, 'log'=> $item->audiovisual->id, 'model' => 'Audiovisual'])}}" title="{{ __(\'older_versions\') }}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900"><x-icon name="rotate-ccw" size="4"/></a>
 
                                                                                             @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                                                                 <span data-toggle="tooltip"
                                                                                                       data-placement="top"
                                                                                                       title="{{__('add_comment')}}"><a
                                                                                                             href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Audiovisual', 'comment' => $item->audiovisual->id, 'type' => 'Audiovisual'])}}"> @if(isset($item->audiovisual->comments) && count($item->audiovisual->comments) > 0)
-                                                                                                            <x-icon name="chat-dots-fill" class="m-2" /> @else
-                                                                                                            <x-icon name="chat" class="m-2" /> @endif </a></span>
+                                                                                                            <x-icon name="message-square-dot" size="4"/> @else
+                                                                                                            <x-icon name="message-square" size="4"/> @endif </a></span>
                                                                                             @endif
 
  																							@if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
-                                                                                                <button type="submit"
-                                                                                                        onclick="return confirm('{{__('message_delete_confirm')}}')">
-                                                                                                    <x-icon name="x-circle-fill" class="m-2"
-                                                                                                       data-toggle="tooltip"
-                                                                                                       data-placement="top"
-                                                                                                       title="{{__('delete_text')}}" />
-                                                                                                </button>
+                                                                                                <button type="submit" onclick="return confirm(\'{{__(\'message_delete_confirm\')}}\')" title="{{__(\'delete_text\')}}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-danger-bg hover:text-danger"><x-icon name="trash-2" size="4"/></button>
                                                                                             @endif
 
                                                                                             {{-- Modify-Button für Audiovisual entfällt seit
@@ -618,26 +598,22 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                 <p>{{$item->gallery->description}}</p>
                                                                                             @endcan
                                                                                         </div>
-                                                                                        <div class="text-right icons">
+                                                                                        <div class="mt-3 flex items-center justify-end gap-1">
                                                                                             <form action="{{ route('gallery.delete',$item->gallery->id) }}"
                                                                                                   method="POST" class="mb-5">
                                                                                                 @csrf
                                                                                                 <input type="hidden" name="project" value="{!! $project->id !!}"/>
                                                                                                 @method('DELETE')
 
-                                                                                                <span data-toggle="tooltip"
-                                                                                                          data-placement="top"
-                                                                                                          title="ältere Versionen"><a
-                                                                                                                href="{{route('projects.edit',['project'=> $project, 'log'=> $item->gallery->id, 'model' => 'Gallery'])}}"
-                                                                                                                class="text-log"><x-icon name="clock-history" class="m-2" /></a></span>
+                                                                                                <a href="{{route('projects.edit',['project'=> $project, 'log'=> $item->gallery->id, 'model' => 'Gallery'])}}" title="{{ __(\'older_versions\') }}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900"><x-icon name="rotate-ccw" size="4"/></a>
 
                                                                                                 @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                                                                     <span data-toggle="tooltip"
                                                                                                           data-placement="top"
                                                                                                           title="{{__('add_comment')}}"><a
                                                                                                                 href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Gallery', 'comment' => $item->gallery->id, 'type'=> 'Gallery'])}}" > @if(isset($item->gallery->comments) && count($item->gallery->comments) > 0)
-                                                                                                                <x-icon name="chat-dots-fill" class="m-2" /> @else
-                                                                                                                <x-icon name="chat" class="m-2" /> @endif </a></span>
+                                                                                                                <x-icon name="message-square-dot" size="4"/> @else
+                                                                                                                <x-icon name="message-square" size="4"/> @endif </a></span>
                                                                                                 @endif
 
  																								@if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
@@ -654,13 +630,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                                 data-target="#imageModal"> <x-icon name="plus-circle" class="m-2" /> </button></span>
                                                                                                 @endif
                                                                                                 @if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
-                                                                                                    <button type="submit"
-                                                                                                            onclick="return confirm('{{__('message_delete_confirm')}}')">
-                                                                                                        <x-icon name="x-circle-fill" class="m-2"
-                                                                                                           data-toggle="tooltip"
-                                                                                                           data-placement="top"
-                                                                                                           title="{{__('delete_image')}}" />
-                                                                                                    </button>
+                                                                                                    <button type="submit" onclick="return confirm(\'{{__(\'message_delete_confirm\')}}\')" title="{{__(\'delete_image\')}}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-danger-bg hover:text-danger"><x-icon name="trash-2" size="4"/></button>
                                                                                                 @endif
                                                                                                 {{-- Gallery-Edit-Modal-Trigger entfällt seit 5c.6.c:
                                                                                                      Title/Subtitle/Description werden inline editiert.
@@ -694,34 +664,24 @@ If not, see <https://www.gnu.org/licenses/>. -->
 																								{{-- <img src="{{route('image', $image->image)}}" alt="{{$item->alt}}" style=""> --}}
 
                                                                                             </div>
-                                                                                            <div class="text-right icons">
+                                                                                            <div class="mt-3 flex items-center justify-end gap-1">
                                                                                                 <form action="{{ route('image.delete',$image->id) }}"
                                                                                                       method="POST" class="mb-5">
                                                                                                     @csrf
                                                                                                     @method('DELETE')
-																									<span data-toggle="tooltip"
-                                                                                                              data-placement="top"
-                                                                                                              title="ältere Versionen"><a
-                                                                                                                    href="{{route('projects.edit',['project'=> $project, 'log'=> $image->id, 'model' => 'Image'])}}"
-                                                                                                                    class="text-log"><x-icon name="clock-history" class="m-2" /></a></span>
+																									<a href="{{route('projects.edit',['project'=> $project, 'log'=> $image->id, 'model' => 'Image'])}}" title="{{ __(\'older_versions\') }}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900"><x-icon name="rotate-ccw" size="4"/></a>
 
                                                                                                     @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                                                                         <span data-toggle="tooltip"
                                                                                                               data-placement="top"
                                                                                                               title="{{__('add_comment')}}"><a
                                                                                                                     href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Image', 'comment' => $image->id, 'type'=> 'Image'])}}"> @if(isset($image->comments) && count($image->comments) > 0)
-                                                                                                                    <x-icon name="chat-dots-fill" class="m-2" /> @else
-                                                                                                                    <x-icon name="chat" class="m-2" /> @endif </a></span>
+                                                                                                                    <x-icon name="message-square-dot" size="4"/> @else
+                                                                                                                    <x-icon name="message-square" size="4"/> @endif </a></span>
                                                                                                     @endif
 
                                                                                                     @if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
-                                                                                                        <button type="submit"
-                                                                                                                onclick="return confirm('{{__('message_delete_confirm')}}')">
-                                                                                                            <x-icon name="x-circle-fill" class="m-2"
-                                                                                                               data-toggle="tooltip"
-                                                                                                               data-placement="top"
-                                                                                                               title="{{__('delete_image')}}" />
-                                                                                                        </button>
+                                                                                                        <button type="submit" onclick="return confirm(\'{{__(\'message_delete_confirm\')}}\')" title="{{__(\'delete_image\')}}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-danger-bg hover:text-danger"><x-icon name="trash-2" size="4"/></button>
                                                                                                     @endif
 
                                                                                                     {{-- Modify-Button für Image entfällt seit
