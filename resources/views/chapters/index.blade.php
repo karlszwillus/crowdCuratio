@@ -376,7 +376,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                     @if($item->content_type == 'App\Models\Text')
                                                                         @isset($item->text->text)
                                                                             <li class="item text content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
-                                                                                <x-ui.block-card type="text" id="anchor_MediaContent_{{$item->id}}" class="mb-4">
+                                                                                <x-ui.block-card type="text" id="anchor_MediaContent_{{$item->id}}" class="mb-4" :save-slot="'Text-'.$item->text->id">
                                                                                     <div>
                                                                                         <div class="text-scrollbar overflow-auto">
                                                                                             @can('update', $project)
@@ -465,7 +465,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                     @if($item->content_type == 'App\Models\Audiovisual')
                                                                         @isset($item->audiovisual->link)
                                                                             <li class="item audiovisual content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
-                                                                                <x-ui.block-card :type="$item->audiovisual->type === 'audio' ? 'audio' : 'video'" id="anchor_MediaContent_{{$item->id}}" class="mb-4">
+                                                                                <x-ui.block-card :type="$item->audiovisual->type === 'audio' ? 'audio' : 'video'" id="anchor_MediaContent_{{$item->id}}" class="mb-4" :save-slot="'Audiovisual-'.$item->audiovisual->id">
                                                                                     <div>
                                                                                         {{-- Player als eigenständige Volt-Komponente
                                                                                              (Phase 5c.6.c.3). Rendert audio/iframe
@@ -566,7 +566,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                     @if(isset($item) && $item->content_type == 'App\Models\Gallery')
                                                                         @if(isset($item->gallery))
                                                                             <li class="item gallery content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
-                                                                                <x-ui.block-card type="gallery" class="mb-4">
+                                                                                <x-ui.block-card type="gallery" class="mb-4" :save-slot="'Gallery-'.$item->gallery->id">
                                                                                     <div class="row">
                                                                                         <div class="">
                                                                                             @can('update', $project)

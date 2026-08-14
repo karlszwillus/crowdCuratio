@@ -56,6 +56,13 @@ Slots:
     'editing' => false,
     'label' => null,
     'actions' => null,
+
+    /**
+     * Slot-Bezeichner für den Pro-Block-Save-Status: `{Model}-{id}`,
+     * z. B. `Text-42`. Wird gegen `$store.saveStatus.blocks[slot]`
+     * gematcht. Ohne Wert entfaellt der Status-Chip.
+     */
+    'saveSlot' => null,
 ])
 
 @php
@@ -89,14 +96,35 @@ Slots:
 <article {{ $attributes->merge(['class' => $cardClasses]) }}>
     {{-- Kopf: Typ-Tag links, optionale Aktionen rechts. --}}
     <header class="mb-3 flex items-start justify-between gap-3">
-        <span class="{{ $tagClasses }} inline-flex items-center gap-1.5 rounded-full px-2.5 py-1
-                      text-mono-caps font-mono uppercase tracking-widest">
-            <x-icon :name="$meta['icon']" size="4"/>
-            <span>{{ $displayLabel }}</span>
-            @if ($editing)
-                <span class="ml-1 normal-case tracking-normal">· {{ __('is_editing') }}</span>
+        <div class="flex items-center gap-2">
+            <span class="{{ $tagClasses }} inline-flex items-center gap-1.5 rounded-full px-2.5 py-1
+                          text-mono-caps font-mono uppercase tracking-widest">
+                <x-icon :name="$meta['icon']" size="4"/>
+                <span>{{ $displayLabel }}</span>
+                @if ($editing)
+                    <span class="ml-1 normal-case tracking-normal">· {{ __('is_editing') }}</span>
+                @endif
+            </span>
+
+            @if ($saveSlot)
+                {{-- Pro-Block-Save-Status (Handoff v4 § Screen 07,
+                     P2.12 aus 5-D.6b). Alpine liest
+                     $store.saveStatus.blocks[slot] und rendert das
+                     passende Chip. --}}
+                <span
+                    x-data
+                    aria-live="polite"
+                    class="text-caption"
+                >
+                    <span x-show="$store.saveStatus.blocks['{{ $saveSlot }}']?.state === 'saved'" x-cloak class="text-success">
+                        ✓ {{ __('save_status_saved') }}
+                    </span>
+                    <span x-show="$store.saveStatus.blocks['{{ $saveSlot }}']?.state === 'error'" x-cloak class="text-danger">
+                        {{ __('save_status_error') }}
+                    </span>
+                </span>
             @endif
-        </span>
+        </div>
 
         @if ($actions !== null && trim((string) $actions) !== '')
             <div class="flex items-center gap-2 text-ink-500">
