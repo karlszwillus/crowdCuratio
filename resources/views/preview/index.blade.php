@@ -195,7 +195,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
 @endif
 @if(isset($parameters['pdf']))
 <div class="footer-background p-3 my-3 border">
-    <a href="@isset($parameters){{route('download', $parameters)}}@endisset" class="btn m-4" data-toggle="modal" data-target="#previewModal" target="_blank" >{{__('pdf')}} <i class="bi bi-file-earmark-pdf-fill"></i>
+    <a href="@isset($parameters){{route('download', $parameters)}}@endisset" class="btn m-4" data-toggle="modal" data-target="#previewModal" target="_blank" >{{__('pdf')}} <x-icon name="file-earmark-pdf-fill" />
     </a>
 </div>
 @endif
@@ -222,11 +222,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
 @section('footer')
     @if(Auth::user()->can('publish', $project) || Auth::user()->can('preview'))
         <div class="footer-background p-3 my-3 border">
-            <a href="#" class="m-4" data-toggle="modal" data-target="#previewModal" target="_blank" >{{__('pdf')}} <i class="bi bi-file-earmark-pdf-fill"></i>
+            <a href="#" class="m-4" data-toggle="modal" data-target="#previewModal" target="_blank" >{{__('pdf')}} <x-icon name="file-earmark-pdf-fill" />
             </a>
-            <a href="#" class="m-4" data-toggle="modal" data-target="#previewModal" target="_blank" >{{__('preview')}} <i class="bi bi-globe"></i>
+            <a href="#" class="m-4" data-toggle="modal" data-target="#previewModal" target="_blank" >{{__('preview')}} <x-icon name="globe" />
             </a>
-            <span class="right">	<a href="https://app.crowdcurat.io/downloads/html.zip" class="m-4"  target="_blank" >{{__('download')}} <i class="bi bi-globe"></i>
+            <span class="right">	<a href="https://app.crowdcurat.io/downloads/html.zip" class="m-4"  target="_blank" >{{__('download')}} <x-icon name="globe" />
             </a></span>
         </div>
     @endif

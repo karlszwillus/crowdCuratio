@@ -42,7 +42,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                 <div class="card-body">
                     <div class="row p-4">
                         <span style="display: inline-block; float: left">{{__('project_terms')}}</span>
-                        <span style="display: inline-block; float: right"><a data-toggle="modal" data-target="#termsConditionsModal" id="addContentTerms"><i class="bi bi-pencil-fill m-2"></i></a></span>
+                        <span style="display: inline-block; float: right"><a data-toggle="modal" data-target="#termsConditionsModal" id="addContentTerms"><x-icon name="pencil-fill" class="m-2" /></a></span>
                     </div>
                     @isset($terms->terms_conditions) <span id="contentTerms">{!! $terms->terms_conditions !!}</span> @endisset
                 </div>
@@ -53,7 +53,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                 <div class="card-body">
                     <div class="row p-4">
                         <span style="display: inline-block; float: left">{{__('policy')}}</span>
-                        <span style="display: inline-block; float: right"><a data-toggle="modal" data-target="#privacyModal" id="addContentPrivacy"><i class="bi bi-pencil-fill m-2"></i></a></span>
+                        <span style="display: inline-block; float: right"><a data-toggle="modal" data-target="#privacyModal" id="addContentPrivacy"><x-icon name="pencil-fill" class="m-2" /></a></span>
                     </div>
                     @isset($privacy->privacy_policy) <span id="contentPolicy">{!! $privacy->privacy_policy !!}</span> @endisset
                 </div>
@@ -66,7 +66,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                 <div class="card-body">
                     <div class="row p-4">
                         <span style="display: inline-block; float: left">{{__('project_imprint')}}</span>
-                        <span style="display: inline-block; float: right"><a data-toggle="modal" data-target="#imprintModal"><i class="bi bi-pencil-fill m-2"></i></a></span>
+                        <span style="display: inline-block; float: right"><a data-toggle="modal" data-target="#imprintModal"><x-icon name="pencil-fill" class="m-2" /></a></span>
                     </div>
                     @isset($imprint->name)
                         <p> Angaben gem:</p>
@@ -98,7 +98,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                 <div class="card-body">
                     <div class="row p-4">
                         <span style="display: inline-block; float: left">{{__('invitation')}}</span>
-                        <span style="display: inline-block; float: right"><a data-toggle="modal" data-target="#invitationModal" id="addContentMail"><i class="bi bi-pencil-fill m-2"></i></a></span>
+                        <span style="display: inline-block; float: right"><a data-toggle="modal" data-target="#invitationModal" id="addContentMail"><x-icon name="pencil-fill" class="m-2" /></a></span>
                     </div>
                     @isset($mail->invitation) <span id="contentMail">{!! $mail->invitation !!}</span> @endisset
                 </div>

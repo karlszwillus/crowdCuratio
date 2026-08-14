@@ -64,7 +64,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                 @if(Auth::user()->can('update', $project) || Auth::user()->can('delete'))
                     <button class="btn btn-secondary btn-block text-left mt-1 mb-2" type="submit"
                             onclick="return confirm('{{__('message_delete_confirm')}}')">
-                        <i class="bi bi-trash m-2"></i> {{__('delete_project')}}
+                        <x-icon name="trash" class="m-2" /> {{__('delete_project')}}
                     </button>
                 @endif
             </div>
@@ -144,27 +144,31 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                               data-placement="top"
                                               title="ältere Versionen"><a
                                                     href="{{route('projects.edit',['project'=> $project, 'log'=> $chapter->id, 'model' => 'Chapter'])}}"
-                                                    class="text-log"><i
-                                                        class="bi bi-clock-history m-2"></i></a></span>
+                                                    class="text-log"><x-icon name="clock-history" class="m-2" /></a></span>
 
                                     @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                         <span data-toggle="tooltip" data-placement="top"
                                               title="{{__('add_comment')}}"><a href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Chapter', 'comment' => $chapter->id])}}" class="addComment"> @if(isset($chapter->comments) && count($chapter->comments) > 0)
-                                                    <i class="bi bi-chat-dots-fill m-2"></i> @else <i class="bi bi-chat m-2"></i>@endif
+                                                    <x-icon name="chat-dots-fill" class="m-2" /> @else <x-icon name="chat" class="m-2" />@endif
 											</a></span>
                                     @endif
 									@if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
                                         <button type="submit" onclick="return confirm('{{__('message_delete_confirm')}}')"
                                                 data-toggle="tooltip" data-placement="top" title="{{__('delete_chapter')}}">
-											<i class="bi-x-circle-fill m-2"></i></button>
+											<x-icon name="x-circle-fill" class="m-2" /></button>
 									@endif
 									{{-- Edit-Button für Chapter entfällt: Titel, Subtitel und
 									     Beschreibung werden per inline-editor-Volt-Komponente
 									     direkt im Kapitel-Card editiert (Phase 5c.6.a). Add-Modal
 									     (myModal) bleibt für „Kapitel hinzufügen". --}}
-									<a onclick="collapseExpand({{$chapter->id}})"  id="{{$chapter->id}}"
-                                       aria-expanded="true" aria-controls="collapseChapter_{{$chapter->id}}"><i
-                                                class="bi-caret-down-fill" id="chp_{{$chapter->id}}"></i></a>
+									<a x-data="{ open: true }"
+                                       @click="open = !open; collapseExpand({{$chapter->id}})"
+                                       id="{{$chapter->id}}"
+                                       :aria-expanded="open"
+                                       aria-controls="collapseChapter_{{$chapter->id}}">
+                                        <x-icon x-show="open" name="chevron-down" size="4" />
+                                        <x-icon x-show="!open" x-cloak name="chevron-right" size="4" />
+                                    </a>
 								</form>
 								<p class="date">{!! date('d.m.Y', strtotime($chapter->created_at)) !!}</p>
                             </div>
@@ -217,14 +221,13 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                               data-placement="top"
                                                                               title="ältere Versionen"><a
                                                                                     href="{{route('projects.edit',['project'=> $project, 'log'=> $entry->id, 'model' => 'Entry'])}}"
-                                                                                    class="text-log"><i
-                                                                                        class="bi bi-clock-history m-2"></i></a></span>
+                                                                                    class="text-log"><x-icon name="clock-history" class="m-2" /></a></span>
 
                                                                     @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                                         <span data-toggle="tooltip" data-placement="top"
                                                                               title="{{__('add_comment')}}"><a href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Entry', 'comment' => $entry->id])}}"> @if(isset($entry->comments) && count($entry->comments) > 0)
-                                                                                    <i class="bi bi-chat-dots-fill m-2"></i>@else
-                                                                                    <i class="bi bi-chat m-2"></i>@endif
+                                                                                    <x-icon name="chat-dots-fill" class="m-2" />@else
+                                                                                    <x-icon name="chat" class="m-2" />@endif
 																			</a></span>
                                                                     @endif
 
@@ -233,7 +236,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                 onclick="return confirm('{{__('message_delete_confirm')}}')"
                                                                                 data-toggle="tooltip" data-placement="top"
                                                                                 title="{{__('delete_entry')}}">
-																			<i class="bi-x-circle-fill m-2"></i>
+																			<x-icon name="x-circle-fill" class="m-2" />
 																	</button>
                                                                     @endif
 
@@ -244,9 +247,15 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                          hinzufügen". --}}
 
 
-                                                                    <a onclick="collapseExpandEntry({{$entry->id}})" class="panel-heading "
-                                                                       role="button" aria-expanded="true" aria-controls="entry_{{$entry->id}}" ><i
-                                                                                class="bi-caret-down-fill" id="ent_{{$entry->id}}"></i></a>
+                                                                    <a x-data="{ open: true }"
+                                                                       @click="open = !open; collapseExpandEntry({{$entry->id}})"
+                                                                       class="panel-heading "
+                                                                       role="button"
+                                                                       :aria-expanded="open"
+                                                                       aria-controls="entry_{{$entry->id}}">
+                                                                        <x-icon x-show="open" name="chevron-down" size="4" />
+                                                                        <x-icon x-show="!open" x-cloak name="chevron-right" size="4" />
+                                                                    </a>
 																</form>
                                                                 <p class="date">{!! date('d.m.Y', strtotime($entry->created_at)) !!}</p>
                                                             </div>
@@ -283,25 +292,24 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                       data-placement="top"
                                                                                                       title="ältere Versionen"><a
                                                                                                             href="{{route('projects.edit',['project'=> $project, 'log'=> $item->text->id, 'model' => 'Text'])}}"
-                                                                                                            class="text-log"><i
-                                                                                                                class="bi bi-clock-history m-2"></i></a></span>
+                                                                                                            class="text-log"><x-icon name="clock-history" class="m-2" /></a></span>
                                                                                             @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                                                                 <span data-toggle="tooltip"
                                                                                                       data-placement="top"
                                                                                                       title="{{__('add_comment')}}"><a
                                                                                                             href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Text', 'comment' => $item->text->id, 'type' => 'Text'])}}"> @if(isset($item->text->comments) && count($item->text->comments) > 0)
-                                                                                                            <i class="bi bi-chat-dots-fill m-2"></i> @else
-                                                                                                            <i class="bi bi-chat m-2"></i>@endif
+                                                                                                            <x-icon name="chat-dots-fill" class="m-2" /> @else
+                                                                                                            <x-icon name="chat" class="m-2" />@endif
 																									</a></span>
 																							@endif
 
  																								@if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
                                                                                                 <button type="submit"
                                                                                                         onclick="return confirm('{{__('message_delete_confirm')}}')">
-                                                                                                    <i class="bi-x-circle-fill m-2"
+                                                                                                    <x-icon name="x-circle-fill" class="m-2"
                                                                                                        data-toggle="tooltip"
                                                                                                        data-placement="top"
-                                                                                                       title="{{__('delete_text')}}"></i>
+                                                                                                       title="{{__('delete_text')}}" />
                                                                                                 </button>
                                                                                             @endif
 
@@ -419,26 +427,24 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                       data-placement="top"
                                                                                                       title="ältere Versionen"><a
                                                                                                             href="{{route('projects.edit',['project'=> $project, 'log'=> $item->audiovisual->id, 'model' => 'Audiovisual'])}}"
-                                                                                                            class="text-log"><i
-                                                                                                                class="bi bi-clock-history m-2"></i></a></span>
+                                                                                                            class="text-log"><x-icon name="clock-history" class="m-2" /></a></span>
 
                                                                                             @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                                                                 <span data-toggle="tooltip"
                                                                                                       data-placement="top"
                                                                                                       title="{{__('add_comment')}}"><a
                                                                                                             href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Audiovisual', 'comment' => $item->audiovisual->id, 'type' => 'Audiovisual'])}}"> @if(isset($item->audiovisual->comments) && count($item->audiovisual->comments) > 0)
-                                                                                                            <i class="bi bi-chat-dots-fill m-2"></i> @else
-                                                                                                            <i
-                                                                                                                    class="bi bi-chat m-2"></i> @endif </a></span>
+                                                                                                            <x-icon name="chat-dots-fill" class="m-2" /> @else
+                                                                                                            <x-icon name="chat" class="m-2" /> @endif </a></span>
                                                                                             @endif
 
  																							@if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
                                                                                                 <button type="submit"
                                                                                                         onclick="return confirm('{{__('message_delete_confirm')}}')">
-                                                                                                    <i class="bi-x-circle-fill m-2"
+                                                                                                    <x-icon name="x-circle-fill" class="m-2"
                                                                                                        data-toggle="tooltip"
                                                                                                        data-placement="top"
-                                                                                                       title="{{__('delete_text')}}"></i>
+                                                                                                       title="{{__('delete_text')}}" />
                                                                                                 </button>
                                                                                             @endif
 
@@ -504,17 +510,15 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                           data-placement="top"
                                                                                                           title="ältere Versionen"><a
                                                                                                                 href="{{route('projects.edit',['project'=> $project, 'log'=> $item->gallery->id, 'model' => 'Gallery'])}}"
-                                                                                                                class="text-log"><i
-                                                                                                                    class="bi bi-clock-history m-2"></i></a></span>
+                                                                                                                class="text-log"><x-icon name="clock-history" class="m-2" /></a></span>
 
                                                                                                 @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                                                                     <span data-toggle="tooltip"
                                                                                                           data-placement="top"
                                                                                                           title="{{__('add_comment')}}"><a
                                                                                                                 href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Gallery', 'comment' => $item->gallery->id, 'type'=> 'Gallery'])}}" > @if(isset($item->gallery->comments) && count($item->gallery->comments) > 0)
-                                                                                                                <i class="bi bi-chat-dots-fill m-2"></i> @else
-                                                                                                                <i
-                                                                                                                        class="bi bi-chat m-2"></i> @endif </a></span>
+                                                                                                                <x-icon name="chat-dots-fill" class="m-2" /> @else
+                                                                                                                <x-icon name="chat" class="m-2" /> @endif </a></span>
                                                                                                 @endif
 
  																								@if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
@@ -528,16 +532,15 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                                 data-id="{{$item->gallery->id}}"
                                                                                                                 data-entryId="{{$entry->id}}"
                                                                                                                 data-toggle="modal"
-                                                                                                                data-target="#imageModal"> <i
-                                                                                                                    class="bi bi-plus-circle m-2"></i> </button></span>
+                                                                                                                data-target="#imageModal"> <x-icon name="plus-circle" class="m-2" /> </button></span>
                                                                                                 @endif
                                                                                                 @if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
                                                                                                     <button type="submit"
                                                                                                             onclick="return confirm('{{__('message_delete_confirm')}}')">
-                                                                                                        <i class="bi-x-circle-fill m-2"
+                                                                                                        <x-icon name="x-circle-fill" class="m-2"
                                                                                                            data-toggle="tooltip"
                                                                                                            data-placement="top"
-                                                                                                           title="{{__('delete_image')}}"></i>
+                                                                                                           title="{{__('delete_image')}}" />
                                                                                                     </button>
                                                                                                 @endif
                                                                                                 {{-- Gallery-Edit-Modal-Trigger entfällt seit 5c.6.c:
@@ -580,25 +583,24 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                               data-placement="top"
                                                                                                               title="ältere Versionen"><a
                                                                                                                     href="{{route('projects.edit',['project'=> $project, 'log'=> $image->id, 'model' => 'Image'])}}"
-                                                                                                                    class="text-log"><i
-                                                                                                                        class="bi bi-clock-history m-2"></i></a></span>
+                                                                                                                    class="text-log"><x-icon name="clock-history" class="m-2" /></a></span>
 
                                                                                                     @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                                                                         <span data-toggle="tooltip"
                                                                                                               data-placement="top"
                                                                                                               title="{{__('add_comment')}}"><a
                                                                                                                     href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Image', 'comment' => $image->id, 'type'=> 'Image'])}}"> @if(isset($image->comments) && count($image->comments) > 0)
-                                                                                                                    <i class="bi bi-chat-dots-fill m-2"></i> @else
-                                                                                                                    <i class="bi bi-chat m-2"></i> @endif </a></span>
+                                                                                                                    <x-icon name="chat-dots-fill" class="m-2" /> @else
+                                                                                                                    <x-icon name="chat" class="m-2" /> @endif </a></span>
                                                                                                     @endif
 
                                                                                                     @if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
                                                                                                         <button type="submit"
                                                                                                                 onclick="return confirm('{{__('message_delete_confirm')}}')">
-                                                                                                            <i class="bi-x-circle-fill m-2"
+                                                                                                            <x-icon name="x-circle-fill" class="m-2"
                                                                                                                data-toggle="tooltip"
                                                                                                                data-placement="top"
-                                                                                                               title="{{__('delete_image')}}"></i>
+                                                                                                               title="{{__('delete_image')}}" />
                                                                                                         </button>
                                                                                                     @endif
 
@@ -667,7 +669,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                 data-entry="{{$entry->name}}"
                                                                 data-id="{{$entry->id}}"
                                                                 data-toggle="modal"
-                                                                data-target="#contentModal">{{__('new_element')}} <i class="bi bi-plus-circle-fill m-2"></i> </button></span>
+                                                                data-target="#contentModal">{{__('new_element')}} <x-icon name="plus-circle-fill" class="m-2" /> </button></span>
                                                 @endif
                                             </div>
                                         </li>
@@ -687,7 +689,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                         data-chapter="{{$chapter->name}}"
                                                                                                         data-id="{{$chapter->id}}"
                                                                                                         data-toggle="modal"
-                                                                                                        data-target="#entryModal">{{__('new_entry')}} <i class="bi bi-plus-circle-fill m-2"></i> </button></span>
+                                                                                                        data-target="#entryModal">{{__('new_entry')}} <x-icon name="plus-circle-fill" class="m-2" /> </button></span>
                         </div>
                     @endif
                 </li>
@@ -698,7 +700,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
     @if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
         <a class="btn btn-secondary btn-lg add_chapter" data-toggle="modal" data-target="#myModal">
 
-            {{__('new_chapter')}} <i class="bi bi-plus-circle-fill m-2"></i>
+            {{__('new_chapter')}} <x-icon name="plus-circle-fill" class="m-2" />
         </a>
     @endif
     <hr class="mt-5 mb-5">
@@ -811,11 +813,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
 @section('footer')
     @if(Auth::user()->can('publish', $project) || Auth::user()->can('preview'))
         <div class="footer-background p-3 my-3 border">
-            <button type="button" class="m-4" data-toggle="modal" data-target="#previewModal" >{{__('pdf')}} <i class="bi bi-file-earmark-pdf-fill"></i>
+            <button type="button" class="m-4" data-toggle="modal" data-target="#previewModal" >{{__('pdf')}} <x-icon name="file-earmark-pdf-fill" />
             </button>
-            <button type="button" class="m-4" data-toggle="modal" data-target="#previewModal" >{{__('preview')}} <i class="bi bi-globe"></i>
+            <button type="button" class="m-4" data-toggle="modal" data-target="#previewModal" >{{__('preview')}} <x-icon name="globe" />
             </button>
-		<span class="right">	<a href="https://app.crowdcurat.io/downloads/html.zip" class="m-4"  target="_blank" >{{__('download')}} <i class="bi bi-globe"></i>
+		<span class="right">	<a href="https://app.crowdcurat.io/downloads/html.zip" class="m-4"  target="_blank" >{{__('download')}} <x-icon name="globe" />
             </a></span>
         </div>
     @endif
@@ -1383,7 +1385,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
             var prev = $(this).data('val');
             var current = $(this).val();
             if (prev !== current) {
-                $('#updateProjectBtn').html('<button id="btn_save" class="btn btn-secondary btn-block text-left" type="submit" name="btn_submit" value="Save"><i class="bi bi-file-earmark m-2"></i>{{__('save')}}</button>');
+                $('#updateProjectBtn').html('<button id="btn_save" class="btn btn-secondary btn-block text-left" type="submit" name="btn_submit" value="Save"><x-icon name="file-earmark" class="m-2" />{{__('save')}}</button>');
             }
 
         });
@@ -1457,8 +1459,8 @@ If not, see <https://www.gnu.org/licenses/>. -->
             }
 
             $('#chapter_'+id).slideToggle('slow');
-            $('#chp_'+id).toggleClass('bi-caret-down-fill').toggleClass('bi-caret-right-fill');
-
+            // Icon-Toggle laeuft ueber Alpine (`x-show="open"`) auf
+            // dem umschliessenden <a>-Element seit Phase 5-D.2.
         }
 
         //collapse entry
@@ -1469,7 +1471,8 @@ If not, see <https://www.gnu.org/licenses/>. -->
             }
 
             $('#entry_'+id).slideToggle('slow');
-            $('#ent_'+id).toggleClass('bi-caret-right-fill').toggleClass('bi-caret-down-fill');
+            // Icon-Toggle laeuft ueber Alpine (`x-show="open"`) auf
+            // dem umschliessenden <a>-Element seit Phase 5-D.2.
         }
 
         //Invitation for existing user

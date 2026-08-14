@@ -50,8 +50,12 @@ If not, see <https://www.gnu.org/licenses/>.
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+    {{-- Bootstrap-Icons-CDN entfaellt seit Phase 5-D.2: Icons kommen
+         ueber die `<x-icon>`-Komponente aus dem Lucide-Set (blade-ui-kit
+         + mallardduck/blade-lucide-icons). Font-Awesome bleibt fuer
+         die Preview-/PDF-Templates (drei Nutzungen in preview/*.blade.php),
+         wird spaeter im PDF-Refactor migriert. --}}
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdn.quilljs.com/1.1.6/quill.snow.css">
     <script src="https://cdn.quilljs.com/1.1.6/quill.js"></script>
 

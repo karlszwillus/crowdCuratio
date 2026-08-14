@@ -28,7 +28,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                        value=" @if(isset($project->name))  {{$project->name}} @endif ">
             </div>
         </div>
-        <div class="col-sm-1"></br><i class="bi bi-pencil-fill"></i></div>
+        <div class="col-sm-1"></br><x-icon name="pencil-fill" /></div>
 
     </div>
 </div>
@@ -44,7 +44,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     <div class="input-group">
                     <span class="input-group-btn">
                         <span class="btn btn-default btn-file">
-                            <i class="bi bi-folder m-2"></i>{{__('browse')}} <input name="project_image" type="file"
+                            <x-icon name="folder" class="m-2" />{{__('browse')}} <input name="project_image" type="file"
                                                                                     id="imgInp">
                         </span>
                     </span>
@@ -64,7 +64,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
         </div>
         <div class="col-sm-1">
             </br>
-            <i class="bi bi-pencil-fill"></i>
+            <x-icon name="pencil-fill" />
         </div>
 
     </div>
@@ -82,7 +82,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                        placeholder="{{__('add_imprint')}}">
             </div>
         </div>
-        <div class="col-sm-1"></br><i class="bi bi-pencil-fill"></i></div>
+        <div class="col-sm-1"></br><x-icon name="pencil-fill" /></div>
 
     </div>
 </div>
@@ -97,7 +97,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                        value=" @if(isset($project->terms))  {{$project->terms}} @endif ">
             </div>
         </div>
-        <div class="col-sm-1"></br><i class="bi bi-pencil-fill"></i></div>
+        <div class="col-sm-1"></br><x-icon name="pencil-fill" /></div>
 
     </div>
 </div>

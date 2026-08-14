@@ -28,7 +28,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
     @endif
     <p>{{__('project')}}</p><br>
     <a class="btn btn-secondary mb-5" href="{{ route('projects.create') }}">
-        <i class="bi bi-plus m-2"></i>
+        <x-icon name="plus" class="m-2" />
         {{__('add_new')}}
     </a>
     <table id="projectList" class="table table-striped table-bordered">
@@ -71,18 +71,17 @@ If not, see <https://www.gnu.org/licenses/>. -->
                         <form action="{{ route('projects.destroy',$value->id) }}" method="POST">
                             <span data-toggle="tooltip" data-placement="top"
                                   title="{{__('edit_project')}}"><a href="{{ route('projects.edit', $value->id) }}"
-                                                                    title="{{__('edit_project')}}"><i
-                                            class="bi bi-pencil-fill m-2"></i></a></span>
+                                                                    title="{{__('edit_project')}}"><x-icon name="pencil-fill" class="m-2" /></a></span>
                             @csrf
                             @if(Auth::user()->can('update', $value) ||  Auth::user()->can('edit'))
                                 @method('DELETE')
                                 <button data-toggle="tooltip" data-placement="top" title="{{__('delete_project')}}"
                                         type="submit" onclick="return confirm('{{__('message_delete_confirm')}}')">
-                                    <i class="bi bi-trash"></i>
+                                    <x-icon name="trash" />
                                 </button>
                             @endif
                             @if(Auth::user()->can('publish', $value) ||  Auth::user()->can('preview'))
-                                <a href="#" data-placement="top" data-project="{{$value->id}}" class="preview m-4" data-toggle="modal" data-target="#previewModal" target="_blank" title="{{__('preview')}}"><i class="bi bi-globe"></i>
+                                <a href="#" data-placement="top" data-project="{{$value->id}}" class="preview m-4" data-toggle="modal" data-target="#previewModal" target="_blank" title="{{__('preview')}}"><x-icon name="globe" />
                                 </a>
                             @endif
                         </form>
@@ -97,7 +96,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
     <x-ui.modal id="myModal">
         <x-slot:header>
-            <i class="bi bi-save"></i> <i class="bi bi-reply"></i>
+            <x-icon name="save" /> <x-icon name="reply" />
         </x-slot:header>
 
         <ul class="list-group" id="project_list">

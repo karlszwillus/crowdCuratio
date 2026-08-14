@@ -12,9 +12,12 @@
         'info'    => 'bg-info-bg text-info border-info/20',
     ];
 
+    // Lucide-Icon-Namen (Handoff-v4-Muster). `triangle-alert` und
+    // `circle-alert` sind die aktuellen Lucide-Namen (frueher
+    // `alert-triangle`/`alert-circle` — Rename in Lucide 0.359).
     $iconName = [
         'success' => 'circle-check',
-        'warning' => 'alert-triangle',
+        'warning' => 'triangle-alert',
         'danger'  => 'circle-alert',
         'info'    => 'info',
     ];
@@ -33,7 +36,7 @@
     aria-live="{{ $live }}"
     {{ $attributes->merge(['class' => $classes]) }}
 >
-    <x-ui.icon :name="$iconName[$type] ?? 'info'" :size="20" class="mt-0.5"/>
+    <x-icon :name="$iconName[$type] ?? 'info'" size="5" class="mt-0.5"/>
 
     <div class="flex-1">
         @if ($title)
@@ -53,7 +56,7 @@
             @click="$el.closest('[role]')?.remove()"
             class="-mr-2 -mt-1 h-8 w-8"
         >
-            <x-ui.icon name="x" :size="16"/>
+            <x-icon name="x" size="4"/>
         </x-ui.icon-button>
     @endif
 </div>

@@ -50,7 +50,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                 <td>
                     <form id="frmRole" action="{{ route('roles.destroy',$role->id) }}" method="POST">
                         <a title="view role" href="{{ route('roles.show',$role->id) }}" data-toggle="tooltip"
-                           data-placement="top" title="See role"> <i class="bi bi-eye m-2"></i></a>
+                           data-placement="top" title="See role"> <x-icon name="eye" class="m-2" /></a>
                         @if($role->name != 'Admin')
                         {{-- E.7b 4a-Hotfix: @can('edit') → @hasPermissionTo, weil Spatie's
                              Gate::before in config/permission.php abgeschaltet wurde.
@@ -58,8 +58,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                         @hasPermissionTo('edit')
                             <a title="{{__('edit_role')}}" href="{{ route('roles.edit',$role->id) }}"
                                data-toggle="tooltip"
-                               data-placement="top" title="{{__('edit_role')}}"><i
-                                        class="bi bi-pencil-fill m-2"></i></a>
+                               data-placement="top" title="{{__('edit_role')}}"><x-icon name="pencil-fill" class="m-2" /></a>
                         @endhasPermissionTo
                         @csrf
                         @method('DELETE')
@@ -67,12 +66,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
                             @hasPermissionTo('delete')
                                 @if($role->cnt > 0)
                                     <a id="" href="" class="roleDelete" data-id="{{$role->id}}" data-toggle="tooltip"
-                                       data-placement="top" title="Delete role"><i class="bi bi-trash"></i></a>
+                                       data-placement="top" title="Delete role"><x-icon name="trash" /></a>
                                 @else
                                     <button type="submit" onclick="return confirm('{{__('message_delete_confirm')}}')"
                                             data-toggle="tooltip"
                                             data-placement="top" title="Delete role">
-                                        <i class="bi bi-trash"></i>
+                                        <x-icon name="trash" />
                                     </button>
                                 @endif
                             @endhasPermissionTo

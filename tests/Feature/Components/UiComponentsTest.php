@@ -219,11 +219,11 @@ it('Banner mit dismissible rendert Close-Button mit aria-label', function () {
         ->toContain('Schliessbar');
 });
 
-// ---------- Icon ----------
+// ---------- Icon (Lucide via <x-icon>, Phase 5-D.2) ----------
 
-it('Icon rendert SVG mit aria-hidden und focusable=false', function () {
+it('Icon rendert Lucide-SVG mit aria-hidden default', function () {
     /** @var TestCase $this */
-    $html = Blade::render('<x-ui.icon name="check"/>');
+    $html = Blade::render('<x-icon name="check"/>');
 
     expect($html)
         ->toContain('<svg')
@@ -231,12 +231,25 @@ it('Icon rendert SVG mit aria-hidden und focusable=false', function () {
         ->toContain('focusable="false"');
 });
 
-it('Icon ohne Match in Library rendert leeres SVG', function () {
+it('Icon in decorative=false-Modus rendert role=img und aria-label', function () {
     /** @var TestCase $this */
-    $html = Blade::render('<x-ui.icon name="does-not-exist"/>');
+    $html = Blade::render('<x-icon name="pencil" :decorative="false" label="Bearbeiten"/>');
+
+    expect($html)
+        ->toContain('role="img"')
+        ->toContain('aria-label="Bearbeiten"');
+});
+
+it('Icon mappt bi-*-Altnamen ueber icon-mapping.php auf Lucide', function () {
+    /** @var TestCase $this */
+    // `bi-trash` steht in config/icon-mapping.php auf `trash-2`.
+    // Renders wird ueber die blade-lucide-icons-Komponente
+    // `lucide-trash-2` aufgeloest — SVG-Output enthaelt die Lucide-
+    // typische viewBox 0 0 24 24 und die stroke-Attribute.
+    $html = Blade::render('<x-icon name="bi-trash"/>');
 
     expect($html)->toContain('<svg');
-    expect(str_contains($html, '<path'))->toBeFalse();
+    expect($html)->toContain('viewBox="0 0 24 24"');
 });
 
 // ---------- Modal ----------

@@ -24,7 +24,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
     </div>
     <a class="btn btn-secondary btn-lg" data-toggle="modal" data-target="#myModal">
-        <i class="bi bi-plus m-2"></i>
+        <x-icon name="plus" class="m-2" />
         {{__('add_new_element')}}
     </a>
     <hr class="mt-5 mb-5">
@@ -36,7 +36,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
             <div class="col-xs-12">
                 <div class=" form-group col-xs-8">
                     <a id="addChapter" href="#chapter">
-                        <i class="bi bi-plus m-2 "></i>{{__('new_chapter')}}
+                        <x-icon name="plus" class="m-2" />{{__('new_chapter')}}
                     </a>
                 </div>
                 <div id="chapter" style="display: none">
@@ -56,7 +56,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                 </div>
                 <div class=" form-group col-xs-8">
                     <a id="addEntry" href="#entry" class="btn disabled">
-                        <i class="bi bi-plus m-2 "></i>{{__('add_entry')}}
+                        <x-icon name="plus" class="m-2" />{{__('add_entry')}}
                     </a>
                 </div>
                 <div id="entry" style="display: none">

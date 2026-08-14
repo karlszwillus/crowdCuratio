@@ -285,7 +285,7 @@ new class extends Component
             <span class="font-medium">
                 {{ $query !== '' ? $query : '—' }}
             </span>
-            <i class="bi-pencil ml-1 text-chrome-on-dim" aria-hidden="true"></i>
+            <x-icon name="pencil" class="ml-1 text-chrome-on-dim" aria-hidden="true" />
         </button>
     @else
         <div class="relative flex flex-col gap-1">

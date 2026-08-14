@@ -800,7 +800,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
     @endif
 @endif
 <div class="footer-background p-3 my-3 border">
-    <a href="@isset($parameters){{route('download', $parameters)}}@endisset" class="m-4" data-toggle="modal" data-target="#previewModal" target="_blank" >{{__('pdf')}} <i class="bi bi-file-earmark-pdf-fill"></i>
+    <a href="@isset($parameters){{route('download', $parameters)}}@endisset" class="m-4" data-toggle="modal" data-target="#previewModal" target="_blank" >{{__('pdf')}} <x-icon name="file-earmark-pdf-fill" />
     </a>
 </div>
 <footer>
