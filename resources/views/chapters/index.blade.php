@@ -178,9 +178,34 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                 <div id="P-{{$project->id}}-C-{{$chapter->id}}-entry-{{$entry->id}}"
                                                              class="row border border-secondary p-4 mb-4 ml-auto w-11/12 content">
                                                             <div style="float: left;" id="anchor_Entry_{{$entry->id}}">
-                                                                <h3>{!! $entry->name !!}</h3>
-                                                                <p>{!! $entry->subtitle !!}</p>
-                                                                <p>{!! $entry->description !!}</p>
+                                                                @can('update', $project)
+                                                                    <livewire:inline-editor
+                                                                        :model="$entry"
+                                                                        field="name"
+                                                                        rules="nullable|string|max:255"
+                                                                        :label="__('entry_title')"
+                                                                        :key="'entry-name-'.$entry->id"
+                                                                    />
+                                                                    <livewire:inline-editor
+                                                                        :model="$entry"
+                                                                        field="subtitle"
+                                                                        rules="nullable|string|max:255"
+                                                                        :label="__('entry_subtitle')"
+                                                                        :key="'entry-subtitle-'.$entry->id"
+                                                                    />
+                                                                    <livewire:inline-editor
+                                                                        :model="$entry"
+                                                                        field="description"
+                                                                        rules="nullable|string"
+                                                                        :multiline="true"
+                                                                        :label="__('entry_description')"
+                                                                        :key="'entry-description-'.$entry->id"
+                                                                    />
+                                                                @else
+                                                                    <h3>{!! $entry->name !!}</h3>
+                                                                    <p>{!! $entry->subtitle !!}</p>
+                                                                    <p>{!! $entry->description !!}</p>
+                                                                @endcan
                                                             </div>
                                                             <div class="ml-auto mr-3 icons">
                                                                 <form action="{{ route('entries.destroy',$entry->id) }}"
@@ -214,16 +239,10 @@ If not, see <https://www.gnu.org/licenses/>. -->
 																	</button>
                                                                     @endif
 
-                                                                    @if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
-                                                                        <span data-toggle="tooltip"
-                                                                              data-placement="top" title="{{__('edit_entry')}}"><button
-                                                                                    type="button"
-                                                                                    data-id="{{$entry->id}}"
-                                                                                    data-toggle="modal"
-                                                                                    data-target="#entryModal"
-                                                                                    class="open-ModifyEntry"><i
-                                                                                        class="bi-pencil-square m-2"></i></button></span>
-                                                                    @endif
+                                                                    {{-- Edit-Button für Entry entfällt: Titel, Subtitel und
+                                                                         Beschreibung werden per <livewire:inline-editor> direkt
+                                                                         im Entry-Card editiert (Phase 5c.6.b). Add-Entry-Modal
+                                                                         (entryModal) bleibt für „Eintrag hinzufügen". --}}
 
 
                                                                     <a onclick="collapseExpandEntry({{$entry->id}})" class="panel-heading "
@@ -952,26 +971,9 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
         $('#entryModal').on('hidden.bs.modal', resetEntryForm);
 
-        $('.open-ModifyEntry').click(function () {
-            $('#entryTitle').val('');
-            $('#entrySubtitle').val();
-            let id = $(this).attr("data-id");
-            let url = "{{ route('entries.edit', ":id") }}";
-            url = url.replace(':id', id);
-
-            setEntryFormUpdate(id);
-
-            $.ajax({
-                type: 'GET',
-                url: url,
-                success: function (data) {
-                    $('input[name="entryId"]').val(data.id);
-                    $('#entryTitle').val(data.name[Object.keys(data.name)[0]]);
-                    $('#entrySubtitle').val(data.subtitle[Object.keys(data.subtitle)[0]]);
-                    quillEntry.container.firstChild.innerHTML = data.description[Object.keys(data.description)[0]];
-                }
-            });
-        })
+        // Modify-Entry-Handler entfällt seit Phase 5c.6.b — Entry-
+        // Titel, Subtitel und Beschreibung werden direkt im Entry-
+        // Card editiert. Add-Entry-Modal bleibt unangetastet.
 
         //Modify text
         $('.open-ModifyText').click(function () {

@@ -49,14 +49,20 @@ new class extends Component
     /**
      * Sidebar aktualisiert sich, wenn irgendein Feld eines Chapter,
      * Entry oder Content-Modells über den Inline-Editor gespeichert
-     * wurde. Der Editor dispatcht das `saved`-Event global; wir
-     * refreshen dann die eager-geladene Project-Hierarchie und
-     * Livewire rendert die Nav neu.
+     * wurde. Der Editor dispatcht das `saved`-Event global.
+     *
+     * Wichtig: `load` statt `loadMissing`. Nach `->fresh()` sind die
+     * Relations noch nicht geladen, `loadMissing` würde greifen —
+     * aber der Livewire-Snapshot bringt manchmal schon `chapters`
+     * mit, dann würde `loadMissing` als No-Op durchlaufen und stale
+     * Entry-Werte anzeigen. `load` überschreibt konsequent.
      */
     #[On('saved')]
-    public function refreshTree(ProjectTreeService $tree): void
+    public function refreshTree(): void
     {
-        $this->project = $tree->sidebarTree($this->project->fresh());
+        $fresh = $this->project->fresh();
+        $fresh->load(['chapters.entries']);
+        $this->project = $fresh;
     }
 }; ?>
 
