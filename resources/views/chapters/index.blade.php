@@ -242,10 +242,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
                             <p class="text-body text-ink-700">{!! $chapter->description !!}</p>
                         @endcan
 
-                        {{-- Trenner zwischen Kapitel-Kopf und Eintraegen,
-                             damit klar wird wo die Zone endet und die
-                             Objekte darin beginnen. --}}
-                        <hr class="my-6 border-t border-line-200" aria-hidden="true">
+                        {{-- Grosser Vertikalspace zwischen Kapitel-Zone
+                             und den enthaltenen Entry-Karten, damit die
+                             Ebenen visuell nicht in einen 'Kapitel-
+                             Kasten' verschmelzen. Der Space macht klar:
+                             die Karten sitzen IN der Zone. --}}
+                        <div class="h-16" aria-hidden="true"></div>
                         <div class="collapse in" id="chapter_{{$chapter->id}}" aria-expanded="false">
                             @if(isset($chapter->entries) && count($chapter->entries) >0)
                                 <ul class="list-group ui-sortable-entry sortable_list_entry connectedSortableEntry" id="{{$chapter->id}}" data-reorder-element="entry" data-reorder-url="{{ route('chapter.drag') }}">
