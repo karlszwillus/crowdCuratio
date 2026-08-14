@@ -163,7 +163,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                         rules="nullable|string|max:255"
                                         :label="__('chapter_title')"
                                         :variant="'title'"
-                                        :key="\'chapter-name-\'.$chapter->id"
+                                        :key="'chapter-name-'.$chapter->id"
                                     />
                                     <livewire:inline-editor
                                         :model="$chapter"
@@ -171,7 +171,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                         rules="nullable|string|max:255"
                                         :label="__('chapter_subtitle')"
                                         :variant="'subtitle'"
-                                        :key="\'chapter-subtitle-\'.$chapter->id"
+                                        :key="'chapter-subtitle-'.$chapter->id"
                                     />
                                 @else
                                     <h2 class="text-title font-semibold text-ink-900">{!! $chapter->name !!}</h2>
@@ -256,7 +256,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                 rules="nullable|string|max:255"
                                                                 :label="__('entry_title')"
                                                                 :variant="'heading'"
-                                                                :key="\'entry-name-\'.$entry->id"
+                                                                :key="'entry-name-'.$entry->id"
                                                             />
                                                             <livewire:inline-editor
                                                                 :model="$entry"
@@ -264,7 +264,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                 rules="nullable|string|max:255"
                                                                 :label="__('entry_subtitle')"
                                                                 :variant="'subtitle'"
-                                                                :key="\'entry-subtitle-\'.$entry->id"
+                                                                :key="'entry-subtitle-'.$entry->id"
                                                             />
                                                         @else
                                                             <h3 class="text-heading font-semibold text-ink-900">{!! $entry->name !!}</h3>
@@ -550,14 +550,14 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                     rules="nullable|string|max:255"
                                                                                                     :label="__('title')"
                                                                                                     :variant="'heading'"
-                                                                                                    :key="\'gallery-title-\'.$item->gallery->id"
+                                                                                                    :key="'gallery-title-'.$item->gallery->id"
                                                                                                 />
                                                                                                 <livewire:inline-editor
                                                                                                     :model="$item->gallery"
                                                                                                     field="subtitle"
                                                                                                     rules="nullable|string|max:255"
                                                                                                     :variant="'subtitle'"
-                                                                                                    :key="\'gallery-subtitle-\'.$item->gallery->id"
+                                                                                                    :key="'gallery-subtitle-'.$item->gallery->id"
                                                                                                 />
                                                                                                 <livewire:rich-text-editor
                                                                                                     :model="$item->gallery"
