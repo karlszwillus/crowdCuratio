@@ -84,6 +84,12 @@ function openModal(modal) {
 
     modal.dispatchEvent(new CustomEvent('shown.modal', { bubbles: true }));
 
+    // Alpine-freundlicher Event-Name ohne Punkt. Alpine interpretiert
+    // Punkte in Event-Namen als Modifier-Separator, deshalb ein
+    // zweiter Event mit kebab-case für x-on:cc-modal-shown-Listener
+    // im Blade-Template (siehe <x-ui.modal>-Focus-Trap in 5c.4).
+    modal.dispatchEvent(new CustomEvent('cc-modal-shown', { bubbles: true }));
+
     // Bootstrap-3-API-Kompatibilität — diverse Inline-Handler hängen
     // an `shown.bs.modal`. Wir feuern beide Events; jQuery-trigger
     // wird mitgenommen, wenn vorhanden.
@@ -111,6 +117,7 @@ function closeModal(modal) {
             document.body.classList.remove(BODY_LOCK_CLASS);
         }
         modal.dispatchEvent(new CustomEvent('hidden.modal', { bubbles: true }));
+        modal.dispatchEvent(new CustomEvent('cc-modal-hidden', { bubbles: true }));
         if (window.jQuery) {
             window.jQuery(modal).trigger('hidden.bs.modal');
         }

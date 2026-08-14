@@ -16,6 +16,15 @@ import '@fontsource/ibm-plex-mono/500.css';
 // damit kein Flash zwischen Default- und persistiertem Theme entsteht.
 import './theme';
 
+// Alpine-Focus-Plugin — liefert `x-trap` für Fokus-Trap in Modalen
+// (WCAG 2.4.11 / 2.1.2, Focus Order und No Keyboard Trap). Wird via
+// `alpine:init` an Livewires Alpine-Instance registriert, damit die
+// Konvention aus ADR-0025 (keine zweite Alpine-Instance) greift.
+import focus from '@alpinejs/focus';
+document.addEventListener('alpine:init', () => {
+    window.Alpine.plugin(focus);
+});
+
 // Alpine wird von Livewire 4 selbst gebündelt und gestartet. Eine
 // zweite Alpine-Instance hier wurde mit „Detected multiple instances
 // of Alpine running" im Browser sichtbar — `<template x-if>` rendert

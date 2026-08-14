@@ -253,6 +253,20 @@ it('Modal rendert mit .modal-Klasse fuer den Vanilla-Modal-Manager', function ()
         ->toContain('Body-Inhalt');
 });
 
+it('Modal rendert aria-modal="true" und Focus-Trap-Alpine-Attribute', function () {
+    /** @var TestCase $this */
+    $html = Blade::render('<x-ui.modal id="x">Body</x-ui.modal>');
+
+    // Focus-Trap via @alpinejs/focus. Open-State reagiert auf die
+    // custom Events cc-modal-shown/cc-modal-hidden aus modal.js.
+    expect($html)
+        ->toContain('aria-modal="true"')
+        ->toContain('x-data="{ open: false }"')
+        ->toContain('@cc-modal-shown="open = true"')
+        ->toContain('@cc-modal-hidden="open = false"')
+        ->toContain('x-trap.noscroll.inert="open"');
+});
+
 it('Modal mit title rendert Heading und verknuepft via aria-labelledby', function () {
     /** @var TestCase $this */
     $html = Blade::render('<x-ui.modal id="x" title="Inhalt anlegen">Body</x-ui.modal>');
