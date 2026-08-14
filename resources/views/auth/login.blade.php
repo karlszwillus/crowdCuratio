@@ -35,9 +35,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
     <div class="flex min-h-screen flex-col md:flex-row">
 
         {{-- Marken-Panel — 520 px auf Desktop, volle Breite mit
-             reduzierter Höhe auf Mobile. --}}
+             reduzierter Höhe auf Mobile. Fest ink-900 (Chrome-dark),
+             unabhaengig vom aktivenTheme: der Panel ist Marken-
+             Signature, nicht Theme-Chrome. Das Logo-Farbschema
+             (gelb/rot) folgt der Marke via `--color-logo-*`. --}}
         <aside
-            class="flex flex-col justify-between bg-chrome-bg px-12 py-12
+            class="flex flex-col justify-between bg-ink-900 px-12 py-12
                    text-on-dark-100 md:w-[520px] md:shrink-0"
             aria-labelledby="brand-panel-heading"
         >
