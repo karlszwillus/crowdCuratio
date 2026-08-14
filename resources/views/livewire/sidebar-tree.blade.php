@@ -109,14 +109,11 @@ new class extends Component
                         <span class="inline-block size-5 shrink-0" aria-hidden="true"></span>
                     @endif
 
-                    {{-- Farbiger Kapitel-Punkt. --}}
-                    <span
-                        class="size-1.5 shrink-0 rounded-sm"
-                        :class="active === '#anchor_Chapter_{{ $chapter->id }}' ? 'bg-brand-bar' : 'bg-ink-300'"
-                        aria-hidden="true"
-                    ></span>
-
-                    {{-- Kapitel-Link mit Nummer. --}}
+                    {{-- Kapitel-Link mit Nummer.
+                         Der farbige Punkt aus Handoff v4 Screen 02
+                         entfaellt: er wirkte visuell wie ein
+                         Aufzaehlungszeichen und war doppelt gemoppelt
+                         mit der Nummer + der aktiven Left-Kante. --}}
                     <a
                         href="#anchor_Chapter_{{ $chapter->id }}"
                         class="relative block flex-1 rounded-md px-2 py-1 text-body font-semibold text-ink-900 hover:bg-line-100"

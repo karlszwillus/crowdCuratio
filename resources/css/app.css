@@ -176,8 +176,11 @@ html {
 }
 
 [id^="anchor_Chapter_"],
-[id^="anchor_Entry_"] {
-    scroll-margin-top: 1rem;
+[id^="anchor_Entry_"],
+[id^="anchor_MediaContent_"] {
+    /* Muss die sticky Editor-Chrome-Bar (Breadcrumb + Segmented
+     * Control, ~64 px) plus ein bisschen Luft einbeziehen. */
+    scroll-margin-top: 96px;
 }
 
 /*
