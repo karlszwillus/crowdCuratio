@@ -34,61 +34,106 @@ If not, see <https://www.gnu.org/licenses/>. -->
 @endsection
 
 @section('main')
-    {{-- Tree-Daten für die Live-Breadcrumb. Die <x-ui.breadcrumb>-
-         Komponente watcht im :tree-Modus window.location.hash und
-         leitet daraus den Pfad ab — Klick im Sidebar-Tree ändert
-         den Hash, Breadcrumb folgt automatisch. ProjectTreeService
-         ist die Single Source of Truth (siehe SidebarTree-Volt). --}}
-    <x-ui.breadcrumb :tree="app(App\Services\ProjectTreeService::class)->breadcrumbTree($data)" />
+    {{-- Editor-Chrome (Handoff v4 Screen 02, Phase 5-D.5):
+         Brotkrumen links, Segmented Control mittig, Publish-Button
+         und ⋮-Menü rechts. Ersetzt die drei stehenden schwarzen
+         Buttons „Projekt löschen / Übersetzen / Metadaten". --}}
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div class="min-w-0 flex-1">
+            <x-ui.breadcrumb :tree="app(App\Services\ProjectTreeService::class)->breadcrumbTree($data)" />
+        </div>
+
+        <div class="flex items-center gap-3">
+            @can('update', $project)
+                <x-ui.segmented
+                    :aria-label="__('editor_mode')"
+                    :items="[
+                        [
+                            'label' => __('edit'),
+                            'href' => route('chapters.index', $project->id),
+                            'active' => true,
+                        ],
+                        [
+                            'label' => __('translate'),
+                            'href' => route('translate', $project->id),
+                        ],
+                        [
+                            'label' => __('meta_data'),
+                            'href' => route('project.metadata', $project->id),
+                        ],
+                    ]"
+                />
+            @endcan
+
+            @if (Auth::user()->can('publish', $project) || Auth::user()->can('preview'))
+                <button
+                    type="button"
+                    data-toggle="modal"
+                    data-target="#previewModal"
+                    class="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2
+                           text-body font-medium text-primary-on hover:opacity-90
+                           focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-bar"
+                >
+                    {{ __('publish') }}
+                </button>
+            @endif
+
+            @can('update', $project)
+                <div x-data="{ open: false }" class="relative">
+                    <button
+                        type="button"
+                        @click="open = !open"
+                        @click.outside="open = false"
+                        aria-haspopup="true"
+                        :aria-expanded="open"
+                        class="inline-flex size-9 items-center justify-center rounded-md text-ink-500
+                               hover:bg-line-100 hover:text-ink-900
+                               focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-bar"
+                        title="{{ __('more_actions') }}"
+                        :aria-label="'{{ __('more_actions') }}'"
+                    >
+                        <x-icon name="ellipsis-vertical" size="5"/>
+                    </button>
+                    <div
+                        x-show="open"
+                        x-transition
+                        x-cloak
+                        class="absolute right-0 z-30 mt-1 min-w-[12rem]
+                               rounded-md border border-line-200 bg-paper-0 py-1 shadow-popover"
+                    >
+                        <form action="{{ route('projects.destroy', $project->id) }}" method="POST">
+                            @csrf
+                            @method('DELETE')
+                            <button
+                                type="submit"
+                                onclick="return confirm('{{ __('message_delete_confirm') }}')"
+                                class="flex w-full items-center gap-2 px-4 py-2 text-left text-body text-danger hover:bg-danger-bg"
+                            >
+                                <x-icon name="trash-2" size="4"/>
+                                <span>{{ __('delete_project') }}</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            @endcan
+        </div>
+    </div>
 
     @if ($message = Session::get('success'))
-        <div class="alert alert-success">
-            <p>{{ $message }}</p>
-        </div>
+        <x-ui.banner type="success" class="mb-4" dismissible>
+            {{ $message }}
+        </x-ui.banner>
     @endif
     @if ($errors->any())
-        <div class="alert alert-danger">
-            <strong>{{__('whoops')}}</strong> {{__('message_problem_input')}}<br><br>
-            <ul>
+        <x-ui.banner type="danger" class="mb-4" :title="__('whoops')">
+            {{ __('message_problem_input') }}
+            <ul class="mt-2 list-disc pl-5">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
             </ul>
-        </div>
+        </x-ui.banner>
     @endif
-    <div class="row border p-2 mb-4">
-        <form action="{{ route('projects.destroy',$project->id) }}" method="POST">
-            @csrf
-            @method('DELETE')
-            <div class="col-sm-3">
-                @if(Auth::user()->can('update', $project) || Auth::user()->can('delete'))
-                    <button class="btn btn-secondary btn-block text-left mt-1 mb-2" type="submit"
-                            onclick="return confirm('{{__('message_delete_confirm')}}')">
-                        <x-icon name="trash" class="m-2" /> {{__('delete_project')}}
-                    </button>
-                @endif
-            </div>
-            {{-- Reader-Frontend-Härtung Juni 2026: Backend blockt
-                 jetzt sowohl `translate` (translateCurrentProject)
-                 als auch `project.metadata` (editMetaData) via
-                 ProjectPolicy::update. Frontend zeigte die Buttons
-                 aber weiter dem Reader an — das gab im Smoke einen
-                 toten Klick-Pfad (403 oder weisse Seite). Buttons
-                 hinter @can('update', $project), damit sie nur
-                 Owner/Admin/Eingeladener-mit-edit sehen. --}}
-            @can('update', $project)
-                <div class="col-sm-3">
-                    <a href="{{route('translate', $project->id)}}"
-                       class="btn btn-secondary btn-block text-left mt-1 mb-2">{{__('translate')}}</a>
-                </div>
-                <div class="col-sm-3">
-                    <a href="{{route('project.metadata', $project->id)}}"
-                       class="btn btn-secondary btn-block text-left mt-1 mb-2">{{__('meta_data')}}</a>
-                </div>
-            @endcan
-        </form>
-
-    </div>
     @if(isset($data) /**&& count($data) > 0*/)
         <div class="row project mb-4">
             <div class="col-sm-2">

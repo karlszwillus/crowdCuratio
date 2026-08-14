@@ -243,7 +243,11 @@
   "actions": "Aktionen",
   "no_projects_yet": "Noch keine Projekte angelegt.",
   "n_chapters": "{0} keine Kapitel|{1} 1 Kapitel|[2,*] :count Kapitel",
-  "n_projects_total": "{0} keine Projekte|{1} 1 Projekt|[2,*] :count Projekte"
+  "n_projects_total": "{0} keine Projekte|{1} 1 Projekt|[2,*] :count Projekte",
+  "editor_mode": "Editor-Modus",
+  "edit": "Bearbeiten",
+  "publish": "Veröffentlichen",
+  "more_actions": "Weitere Aktionen"
 
 
 }
