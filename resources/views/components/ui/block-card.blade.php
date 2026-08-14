@@ -89,7 +89,7 @@ Slots:
 <article {{ $attributes->merge(['class' => $cardClasses]) }}>
     {{-- Kopf: Typ-Tag links, optionale Aktionen rechts. --}}
     <header class="mb-3 flex items-start justify-between gap-3">
-        <span class="{{ $tagClasses }} inline-flex items-center gap-1.5 rounded-sm px-2 py-0.5
+        <span class="{{ $tagClasses }} inline-flex items-center gap-1.5 rounded-full px-2.5 py-1
                       text-mono-caps font-mono uppercase tracking-widest">
             <x-icon :name="$meta['icon']" size="4"/>
             <span>{{ $displayLabel }}</span>

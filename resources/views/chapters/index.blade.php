@@ -162,14 +162,16 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                         field="name"
                                         rules="nullable|string|max:255"
                                         :label="__('chapter_title')"
-                                        :key="'chapter-name-'.$chapter->id"
+                                        :variant="\'title\'"
+                                        :key="\'chapter-name-\'.$chapter->id"
                                     />
                                     <livewire:inline-editor
                                         :model="$chapter"
                                         field="subtitle"
                                         rules="nullable|string|max:255"
                                         :label="__('chapter_subtitle')"
-                                        :key="'chapter-subtitle-'.$chapter->id"
+                                        :variant="\'subtitle\'"
+                                        :key="\'chapter-subtitle-\'.$chapter->id"
                                     />
                                 @else
                                     <h2 class="text-title font-semibold text-ink-900">{!! $chapter->name !!}</h2>
@@ -253,14 +255,16 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                 field="name"
                                                                 rules="nullable|string|max:255"
                                                                 :label="__('entry_title')"
-                                                                :key="'entry-name-'.$entry->id"
+                                                                :variant="\'heading\'"
+                                                                :key="\'entry-name-\'.$entry->id"
                                                             />
                                                             <livewire:inline-editor
                                                                 :model="$entry"
                                                                 field="subtitle"
                                                                 rules="nullable|string|max:255"
                                                                 :label="__('entry_subtitle')"
-                                                                :key="'entry-subtitle-'.$entry->id"
+                                                                :variant="\'subtitle\'"
+                                                                :key="\'entry-subtitle-\'.$entry->id"
                                                             />
                                                         @else
                                                             <h3 class="text-heading font-semibold text-ink-900">{!! $entry->name !!}</h3>
@@ -545,13 +549,15 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                     field="title"
                                                                                                     rules="nullable|string|max:255"
                                                                                                     :label="__('title')"
-                                                                                                    :key="'gallery-title-'.$item->gallery->id"
+                                                                                                    :variant="\'heading\'"
+                                                                                                    :key="\'gallery-title-\'.$item->gallery->id"
                                                                                                 />
                                                                                                 <livewire:inline-editor
                                                                                                     :model="$item->gallery"
                                                                                                     field="subtitle"
                                                                                                     rules="nullable|string|max:255"
-                                                                                                    :key="'gallery-subtitle-'.$item->gallery->id"
+                                                                                                    :variant="\'subtitle\'"
+                                                                                                    :key="\'gallery-subtitle-\'.$item->gallery->id"
                                                                                                 />
                                                                                                 <livewire:rich-text-editor
                                                                                                     :model="$item->gallery"
@@ -624,7 +630,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                  nicht mehr zuverlässig greift und das Div
                                                                                                  sonst auf Caption-Höhe kollabiert. --}}
                                                                                             <div id="anchor_MediaContent_{{$item->id}}"
-                                                                                                 class="img relative h-[300px] w-full bg-cover bg-center bg-no-repeat"
+                                                                                                 class="img relative h-full w-full bg-cover bg-center bg-no-repeat"
                                                                                                  style="background-image: url('{{route('image', $image->image)}}')" >
                                                                                                <div class="caption">
                                                                                                     @can('update', $project)

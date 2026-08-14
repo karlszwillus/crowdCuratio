@@ -67,15 +67,30 @@ new class extends Component
 
     public string $label = '';
 
+    /**
+     * Render-Variante — bestimmt das visuelle Aussehen des Inputs:
+     * - `default`  → klassisches Formularfeld mit Rahmen und Padding.
+     * - `title`    → wie H2 gerendert, kein Rahmen in Ruhe, sanfter
+     *                Rahmen bei Hover, Marken-Outline bei Fokus.
+     * - `subtitle` → wie Body-Text (dim), kein Rahmen in Ruhe.
+     * - `heading`  → wie H3 gerendert, sonst wie `title`.
+     *
+     * Sitzt an der Volt-Komponente, damit chapter/entry-Views
+     * dieselbe Rendering-Logik teilen und die Titel-Inputs nicht
+     * mehr wie Formularfelder wirken (Handoff v4 § Screen 02/05a).
+     */
+    public string $variant = 'default';
+
     public string $value = '';
 
-    public function mount(Model $model, string $field, string $rules = 'nullable|string', bool $multiline = false, array $options = [], string $label = ''): void
+    public function mount(Model $model, string $field, string $rules = 'nullable|string', bool $multiline = false, array $options = [], string $label = '', string $variant = 'default'): void
     {
         $this->model = $model;
         $this->field = $field;
         $this->rules = $rules;
         $this->multiline = $multiline;
         $this->options = $options;
+        $this->variant = $variant;
         $this->label = $label !== '' ? $label : $field;
 
         // Aktueller Wert des Feldes für die Anzeige. HasTranslations
@@ -145,6 +160,29 @@ new class extends Component
     }
 }; ?>
 
+@php
+    // Klassen-Bausteine pro Variant. Ruhe: kein Rahmen, minimaler
+    // Padding, Text-Style aus Design-Tokens. Hover: sanfter
+    // line-200-Rahmen. Fokus: brand-bar-Outline.
+    $variantClasses = match ($variant) {
+        'title'    => 'w-full rounded-md border border-transparent bg-transparent px-2 py-1 '
+                    . '-mx-2 text-title font-semibold text-ink-900 tracking-tight '
+                    . 'hover:border-line-200 focus:border-primary '
+                    . 'focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-primary',
+        'heading'  => 'w-full rounded-md border border-transparent bg-transparent px-2 py-1 '
+                    . '-mx-2 text-heading font-semibold text-ink-900 '
+                    . 'hover:border-line-200 focus:border-primary '
+                    . 'focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-primary',
+        'subtitle' => 'w-full rounded-md border border-transparent bg-transparent px-2 py-1 '
+                    . '-mx-2 text-body text-ink-500 '
+                    . 'hover:border-line-200 focus:border-primary '
+                    . 'focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-primary',
+        default    => 'w-full rounded-md border border-form-border bg-canvas-bg px-3 py-2 '
+                    . 'text-body text-ink-900 '
+                    . 'focus:border-primary focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-primary',
+    };
+@endphp
+
 <div>
     @if (! empty($options))
         {{-- Select nutzt `wire:model.live`, nicht `.blur`: bei einem
@@ -157,7 +195,7 @@ new class extends Component
             wire:model.live="value"
             aria-label="{{ $label }}"
             @error('value') aria-invalid="true" aria-describedby="inline-editor-error-{{ $field }}" @enderror
-            class="w-full rounded-md border border-ink-300 bg-canvas-bg px-3 py-2 text-body text-ink-900 focus:border-primary focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-primary"
+            class="{{ $variantClasses }}"
         >
             @foreach ($options as $optionValue => $optionLabel)
                 <option value="{{ $optionValue }}" @selected($value === (string) $optionValue)>{{ $optionLabel }}</option>
@@ -169,7 +207,7 @@ new class extends Component
             wire:model.live.debounce.1500ms="value"
             aria-label="{{ $label }}"
             @error('value') aria-invalid="true" aria-describedby="inline-editor-error-{{ $field }}" @enderror
-            class="w-full rounded-md border border-ink-300 bg-canvas-bg px-3 py-2 text-body text-ink-900 focus:border-primary focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-primary"
+            class="{{ $variantClasses }}"
             rows="3"
         >{{ $value }}</textarea>
     @else
@@ -180,7 +218,7 @@ new class extends Component
             wire:model.live.debounce.1500ms="value"
             aria-label="{{ $label }}"
             @error('value') aria-invalid="true" aria-describedby="inline-editor-error-{{ $field }}" @enderror
-            class="w-full rounded-md border border-ink-300 bg-canvas-bg px-3 py-2 text-body text-ink-900 focus:border-primary focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-primary"
+            class="{{ $variantClasses }}"
         />
     @endif
 
