@@ -154,8 +154,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
                         >
                     </div>
 
-                    {{-- Passwort mit „anzeigen"-Toggle --}}
-                    <div x-data="{ show: false }">
+                    {{-- Passwort — klassisches type="password"-Feld
+                         (der 'anzeigen'-Toggle wird bewusst weggelassen,
+                         damit Password-Manager wie 1Password sauber
+                         greifen und die UX nicht ueberladen wird). --}}
+                    <div>
                         <div class="mb-1 flex items-center justify-between">
                             <label for="password" class="text-caption font-medium text-ink-700">
                                 {{ __('password') }} <span class="text-danger" aria-hidden="true">*</span>
@@ -167,24 +170,13 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                 </a>
                             @endif
                         </div>
-                        <div class="relative">
-                            <input
-                                id="password" name="password"
-                                :type="show ? 'text' : 'password'"
-                                required autocomplete="current-password" aria-required="true"
-                                class="w-full rounded-md border border-form-border bg-paper-0 px-3 py-2.5 pr-16
-                                       text-body text-ink-900
-                                       focus:border-primary focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-primary"
-                            >
-                            <button
-                                type="button"
-                                @click="show = !show"
-                                class="absolute inset-y-0 right-0 flex items-center px-3 text-caption text-ink-500 hover:text-ink-900"
-                                :aria-label="show ? '{{ __('hide_password') }}' : '{{ __('show_password') }}'"
-                            >
-                                <span x-text="show ? '{{ __('hide') }}' : '{{ __('show') }}'"></span>
-                            </button>
-                        </div>
+                        <input
+                            id="password" name="password" type="password"
+                            required autocomplete="current-password" aria-required="true"
+                            class="w-full rounded-md border border-form-border bg-paper-0 px-3 py-2.5
+                                   text-body text-ink-900
+                                   focus:border-primary focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-primary"
+                        >
                     </div>
 
                     {{-- Angemeldet bleiben --}}
