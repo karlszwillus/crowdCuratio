@@ -15,7 +15,7 @@
     "php": "^8.4",
     "carbonphp/carbon-doctrine-types": "^2.0",
     "doctrine/dbal": "^3.0",
-    "dompdf/dompdf": "^2.0",
+    "dompdf/dompdf": "^v3.1.6",
     "guzzlehttp/guzzle": "^7.0.1",
     "laravel/framework": "^12.0",
     "laravel/tinker": "^2.5",
