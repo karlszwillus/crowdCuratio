@@ -100,6 +100,23 @@ p, .text-body {
     min-height: 3rem;
 }
 
+/* Toolbar-Overflow bei schmaler Block-Card-Breite (P3.16 aus
+ * 5-D.6b). Container-Query auf rich-text-editor selbst: unter
+ * 600 px (Tablet-Portrait, aber auch enge Editor-Sidebars) zeigen
+ * wir nur die essentiellen B/I/U/S-Buttons plus Header-Select;
+ * List, Link und Clean klappen weg. Ab 900 px sind alle Gruppen
+ * wieder sichtbar. */
+.rich-text-editor {
+    container-type: inline-size;
+    container-name: rte;
+}
+
+@container rte (max-width: 600px) {
+    .rich-text-editor .ql-formats:nth-child(n+3) {
+        display: none !important;
+    }
+}
+
 /*
  * Theme-Switch-Transition: weicher Wechsel zwischen den beiden Themes
  * statt hartem Re-Paint. Beim Klick auf den Sonne-/Mond-Button wechseln
