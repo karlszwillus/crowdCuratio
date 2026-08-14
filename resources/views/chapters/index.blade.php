@@ -36,9 +36,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
 @section('main')
     {{-- Editor-Chrome (Handoff v4 Screen 02, Phase 5-D.5):
          Brotkrumen links, Segmented Control mittig, Publish-Button
-         und ⋮-Menü rechts. Ersetzt die drei stehenden schwarzen
-         Buttons „Projekt löschen / Übersetzen / Metadaten". --}}
-    <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+         und ⋮-Menü rechts. Sticky an der Canvas-Oberkante, damit
+         Kontext und Publish beim Scrollen im Blick bleiben. --}}
+    <div class="sticky top-0 z-20 -mx-6 -mt-6 mb-6 flex flex-wrap items-center justify-between gap-4
+                border-b border-line-200 bg-canvas-bg/95 px-6 py-3
+                backdrop-blur supports-[backdrop-filter]:bg-canvas-bg/80">
         <div class="min-w-0 flex-1">
             <x-ui.breadcrumb :tree="app(App\Services\ProjectTreeService::class)->breadcrumbTree($data)" />
         </div>
