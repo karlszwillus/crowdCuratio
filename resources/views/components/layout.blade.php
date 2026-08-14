@@ -140,8 +140,10 @@ und `main` sind gleichwertige Canvas-Slots.
         @endif
 
         {{-- Canvas: Content-Bereich rechts. Bei fehlendem Panel füllt
-             er den ganzen Rest. --}}
-        <div class="flex-1 min-w-0 overflow-x-hidden">
+             er den ganzen Rest. `overflow-clip` statt `overflow-x-hidden`
+             — Letzteres bricht `position: sticky` in Chrome/Firefox,
+             weil es implizit auch `overflow-y: auto` erzeugt. --}}
+        <div class="flex-1 min-w-0 overflow-x-clip">
             <div class="mx-auto w-full max-w-screen-2xl px-6 py-6">
                 @if ($canvas !== null)
                     <main role="main" id="main-content">
