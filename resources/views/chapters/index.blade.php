@@ -238,16 +238,9 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                     </button>
                                 @endif
 
-                                <a x-data="{ open: true }"
-                                   @click="open = !open; collapseExpand({{$chapter->id}})"
-                                   id="{{$chapter->id}}"
-                                   :aria-expanded="open"
-                                   aria-controls="collapseChapter_{{$chapter->id}}"
-                                   title="{{ __('collapse') }}"
-                                   class="inline-flex size-11 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
-                                    <x-icon x-show="open" name="chevron-down" size="4"/>
-                                    <x-icon x-show="!open" x-cloak name="chevron-right" size="4"/>
-                                </a>
+                                {{-- Chevron-Toggle entfaellt seit 5-D.6b: Kapitel
+                                     ist eine offene Zone, das Auf-/Zuklappen
+                                     laeuft ueber den Sidebar-Tree. --}}
                             </form>
                         </header>
 
@@ -344,16 +337,8 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                             </button>
                                                         @endif
 
-                                                        <a x-data="{ open: true }"
-                                                           @click="open = !open; collapseExpandEntry({{$entry->id}})"
-                                                           role="button"
-                                                           :aria-expanded="open"
-                                                           aria-controls="entry_{{$entry->id}}"
-                                                           title="{{ __('collapse') }}"
-                                                           class="inline-flex size-11 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
-                                                            <x-icon x-show="open" name="chevron-down" size="4"/>
-                                                            <x-icon x-show="!open" x-cloak name="chevron-right" size="4"/>
-                                                        </a>
+                                                        {{-- Chevron-Toggle entfaellt seit 5-D.6b: Auf-/
+                                                             Zuklappen laeuft ueber den Sidebar-Tree. --}}
                                                     </form>
                                                 </header>
 
@@ -1545,31 +1530,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
         });
 
-        //collapse and expand chapter
-        function collapseExpand(id){
-
-            if($('#chapter_'+id).is(':animated') ) {
-
-                return false;
-
-            }
-
-            $('#chapter_'+id).slideToggle('slow');
-            // Icon-Toggle laeuft ueber Alpine (`x-show="open"`) auf
-            // dem umschliessenden <a>-Element seit Phase 5-D.2.
-        }
-
-        //collapse entry
-        function collapseExpandEntry(id){
-
-            if($('#entry_'+id).is(':animated') ) {
-                return false;
-            }
-
-            $('#entry_'+id).slideToggle('slow');
-            // Icon-Toggle laeuft ueber Alpine (`x-show="open"`) auf
-            // dem umschliessenden <a>-Element seit Phase 5-D.2.
-        }
+        // collapseExpand()- und collapseExpandEntry()-Handler
+        // entfallen seit Phase 5-D.6b: Kapitel und Eintrag sind
+        // offene Zonen, das Auf-/Zuklappen laeuft ueber den
+        // Sidebar-Tree (Alpine-x-collapse in
+        // sidebar-tree.blade.php).
 
         //Invitation for existing user
         @if(!empty(Session::get('error_code')) && Session::get('error_code') == 6)
