@@ -99,7 +99,7 @@ If not, see <https://www.gnu.org/licenses/>.
         @else
             {{-- Editor-Layout: drei Spalten — History links, Editor mitte, Tools rechts. --}}
             <div class="grid grid-cols-12 gap-4 py-4">
-                <aside aria-label="{{ __('project_structure') }}" class="col-span-12 md:col-span-2">
+                <aside aria-label="{{ __('project_structure') }}" class="col-span-12 md:sticky md:top-20 md:col-span-2 md:h-fit md:self-start">
                     {{ $log }}
                 </aside>
                 <main role="main" id="main-content" class="col-span-12 md:col-span-7">

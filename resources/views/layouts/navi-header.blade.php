@@ -17,7 +17,7 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>. -->
 
-<header class="mb-4 border-b border-chrome-line bg-chrome-bg">
+<header class="sticky top-0 z-40 mb-4 border-b border-chrome-line bg-chrome-bg">
     <nav class="mx-auto flex w-full max-w-screen-2xl items-center justify-between gap-4 px-6 py-3">
         <a href="{{ route('projects.index') }}" class="shrink-0">
             <img
@@ -95,18 +95,25 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
         <div class="flex items-center gap-3">
             {{-- Auto-Save-Indikator (Phase 5c.2). Alpine-Store `saveStatus`
-                 wird vom Inline-Editor gefüttert; leerer Text im idle-
-                 Zustand hält den Header sauber, sichtbar wird er erst,
-                 sobald etwas gespeichert wurde. --}}
+                 wird vom Inline-Editor gefüttert. Der Container behält
+                 immer seinen Platz (min-w), damit das Erscheinen und
+                 Verschwinden des Status-Textes den restlichen Header
+                 nicht seitlich verschiebt. --}}
             <div
                 x-data
-                x-show="$store.saveStatus.state !== 'idle'"
-                x-cloak
                 aria-live="polite"
-                class="text-body text-chrome-on-dim"
+                class="min-w-[9rem] text-right text-body text-chrome-on-dim"
             >
                 <span x-show="$store.saveStatus.state === 'saving'">{{ __('save_status_saving') }}</span>
-                <span x-show="$store.saveStatus.state === 'saved'">{{ __('save_status_saved') }}</span>
+                <span
+                    x-show="$store.saveStatus.state === 'saved'"
+                    x-transition:enter="transition-colors duration-300 ease-out"
+                    x-transition:enter-start="text-green-600 font-medium"
+                    x-transition:enter-end="text-chrome-on-dim"
+                    x-transition:leave="transition-opacity duration-500 ease-in"
+                    x-transition:leave-start="opacity-100"
+                    x-transition:leave-end="opacity-0"
+                >{{ __('save_status_saved') }}</span>
                 <span x-show="$store.saveStatus.state === 'error'" class="text-primary">{{ __('save_status_error') }}</span>
             </div>
 

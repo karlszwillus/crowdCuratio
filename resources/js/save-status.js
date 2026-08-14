@@ -32,6 +32,19 @@ document.addEventListener('alpine:init', () => {
         markSaved() {
             this.state = 'saved';
             this.lastSavedAt = Date.now();
+
+            // Auto-Fade nach 5 s: der Indikator wandert zurück auf
+            // idle und der Text verschwindet aus dem Header. Bei
+            // einem erneuten Save flippt der State kurz auf saved
+            // zurück, die Alpine-Enter-Transition (grüner Puls) läuft
+            // dadurch neu — sichtbares Feedback bei wiederholtem
+            // Speichern.
+            clearTimeout(this._idleTimer);
+            this._idleTimer = setTimeout(() => {
+                if (this.state === 'saved') {
+                    this.state = 'idle';
+                }
+            }, 5000);
         },
 
         markError() {

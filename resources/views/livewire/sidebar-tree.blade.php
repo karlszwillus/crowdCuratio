@@ -23,6 +23,7 @@ If not, see <https://www.gnu.org/licenses/>.
 use App\Models\Project;
 use App\Services\ProjectTreeService;
 use Illuminate\Support\Facades\Gate;
+use Livewire\Attributes\On;
 use Livewire\Volt\Component;
 
 new class extends Component
@@ -43,6 +44,19 @@ new class extends Component
         // Sidebar iteriert direkt über die eager-geladenen Relations
         // am Project-Modell.
         $this->project = $tree->sidebarTree($project);
+    }
+
+    /**
+     * Sidebar aktualisiert sich, wenn irgendein Feld eines Chapter,
+     * Entry oder Content-Modells über den Inline-Editor gespeichert
+     * wurde. Der Editor dispatcht das `saved`-Event global; wir
+     * refreshen dann die eager-geladene Project-Hierarchie und
+     * Livewire rendert die Nav neu.
+     */
+    #[On('saved')]
+    public function refreshTree(ProjectTreeService $tree): void
+    {
+        $this->project = $tree->sidebarTree($this->project->fresh());
     }
 }; ?>
 
