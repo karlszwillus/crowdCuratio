@@ -73,12 +73,16 @@ new class extends Component
          der äußere Blade-@if reagierte nicht auf DB-Updates und der
          UI-Zustand fiel um einen Save hinterher. --}}
     @if ($audiovisual->type === 'audio')
-        <audio
-            controls
-            class="embed-responsive-item w-full"
-            id="audio_{{ $audiovisual->id }}"
-            src="{{ route('audio', $audiovisual->link) }}"
-        ></audio>
+        @if (empty(trim((string) $audiovisual->link)))
+            <x-ui.media-placeholder type="audio"/>
+        @else
+            <audio
+                controls
+                class="embed-responsive-item w-full"
+                id="audio_{{ $audiovisual->id }}"
+                src="{{ route('audio', $audiovisual->link) }}"
+            ></audio>
+        @endif
 
         @can('update', $audiovisual->project())
             <div class="mt-3">
@@ -88,15 +92,19 @@ new class extends Component
             </div>
         @endcan
     @else
-        <iframe
-            wire:key="av-iframe-{{ $audiovisual->id }}-{{ md5((string) $audiovisual->link) }}"
-            width="100%"
-            height="315"
-            src="{!! $audiovisual->link !!}"
-            frameborder="0"
-            allowfullscreen
-            title="{{ __('audiovisual_player') }}"
-        ></iframe>
+        @if (empty(trim((string) $audiovisual->link)))
+            <x-ui.media-placeholder type="video"/>
+        @else
+            <iframe
+                wire:key="av-iframe-{{ $audiovisual->id }}-{{ md5((string) $audiovisual->link) }}"
+                width="100%"
+                height="315"
+                src="{!! $audiovisual->link !!}"
+                frameborder="0"
+                allowfullscreen
+                title="{{ __('audiovisual_player') }}"
+            ></iframe>
+        @endif
 
         @can('update', $audiovisual->project())
             <div class="mt-3">

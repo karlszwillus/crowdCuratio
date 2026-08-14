@@ -643,6 +643,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                          .gallery_container-Grid-Regeln greifen nicht.
                                                                                          Wir setzen das Grid komplett per Tailwind-
                                                                                          Utilities direkt am Element. --}}
+                                                                                    @if ($item->gallery->images->isEmpty())
+                                                                                        <div class="mt-4">
+                                                                                            <x-ui.media-placeholder type="gallery"/>
+                                                                                        </div>
+                                                                                    @else
                                                                                     <div class="mt-4 grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4">
                                                                                     @foreach($item->gallery->images as $image)
                                                                                         <div class="gallery_item relative" id="gallery_items_{{$item->gallery->id}}">
@@ -730,6 +735,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                         </div>
                                                                                     @endforeach
 																					</div>
+                                                                                    @endif
                                                                                 </x-ui.block-card>
                                                                             </li>
                                                                         @endif
