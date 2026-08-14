@@ -28,10 +28,6 @@
 ])
 
 @php
-    // Bootstrap-Icons-Altnamen (`bi-…`) auf Lucide übersetzen.
-    // Konvention: `<x-icon name="pencil" />` (semantischer Ziel-
-    // Name). Migrations-Shim für Bestandsviews akzeptiert auch
-    // `bi-pencil` und schlägt im Mapping nach.
     $requested = ltrim((string) $name, ' ');
     $mapping = config('icon-mapping', []);
 
@@ -45,19 +41,41 @@
         $requested = $mapping[$requested];
     }
 
-    $lucideComponent = 'lucide-'.$requested;
+    // Wir rufen den `svg()`-Helper aus blade-ui-kit/blade-icons
+    // direkt: `svg('lucide-trash')` splittet auf Set `lucide` und
+    // Icon `trash` (dank Prefix-Registrierung im Lucide-Package).
+    // Ergebnis ist ein Inline-SVG-String; wir platzieren ihn mit
+    // `{!! !!}` und mergen Klassen sowie ARIA-Attribute.
+    $lucideName = 'lucide-'.$requested;
 
-    $mergedClasses = trim('size-'.$size.' inline-block shrink-0 '.$attributes->get('class', ''));
-    $svgAttributes = collect($attributes->getAttributes())
+    // Klassen zusammenbauen: erst unsere Defaults (size-N,
+    // inline-block, shrink-0), dann per Aufruf gesetzte extra
+    // Klassen anhängen.
+    //
+    // Statische Zuordnung, damit Tailwinds JIT die Klassen scannen
+    // kann — `'size-'.$size` als dynamische Konkatenation würde
+    // Tailwind übersehen und die Icons rendern in ihrer intrinsischen
+    // (viewBox-)Größe, sichtbar als 300-px-Kacheln.
+    $sizeClass = match ((int) $size) {
+        4 => 'size-4',
+        6 => 'size-6',
+        default => 'size-5',
+    };
+
+    $extraClass = trim((string) $attributes->get('class', ''));
+    $iconClass = trim($sizeClass.' inline-block shrink-0 '.$extraClass);
+
+    // Restliche Attribute (ohne `class`) plus ARIA-Defaults.
+    $svgAttrs = collect($attributes->getAttributes())
         ->except('class')
         ->all();
 
-    $svgAttributes = array_merge(
-        $svgAttributes,
+    $svgAttrs = array_merge(
+        $svgAttrs,
         $decorative
             ? ['aria-hidden' => 'true', 'focusable' => 'false']
-            : ['role' => 'img', 'aria-label' => $label],
+            : ['role' => 'img', 'aria-label' => (string) $label],
     );
 @endphp
 
-{!! svg($lucideComponent, $mergedClasses, $svgAttributes)->toHtml() !!}
+{!! svg($lucideName, $iconClass, $svgAttrs)->toHtml() !!}
