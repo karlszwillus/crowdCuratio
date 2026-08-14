@@ -153,3 +153,44 @@ it('InlineEditor validiert gegen die übergebenen Rules', function () {
     $chapter->refresh();
     expect($chapter->name)->toBe('Original');
 });
+
+it('InlineEditor rendert aria-invalid und aria-describedby im Fehler-Zustand', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole(RoleName::ADMIN->value);
+    $project = makeProject($owner);
+    $chapter = makeChapter($project, ['name' => 'Original']);
+
+    // Nach dem gescheiterten Update sollte das HTML `aria-invalid="true"`
+    // am Input und `aria-describedby` mit der Fehler-Message-ID
+    // rendern. Screen-Reader hören dann sowohl den Feld-Fehler-Status
+    // als auch den konkreten Fehlertext.
+    $rendered = Livewire::actingAs($owner)
+        ->test('inline-editor', [
+            'model' => $chapter,
+            'field' => 'name',
+            'rules' => 'required|string|min:3',
+        ])
+        ->set('value', 'x');
+
+    $rendered->assertSee('aria-invalid="true"', false);
+    $rendered->assertSee('aria-describedby="inline-editor-error-name"', false);
+    $rendered->assertSee('id="inline-editor-error-name"', false);
+});
+
+it('InlineEditor rendert kein aria-invalid im Erfolg-Zustand', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole(RoleName::ADMIN->value);
+    $project = makeProject($owner);
+    $chapter = makeChapter($project, ['name' => 'Original']);
+
+    // Beim Initial-Render ohne Fehler-Zustand darf aria-invalid nicht
+    // gerendert werden — das würde Screen-Reader falsch alarmieren.
+    Livewire::actingAs($owner)
+        ->test('inline-editor', ['model' => $chapter, 'field' => 'name'])
+        ->assertDontSee('aria-invalid', false)
+        ->assertDontSee('aria-describedby="inline-editor-error-', false);
+});
