@@ -88,10 +88,20 @@
   --radius-pill: 999px; /* Status-Badges, Toggles */
 
   /* ============================================================
-   * 4 · Typografie
-   * Line-Height / Letter-Spacing pro Stufe direkt am Utility
-   * (`leading-*`, `tracking-*`) — Handoff v4 § 3.
+   * 4 · Typografie — IBM Plex Sans / Mono / Source Serif 4
+   * Handoff v4 § 3: Plex Sans als UI-Default (Body/Headlines),
+   * Plex Mono nur für Caps-Labels und IDs, Source Serif 4 nur
+   * in Preview- und PDF-Templates.
+   *
+   * Font-Files werden über resources/js/app.js aus @fontsource
+   * geladen. Der `--font-sans`-Token setzt IBM Plex Sans als
+   * projektweiten Default; Tailwind generiert daraus die
+   * font-sans-Utility und die base-Rules.
    * ============================================================ */
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+  --font-serif: "Source Serif 4", ui-serif, Georgia, serif;
+
   --text-display: 46px;   /* Seiten-H1 · 1.08 / -1.2px, weight 600 */
   --text-title:   26px;   /* Sektions-H2 · 1.2 / -0.5px, weight 600 */
   --text-heading: 18px;   /* Karten-Titel · 1.3 / -0.2px, weight 600 */
