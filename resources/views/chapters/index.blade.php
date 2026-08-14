@@ -401,9 +401,32 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                 <div class="row border border-secondary p-4 mb-4 ml-auto w-10/12">
                                                                                     <div class="row">
                                                                                         <div class="">
-                                                                                            <h4>{{$item->gallery->title}}</h4>
-                                                                                            <p>{{$item->gallery->subtitle}}</p>
-                                                                                            <p>{{$item->gallery->description}}</p>
+                                                                                            @can('update', $project)
+                                                                                                <livewire:inline-editor
+                                                                                                    :model="$item->gallery"
+                                                                                                    field="title"
+                                                                                                    rules="nullable|string|max:255"
+                                                                                                    :label="__('title')"
+                                                                                                    :key="'gallery-title-'.$item->gallery->id"
+                                                                                                />
+                                                                                                <livewire:inline-editor
+                                                                                                    :model="$item->gallery"
+                                                                                                    field="subtitle"
+                                                                                                    rules="nullable|string|max:255"
+                                                                                                    :key="'gallery-subtitle-'.$item->gallery->id"
+                                                                                                />
+                                                                                                <livewire:inline-editor
+                                                                                                    :model="$item->gallery"
+                                                                                                    field="description"
+                                                                                                    rules="nullable|string"
+                                                                                                    :multiline="true"
+                                                                                                    :key="'gallery-description-'.$item->gallery->id"
+                                                                                                />
+                                                                                            @else
+                                                                                                <h4>{{$item->gallery->title}}</h4>
+                                                                                                <p>{{$item->gallery->subtitle}}</p>
+                                                                                                <p>{{$item->gallery->description}}</p>
+                                                                                            @endcan
                                                                                         </div>
                                                                                         <div class="text-right icons">
                                                                                             <form action="{{ route('gallery.delete',$item->gallery->id) }}"
@@ -452,26 +475,27 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                            title="{{__('delete_image')}}"></i>
                                                                                                     </button>
                                                                                                 @endif
-                                                                                                @if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
-
-                                                                                                    <span data-toggle="tooltip"
-                                                                                                          data-placement="top"
-                                                                                                          title="{{__('edit_image')}}"><button
-                                                                                                                type="button"
-                                                                                                                data-id="{{$item->gallery->id}}"
-                                                                                                                data-toggle="modal"
-                                                                                                                data-target="#galleryModal"
-                                                                                                                class="open-ModifyGallery"> <i
-                                                                                                                    class="bi-pencil-square m-2"></i>
-                                                                </button></span>
-                                                                                                @endif
+                                                                                                {{-- Gallery-Edit-Modal-Trigger entfällt seit 5c.6.c:
+                                                                                                     Title/Subtitle/Description werden inline editiert.
+                                                                                                     Bild-Hinzufügen (addImage) bleibt modal. --}}
                                                                                             </form>
                                                                                         </div>
                                                                                     </div><div class="gallery_container">
                                                                                     @foreach($item->gallery->images as $image)
                                                                                         <div class="row mt-4 gallery_item" id="gallery_items_{{$item->gallery->id}}">
                                                                                             <div id="anchor_MediaContent_{{$item->id}}" class="img" style="background: url('{{route('image', $image->image)}}') no-repeat center center / cover" >
-                                                                                               <div class="caption">{{$image->alt}}</div>
+                                                                                               <div class="caption">
+                                                                                                    @can('update', $project)
+                                                                                                        <livewire:inline-editor
+                                                                                                            :model="$image"
+                                                                                                            field="alt"
+                                                                                                            rules="nullable|string|max:255"
+                                                                                                            :key="'image-alt-'.$image->id"
+                                                                                                        />
+                                                                                                    @else
+                                                                                                        {{$image->alt}}
+                                                                                                    @endcan
+                                                                                                </div>
 																								{{-- <img src="{{route('image', $image->image)}}" alt="{{$item->alt}}" style=""> --}}
 
                                                                                             </div>
@@ -1028,23 +1052,10 @@ If not, see <https://www.gnu.org/licenses/>. -->
             });
         })
 
-        //Modify gallery
-        $('.open-ModifyGallery').click(function () {
-            let id = $(this).attr("data-id");
-            let url = "{{ route('gallery.edit', ":id") }}";
-            url = url.replace(':id', id);
-
-            $.ajax({
-                type: 'GET',
-                url: url,
-                success: function (data) {
-                    $('#galleryId').val(data.id);
-                    $('#title').val(data.title[Object.keys(data.title)[0]]);
-                    $('#subtitle').val(data.subtitle[Object.keys(data.subtitle)[0]]);
-                    $('#description').val(data.description[Object.keys(data.description)[0]]);
-                }
-            });
-        })
+        // Modify-Gallery-Handler entfällt seit Phase 5c.6.c.1 —
+        // Title, Subtitle und Description werden direkt im Gallery-
+        // Card via <livewire:inline-editor> editiert. Add-Image-
+        // Modal (imageModal) bleibt für neue Bilder in der Galerie.
 
         //Add Content
         $('.addContent').click(function () {
