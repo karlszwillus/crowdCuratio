@@ -419,3 +419,76 @@ it('Breadcrumb bevorzugt :tree gegenüber :items, wenn beide gesetzt', function 
         ->toContain('x-data="ccBreadcrumb(')
         ->not->toContain('Static-Item');
 });
+
+// ---------- Block-Card (Phase 5-D.6) ----------
+
+it('Block-Card rendert Typ-Tag mit Icon und Label', function () {
+    /** @var TestCase $this */
+    $html = Blade::render('<x-ui.block-card type="text">Inhalt</x-ui.block-card>');
+
+    expect($html)
+        ->toContain('rounded-full')
+        ->toContain('TYPE') // Lucide-Icon type als svg oder Muster
+        ->toContain('Inhalt');
+});
+
+it('Block-Card mit editing=true bekommt brand-bar-Rand und Suffix', function () {
+    /** @var TestCase $this */
+    $html = Blade::render('<x-ui.block-card type="image" :editing="true">Body</x-ui.block-card>');
+
+    expect($html)
+        ->toContain('border-brand-bar')
+        ->toContain('is_editing'); // Sprachschluessel-Suffix
+});
+
+it('Block-Card mit save-slot rendert Alpine-Store-Zugriff', function () {
+    /** @var TestCase $this */
+    $html = Blade::render('<x-ui.block-card type="text" save-slot="Text-42">Body</x-ui.block-card>');
+
+    expect($html)
+        ->toContain("blocks['Text-42']")
+        ->toContain('aria-live="polite"');
+});
+
+// ---------- Segmented Control (Phase 5-D.5) ----------
+
+it('Segmented rendert role=tablist mit aria-selected je Item', function () {
+    /** @var TestCase $this */
+    $items = [
+        ['label' => 'Bearbeiten', 'href' => '/edit', 'active' => true],
+        ['label' => 'Übersetzen', 'href' => '/translate'],
+        ['label' => 'Metadaten', 'href' => '/meta'],
+    ];
+
+    $html = Blade::render(
+        '<x-ui.segmented :items="$items" aria-label="Modus"/>',
+        ['items' => $items]
+    );
+
+    expect($html)
+        ->toContain('role="tablist"')
+        ->toContain('aria-label="Modus"')
+        ->toContain('aria-selected="true"')
+        ->toContain('aria-selected="false"')
+        ->toContain('aria-current="page"');
+});
+
+// ---------- Media-Placeholder (Phase 5-D.6b P3.14) ----------
+
+it('Media-Placeholder rendert Streifenmuster-Container mit Icon und Hint', function () {
+    /** @var TestCase $this */
+    $html = Blade::render('<x-ui.media-placeholder type="image"/>');
+
+    expect($html)
+        ->toContain('cc-media-placeholder')
+        ->toContain('aspect-ratio: 4/3')
+        ->toContain('role="img"')
+        ->toContain('aria-label');
+});
+
+it('Media-Placeholder respektiert aspect-Overrider', function () {
+    /** @var TestCase $this */
+    $html = Blade::render('<x-ui.media-placeholder type="video" aspect="21/9"/>');
+
+    expect($html)->toContain('aspect-ratio: 21/9');
+});
