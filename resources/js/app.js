@@ -40,6 +40,10 @@ import './breadcrumb';
 // im Header rechts vom Theme-Toggle.
 import './save-status';
 
+// Toast-Notifications (Phase 5c.3): Alpine-Store toast plus
+// window.ccToast(). Save-Failed-Bridge hängt automatisch.
+import './toast';
+
 // Vanilla-Typeahead-Manager — ersetzt bootstrap-3-typeahead.js. Auch
 // hier ein jQuery-Shim, damit die fünf `$('#xxx').typeahead({...})`-
 // Aufrufe in den Editor-Views unverändert weiterlaufen.
