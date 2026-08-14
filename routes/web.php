@@ -153,10 +153,15 @@ Route::group(
         Route::post('/comment/chapter', [ChapterController::class, 'commentChapter'])->name(
             'comment.chapter'
         );
+        // Throttle greift den Strg+Alt-Pfeil-Spam-Fall: bei jedem
+        // Tastatur-Reorder-Klick ein POST plus N Einzel-Updates im
+        // Service. 60 Requests pro Minute pro User sind das
+        // Standardmaß, das Laravel-Rate-Limiter für interaktive UI
+        // ansetzt.
         Route::post(
             '/drag',
             [ChapterController::class, 'saveDragAndDrop']
-        )->name(
+        )->middleware('throttle:60,1')->name(
             'chapter.drag'
         );
         Route::get(

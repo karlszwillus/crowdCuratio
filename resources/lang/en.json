@@ -214,6 +214,7 @@
   "history": "History",
   "tools": "Tools",
   "skip_to_main": "Skip to main content",
-  "project_structure": "Project structure"
+  "project_structure": "Project structure",
+  "reorder_hint": "Move with Alt+↑/↓"
 
 }

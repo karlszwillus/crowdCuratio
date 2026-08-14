@@ -37,25 +37,9 @@ If not, see <https://www.gnu.org/licenses/>. -->
     {{-- Tree-Daten für die Live-Breadcrumb. Die <x-ui.breadcrumb>-
          Komponente watcht im :tree-Modus window.location.hash und
          leitet daraus den Pfad ab — Klick im Sidebar-Tree ändert
-         den Hash, Breadcrumb folgt automatisch. --}}
-    @php
-        $breadcrumbTree = [
-            'root' => ['label' => $project->name, 'href' => '#main-content'],
-            'chapters' => $data->chapters->mapWithKeys(fn ($chapter) => [
-                $chapter->id => [
-                    'label' => $chapter->name,
-                    'href' => '#anchor_Chapter_'.$chapter->id,
-                    'entries' => $chapter->entries->mapWithKeys(fn ($entry) => [
-                        $entry->id => [
-                            'label' => $entry->name,
-                            'href' => '#anchor_Entry_'.$entry->id,
-                        ],
-                    ])->toArray(),
-                ],
-            ])->toArray(),
-        ];
-    @endphp
-    <x-ui.breadcrumb :tree="$breadcrumbTree" />
+         den Hash, Breadcrumb folgt automatisch. ProjectTreeService
+         ist die Single Source of Truth (siehe SidebarTree-Volt). --}}
+    <x-ui.breadcrumb :tree="app(App\Services\ProjectTreeService::class)->breadcrumbTree($data)" />
 
     @if ($message = Session::get('success'))
         <div class="alert alert-success">
@@ -117,7 +101,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
         </div>
         <ul class="list-group ui-sortable-chapter sortable_list_chapter connectedSortableChapter" id="groupsList" data-reorder-element="chapter" data-reorder-url="{{ route('chapter.drag') }}" data-reorder-project="{{ $project->id }}">
             @foreach($data->chapters as $key => $chapter)
-                <li class="chapter group" data-chapter="{{$chapter->id}}" data-project="{{$project->id}}" id="{{$chapter->id}}" @can('update', $project) tabindex="0" @endcan>
+                <li class="chapter group" data-chapter="{{$chapter->id}}" data-project="{{$project->id}}" id="{{$chapter->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
                     <div id="{{$chapter->id}}">
                         <div class="row border border-secondary p-4 mb-4 content">
                             <div style="float: left;" id="anchor_Chapter_{{$chapter->id}}">
@@ -167,7 +151,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                             @if(isset($chapter->entries) && count($chapter->entries) >0)
                                 <ul class="list-group ui-sortable-entry sortable_list_entry connectedSortableEntry" id="{{$chapter->id}}" data-reorder-element="entry" data-reorder-url="{{ route('chapter.drag') }}">
                                     @foreach($chapter->entries as $entry)
-                                        <li class="entry group" data-chapter="{{$chapter->id}}" data-entry="{{$entry->id}}" @can('update', $project) tabindex="0" @endcan>
+                                        <li class="entry group" data-chapter="{{$chapter->id}}" data-entry="{{$entry->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
                                                 <div id="P-{{$project->id}}-C-{{$chapter->id}}-entry-{{$entry->id}}"
                                                              class="row border border-secondary p-4 mb-4 ml-auto w-11/12 content">
                                                             <div style="float: left;" id="anchor_Entry_{{$entry->id}}">
@@ -232,7 +216,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                 @foreach($entry->mediaContent as $item)
                                                                     @if($item->content_type == 'App\Models\Text')
                                                                         @isset($item->text->text)
-                                                                            <li class="item text content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" @endcan>
+                                                                            <li class="item text content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
                                                                                 <div class="row border border-secondary p-4 mb-4 ml-auto w-10/12">
                                                                                     <div id="anchor_MediaContent_{{$item->id}}">
                                                                                         <div class="text-scrollbar overflow-auto">
@@ -295,7 +279,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                     @endif
                                                                     @if($item->content_type == 'App\Models\Audiovisual')
                                                                         @isset($item->audiovisual->link)
-                                                                            <li class="item audiovisual content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" @endcan>
+                                                                            <li class="item audiovisual content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
                                                                                 <div class="row border border-secondary p-4 mb-4 ml-auto w-10/12">
                                                                                     <div id="anchor_MediaContent_{{$item->id}}">
                                                                                         @if($item->audiovisual->type == 'audio')
@@ -371,7 +355,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                          hat 'App\Models\Gallery' (ADR-0022). --}}
                                                                     @if(isset($item) && $item->content_type == 'App\Models\Gallery')
                                                                         @if(isset($item->gallery))
-                                                                            <li class="item gallery content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" @endcan>
+                                                                            <li class="item gallery content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
                                                                                 <div class="row border border-secondary p-4 mb-4 ml-auto w-10/12">
                                                                                     <div class="row">
                                                                                         <div class="">

@@ -80,13 +80,15 @@ phpMyAdmin: <http://localhost:8080> (nur Loopback)
 ./vendor/bin/sail composer test-coverage
 ```
 
-Aktuell deckt die Suite Authorization, Validation und Happy-Path-
-Verhalten für Project, Chapter, Entry, Text-/Image-/Audio-Blocks
-sowie den Register- und Invitation-Flow ab (58 Tests grün auf
-PHP 8.4 + Laravel 12). Coverage wird vom PCOV-Driver erhoben, der
-im PHP-Container mitgeliefert ist — kein Overhead im normalen App-
-Lauf, aktiv nur bei `--coverage`. Die CI-Schwelle steht bei 25 %,
-aktueller Stand 26,68 %.
+Die Suite deckt Authorization, Validation und Happy-Path-Verhalten
+für Project, Chapter, Entry, Text-/Image-/Audio-Blocks, den
+Register- und Invitation-Flow, die UI-Komponenten (Button,
+Icon-Button, Input, Modal, Breadcrumb, Layout) und die Livewire-
+Volt-Komponenten (Comment-Status-Switcher, Sidebar-Tree) ab. Rund
+400 Tests grün auf PHP 8.4 + Laravel 12. Coverage wird vom PCOV-
+Driver erhoben, der im PHP-Container mitgeliefert ist — kein
+Overhead im normalen App-Lauf, aktiv nur bei `--coverage`. Die
+CI-Schwelle steht bei 65 %, aktueller Stand 77,5 %.
 
 GitHub Actions (`.github/workflows/ci.yml`) führt auf jedem PR und
 Push nach `main` parallel sechs Jobs aus: Pest (SQLite-in-memory),

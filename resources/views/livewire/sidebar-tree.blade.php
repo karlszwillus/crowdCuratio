@@ -21,29 +21,44 @@ If not, see <https://www.gnu.org/licenses/>.
  */
 
 use App\Models\Project;
+use App\Services\ProjectTreeService;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Volt\Component;
 
 new class extends Component
 {
     public Project $project;
 
-    public function mount(Project $project): void
+    public function mount(Project $project, ProjectTreeService $tree): void
     {
-        // Eager-Load nur was die Sidebar braucht — Kapitel und
-        // Abschnitte, keine Inhalte (3 Ebenen laut Phase-5b § 2.4).
-        // loadMissing greift nur, wenn die Relation noch nicht
-        // geladen ist; ProjectController::edit lädt bereits via
-        // withEditTree, dann ist das hier ein No-Op.
-        $this->project = $project->loadMissing(['chapters.entries']);
+        // Defense-in-Depth: die Volt-Komponente wird heute nur aus
+        // dem gegateten ProjectController::edit gerendert, aber ohne
+        // eigenen Gate wäre sie bei künftiger Wiederverwendung ein
+        // Bypass. Ein direkter Livewire-Update-Roundtrip wählt sonst
+        // beliebige Projekte als Prop.
+        Gate::authorize('view', $project);
+
+        // Tree-Aufbau geht durch den ProjectTreeService (Single Source
+        // of Truth, den auch <x-ui.breadcrumb :tree> nutzt). Die
+        // Sidebar iteriert direkt über die eager-geladenen Relations
+        // am Project-Modell.
+        $this->project = $tree->sidebarTree($project);
     }
 }; ?>
 
-<nav aria-label="{{ __('project_structure') }}" class="text-body">
+<nav
+    aria-label="{{ __('project_structure') }}"
+    class="text-body"
+    x-data="{ active: window.location.hash }"
+    @hashchange.window="active = window.location.hash"
+>
     <ol class="space-y-1">
         <li>
             <a
                 href="#main-content"
                 class="block rounded-md px-2 py-1 font-medium text-ink-900 hover:bg-chrome-active"
+                :aria-current="active === '#main-content' || active === '' ? 'page' : null"
+                :class="(active === '#main-content' || active === '') && 'bg-chrome-active'"
             >
                 {{ $project->name }}
             </a>
@@ -55,6 +70,8 @@ new class extends Component
                             <a
                                 href="#anchor_Chapter_{{ $chapter->id }}"
                                 class="block rounded-md px-2 py-1 text-ink-800 hover:bg-chrome-active"
+                                :aria-current="active === '#anchor_Chapter_{{ $chapter->id }}' ? 'true' : null"
+                                :class="active === '#anchor_Chapter_{{ $chapter->id }}' && 'bg-chrome-active font-medium'"
                             >
                                 {{ $chapter->name }}
                             </a>
@@ -66,6 +83,8 @@ new class extends Component
                                             <a
                                                 href="#anchor_Entry_{{ $entry->id }}"
                                                 class="block rounded-md px-2 py-1 text-ink-700 hover:bg-chrome-active"
+                                                :aria-current="active === '#anchor_Entry_{{ $entry->id }}' ? 'true' : null"
+                                                :class="active === '#anchor_Entry_{{ $entry->id }}' && 'bg-chrome-active font-medium'"
                                             >
                                                 {{ $entry->name }}
                                             </a>

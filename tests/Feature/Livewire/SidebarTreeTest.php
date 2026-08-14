@@ -83,3 +83,20 @@ it('SidebarTree liefert leeren Tree-Stamm für ein Projekt ohne Kapitel', functi
         ->assertSee('aria-label="Projektstruktur"', false)
         ->assertDontSee('href="#anchor_Chapter_', false);
 });
+
+it('SidebarTree verweigert Fremd-Zugriff via authorize view', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    /** @var User $stranger */
+    $stranger = User::factory()->create();
+    $project = makeProject($owner);
+
+    // Defense-in-Depth: die Volt-Komponente muss selbst gaten, auch
+    // wenn heute nur der gegatete Editor sie rendert. Ein direkter
+    // Livewire-Roundtrip mit fremdem Project-Modell darf nicht
+    // aufgehen.
+    Livewire::actingAs($stranger)
+        ->test('sidebar-tree', ['project' => $project])
+        ->assertForbidden();
+});

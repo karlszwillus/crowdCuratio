@@ -46,19 +46,25 @@ async function persistReorder(container) {
         return false;
     }
 
-    const data = {
-        data: collectOrder(container, element),
-        element,
-    };
+    const order = collectOrder(container, element);
 
-    // Parent-Referenz: für Chapter ist es das Project, für Entry das
-    // Chapter, für Content das Entry.
+    // Payload muss form-encoded als Array kommen, nicht als JSON-String
+    // — `ChapterController::saveDragAndDrop` prüft `isset($payload['data'])`
+    // auf einem PHP-Array (kein String-Offset-Access, PHP 8.4). Der
+    // SortableJS-Handler in chapters/index.blade.php sendet genau in
+    // diesem Format via jQuery-`$.ajax({data: {data: {...}}})`; wir
+    // replizieren die exakte Serialisierung mit URLSearchParams-`append`.
+    const params = new URLSearchParams();
+    for (const id of order) {
+        params.append('data[data][]', id);
+    }
+    params.append('data[element]', element);
     if (element === 'chapter') {
-        data.project = container.dataset.reorderProject;
+        params.append('data[project]', container.dataset.reorderProject ?? '');
     } else if (element === 'entry') {
-        data.chapter = container.id;
+        params.append('data[chapter]', container.id);
     } else if (element === 'content') {
-        data.entry = container.id;
+        params.append('data[entry]', container.id);
     }
 
     try {
@@ -71,7 +77,7 @@ async function persistReorder(container) {
                 'X-CSRF-TOKEN': csrf ?? '',
                 'X-Requested-With': 'XMLHttpRequest',
             },
-            body: new URLSearchParams({ data: JSON.stringify(data) }).toString(),
+            body: params.toString(),
         });
         if (! response.ok) {
             // 403 für Reader, 419 bei abgelaufener CSRF, … wir
@@ -95,7 +101,13 @@ function attachContainer(container) {
     container.__crowdCuratioKeyboardReorder = true;
 
     container.addEventListener('keydown', async (event) => {
-        if (! event.ctrlKey) return;
+        // Shortcut: Alt+ArrowUp / Alt+ArrowDown. Alt (Option auf macOS)
+        // ist auf allen drei Desktop-OS system-weit frei, im Gegensatz
+        // zu Ctrl (macOS reserviert Ctrl+Pfeil fest für Mission Control
+        // und Space-Switching). Konvention wie VS Code für Zeilen-
+        // Verschieben.
+        if (! event.altKey) return;
+        if (event.ctrlKey || event.metaKey || event.shiftKey) return;
         if (event.key !== 'ArrowUp' && event.key !== 'ArrowDown') return;
 
         const item = event.target.closest('li');
@@ -109,6 +121,9 @@ function attachContainer(container) {
 
         if (! sibling || sibling.tagName !== 'LI') return;
 
+        // DOM-Swap zunächst optimistisch — der Server-Roundtrip
+        // dauert 100–300 ms, den User visuell warten zu lassen wäre
+        // träge. Rollback bei Server-Fail weiter unten.
         if (event.key === 'ArrowUp') {
             container.insertBefore(item, sibling);
         } else {
@@ -120,17 +135,30 @@ function attachContainer(container) {
         // den Refokus für eine konsistente Tastatur-Erfahrung.
         item.focus();
 
+        // Vokabular aus dem Glossar: Projekt > Kapitel > Abschnitt > Inhalt.
+        const label = {
+            chapter: 'Kapitel',
+            entry: 'Abschnitt',
+            content: 'Inhalt',
+        }[container.dataset.reorderElement] ?? 'Eintrag';
+
         const persisted = await persistReorder(container);
         if (persisted) {
             const position = [...container.children].indexOf(item) + 1;
             const total = container.children.length;
-            // Vokabular aus dem Glossar: Projekt > Kapitel > Abschnitt > Inhalt.
-            const label = {
-                chapter: 'Kapitel',
-                entry: 'Abschnitt',
-                content: 'Inhalt',
-            }[container.dataset.reorderElement] ?? 'Eintrag';
             window.ccAnnounce(`${label} ist jetzt an Position ${position} von ${total}.`);
+        } else {
+            // Server hat abgelehnt (403, 419, 500) oder Netz ist tot.
+            // Der DOM-Zustand ist bereits geswapt und würde ohne
+            // Rollback bis zum nächsten Reload eine falsche Reihenfolge
+            // zeigen. Reset und Screen-Reader-Hinweis.
+            if (event.key === 'ArrowUp') {
+                container.insertBefore(sibling, item);
+            } else {
+                container.insertBefore(item, sibling);
+            }
+            item.focus();
+            window.ccAnnounce(`Verschieben von ${label} fehlgeschlagen, Reihenfolge zurückgesetzt.`);
         }
     });
 }

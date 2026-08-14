@@ -19,8 +19,6 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-      redis:
-        condition: service_healthy
   mysql:
     image: 'mysql:8.0'
     # NF-DOCKER-005: Port nur auf Loopback, nicht auf 0.0.0.0.
@@ -55,36 +53,6 @@ services:
       MYSQL_USERNAME: "${DB_USERNAME}"
       MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
       PMA_HOST: mysql
-  redis:
-    image: 'redis:7-alpine'
-    # NF-DOCKER-005: Port auf Loopback.
-    ports:
-      - '127.0.0.1:${FORWARD_REDIS_PORT:-6379}:6379'
-    # NF-DOCKER-002.
-    restart: unless-stopped
-    volumes:
-      - 'sailredis:/data'
-    networks:
-      - sail
-    healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-  meilisearch:
-    image: 'getmeili/meilisearch:v1.6'
-    # NF-DOCKER-005: Port auf Loopback.
-    ports:
-      - '127.0.0.1:${FORWARD_MEILISEARCH_PORT:-7700}:7700'
-    # NF-DOCKER-002.
-    restart: unless-stopped
-    volumes:
-      - 'sailmeilisearch:/data.ms'
-    networks:
-      - sail
-    # NF-DOCKER-001: Healthcheck gegen die /health-Route.
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:7700/health || exit 1"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
   mailpit:
     image: 'axllent/mailpit:v1.20'
     # SMTP-Port bewusst auf 0.0.0.0:1025 (App-Container muss ihn intern
@@ -107,8 +75,4 @@ networks:
     driver: bridge
 volumes:
   sailmysql:
-    driver: local
-  sailredis:
-    driver: local
-  sailmeilisearch:
     driver: local

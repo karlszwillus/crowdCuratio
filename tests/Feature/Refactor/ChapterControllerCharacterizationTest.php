@@ -182,6 +182,44 @@ it('saveDragAndDrop ordnet Chapter-Positionen neu, wenn element=chapter', functi
     expect($first->position)->toBe(2);
 });
 
+it('saveDragAndDrop akzeptiert das Wire-Format des Tastatur-Reorders (form-encoded Array)', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole('Admin');
+    $this->actingAs($owner);
+
+    $project = makeProject($owner);
+    $first = makeChapter($project, ['position' => 1]);
+    $second = makeChapter($project, ['position' => 2]);
+
+    // resources/js/keyboard-reorder.js baut den Payload mit
+    // URLSearchParams.append('data[data][]', id) — was zu einem
+    // form-encoded Body `data[data][]=…&data[element]=…` führt.
+    // http_build_query erzeugt exakt dieselbe Serialisierung,
+    // parse_str macht den PHP-fpm-Roundtrip; der Assert unten
+    // pinnt, dass das aus PHP-Sicht ein Array ist (das ist das,
+    // woran der ursprüngliche Bug hing — String-Offset auf einem
+    // JSON-String).
+    $wireBody = http_build_query([
+        'data' => [
+            'data' => [(string) $second->id, (string) $first->id],
+            'element' => 'chapter',
+            'project' => (string) $project->id,
+        ],
+    ]);
+    parse_str($wireBody, $parsedParams);
+    expect($parsedParams['data']['data'])->toBeArray();
+
+    $this->post(route('chapter.drag'), $parsedParams);
+
+    $first->refresh();
+    $second->refresh();
+
+    expect($second->position)->toBe(1);
+    expect($first->position)->toBe(2);
+});
+
 it('saveDragAndDrop verschiebt Entries zwischen Kapiteln, wenn element=entry', function () {
     /** @var TestCase $this */
     /** @var User $owner */
