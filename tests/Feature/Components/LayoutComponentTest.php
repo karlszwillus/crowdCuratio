@@ -117,6 +117,42 @@ BLADE);
     expect($skipPos)->toBeInt()->toBeLessThan($headerPos);
 });
 
+it('Layout rendert Auto-Save-Indikator im Header mit drei State-Spans', function () {
+    /** @var TestCase $this */
+    $html = Blade::render(<<<'BLADE'
+<x-layout>
+    <x-slot:main>X</x-slot:main>
+</x-layout>
+BLADE);
+
+    // Der Indikator sitzt neben dem Theme-Toggle im Navi-Header,
+    // ist im idle-Zustand versteckt (x-cloak + x-show), Alpine
+    // hört auf $store.saveStatus.
+    expect($html)
+        ->toContain('$store.saveStatus.state')
+        ->toContain('speichert')
+        ->toContain('gespeichert')
+        ->toContain('nicht gespeichert')
+        ->toContain('aria-live="polite"');
+});
+
+it('Layout rendert Toast-Region rechts unten mit aria-live=assertive', function () {
+    /** @var TestCase $this */
+    $html = Blade::render(<<<'BLADE'
+<x-layout>
+    <x-slot:main>X</x-slot:main>
+</x-layout>
+BLADE);
+
+    // Region iteriert reaktiv über $store.toast.items,
+    // Position rechts unten (fixed bottom-4 right-4).
+    expect($html)
+        ->toContain('aria-live="assertive"')
+        ->toContain('$store.toast.items')
+        ->toContain('$store.toast.dismiss')
+        ->toContain('fixed bottom-4 right-4');
+});
+
 it('Layout-Komponente exponiert <header> und @livewireScripts vor </body>', function () {
     /** @var TestCase $this */
     $html = Blade::render(<<<'BLADE'

@@ -215,6 +215,17 @@
   "tools": "Tools",
   "skip_to_main": "Skip to main content",
   "project_structure": "Project structure",
-  "reorder_hint": "Move with Alt+↑/↓"
+  "reorder_hint": "Move with Alt+↑/↓",
+  "save_status_saving": "saving…",
+  "save_status_saved": "saved",
+  "save_status_error": "not saved",
+  "audiovisual_player": "Media player",
+  "audio_file": "Audio file",
+  "current_file": "Current file",
+  "replace_audio": "Replace file",
+  "uploading": "uploading",
+  "text_content": "Text content",
+  "metadata": "Metadata",
+  "create_new": "Create new"
 
 }

@@ -99,7 +99,7 @@ If not, see <https://www.gnu.org/licenses/>.
         @else
             {{-- Editor-Layout: drei Spalten — History links, Editor mitte, Tools rechts. --}}
             <div class="grid grid-cols-12 gap-4 py-4">
-                <aside aria-label="{{ __('project_structure') }}" class="col-span-12 md:col-span-2">
+                <aside aria-label="{{ __('project_structure') }}" class="col-span-12 md:sticky md:top-20 md:col-span-2 md:h-fit md:self-start">
                     {{ $log }}
                 </aside>
                 <main role="main" id="main-content" class="col-span-12 md:col-span-7">
@@ -130,6 +130,44 @@ If not, see <https://www.gnu.org/licenses/>.
         aria-atomic="true"
         class="sr-only"
     ></div>
+
+    {{-- Toast-Region (Phase 5c.3). Rendert die aktive Toast-Liste
+         aus dem Alpine-Store `toast` reaktiv, jeder Toast wird nach
+         5 s automatisch entfernt. aria-live=assertive für Fehler
+         (der Standardweg), sonst polite. Position: rechts unten. --}}
+    <div
+        x-data
+        aria-live="assertive"
+        aria-atomic="false"
+        class="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col gap-2"
+    >
+        <template x-for="item in $store.toast.items" :key="item.id">
+            <div
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 translate-y-2"
+                x-transition:enter-end="opacity-100 translate-y-0"
+                x-transition:leave="transition ease-in duration-150"
+                x-transition:leave-start="opacity-100"
+                x-transition:leave-end="opacity-0"
+                :class="{
+                    'bg-primary text-primary-on': item.type === 'error',
+                    'bg-ink-900 text-canvas-bg': item.type === 'success' || item.type === 'info',
+                }"
+                class="pointer-events-auto flex min-w-[16rem] max-w-md items-start gap-3 rounded-md px-4 py-3 shadow-lg"
+                role="alert"
+            >
+                <span x-text="item.text" class="flex-1 text-body"></span>
+                <button
+                    type="button"
+                    @click="$store.toast.dismiss(item.id)"
+                    :aria-label="'{{ __('close') }}'"
+                    class="shrink-0 rounded p-1 opacity-70 hover:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-current"
+                >
+                    &times;
+                </button>
+            </div>
+        </template>
+    </div>
 
     @livewireScripts
 

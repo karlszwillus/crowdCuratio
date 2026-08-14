@@ -184,7 +184,7 @@ li.item.content.text .row.p-4 {
 .gallery_container{
 	display: grid;
 	grid-template-columns: 1fr 1fr 1fr;
-	grid-template-rows: 300px auto;
+	grid-auto-rows: minmax(300px, auto);
 	column-gap: 40px;
 	row-gap: 13px;
 }
@@ -193,10 +193,14 @@ li.item.content.text .row.p-4 {
 	/*width: 33%;
 	margin-right: .2em;*/
 }
+/* Höhe zusätzlich am Element per Tailwind-Utility (h-[300px]) —
+   diese Regel bleibt als Fallback, wird aber unter Tailwind 4
+   Preflight nicht immer zuverlässig priorisiert. */
 .gallery_item .img{
 	background-size: cover;
 	width: 100%;
 	height: 300px;
+	min-height: 300px;
 	position: relative;
 }
 .gallery_item .icons{

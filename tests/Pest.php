@@ -5,10 +5,12 @@ use App\Models\Chapter;
 use App\Models\Entry;
 use App\Models\Gallery;
 use App\Models\Image;
+use App\Models\MediaContent;
 use App\Models\Project;
 use App\Models\Source;
 use App\Models\Text;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -140,4 +142,36 @@ function makeGallery(array $overrides = []): Gallery
 function makeAudiovisual(array $overrides = []): Audiovisual
 {
     return Audiovisual::factory()->create($overrides);
+}
+
+/**
+ * Hängt ein Content-Modell (Text / Image / Audiovisual / Gallery) an
+ * ein Project über die kanonische Kette Chapter → Entry → MediaContent.
+ *
+ * Wird von Volt-Component-Tests genutzt, deren Save-Pfad über
+ * `Gate::authorize('update', $model->project())` läuft — ohne den
+ * Pivot liefert `->project()` null und Gate wirft 403. Zentraler
+ * Helper statt in jedem Test kopiert (5c.7 Konsolidierung).
+ *
+ * @template TModel of \Illuminate\Database\Eloquent\Model
+ *
+ * @param  TModel  $content
+ * @return TModel
+ */
+function attachToProject(Project $project, Model $content): Model
+{
+    $chapter = makeChapter($project);
+    $entry = makeEntry($chapter);
+    MediaContent::create([
+        // Model::getKey() ist auf Basis-Model typisiert und
+        // umgeht Larastans „property TModel::$id not found"-
+        // Warnung, die generische Templates nicht auflösen kann.
+        'content_id' => $content->getKey(),
+        'content_type' => $content::class,
+        'parent_id' => $entry->id,
+        'parent_type' => Entry::class,
+        'position' => 1,
+    ]);
+
+    return $content;
 }

@@ -106,6 +106,20 @@ class Entry extends Model implements HasComments
     }
 
     /**
+     * Navigiert vom Entry über Chapter zum Project. Kanonische
+     * Navigations-Methode wie bei Chapter/Text/Image/Audiovisual/
+     * Gallery — Volt-Komponenten (inline-editor, rich-text-editor,
+     * source-picker) rufen `$model->project()` für den
+     * Gate::authorize-Aufruf. Ohne diese Methode kam bei Entry-
+     * Feldern (z. B. Description) `null` heraus und der Save
+     * scheiterte mit 403 (Phase-5c.6.c.5-Followup).
+     */
+    public function project(): ?Project
+    {
+        return $this->chapter?->project;
+    }
+
+    /**
      * Get all texts
      *
      * @return HasMany

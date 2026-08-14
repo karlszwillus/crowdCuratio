@@ -255,7 +255,7 @@ jobs:
         env:
           DB_CONNECTION: sqlite
           DB_DATABASE: ':memory:'
-        run: ./vendor/bin/pest --coverage --min=65 --colors=always
+        run: ./vendor/bin/pest --coverage --min=75 --colors=always
 
   changelog-check:
     name: CHANGELOG diff

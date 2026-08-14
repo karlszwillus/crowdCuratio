@@ -23,6 +23,7 @@ If not, see <https://www.gnu.org/licenses/>.
 use App\Models\Project;
 use App\Services\ProjectTreeService;
 use Illuminate\Support\Facades\Gate;
+use Livewire\Attributes\On;
 use Livewire\Volt\Component;
 
 new class extends Component
@@ -43,6 +44,25 @@ new class extends Component
         // Sidebar iteriert direkt über die eager-geladenen Relations
         // am Project-Modell.
         $this->project = $tree->sidebarTree($project);
+    }
+
+    /**
+     * Sidebar aktualisiert sich, wenn irgendein Feld eines Chapter,
+     * Entry oder Content-Modells über den Inline-Editor gespeichert
+     * wurde. Der Editor dispatcht das `saved`-Event global.
+     *
+     * Wichtig: `load` statt `loadMissing`. Nach `->fresh()` sind die
+     * Relations noch nicht geladen, `loadMissing` würde greifen —
+     * aber der Livewire-Snapshot bringt manchmal schon `chapters`
+     * mit, dann würde `loadMissing` als No-Op durchlaufen und stale
+     * Entry-Werte anzeigen. `load` überschreibt konsequent.
+     */
+    #[On('saved')]
+    public function refreshTree(): void
+    {
+        $fresh = $this->project->fresh();
+        $fresh->load(['chapters.entries']);
+        $this->project = $fresh;
     }
 }; ?>
 

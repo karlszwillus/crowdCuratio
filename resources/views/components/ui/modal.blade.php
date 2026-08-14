@@ -40,8 +40,13 @@
     id="{{ $id }}"
     tabindex="-1"
     role="dialog"
+    aria-modal="true"
     @if ($labelId) aria-labelledby="{{ $labelId }}" @endif
     aria-hidden="true"
+    x-data="{ open: false }"
+    @cc-modal-shown="open = true"
+    @cc-modal-hidden="open = false"
+    x-trap.noscroll.inert="open"
 >
     <div class="relative mx-auto my-8 w-auto {{ $dialogMax }}" role="document">
         <div class="relative rounded-md border border-ink-400 bg-white shadow-lg">
