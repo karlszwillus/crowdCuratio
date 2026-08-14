@@ -264,6 +264,8 @@
   "show": "anzeigen",
   "hide": "verbergen",
   "privacy_policy": "Datenschutz",
+  "structure": "Struktur",
+  "expand": "Aufklappen",
   "block_type_text": "Text",
   "block_type_image": "Bild",
   "block_type_gallery": "Galerie",

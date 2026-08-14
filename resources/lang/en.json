@@ -263,6 +263,8 @@
   "show": "show",
   "hide": "hide",
   "privacy_policy": "Privacy",
+  "structure": "Structure",
+  "expand": "Expand",
   "block_type_text": "Text",
   "block_type_image": "Image",
   "block_type_gallery": "Gallery",
