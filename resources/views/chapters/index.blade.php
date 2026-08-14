@@ -60,7 +60,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                             'href' => route('translate', $project->id),
                         ],
                         [
-                            'label' => __('meta_data'),
+                            'label' => __('metadata'),
                             'href' => route('project.metadata', $project->id),
                         ],
                     ]"
@@ -149,11 +149,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
         <ul class="list-group ui-sortable-chapter sortable_list_chapter connectedSortableChapter" id="groupsList" data-reorder-element="chapter" data-reorder-url="{{ route('chapter.drag') }}" data-reorder-project="{{ $project->id }}">
             @foreach($data->chapters as $key => $chapter)
                 <li class="chapter group" data-chapter="{{$chapter->id}}" data-project="{{$project->id}}" id="{{$chapter->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
-                    {{-- Chapter-Bereich: nur durch sanfte Hintergrundfarbe
-                         (paper-50) abgesetzt, keinen Rahmen. Innerhalb
-                         sitzen die Objekt-Cards (Block-Cards mit Rahmen). --}}
-                    <div id="{{$chapter->id}}" class="mb-6 rounded-lg bg-paper-50 p-6">
-                        {{-- Kapitel-Section-Header nach Handoff v4 § Screen 02. --}}
+                    {{-- Kapitel ist keine Karte — Titel ist Section-H1
+                         (Handoff v4 § Screen 02, P1.2 aus Designer-
+                         Review). Nur Entry und Block-Cards tragen
+                         Rahmen; Kapitel-Ebene läuft ueber Typografie
+                         und Vertical-Rhythm. --}}
+                    <div id="{{$chapter->id}}" class="mb-8">
                         <header class="mb-4 flex items-start justify-between gap-4">
                             <div class="min-w-0 flex-1" id="anchor_Chapter_{{$chapter->id}}">
                                 @can('update', $project)
@@ -187,14 +188,14 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
                                 <a href="{{route('projects.edit',['project'=> $project, 'log'=> $chapter->id, 'model' => 'Chapter'])}}"
                                    title="{{ __('older_versions') }}"
-                                   class="inline-flex size-8 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
+                                   class="inline-flex size-11 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
                                     <x-icon name="rotate-ccw" size="4"/>
                                 </a>
 
                                 @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                     <a href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Chapter', 'comment' => $chapter->id])}}"
                                        title="{{ __('add_comment') }}"
-                                       class="addComment inline-flex size-8 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
+                                       class="addComment inline-flex size-11 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
                                         @if(isset($chapter->comments) && count($chapter->comments) > 0)
                                             <x-icon name="message-square-dot" size="4"/>
                                         @else
@@ -207,7 +208,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                     <button type="submit"
                                             onclick="return confirm('{{__('message_delete_confirm')}}')"
                                             title="{{ __('delete_chapter') }}"
-                                            class="inline-flex size-8 items-center justify-center rounded-md hover:bg-danger-bg hover:text-danger">
+                                            class="inline-flex size-11 items-center justify-center rounded-md hover:bg-danger-bg hover:text-danger">
                                         <x-icon name="trash-2" size="4"/>
                                     </button>
                                 @endif
@@ -218,7 +219,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                    :aria-expanded="open"
                                    aria-controls="collapseChapter_{{$chapter->id}}"
                                    title="{{ __('collapse') }}"
-                                   class="inline-flex size-8 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
+                                   class="inline-flex size-11 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
                                     <x-icon x-show="open" name="chevron-down" size="4"/>
                                     <x-icon x-show="!open" x-cloak name="chevron-right" size="4"/>
                                 </a>
@@ -243,10 +244,15 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                 <ul class="list-group ui-sortable-entry sortable_list_entry connectedSortableEntry" id="{{$chapter->id}}" data-reorder-element="entry" data-reorder-url="{{ route('chapter.drag') }}">
                                     @foreach($chapter->entries as $entry)
                                         <li class="entry group" data-chapter="{{$chapter->id}}" data-entry="{{$entry->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
-                                            {{-- Entry-Section-Header (Handoff v4 § Screen 02).
-                                                 Bootstrap-Row-Card raus, Bezug zum umschließenden
-                                                 Kapitel bleibt über visuelle Hierarchie im Baum. --}}
-                                            <div id="P-{{$project->id}}-C-{{$chapter->id}}-entry-{{$entry->id}}" class="mb-4 mt-6">
+                                            {{-- Entry als Karte mit Mono-Caps-Label
+                                                 (Handoff v4 Screen 02: „EINTRAG · KAPITEL 2").
+                                                 Bezug zum umschließenden Kapitel steht
+                                                 explizit im Kopf, nicht ueber CSS-Einrueckung. --}}
+                                            <div id="P-{{$project->id}}-C-{{$chapter->id}}-entry-{{$entry->id}}"
+                                                 class="mb-6 rounded-lg border border-line-200 bg-paper-0 p-6 shadow-subtle">
+                                                <p class="mb-2 text-mono-caps font-mono uppercase tracking-widest text-ink-500">
+                                                    {{ __('entry') }} · {{ __('chapter') }} {{ $key + 1 }}
+                                                </p>
                                                 <header class="mb-3 flex items-start justify-between gap-4">
                                                     <div class="min-w-0 flex-1" id="anchor_Entry_{{$entry->id}}">
                                                         @can('update', $project)
@@ -281,14 +287,14 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
                                                         <a href="{{route('projects.edit',['project'=> $project, 'log'=> $entry->id, 'model' => 'Entry'])}}"
                                                            title="{{ __('older_versions') }}"
-                                                           class="inline-flex size-8 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
+                                                           class="inline-flex size-11 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
                                                             <x-icon name="rotate-ccw" size="4"/>
                                                         </a>
 
                                                         @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                             <a href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Entry', 'comment' => $entry->id])}}"
                                                                title="{{ __('add_comment') }}"
-                                                               class="inline-flex size-8 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
+                                                               class="inline-flex size-11 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
                                                                 @if(isset($entry->comments) && count($entry->comments) > 0)
                                                                     <x-icon name="message-square-dot" size="4"/>
                                                                 @else
@@ -301,7 +307,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                             <button type="submit"
                                                                     onclick="return confirm('{{__('message_delete_confirm')}}')"
                                                                     title="{{ __('delete_entry') }}"
-                                                                    class="inline-flex size-8 items-center justify-center rounded-md hover:bg-danger-bg hover:text-danger">
+                                                                    class="inline-flex size-11 items-center justify-center rounded-md hover:bg-danger-bg hover:text-danger">
                                                                 <x-icon name="trash-2" size="4"/>
                                                             </button>
                                                         @endif
@@ -312,7 +318,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                            :aria-expanded="open"
                                                            aria-controls="entry_{{$entry->id}}"
                                                            title="{{ __('collapse') }}"
-                                                           class="inline-flex size-8 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
+                                                           class="inline-flex size-11 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
                                                             <x-icon x-show="open" name="chevron-down" size="4"/>
                                                             <x-icon x-show="!open" x-cloak name="chevron-right" size="4"/>
                                                         </a>
@@ -389,38 +395,46 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                  direkt im Content-Card editiert. Add-Text-Modal
                                                                                                  (contentModal) bleibt für „Text hinzufügen". --}}
                                                                                         </form>
-                                                                                        {{-- Metadaten hinter <details>-Toggle.
-                                                                                             Copyright/Quelle als inline source-picker
-                                                                                             mit Autocomplete + „Neu anlegen" — löst
-                                                                                             den letzten Modal für Text-Content ab
-                                                                                             (Phase 5c.6.c.4-Followup). --}}
-                                                                                        <details class="metadata mt-2 rounded-md border border-ink-300/60 bg-canvas-dim/40 px-3 py-2">
-                                                                                            <summary class="cursor-pointer select-none text-caption text-chrome-on-dim focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-                                                                                                {{ __('metadata') }}
-                                                                                            </summary>
-                                                                                            <div class="mt-2 space-y-2 text-caption text-chrome-on-dim">
-                                                                                                <div>{!! date('d.m.Y', strtotime($item->text->created_at)) !!}</div>
-                                                                                                @can('update', $project)
-                                                                                                    <livewire:source-picker
-                                                                                                        :model="$item->text"
-                                                                                                        field="copyright"
-                                                                                                        relation="copyrightText"
-                                                                                                        source-type="Copyright"
-                                                                                                        :label="__('copyright')"
-                                                                                                        :key="'text-copyright-'.$item->text->id" />
-                                                                                                    <livewire:source-picker
-                                                                                                        :model="$item->text"
-                                                                                                        field="origin"
-                                                                                                        relation="originText"
-                                                                                                        source-type="Origin"
-                                                                                                        :label="__('origin')"
-                                                                                                        :key="'text-origin-'.$item->text->id" />
-                                                                                                @else
-                                                                                                    <div>Copyright: {!! $item->text->copyrightText?->name !!}</div>
-                                                                                                    <div>{{ __('origin') }}: {!! $item->text->originText?->name !!}</div>
-                                                                                                @endcan
-                                                                                            </div>
-                                                                                        </details>
+                                                                                        {{-- Copyright + Quelle sind Pflichtfelder und
+                                                                                             sitzen sichtbar am Fuss der Block-Card
+                                                                                             (P1.4 aus Designer-Review: eingeklappt
+                                                                                             darf nur Optionales sein). Sternchen
+                                                                                             und aria-required kommen ueber das
+                                                                                             rules-Prop des source-picker. --}}
+                                                                                        <div class="mt-4 border-t border-line-100 pt-3">
+                                                                                            @can('update', $project)
+                                                                                                <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                                                                                    <div>
+                                                                                                        <label class="mb-1 block text-caption font-medium text-ink-700">
+                                                                                                            {{ __('copyright') }} <span class="text-danger" aria-hidden="true">*</span>
+                                                                                                        </label>
+                                                                                                        <livewire:source-picker
+                                                                                                            :model="$item->text"
+                                                                                                            field="copyright"
+                                                                                                            relation="copyrightText"
+                                                                                                            source-type="Copyright"
+                                                                                                            :label="__('copyright')"
+                                                                                                            :key="'text-copyright-'.$item->text->id" />
+                                                                                                    </div>
+                                                                                                    <div>
+                                                                                                        <label class="mb-1 block text-caption font-medium text-ink-700">
+                                                                                                            {{ __('origin') }} <span class="text-danger" aria-hidden="true">*</span>
+                                                                                                        </label>
+                                                                                                        <livewire:source-picker
+                                                                                                            :model="$item->text"
+                                                                                                            field="origin"
+                                                                                                            relation="originText"
+                                                                                                            source-type="Origin"
+                                                                                                            :label="__('origin')"
+                                                                                                            :key="'text-origin-'.$item->text->id" />
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            @else
+                                                                                                <div class="text-caption text-ink-500">
+                                                                                                    Copyright: {!! $item->text->copyrightText?->name !!} · {{ __('origin') }}: {!! $item->text->originText?->name !!}
+                                                                                                </div>
+                                                                                            @endcan
+                                                                                        </div>
                                                                                     </div>
                                                                                 </x-ui.block-card>
                                                                             </li>
@@ -683,37 +697,42 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                          in den Details unten editiert.
                                                                                                          imageModal bleibt für „Bild hinzufügen". --}}
                                                                                                 </form>
-                                                                                                {{-- Metadaten hinter <details>-Toggle,
-                                                                                                     Copyright/Quelle als inline
-                                                                                                     source-picker mit Autocomplete +
-                                                                                                     „Neu anlegen". --}}
-                                                                                                <details class="metadata mt-2 rounded-md border border-ink-300/60 bg-canvas-dim/40 px-3 py-2">
-                                                                                                    <summary class="cursor-pointer select-none text-caption text-chrome-on-dim focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-                                                                                                        {{ __('metadata') }}
-                                                                                                    </summary>
-                                                                                                    <div class="mt-2 space-y-2 text-caption text-chrome-on-dim">
-                                                                                                        <div>{{date('d.m.Y', strtotime($image->created_at))}}</div>
-                                                                                                        @can('update', $project)
-                                                                                                            <livewire:source-picker
-                                                                                                                :model="$image"
-                                                                                                                field="copyright"
-                                                                                                                relation="copyrightImage"
-                                                                                                                source-type="Copyright"
-                                                                                                                :label="__('copyright')"
-                                                                                                                :key="'image-copyright-'.$image->id" />
-                                                                                                            <livewire:source-picker
-                                                                                                                :model="$image"
-                                                                                                                field="origin"
-                                                                                                                relation="originImage"
-                                                                                                                source-type="Origin"
-                                                                                                                :label="__('origin')"
-                                                                                                                :key="'image-origin-'.$image->id" />
-                                                                                                        @else
-                                                                                                            <div>Copyright: {{$image->copyrightImage?->name}}</div>
-                                                                                                            <div>{{ __('origin') }}: {{$image->originImage?->name}}</div>
-                                                                                                        @endcan
-                                                                                                    </div>
-                                                                                                </details>
+                                                                                                {{-- Copyright + Quelle sichtbar am
+                                                                                                     Card-Fuss (P1.4 aus Review). --}}
+                                                                                                <div class="mt-3 border-t border-line-100 pt-2">
+                                                                                                    @can('update', $project)
+                                                                                                        <div class="grid grid-cols-1 gap-2 md:grid-cols-2">
+                                                                                                            <div>
+                                                                                                                <label class="mb-1 block text-caption font-medium text-ink-700">
+                                                                                                                    {{ __('copyright') }} <span class="text-danger" aria-hidden="true">*</span>
+                                                                                                                </label>
+                                                                                                                <livewire:source-picker
+                                                                                                                    :model="$image"
+                                                                                                                    field="copyright"
+                                                                                                                    relation="copyrightImage"
+                                                                                                                    source-type="Copyright"
+                                                                                                                    :label="__('copyright')"
+                                                                                                                    :key="'image-copyright-'.$image->id" />
+                                                                                                            </div>
+                                                                                                            <div>
+                                                                                                                <label class="mb-1 block text-caption font-medium text-ink-700">
+                                                                                                                    {{ __('origin') }} <span class="text-danger" aria-hidden="true">*</span>
+                                                                                                                </label>
+                                                                                                                <livewire:source-picker
+                                                                                                                    :model="$image"
+                                                                                                                    field="origin"
+                                                                                                                    relation="originImage"
+                                                                                                                    source-type="Origin"
+                                                                                                                    :label="__('origin')"
+                                                                                                                    :key="'image-origin-'.$image->id" />
+                                                                                                            </div>
+                                                                                                        </div>
+                                                                                                    @else
+                                                                                                        <div class="text-caption text-ink-500">
+                                                                                                            Copyright: {{$image->copyrightImage?->name}} · {{ __('origin') }}: {{$image->originImage?->name}}
+                                                                                                        </div>
+                                                                                                    @endcan
+                                                                                                </div>
                                                                                             </div>
                                                                                         </div>
                                                                                     @endforeach
