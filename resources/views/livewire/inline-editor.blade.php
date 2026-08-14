@@ -164,19 +164,23 @@ new class extends Component
     // Klassen-Bausteine pro Variant. Ruhe: kein Rahmen, minimaler
     // Padding, Text-Style aus Design-Tokens. Hover: sanfter
     // line-200-Rahmen. Fokus: brand-bar-Outline.
+    // Ghost-Inputs: kein Rahmen — auch nicht bei Hover. Hover zeigt
+    // nur einen sanften Background-Hint, Fokus einen dezenten Ring
+    // vom brand-bar-Token. Das entspricht Handoff v4 § Screen 02:
+    // Titel wirken wie Ueberschriften, keine Formularfelder.
     $variantClasses = match ($variant) {
-        'title'    => 'w-full rounded-md border border-transparent bg-transparent px-2 py-1 '
-                    . '-mx-2 text-title font-semibold text-ink-900 tracking-tight '
-                    . 'hover:border-line-200 focus:border-primary '
-                    . 'focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-primary',
-        'heading'  => 'w-full rounded-md border border-transparent bg-transparent px-2 py-1 '
-                    . '-mx-2 text-heading font-semibold text-ink-900 '
-                    . 'hover:border-line-200 focus:border-primary '
-                    . 'focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-primary',
-        'subtitle' => 'w-full rounded-md border border-transparent bg-transparent px-2 py-1 '
-                    . '-mx-2 text-body text-ink-500 '
-                    . 'hover:border-line-200 focus:border-primary '
-                    . 'focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-primary',
+        'title'    => 'w-full rounded-md border-0 bg-transparent px-2 py-1 -mx-2 '
+                    . 'text-title font-semibold text-ink-900 tracking-tight '
+                    . 'transition-colors hover:bg-line-100/60 '
+                    . 'focus:bg-line-100/60 focus:outline-none focus:ring-2 focus:ring-brand-bar/40',
+        'heading'  => 'w-full rounded-md border-0 bg-transparent px-2 py-1 -mx-2 '
+                    . 'text-heading font-semibold text-ink-900 '
+                    . 'transition-colors hover:bg-line-100/60 '
+                    . 'focus:bg-line-100/60 focus:outline-none focus:ring-2 focus:ring-brand-bar/40',
+        'subtitle' => 'w-full rounded-md border-0 bg-transparent px-2 py-1 -mx-2 '
+                    . 'text-body text-ink-500 '
+                    . 'transition-colors hover:bg-line-100/60 '
+                    . 'focus:bg-line-100/60 focus:outline-none focus:ring-2 focus:ring-brand-bar/40',
         default    => 'w-full rounded-md border border-form-border bg-canvas-bg px-3 py-2 '
                     . 'text-body text-ink-900 '
                     . 'focus:border-primary focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-primary',

@@ -149,12 +149,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
         <ul class="list-group ui-sortable-chapter sortable_list_chapter connectedSortableChapter" id="groupsList" data-reorder-element="chapter" data-reorder-url="{{ route('chapter.drag') }}" data-reorder-project="{{ $project->id }}">
             @foreach($data->chapters as $key => $chapter)
                 <li class="chapter group" data-chapter="{{$chapter->id}}" data-project="{{$project->id}}" id="{{$chapter->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
-                    <div id="{{$chapter->id}}" class="mb-6">
-                        {{-- Kapitel-Section-Header nach Handoff v4 § Screen 02.
-                             Kein Bootstrap-Row-Card mehr — Titel + Untertitel
-                             sind Section-Heading, Aktionen sitzen als Icon-
-                             Zeile oben rechts. --}}
-                        <header class="mb-3 flex items-start justify-between gap-4 border-b border-line-100 pb-3">
+                    {{-- Chapter-Bereich: nur durch sanfte Hintergrundfarbe
+                         (paper-50) abgesetzt, keinen Rahmen. Innerhalb
+                         sitzen die Objekt-Cards (Block-Cards mit Rahmen). --}}
+                    <div id="{{$chapter->id}}" class="mb-6 rounded-lg bg-paper-50 p-6">
+                        {{-- Kapitel-Section-Header nach Handoff v4 § Screen 02. --}}
+                        <header class="mb-4 flex items-start justify-between gap-4">
                             <div class="min-w-0 flex-1" id="anchor_Chapter_{{$chapter->id}}">
                                 @can('update', $project)
                                     <livewire:inline-editor
@@ -246,8 +246,8 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                             {{-- Entry-Section-Header (Handoff v4 § Screen 02).
                                                  Bootstrap-Row-Card raus, Bezug zum umschließenden
                                                  Kapitel bleibt über visuelle Hierarchie im Baum. --}}
-                                            <div id="P-{{$project->id}}-C-{{$chapter->id}}-entry-{{$entry->id}}" class="mb-4">
-                                                <header class="mb-3 flex items-start justify-between gap-4 border-b border-line-100 pb-3">
+                                            <div id="P-{{$project->id}}-C-{{$chapter->id}}-entry-{{$entry->id}}" class="mb-4 mt-6">
+                                                <header class="mb-3 flex items-start justify-between gap-4">
                                                     <div class="min-w-0 flex-1" id="anchor_Entry_{{$entry->id}}">
                                                         @can('update', $project)
                                                             <livewire:inline-editor

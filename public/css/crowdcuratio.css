@@ -73,59 +73,15 @@ navbar a:focus{
 }
 
 
-li.chapter{
-	position: relative;
-	background: rgba(99,112,129,0.45);
-	border-radius: 12px;
-	padding: 1em 2em;
-	margin: 0 0 1em;
-	background: url("images/drag.png") no-repeat rgba(99,112,129,0.45) .8em .8em / 36px;
-}
-li.chapter .content{
-	padding: 0 2em 0 3em;
-}
-li.chapter p{
-	margin: .6em 0;
-	line-height: 1.3em;
-}
-
-
-
-li.entry{
-	position: relative;
-	background: rgba(148,148,155,0.76);
-	border-radius: 12px;
-	padding: 1em 2em;
-	margin: 0 0 1em;
-	background: url("images/drag.png") no-repeat rgba(99,112,129,0.45) .8em .8em / 36px;
-}
-li.entry:last-child{
-	margin: 0;
-}
-li.entry .content{
-	padding: 0 1em 0 1em;
-}
-
-
+/* Legacy-Layout fuer li.chapter/entry/item war Bootstrap-3-Zeit
+ * (graue Backgrounds, Drag-Icon-Sprite, Border-Radius 12px). Seit
+ * Phase 5-D.6 laufen die Ebenen ueber Blade-Sections und die
+ * <x-ui.block-card>-Component — Layout und Farben kommen aus den
+ * Design-Tokens. Nur der positionelle Anker bleibt. */
+li.chapter,
+li.entry,
 li.item{
 	position: relative;
-	background: #D5D5DB;
-	border-radius: 12px;
-	padding: 1em 2em;
-	margin: 0 0 1em;
-	background: url("images/drag.png") no-repeat #D5D5DB .8em .8em / 36px;
-}
-li.item.content{
-	padding: .8em 4em;
-}
-li.item.audiovisual{
-	padding: 3em 4em .8em;
-}
-li.item.content.gallery {
-  padding: 1.3em 4em;
-}
-li.item.content.text .row.p-4 {
-  margin: 1em 0 0;
 }
 .btn-primary,
 .btn-secondary{
