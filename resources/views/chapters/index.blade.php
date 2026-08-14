@@ -644,16 +644,17 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                      Bild-Hinzufügen (addImage) bleibt modal. --}}
                                                                                             </form>
                                                                                         </div>
-                                                                                    </div><div class="gallery_container">
+                                                                                    </div>
+                                                                                    {{-- public/css/crowdcuratio.css wird seit dem
+                                                                                         Vite-Umbau nicht mehr geladen — die alten
+                                                                                         .gallery_container-Grid-Regeln greifen nicht.
+                                                                                         Wir setzen das Grid komplett per Tailwind-
+                                                                                         Utilities direkt am Element. --}}
+                                                                                    <div class="mt-4 grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4">
                                                                                     @foreach($item->gallery->images as $image)
-                                                                                        <div class="row mt-4 gallery_item" id="gallery_items_{{$item->gallery->id}}">
-                                                                                            {{-- Höhe zusätzlich als Utility, weil die alte
-                                                                                                 crowdcuratio.css-Regel `.gallery_item .img
-                                                                                                 { height: 300px }` unter Tailwind 4 Preflight
-                                                                                                 nicht mehr zuverlässig greift und das Div
-                                                                                                 sonst auf Caption-Höhe kollabiert. --}}
+                                                                                        <div class="gallery_item relative" id="gallery_items_{{$item->gallery->id}}">
                                                                                             <div id="anchor_MediaContent_{{$item->id}}"
-                                                                                                 class="img relative h-full w-full bg-cover bg-center bg-no-repeat"
+                                                                                                 class="img relative h-[200px] w-full overflow-hidden rounded-md bg-cover bg-center bg-no-repeat"
                                                                                                  style="background-image: url('{{route('image', $image->image)}}')" >
                                                                                                <div class="caption">
                                                                                                     @can('update', $project)
