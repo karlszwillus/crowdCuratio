@@ -167,10 +167,13 @@ If not, see <https://www.gnu.org/licenses/>.
                             <a href="{{ route('projects.edit', $project->id) }}"
                                class="flex items-center gap-3 text-ink-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-bar rounded-md"
                             >
+                                {{-- Projekt-Thumbnail: der Bestand liefert Bilder
+                                     ueber die `image`-Route (Image-Controller-
+                                     Endpoint), nicht direkt aus dem storage-Path. --}}
                                 <span
                                     class="h-8 w-11 shrink-0 rounded bg-line-100 bg-cover bg-center"
                                     @if ($project->logo)
-                                        style="background-image: url('{{ asset('storage/'.$project->logo) }}')"
+                                        style="background-image: url('{{ route('image', $project->logo) }}')"
                                     @endif
                                     aria-hidden="true"
                                 ></span>
