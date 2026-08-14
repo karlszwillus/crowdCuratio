@@ -66,7 +66,31 @@ von `<a href="">` auf semantisches `<button type="button">` migriert.
 Bestands-Endpoint `chapter.drag` nimmt sowohl Maus- als auch
 Tastatur-Reorders ohne Sicherheits-Refactor. Coverage hält bei 77,5 %.
 
+**Nachtrag Phase-5b-Hotfix (2026-08-14).** Reviewer-Konsolidierung
+nach dem 5b-Merge deckte einen funktionalen Bug im Tastatur-Reorder
+auf: das POST-Payload-Encoding aus dem `fetch`-Handler war nicht
+kompatibel zum bestehenden `chapter.drag`-Endpoint, die neue
+Reihenfolge landete nicht in der Datenbank. Persona-Smoke hatte den
+Bug nicht gefangen, weil er ohne Page-Reload lief. Parallel dazu
+zeigte sich, dass der Shortcut `Strg+Pfeil` auf macOS system-weit
+für Mission Control und Space-Switching reserviert ist — das
+Feature war für macOS-Nutzer:innen von Anfang an nicht bedienbar.
+Beides ist im Hotfix behoben: form-encoded Array-Notation im POST,
+Shortcut auf `Alt+↑/↓` umgestellt (plattformübergreifend frei, wie
+in VS Code). Zusätzlich vier defensive Härtungen (DOM-Rollback bei
+Server-Fail, Rate-Limit auf `chapter.drag`, Autorisierung in der
+Sidebar-Tree-Livewire-Komponente, Aktivmarkierung per
+`aria-current`) und ein Refactor auf einen `ProjectTreeService` als
+Single Source für Sidebar und Breadcrumb.
+
 ### Hinzugefügt
+
+- **Aktivmarkierung im Sidebar-Tree** (Phase-5b-Hotfix). Alpine-
+  `x-data` auf der Sidebar-Nav watcht `window.location.hash` bei
+  Init und `@hashchange`, setzt auf dem passenden Tree-Link
+  `aria-current` sowie eine visuelle Aktiv-Klasse. Klick im Tree
+  oder Deep-Link liefert sofort visuelle und Screen-Reader-
+  Rückmeldung, welcher Eintrag gerade fokussiert ist.
 
 - **Tastatur- und Screenreader-Pflöcke für den Editor** (Phase 5b.2,
   5b.5, 5b.6, 5b.7). Skip-Link „Zum Inhalt springen" als erster Tab-
@@ -383,6 +407,23 @@ Tastatur-Reorders ohne Sicherheits-Refactor. Coverage hält bei 77,5 %.
   Verwerfen leerer Eingaben ab.
 
 ### Geändert
+
+- **Reorder-Shortcut auf Alt+↑/↓** (Phase-5b-Hotfix). Der ursprünglich
+  in Phase 5b vorgesehene Shortcut `Strg+↑/↓` kollidierte auf macOS
+  system-weit mit Mission Control und Space-Switching, das Feature
+  war für macOS-Nutzer:innen nicht bedienbar. `Alt+↑/↓` (Option auf
+  macOS) ist auf allen drei Desktop-OS frei — dieselbe Konvention
+  wie in VS Code für Zeilen-Verschieben. Item bekommt zusätzlich
+  `aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"` und einen
+  Tooltip-Hinweis („Verschieben mit Alt+↑/↓").
+
+- **Sidebar- und Breadcrumb-Tree hinter einem Service** (Phase-5b-
+  Hotfix). Neuer `ProjectTreeService` mit zwei Methoden
+  (`breadcrumbTree`, `sidebarTree`) ist Single Source für die
+  Projekt-Hierarchie. Vor der Konsolidierung bauten Sidebar-Volt-
+  Komponente und Breadcrumb-Blade die Hierarchie unabhängig aus zwei
+  unterschiedlichen Project-Instanzen auf — Drift-Risiko bei
+  Struktur-Änderungen.
 
 - **App-Shell-Layout auf semantische Komponente** (Phase 5b.1). Neue
   `<x-layout>`-Komponente löst die alte `layouts/navi.blade.php` ab —
@@ -803,6 +844,30 @@ Tastatur-Reorders ohne Sicherheits-Refactor. Coverage hält bei 77,5 %.
 
 ### Behoben
 
+- **Tastatur-Reorder persistierte nicht** (Phase-5b-Hotfix). Der
+  `fetch`-Handler in `keyboard-reorder.js` schickte den Payload
+  als JSON-String über
+  `URLSearchParams({data: JSON.stringify(...)})`, `ChapterController::saveDragAndDrop`
+  erwartete aber ein form-encoded Array (identisch zum SortableJS-
+  Maus-Pfad). Server antwortete `200 "Nothing to update"`, Frontend
+  announced Erfolg, DB-Update fiel aus — sichtbar erst nach Page-
+  Reload. Fix: form-encoded Array-Notation über `params.append('data[data][]', id)`.
+  Wire-Format-Pinning-Test ergänzt, der den PHP-fpm-Roundtrip via
+  `http_build_query`/`parse_str` nachbildet.
+
+- **DOM-Rollback bei fehlgeschlagenem Tastatur-Reorder** (Phase-5b-
+  Hotfix). Vorher: bei Server-Fail (403, 419, 500) blieb der
+  optimistische DOM-Swap stehen, Frontend zeigte eine falsche
+  Reihenfolge bis zum nächsten Reload, keine Rückmeldung. Jetzt:
+  Swap wird zurückgerollt, deutsche Fehler-Announcement in die
+  Live-Region („Verschieben von … fehlgeschlagen, Reihenfolge
+  zurückgesetzt.").
+
+- **Layout-Slot-Trim ohne String-Cast** (Phase-5b-Hotfix). `trim($content)`
+  in `<x-layout>` warf potenziell `TypeError`, wenn Blade ein
+  `Stringable`-Objekt statt eines Strings als Slot lieferte.
+  `trim((string) $content)` härtet den Test.
+
 - **Theme-Toggle-Icon im Navi-Header war unsichtbar** (Phase 5a.V,
   T1 + T2 + T3). Drei Bugs überlagert:
   - **T1 (View-Pattern):** Das ursprüngliche Markup hatte zwei
@@ -949,6 +1014,21 @@ Tastatur-Reorders ohne Sicherheits-Refactor. Coverage hält bei 77,5 %.
   nachdem die alten Spalten aus dem Schema gefallen sind.
 
 ### Sicherheit
+
+- **Rate-Limit auf `chapter.drag`** (Phase-5b-Hotfix). Neuer
+  `throttle:60,1`-Middleware auf der Reorder-Route. Vorher
+  ungebremst: Alt+↑/↓-Spam oder ein defekter Client konnte den
+  Endpoint fluten, jeder Move ist im Service N Einzel-Updates.
+  60 Requests pro Minute pro User entsprechen dem Laravel-
+  Rate-Limiter-Standard für interaktive UI.
+
+- **Autorisierung in der Sidebar-Tree-Livewire-Komponente**
+  (Phase-5b-Hotfix). `livewire/sidebar-tree.blade.php` prüft
+  jetzt in `mount()` explizit `Gate::authorize('view', $project)`.
+  Vorher heute nur indirekt über den gegateten Editor-Controller
+  abgedeckt; ein direkter Livewire-Roundtrip mit fremdem
+  Project-Modell wäre ein Bypass gewesen. Defense-in-Depth-
+  Pinning-Test ergänzt.
 
 - **Authorization-Bypässe in vier Content-Controllern geschlossen.**
   Nach der Permission-Modell-Konsolidierung und Abschaltung von
