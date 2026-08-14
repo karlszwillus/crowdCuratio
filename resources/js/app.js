@@ -35,6 +35,11 @@ import './modal';
 // (Projekt > Kapitel > Abschnitt) ab.
 import './breadcrumb';
 
+// Auto-Save-Indikator (Phase 5c.2): Alpine-Store saveStatus,
+// gefüttert von den Livewire-Events des Inline-Editors, gerendert
+// im Header rechts vom Theme-Toggle.
+import './save-status';
+
 // Vanilla-Typeahead-Manager — ersetzt bootstrap-3-typeahead.js. Auch
 // hier ein jQuery-Shim, damit die fünf `$('#xxx').typeahead({...})`-
 // Aufrufe in den Editor-Views unverändert weiterlaufen.

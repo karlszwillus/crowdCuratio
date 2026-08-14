@@ -117,6 +117,25 @@ BLADE);
     expect($skipPos)->toBeInt()->toBeLessThan($headerPos);
 });
 
+it('Layout rendert Auto-Save-Indikator im Header mit drei State-Spans', function () {
+    /** @var TestCase $this */
+    $html = Blade::render(<<<'BLADE'
+<x-layout>
+    <x-slot:main>X</x-slot:main>
+</x-layout>
+BLADE);
+
+    // Der Indikator sitzt neben dem Theme-Toggle im Navi-Header,
+    // ist im idle-Zustand versteckt (x-cloak + x-show), Alpine
+    // hört auf $store.saveStatus.
+    expect($html)
+        ->toContain('$store.saveStatus.state')
+        ->toContain('speichert')
+        ->toContain('gespeichert')
+        ->toContain('nicht gespeichert')
+        ->toContain('aria-live="polite"');
+});
+
 it('Layout-Komponente exponiert <header> und @livewireScripts vor </body>', function () {
     /** @var TestCase $this */
     $html = Blade::render(<<<'BLADE'

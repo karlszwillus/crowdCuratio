@@ -216,7 +216,10 @@
   "tools": "Werkzeuge",
   "skip_to_main": "Zum Inhalt springen",
   "project_structure": "Projektstruktur",
-  "reorder_hint": "Verschieben mit Alt+↑/↓"
+  "reorder_hint": "Verschieben mit Alt+↑/↓",
+  "save_status_saving": "speichert…",
+  "save_status_saved": "gespeichert",
+  "save_status_error": "nicht gespeichert"
 
 
 }

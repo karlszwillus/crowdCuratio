@@ -94,6 +94,22 @@ If not, see <https://www.gnu.org/licenses/>. -->
         </ul>
 
         <div class="flex items-center gap-3">
+            {{-- Auto-Save-Indikator (Phase 5c.2). Alpine-Store `saveStatus`
+                 wird vom Inline-Editor gefüttert; leerer Text im idle-
+                 Zustand hält den Header sauber, sichtbar wird er erst,
+                 sobald etwas gespeichert wurde. --}}
+            <div
+                x-data
+                x-show="$store.saveStatus.state !== 'idle'"
+                x-cloak
+                aria-live="polite"
+                class="text-body text-chrome-on-dim"
+            >
+                <span x-show="$store.saveStatus.state === 'saving'">{{ __('save_status_saving') }}</span>
+                <span x-show="$store.saveStatus.state === 'saved'">{{ __('save_status_saved') }}</span>
+                <span x-show="$store.saveStatus.state === 'error'" class="text-primary">{{ __('save_status_error') }}</span>
+            </div>
+
             <button
                 type="button"
                 x-data
