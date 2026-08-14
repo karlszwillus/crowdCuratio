@@ -397,7 +397,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                             @csrf
                                                                                             <input type="hidden" name="project" value="{!! $project->id !!}"/>
                                                                                             @method('DELETE')
-                                                                                            <a href="{{route('projects.edit',['project'=> $project, 'log'=> $item->text->id, 'model' => 'Text'])}}" title="{{ __(\'older_versions\') }}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900"><x-icon name="rotate-ccw" size="4"/></a>
+                                                                                            <a href="{{route('projects.edit',['project'=> $project, 'log'=> $item->text->id, 'model' => 'Text'])}}" title="{{ __('older_versions') }}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900"><x-icon name="rotate-ccw" size="4"/></a>
                                                                                             @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                                                                 <span data-toggle="tooltip"
                                                                                                       data-placement="top"
@@ -409,7 +409,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
 																							@endif
 
  																								@if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
-                                                                                                <button type="submit" onclick="return confirm(\'{{__(\'message_delete_confirm\')}}\')" title="{{__(\'delete_text\')}}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-danger-bg hover:text-danger"><x-icon name="trash-2" size="4"/></button>
+                                                                                                <button type="submit" onclick="return confirm('{{__('message_delete_confirm')}}')" title="{{__('delete_text')}}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-danger-bg hover:text-danger"><x-icon name="trash-2" size="4"/></button>
                                                                                             @endif
 
                                                                                             {{-- Edit-Button für Text entfällt seit Phase 5c.6.c.4:
@@ -530,7 +530,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                             @csrf
                                                                                             <input type="hidden" name="project" value="{!! $project->id !!}"/>
                                                                                             @method('DELETE')
-                                                                                           <a href="{{route('projects.edit',['project'=> $project, 'log'=> $item->audiovisual->id, 'model' => 'Audiovisual'])}}" title="{{ __(\'older_versions\') }}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900"><x-icon name="rotate-ccw" size="4"/></a>
+                                                                                           <a href="{{route('projects.edit',['project'=> $project, 'log'=> $item->audiovisual->id, 'model' => 'Audiovisual'])}}" title="{{ __('older_versions') }}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900"><x-icon name="rotate-ccw" size="4"/></a>
 
                                                                                             @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                                                                 <span data-toggle="tooltip"
@@ -542,7 +542,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                             @endif
 
  																							@if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
-                                                                                                <button type="submit" onclick="return confirm(\'{{__(\'message_delete_confirm\')}}\')" title="{{__(\'delete_text\')}}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-danger-bg hover:text-danger"><x-icon name="trash-2" size="4"/></button>
+                                                                                                <button type="submit" onclick="return confirm('{{__('message_delete_confirm')}}')" title="{{__('delete_text')}}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-danger-bg hover:text-danger"><x-icon name="trash-2" size="4"/></button>
                                                                                             @endif
 
                                                                                             {{-- Modify-Button für Audiovisual entfällt seit
@@ -605,7 +605,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                 <input type="hidden" name="project" value="{!! $project->id !!}"/>
                                                                                                 @method('DELETE')
 
-                                                                                                <a href="{{route('projects.edit',['project'=> $project, 'log'=> $item->gallery->id, 'model' => 'Gallery'])}}" title="{{ __(\'older_versions\') }}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900"><x-icon name="rotate-ccw" size="4"/></a>
+                                                                                                <a href="{{route('projects.edit',['project'=> $project, 'log'=> $item->gallery->id, 'model' => 'Gallery'])}}" title="{{ __('older_versions') }}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900"><x-icon name="rotate-ccw" size="4"/></a>
 
                                                                                                 @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                                                                     <span data-toggle="tooltip"
@@ -630,7 +630,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                                 data-target="#imageModal"> <x-icon name="plus-circle" class="m-2" /> </button></span>
                                                                                                 @endif
                                                                                                 @if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
-                                                                                                    <button type="submit" onclick="return confirm(\'{{__(\'message_delete_confirm\')}}\')" title="{{__(\'delete_image\')}}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-danger-bg hover:text-danger"><x-icon name="trash-2" size="4"/></button>
+                                                                                                    <button type="submit" onclick="return confirm('{{__('message_delete_confirm')}}')" title="{{__('delete_image')}}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-danger-bg hover:text-danger"><x-icon name="trash-2" size="4"/></button>
                                                                                                 @endif
                                                                                                 {{-- Gallery-Edit-Modal-Trigger entfällt seit 5c.6.c:
                                                                                                      Title/Subtitle/Description werden inline editiert.
@@ -669,7 +669,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                       method="POST" class="mb-5">
                                                                                                     @csrf
                                                                                                     @method('DELETE')
-																									<a href="{{route('projects.edit',['project'=> $project, 'log'=> $image->id, 'model' => 'Image'])}}" title="{{ __(\'older_versions\') }}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900"><x-icon name="rotate-ccw" size="4"/></a>
+																									<a href="{{route('projects.edit',['project'=> $project, 'log'=> $image->id, 'model' => 'Image'])}}" title="{{ __('older_versions') }}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900"><x-icon name="rotate-ccw" size="4"/></a>
 
                                                                                                     @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                                                                         <span data-toggle="tooltip"
@@ -681,7 +681,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                     @endif
 
                                                                                                     @if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
-                                                                                                        <button type="submit" onclick="return confirm(\'{{__(\'message_delete_confirm\')}}\')" title="{{__(\'delete_image\')}}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-danger-bg hover:text-danger"><x-icon name="trash-2" size="4"/></button>
+                                                                                                        <button type="submit" onclick="return confirm('{{__('message_delete_confirm')}}')" title="{{__('delete_image')}}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-danger-bg hover:text-danger"><x-icon name="trash-2" size="4"/></button>
                                                                                                     @endif
 
                                                                                                     {{-- Modify-Button für Image entfällt seit
