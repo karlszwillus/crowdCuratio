@@ -120,11 +120,10 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                         :label="__('chapter_subtitle')"
                                         :key="'chapter-subtitle-'.$chapter->id"
                                     />
-                                    <livewire:inline-editor
+                                    <livewire:rich-text-editor
                                         :model="$chapter"
                                         field="description"
                                         rules="nullable|string"
-                                        :multiline="true"
                                         :label="__('chapter_description')"
                                         :key="'chapter-description-'.$chapter->id"
                                     />
@@ -160,9 +159,9 @@ If not, see <https://www.gnu.org/licenses/>. -->
 											<i class="bi-x-circle-fill m-2"></i></button>
 									@endif
 									{{-- Edit-Button für Chapter entfällt: Titel, Subtitel und
-									     Beschreibung werden per <livewire:inline-editor> direkt im
-									     Kapitel-Card editiert (Phase 5c.6.a). Add-Modal (myModal)
-									     bleibt für „Kapitel hinzufügen". --}}
+									     Beschreibung werden per inline-editor-Volt-Komponente
+									     direkt im Kapitel-Card editiert (Phase 5c.6.a). Add-Modal
+									     (myModal) bleibt für „Kapitel hinzufügen". --}}
 									<a onclick="collapseExpand({{$chapter->id}})"  id="{{$chapter->id}}"
                                        aria-expanded="true" aria-controls="collapseChapter_{{$chapter->id}}"><i
                                                 class="bi-caret-down-fill" id="chp_{{$chapter->id}}"></i></a>
@@ -193,11 +192,10 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                         :label="__('entry_subtitle')"
                                                                         :key="'entry-subtitle-'.$entry->id"
                                                                     />
-                                                                    <livewire:inline-editor
+                                                                    <livewire:rich-text-editor
                                                                         :model="$entry"
                                                                         field="description"
                                                                         rules="nullable|string"
-                                                                        :multiline="true"
                                                                         :label="__('entry_description')"
                                                                         :key="'entry-description-'.$entry->id"
                                                                     />
@@ -240,9 +238,10 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                     @endif
 
                                                                     {{-- Edit-Button für Entry entfällt: Titel, Subtitel und
-                                                                         Beschreibung werden per <livewire:inline-editor> direkt
-                                                                         im Entry-Card editiert (Phase 5c.6.b). Add-Entry-Modal
-                                                                         (entryModal) bleibt für „Eintrag hinzufügen". --}}
+                                                                         Beschreibung werden per inline-editor-Volt-Komponente
+                                                                         direkt im Entry-Card editiert (Phase 5c.6.b).
+                                                                         Add-Entry-Modal (entryModal) bleibt für „Eintrag
+                                                                         hinzufügen". --}}
 
 
                                                                     <a onclick="collapseExpandEntry({{$entry->id}})" class="panel-heading "
@@ -262,7 +261,16 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                 <div class="row border border-secondary p-4 mb-4 ml-auto w-10/12">
                                                                                     <div id="anchor_MediaContent_{{$item->id}}">
                                                                                         <div class="text-scrollbar overflow-auto">
-                                                                                            <p>{!! html_entity_decode($item->text->text) !!}</p>
+                                                                                            @can('update', $project)
+                                                                                                <livewire:rich-text-editor
+                                                                                                    :model="$item->text"
+                                                                                                    field="text"
+                                                                                                    rules="nullable|string"
+                                                                                                    :label="__('text_content')"
+                                                                                                    :key="'text-content-'.$item->text->id" />
+                                                                                            @else
+                                                                                                <p>{!! html_entity_decode($item->text->text) !!}</p>
+                                                                                            @endcan
                                                                                         </div>
                                                                                     </div>
                                                                                     <div class="text-right icons">
@@ -297,23 +305,43 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                 </button>
                                                                                             @endif
 
-                                                                                            @if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
-
-                                                                                                <span data-toggle="tooltip"
-                                                                                                      data-placement="top"
-                                                                                                      title="{{_('edit_text')}}"><button
-                                                                                                            type="button"
-                                                                                                            data-id="{{$item->text->id}}"
-                                                                                                            data-toggle="modal"
-                                                                                                            data-target="#contentModal"
-                                                                                                            class="open-ModifyText"><i class="bi-pencil-square m-2"></i></button></span>
-																							@endif
+                                                                                            {{-- Edit-Button für Text entfällt seit Phase 5c.6.c.4:
+                                                                                                 Text-Content wird per rich-text-editor-Volt-Komponente
+                                                                                                 direkt im Content-Card editiert. Add-Text-Modal
+                                                                                                 (contentModal) bleibt für „Text hinzufügen". --}}
                                                                                         </form>
-                                                                                        <p class="metadata">
-                                                                                            {!! date('d.m.Y', strtotime($item->text->created_at)) !!}<br>
-                                                                                            Copyright {!! $item->text->copyrightText->name !!}<br>
-                                                                                            Origin {!! $item->text->originText->name !!}
-                                                                                        </p>
+                                                                                        {{-- Metadaten hinter <details>-Toggle.
+                                                                                             Copyright/Quelle als inline source-picker
+                                                                                             mit Autocomplete + „Neu anlegen" — löst
+                                                                                             den letzten Modal für Text-Content ab
+                                                                                             (Phase 5c.6.c.4-Followup). --}}
+                                                                                        <details class="metadata mt-2 rounded-md border border-ink-300/60 bg-canvas-dim/40 px-3 py-2">
+                                                                                            <summary class="cursor-pointer select-none text-caption text-chrome-on-dim focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                                                                                                {{ __('metadata') }}
+                                                                                            </summary>
+                                                                                            <div class="mt-2 space-y-2 text-caption text-chrome-on-dim">
+                                                                                                <div>{!! date('d.m.Y', strtotime($item->text->created_at)) !!}</div>
+                                                                                                @can('update', $project)
+                                                                                                    <livewire:source-picker
+                                                                                                        :model="$item->text"
+                                                                                                        field="copyright"
+                                                                                                        relation="copyrightText"
+                                                                                                        source-type="Copyright"
+                                                                                                        :label="__('copyright')"
+                                                                                                        :key="'text-copyright-'.$item->text->id" />
+                                                                                                    <livewire:source-picker
+                                                                                                        :model="$item->text"
+                                                                                                        field="origin"
+                                                                                                        relation="originText"
+                                                                                                        source-type="Origin"
+                                                                                                        :label="__('origin')"
+                                                                                                        :key="'text-origin-'.$item->text->id" />
+                                                                                                @else
+                                                                                                    <div>Copyright: {!! $item->text->copyrightText?->name !!}</div>
+                                                                                                    <div>{{ __('origin') }}: {!! $item->text->originText?->name !!}</div>
+                                                                                                @endcan
+                                                                                            </div>
+                                                                                        </details>
                                                                                     </div>
                                                                                 </div>
                                                                             </li>
@@ -324,12 +352,62 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                             <li class="item audiovisual content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
                                                                                 <div class="row border border-secondary p-4 mb-4 ml-auto w-10/12">
                                                                                     <div id="anchor_MediaContent_{{$item->id}}">
-                                                                                        @if($item->audiovisual->type == 'audio')
-                                                                                            <audio controls class="embed-responsive-item" id="audio" src="{{route('audio',$item->audiovisual->link)}}"  ></audio>
+                                                                                        {{-- Player als eigenständige Volt-Komponente
+                                                                                             (Phase 5c.6.c.3). Rendert audio/iframe
+                                                                                             und aktualisiert sich beim Speichern
+                                                                                             eines Inline-Editor-Felds via `saved`
+                                                                                             Event. --}}
+                                                                                        <livewire:audiovisual-player
+                                                                                            :audiovisual="$item->audiovisual"
+                                                                                            :key="'av-player-'.$item->audiovisual->id" />
+
+                                                                                        @can('update', $project)
+                                                                                            <div class="mt-3 space-y-2">
+                                                                                                {{-- Link/Uploader rendert jetzt der
+                                                                                                     audiovisual-player selbst
+                                                                                                     (Phase 5c.6.c.3-Fix); der
+                                                                                                     Type-Wechsel triggert dort
+                                                                                                     den kompletten Re-Render. --}}
+                                                                                                <livewire:inline-editor
+                                                                                                    :model="$item->audiovisual"
+                                                                                                    field="type"
+                                                                                                    rules="required|in:audio,video"
+                                                                                                    :options="['audio' => __('audio'), 'video' => __('video')]"
+                                                                                                    :label="__('type')"
+                                                                                                    :key="'av-type-'.$item->audiovisual->id" />
+
+                                                                                                {{-- Copyright und Quelle sind
+                                                                                                     Metadaten, keine Player-Konfig
+                                                                                                     — hinter einem <details>-Toggle
+                                                                                                     kollabiert, damit die Editor-
+                                                                                                     Sicht ruhig bleibt. Nativ,
+                                                                                                     ohne JS, WCAG-freundlich. --}}
+                                                                                                <details class="mt-1 rounded-md border border-ink-300/60 bg-canvas-dim/40 px-3 py-2">
+                                                                                                    <summary class="cursor-pointer select-none text-caption text-chrome-on-dim focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                                                                                                        {{ __('metadata') }}
+                                                                                                    </summary>
+                                                                                                    <div class="mt-2 space-y-2">
+                                                                                                        <livewire:inline-editor
+                                                                                                            :model="$item->audiovisual"
+                                                                                                            field="copyright"
+                                                                                                            rules="nullable|string|max:255"
+                                                                                                            :label="__('copyright')"
+                                                                                                            :key="'av-copyright-'.$item->audiovisual->id" />
+                                                                                                        <livewire:inline-editor
+                                                                                                            :model="$item->audiovisual"
+                                                                                                            field="source"
+                                                                                                            rules="nullable|string|max:255"
+                                                                                                            :label="__('origin')"
+                                                                                                            :key="'av-source-'.$item->audiovisual->id" />
+                                                                                                    </div>
+                                                                                                </details>
+                                                                                            </div>
                                                                                         @else
-                                                                                            <iframe width="100%" height="315" src="{!! $item->audiovisual->link !!}" frameborder="0" allowfullscreen>
-                                                                                            </iframe>
-                                                                                        @endif
+                                                                                            <p class="metadata mt-2">
+                                                                                                Copyright {!! $item->audiovisual->copyright !!}<br>
+                                                                                                Origin {!! $item->audiovisual->source !!}
+                                                                                            </p>
+                                                                                        @endcan
                                                                                     </div>
                                                                                     <div class="text-right icons">
                                                                                         <form action="{{ route('audiovisual.delete',$item->audiovisual->id) }}"
@@ -364,28 +442,15 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                 </button>
                                                                                             @endif
 
-                                                                                            @if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
-
-                                                                                                <span data-toggle="tooltip"
-                                                                                                      data-placement="top"
-                                                                                                      title="{{_('edit_text')}}"><button
-                                                                                                            type="button"
-                                                                                                            data-id="{{$item->audiovisual->id}}"
-                                                                                                            data-link="{{$item->audiovisual->link}}"
-                                                                                                            data-copyright="{{$item->audiovisual->copyright}}"
-                                                                                                            data-source="{{$item->audiovisual->source}}"
-                                                                                                            data-type="{{$item->audiovisual->type}}"
-                                                                                                            data-toggle="modal"
-                                                                                                            data-target="#audiovisualModal"
-                                                                                                            class="audiovisual-modify"> <i
-                                                                                                                class="bi-pencil-square m-2"></i>
-                                                                </button></span>
-                                                                                            @endif
+                                                                                            {{-- Modify-Button für Audiovisual entfällt seit
+                                                                                                 Phase 5c.6.c.3: link/type/copyright/source
+                                                                                                 werden per inline-editor-Volt-Komponente
+                                                                                                 direkt unter dem Player editiert. Add-
+                                                                                                 Audiovisual-Modal (audiovisualModal) bleibt
+                                                                                                 für neu Anlegen. --}}
                                                                                         </form>
                                                                                         <p class="metadata">
-                                                                                            {!! date('d.m.Y', strtotime($item->audiovisual->created_at)) !!}<br>
-                                                                                            Copyright {!! $item->audiovisual->copyright !!}<br>
-                                                                                            Origin {!! $item->audiovisual->source !!}
+                                                                                            {!! date('d.m.Y', strtotime($item->audiovisual->created_at)) !!}
                                                                                         </p>
                                                                                     </div>
                                                                                 </div>
@@ -415,11 +480,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                     rules="nullable|string|max:255"
                                                                                                     :key="'gallery-subtitle-'.$item->gallery->id"
                                                                                                 />
-                                                                                                <livewire:inline-editor
+                                                                                                <livewire:rich-text-editor
                                                                                                     :model="$item->gallery"
                                                                                                     field="description"
                                                                                                     rules="nullable|string"
-                                                                                                    :multiline="true"
+                                                                                                    :label="__('gallery_description')"
                                                                                                     :key="'gallery-description-'.$item->gallery->id"
                                                                                                 />
                                                                                             @else
@@ -483,7 +548,14 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                     </div><div class="gallery_container">
                                                                                     @foreach($item->gallery->images as $image)
                                                                                         <div class="row mt-4 gallery_item" id="gallery_items_{{$item->gallery->id}}">
-                                                                                            <div id="anchor_MediaContent_{{$item->id}}" class="img" style="background: url('{{route('image', $image->image)}}') no-repeat center center / cover" >
+                                                                                            {{-- Höhe zusätzlich als Utility, weil die alte
+                                                                                                 crowdcuratio.css-Regel `.gallery_item .img
+                                                                                                 { height: 300px }` unter Tailwind 4 Preflight
+                                                                                                 nicht mehr zuverlässig greift und das Div
+                                                                                                 sonst auf Caption-Höhe kollabiert. --}}
+                                                                                            <div id="anchor_MediaContent_{{$item->id}}"
+                                                                                                 class="img relative h-[300px] w-full bg-cover bg-center bg-no-repeat"
+                                                                                                 style="background-image: url('{{route('image', $image->image)}}')" >
                                                                                                <div class="caption">
                                                                                                     @can('update', $project)
                                                                                                         <livewire:inline-editor
@@ -530,25 +602,43 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                         </button>
                                                                                                     @endif
 
-                                                                                                    @if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
-
-                                                                                                        <span data-toggle="tooltip"
-                                                                                                              data-placement="top"
-                                                                                                              title="{{__('edit_image')}}"><button
-                                                                                                                    type="button"
-                                                                                                                    data-id="{{$image->id}}"
-                                                                                                                    data-toggle="modal"
-                                                                                                                    data-target="#imageModal"
-                                                                                                                    class="open-ModifyImage"> <i
-                                                                                                                        class="bi-pencil-square m-2"></i>
-                                                                </button></span>
-                                                                                                    @endif
+                                                                                                    {{-- Modify-Button für Image entfällt seit
+                                                                                                         Phase 5c.6.c.4-Followup — Copyright/
+                                                                                                         Quelle werden über den source-picker
+                                                                                                         in den Details unten editiert.
+                                                                                                         imageModal bleibt für „Bild hinzufügen". --}}
                                                                                                 </form>
-                                                                                                <div class="metadata">
-                                                                                                    {{date('d.m.Y', strtotime($image->created_at))}} <br>
-                                                                                                    Copyright {{$image->copyrightImage->name}} <br>
-                                                                                                    Origin {{$image->originImage->name}}
-                                                                                                </div>
+                                                                                                {{-- Metadaten hinter <details>-Toggle,
+                                                                                                     Copyright/Quelle als inline
+                                                                                                     source-picker mit Autocomplete +
+                                                                                                     „Neu anlegen". --}}
+                                                                                                <details class="metadata mt-2 rounded-md border border-ink-300/60 bg-canvas-dim/40 px-3 py-2">
+                                                                                                    <summary class="cursor-pointer select-none text-caption text-chrome-on-dim focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                                                                                                        {{ __('metadata') }}
+                                                                                                    </summary>
+                                                                                                    <div class="mt-2 space-y-2 text-caption text-chrome-on-dim">
+                                                                                                        <div>{{date('d.m.Y', strtotime($image->created_at))}}</div>
+                                                                                                        @can('update', $project)
+                                                                                                            <livewire:source-picker
+                                                                                                                :model="$image"
+                                                                                                                field="copyright"
+                                                                                                                relation="copyrightImage"
+                                                                                                                source-type="Copyright"
+                                                                                                                :label="__('copyright')"
+                                                                                                                :key="'image-copyright-'.$image->id" />
+                                                                                                            <livewire:source-picker
+                                                                                                                :model="$image"
+                                                                                                                field="origin"
+                                                                                                                relation="originImage"
+                                                                                                                source-type="Origin"
+                                                                                                                :label="__('origin')"
+                                                                                                                :key="'image-origin-'.$image->id" />
+                                                                                                        @else
+                                                                                                            <div>Copyright: {{$image->copyrightImage?->name}}</div>
+                                                                                                            <div>{{ __('origin') }}: {{$image->originImage?->name}}</div>
+                                                                                                        @endcan
+                                                                                                    </div>
+                                                                                                </details>
                                                                                             </div>
                                                                                         </div>
                                                                                     @endforeach
@@ -999,63 +1089,22 @@ If not, see <https://www.gnu.org/licenses/>. -->
         // Titel, Subtitel und Beschreibung werden direkt im Entry-
         // Card editiert. Add-Entry-Modal bleibt unangetastet.
 
-        //Modify text
-        $('.open-ModifyText').click(function () {
-            let id = $(this).attr("data-id");
-            let url = "{{ route('text.edit', ":id") }}";
-            url = url.replace(':id', id);
+        // Modify-Text-Handler entfaellt seit Phase 5c.6.c.4 —
+        // Text-Content wird ueber die rich-text-editor-Volt-
+        // Komponente direkt im Content-Card editiert. Der
+        // contentModal + der Quill (quill) bleiben fuer den
+        // Add-Text-Fall bestehen (neuer Textblock hinzufuegen).
 
-            $.ajax({
-                type: 'GET',
-                url: url,
-                success: function (data) {
-                    let text = data.text;
-                    let translate = data[0]
-                    quill.container.firstChild.innerHTML = data.text;
-                    $('#textId').val(data.id);
-                    $('#copyrightText').val(data.copyright);
-                    $('#originText').val(data.origin);
-                    $('#contentType').hide();
-                    $('#addText').show();
-                    $('#addImage').hide();
-                }
-            });
-        })
+        // Modify-Image-Handler entfaellt seit Phase 5c.6.c.4-Followup —
+        // Copyright/Quelle werden ueber die source-picker-Volt-Komponente
+        // in den Bild-Details editiert, das Alt-Feld ueber inline-editor.
+        // imageModal bleibt bestehen fuer den Add-Image-Fall.
 
-        //Modify image
-        $('.open-ModifyImage').click(function () {
-            $('#updateNewImage').html('<input id="newImage" name="newImage" type="file" class="form-control" multiple="">');
-            $('#newImage').val('');
-            let id = $(this).attr("data-id");
-            let url = "{{ route('image.edit', ":id") }}";
-            url = url.replace(':id', id);
-
-            $.ajax({
-                type: 'GET',
-                url: url,
-                success: function (data) {
-                    let imageName = data.image;
-                    let imageUrl = "{{route("image",":imageName")}}";
-                    imageUrl = imageUrl.replace(':imageName', imageName);
-                    $('#imageId').val(data.id);
-                    $('#copyrightImage').val(data.copyright);
-                    $('#originImage').val(data.origin);
-                    $('#url').html('URL: ' + imageUrl);
-                    $('#altText').val(data.alt);
-                    $('#uploadId').attr('src', imageUrl);
-                    $('#contentType').hide();
-                    $('#addImage').show();
-                    $('#addText').hide();
-                    $('#savedImage').hide();
-                    $('#uploadId').show();
-                }
-            });
-        })
-
-        // Modify-Gallery-Handler entfällt seit Phase 5c.6.c.1 —
+        // Modify-Gallery-Handler entfaellt seit Phase 5c.6.c.1 —
         // Title, Subtitle und Description werden direkt im Gallery-
-        // Card via <livewire:inline-editor> editiert. Add-Image-
-        // Modal (imageModal) bleibt für neue Bilder in der Galerie.
+        // Card via der Volt-Komponente inline-editor editiert.
+        // Add-Image-Modal (imageModal) bleibt fuer neue Bilder in
+        // der Galerie.
 
         //Add Content
         $('.addContent').click(function () {
@@ -1477,20 +1526,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
             $('.reply_'+this.id).toggle();
         })
 
-        $('.audiovisual-modify').click(function (){
-            resetValues();
-            $('#audiovisualId').val($(this).attr("data-id"));
-            if($(this).attr("data-type") === 'video') {
-                $('#link').val($(this).attr("data-link"));
-                $('#savedAudio').hide();
-            }else{
-                $('#link').hide();
-                $('#savedAudio').show();
-            }
-
-            $('#copyright').val($(this).attr("data-copyright"));
-            $('#source').val($(this).attr("data-source"));
-        })
+        // Audiovisual-Modify-Handler entfaellt seit Phase 5c.6.c.3 —
+        // link/type/copyright/source werden ueber die inline-editor-
+        // Volt-Komponente direkt unter dem Player editiert. Die
+        // resetValues()-Hilfsfunktion wird vom Add-Handler weiter
+        // unten noch benoetigt.
 
         function resetValues(){
             $('#link').val('');

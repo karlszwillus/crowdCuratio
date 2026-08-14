@@ -53,6 +53,12 @@ import './save-status';
 // window.ccToast(). Save-Failed-Bridge hängt automatisch.
 import './toast';
 
+// Rich-Text-Inline-Editor (Phase 5c.6.c.4): Alpine-Data-Factory
+// `richTextEditor(initialHtml)` mit Quill-Bridge, verwendet von
+// <livewire:rich-text-editor>. Quill selbst kommt über den
+// bestehenden CDN-Include; das JS hier verkabelt nur die Bridge.
+import './rich-text-editor';
+
 // Vanilla-Typeahead-Manager — ersetzt bootstrap-3-typeahead.js. Auch
 // hier ein jQuery-Shim, damit die fünf `$('#xxx').typeahead({...})`-
 // Aufrufe in den Editor-Views unverändert weiterlaufen.

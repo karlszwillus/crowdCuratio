@@ -141,3 +141,32 @@ function makeAudiovisual(array $overrides = []): Audiovisual
 {
     return Audiovisual::factory()->create($overrides);
 }
+
+/**
+ * Hängt ein Content-Modell (Text / Image / Audiovisual / Gallery) an
+ * ein Project über die kanonische Kette Chapter → Entry → MediaContent.
+ *
+ * Wird von Volt-Component-Tests genutzt, deren Save-Pfad über
+ * `Gate::authorize('update', $model->project())` läuft — ohne den
+ * Pivot liefert `->project()` null und Gate wirft 403. Zentraler
+ * Helper statt in jedem Test kopiert (5c.7 Konsolidierung).
+ *
+ * @template TModel of \Illuminate\Database\Eloquent\Model
+ *
+ * @param  TModel  $content
+ * @return TModel
+ */
+function attachToProject(\App\Models\Project $project, \Illuminate\Database\Eloquent\Model $content): \Illuminate\Database\Eloquent\Model
+{
+    $chapter = makeChapter($project);
+    $entry = makeEntry($chapter);
+    \App\Models\MediaContent::create([
+        'content_id' => $content->id,
+        'content_type' => $content::class,
+        'parent_id' => $entry->id,
+        'parent_type' => \App\Models\Entry::class,
+        'position' => 1,
+    ]);
+
+    return $content;
+}

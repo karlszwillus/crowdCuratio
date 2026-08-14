@@ -219,7 +219,15 @@
   "reorder_hint": "Verschieben mit Alt+↑/↓",
   "save_status_saving": "speichert…",
   "save_status_saved": "gespeichert",
-  "save_status_error": "nicht gespeichert"
+  "save_status_error": "nicht gespeichert",
+  "audiovisual_player": "Medien-Player",
+  "audio_file": "Audio-Datei",
+  "current_file": "Aktuelle Datei",
+  "replace_audio": "Datei ersetzen",
+  "uploading": "wird hochgeladen",
+  "text_content": "Textinhalt",
+  "metadata": "Metadaten",
+  "create_new": "Neu anlegen"
 
 
 }

@@ -83,7 +83,121 @@ Sidebar-Tree-Livewire-Komponente, Aktivmarkierung per
 `aria-current`) und ein Refactor auf einen `ProjectTreeService` als
 Single Source für Sidebar und Breadcrumb.
 
+**Phase-5c — Inline-Editing für Content-Editor abgeschlossen.** Der
+Editier-Flow verlässt die Modal-Welt: alle Feldeditoren des Content-
+Trees (Kapitel, Abschnitte, Text-Blöcke, Galerien, Bilder,
+Audiovisuals) laufen jetzt inline direkt am Content-Element. Basis
+ist eine schlanke Volt-Komponente `<livewire:inline-editor>` mit drei
+Render-Modi (Text-Input, Textarea, Select-Dropdown), die Update-
+Autorisierung project-scoped über `Gate::authorize('update', $project)`
+prüft, Validation gegen konfigurierbare Laravel-Rules laufen lässt und
+via debouncing (blur oder 1,5-s-Timer) speichert. Fehler laden aria-
+invalid/aria-describedby und ein Screenreader-freundliches Feedback.
+
+Für Text-Content und alle Beschreibungs-Felder gibt es einen
+`<livewire:rich-text-editor>` mit Quill-Bridge (Alpine-x-data), der
+das gleiche Save-Gate nutzt und HTML als Rohtext ins Modell schreibt.
+Der Audiovisual-Player rendert als eigene Volt-Komponente, die auf
+das `saved`-Event des Inline-Editors hört und sich beim Wechsel von
+audio↔video sofort neu lädt. Bei type=audio ersetzt ein Inline-Audio-
+Uploader das Link-Textfeld, mit MIME-Whitelist und 20-MB-Limit wie
+in der Server-Route.
+
+Copyright und Quelle sind in einem `<details>`-Toggle unterhalb des
+Content-Blocks kollabiert und lassen sich über einen neuen
+`<livewire:source-picker>` mit Live-Autocomplete gegen die Source-
+Tabelle editieren — inklusive „+ Neu anlegen: '…'"-Aktion für nicht
+existierende Werte und case-insensitiver Duplikat-Erkennung. Damit
+fällt der Bootstrap-3-Typeahead aus dem alten Modify-Modal ersatzlos.
+
+Ein Auto-Save-Indikator im Header (Alpine-Store `saveStatus`) zeigt
+„speichert…", „gespeichert" (grüner Puls, Auto-Fade) und
+„nicht gespeichert" je nach Livewire-Event; Toast-Notifications
+signalisieren Fehler global über einen weiteren Alpine-Store. Header
+und Sidebar-Tree sind auf `sticky` gesetzt und der Tree aktualisiert
+sich live über den `saved`-Event ohne Full-Reload. Focus-Trap in
+Modals nutzt `@alpinejs/focus` und ist WCAG-2.4.11/2.1.2-konform.
+
+Sechs Modify-Modals aus dem Bestand fallen weg (Kapitel, Abschnitt,
+Galerie, Text-Content, Bild, Audiovisual); die zugehörigen jQuery-
+Handler und Ajax-Roundtrips sind entfernt. Die fünf Add-Modals
+(Kapitel/Abschnitt/Text/Bild/Audiovisual/Galerie hinzufügen) bleiben
+in dieser Runde — deren Inline-Migration ist als Backlog-Feature
+vermerkt und braucht Design-Vorlage.
+
 ### Hinzugefügt
+
+- **Inline-Editor als Volt-Komponente** (Phase 5c). Neue
+  `<livewire:inline-editor>` mit drei Modi (Text-Input, Textarea,
+  Select-Dropdown), Save via `wire:model.blur` plus 1,5-s-Debounce.
+  Feldwerte werden project-scoped autorisiert und gegen übergebene
+  Laravel-Rules validiert; Fehler-Zustand rendert `aria-invalid`
+  und `aria-describedby` auf das Input.
+
+- **Rich-Text-Editor mit Quill-Bridge** (Phase 5c). Eigene
+  `<livewire:rich-text-editor>`-Komponente mit Alpine-Bridge, die
+  Quill auf einem `wire:ignore`-Container mountet — Caret-Position
+  bleibt beim Auto-Save erhalten. HTML-Änderungen laufen debounced
+  über die gleiche Save-/Autorisierungs-Pipeline wie der Inline-
+  Editor. Löst den bisherigen Quill-im-Modal-Flow für Text-Content
+  und alle Beschreibungs-Felder (Kapitel/Abschnitt/Galerie) ab.
+
+- **Audiovisual-Player und Audio-Uploader inline** (Phase 5c). Der
+  `<livewire:audiovisual-player>` rendert audio-Tag oder iframe je
+  nach Type und lädt sich beim `saved`-Event neu — Typ-Wechsel
+  audio↔video greift sofort. Bei type=audio ersetzt ein
+  `<livewire:audio-uploader>` das Link-Feld und nimmt Dateien über
+  `WithFileUploads` entgegen. MIME-Whitelist
+  (audio/mpeg, mp4, wav, ogg, x-m4a) und 20-MB-Limit spiegeln die
+  Store-Route.
+
+- **Source-Picker mit Live-Autocomplete** (Phase 5c). Neue
+  `<livewire:source-picker>`-Komponente ersetzt den Bootstrap-3-
+  Typeahead im alten Modify-Modal für Copyright und Quelle an
+  Text- und Image-Modellen. Klick auf den Chip öffnet einen Text-
+  Input mit debouncetem Live-Filter gegen die `sources`-Tabelle
+  (nach `type`), Auswahl per Klick oder Enter, „+ Neu anlegen:
+  '…'"-Aktion legt eine fehlende Source direkt an und verknüpft
+  sie. Case-insensitive Duplikat-Prüfung verhindert Doubletten.
+
+- **Auto-Save-Indikator im Header** (Phase 5c). Alpine-Store
+  `saveStatus` hört auf `saved`, `save-failed` und `save-started`
+  vom Inline-Editor und rendert einen Status-Text rechts von den
+  Header-Menüs („speichert…" / „gespeichert" / „nicht gespeichert").
+  „gespeichert" pulst 300 ms grün und faded nach 5 s in Chrome-Dim
+  weg. Container mit `min-w-[9rem]`, damit der Rest der Nav nicht
+  seitlich springt.
+
+- **Toast-Komponente für Fehler-Feedback** (Phase 5c). Zweiter
+  Alpine-Store `toast` mit Region unten rechts (`aria-live="assertive"`),
+  angezeigt bei `save-failed`-Events oder manuellem
+  `window.ccToast(message, type)`. Auto-Dismiss nach 5 s, mehrere
+  Toasts stapeln sich vertikal.
+
+- **Sticky Header und Sticky Sidebar-Tree** (Phase 5c). Header sitzt
+  auf `sticky top-0 z-40`, Aside auf `md:sticky md:top-20
+  md:h-fit md:self-start`. Der Baum bleibt beim Scrollen des
+  Content-Canvas sichtbar und aktualisiert sich live via
+  `#[On('saved')]`-Listener in der `<livewire:sidebar-tree>`-
+  Komponente — Titel-Änderungen erscheinen ohne Full-Reload im Baum.
+
+- **Focus-Trap-Plugin für Modals** (Phase 5c). Registrierung von
+  `@alpinejs/focus` an Livewires Alpine-Instance via `alpine:init`.
+  `<x-ui.modal>` nutzt `x-trap.noscroll.inert` und `aria-modal="true"`;
+  Tab bleibt im offenen Modal, Escape schließt ihn (WCAG 2.4.11 /
+  2.1.2). Zwei zusätzliche kebab-case-Events (`cc-modal-shown`,
+  `cc-modal-hidden`) neben den bestehenden Bootstrap-Kompatibilitäts-
+  Events.
+
+- **`Entry::project()`-Navigations-Methode**. Kanonische Convenience
+  wie bei Chapter/Text/Image/Audiovisual/Gallery — navigiert über
+  `chapter?->project` hoch. Ohne diese Methode failte
+  `Gate::authorize('update', ...)` bei Entry-Feldern mit 403.
+
+- **`attachToProject`-Test-Helper** in `tests/Pest.php`. Zentraler
+  Helper legt Chapter → Entry → MediaContent → Content-Modell in
+  einem Aufruf an. Ersetzt drei fast identische Duplikate in den
+  Livewire-Component-Tests (5c.7-Konsolidierung).
 
 - **Aktivmarkierung im Sidebar-Tree** (Phase-5b-Hotfix). Alpine-
   `x-data` auf der Sidebar-Nav watcht `window.location.hash` bei
@@ -407,6 +521,34 @@ Single Source für Sidebar und Breadcrumb.
   Verwerfen leerer Eingaben ab.
 
 ### Geändert
+
+- **Coverage-Mindestschwelle im CI auf 75 %** (Phase 5c). Der
+  `pest --coverage --min`-Wert im `test`-Job der GitHub-Actions-
+  Pipeline ist von 65 auf 75 gehoben. Ist-Stand nach 5c: 77,9 %
+  Zeilenabdeckung — 2,9 Punkte Polster für kleine Folge-Wellen.
+
+- **Editier-Flow ohne Modals** (Phase 5c). Kapitel-, Abschnitt-,
+  Text-Content-, Galerie-, Bild- und Audiovisual-Editieren läuft
+  direkt am Element inline statt in einem Modal. Titel/Subtitel/
+  Beschreibungen editieren sich per Klick am Card; Bild-Alt-Text
+  am Bild; Copyright und Quelle hinter einem `<details>`-Toggle
+  mit Autocomplete. Fünf Add-Modals bleiben in dieser Runde für
+  „hinzufügen" — inline-Add ist als Feature im Backlog.
+
+- **Sidebar-Tree Live-Update via `saved`-Event** (Phase 5c). Der
+  Baum hört auf globales `saved`-Event und lädt sich frisch aus
+  der Datenbank neu (`->load()` statt `->loadMissing()`, weil
+  Livewires Snapshot Relations mitbringt und `loadMissing` sonst
+  als No-Op durchläuft). Änderungen an Titeln erscheinen ohne
+  Full-Page-Reload im Baum.
+
+- **Gallery-Bild-Layout auf Utility-Höhe umgestellt** (Phase 5c).
+  `.gallery_item .img { height: 300px }` aus dem Legacy-CSS wird
+  unter Tailwind-4-Preflight nicht mehr zuverlässig priorisiert;
+  die 300 px sind jetzt zusätzlich per `h-[300px]`-Utility direkt
+  am Element gesetzt. `grid-auto-rows: minmax(300px, auto)`
+  ersetzt das Zwei-Row-Muster im `.gallery_container`, damit auch
+  Row 2/3 nicht kollabieren.
 
 - **Reorder-Shortcut auf Alt+↑/↓** (Phase-5b-Hotfix). Der ursprünglich
   in Phase 5b vorgesehene Shortcut `Strg+↑/↓` kollidierte auf macOS
@@ -793,6 +935,16 @@ Single Source für Sidebar und Breadcrumb.
 
 ### Entfernt
 
+- **Sechs Modify-Modal-Handler und -Trigger** (Phase 5c). Die
+  jQuery-Handler `.open-ModifyChapter`, `.open-ModifyEntry`,
+  `.open-ModifyGallery`, `.open-ModifyText`, `.open-ModifyImage`
+  und `.audiovisual-modify` sind ersatzlos gefallen — samt ihrer
+  Ajax-Roundtrips gegen `text.edit`, `image.edit` etc. Die Pencil-
+  Icon-Buttons in den Content-Cards ebenfalls raus. Die zugehörigen
+  Add-Modals (`myModal`, `entryModal`, `contentModal`, `imageModal`,
+  `audiovisualModal`) bleiben bestehen, weil sie in der 5c-Runde
+  noch für „hinzufügen" gebraucht werden.
+
 - **Drei toter Bootstrap-Boilerplate-Dateien gelöscht** durch die
   Laravel-11+-Closure-API-Umstellung:
   - `app/Http/Kernel.php` (Middleware-Stack, Middleware-Groups
@@ -843,6 +995,40 @@ Single Source für Sidebar und Breadcrumb.
   in der ehemaligen `CommentTrait::commentAsUser`.
 
 ### Behoben
+
+- **Entry-Feld-Save mit 403** (Phase 5c). `Entry` fehlte als
+  einziges Content-Modell eine `project()`-Navigations-Methode —
+  `resolveProject()` im Inline-Editor lieferte `null`, Gate
+  antwortete `403 Forbidden`. Sichtbar geworden erst beim Rich-Text-
+  Editor für Beschreibungs-Felder. Fix: `Entry::project()`-Methode
+  ergänzt, die über `chapter?->project` navigiert. Konvention ist
+  jetzt konsistent über alle sechs Content-Modelle.
+
+- **Gallery-`::project()`-Kollision mit Attribute-Magic** (Phase 5c).
+  `$model->project` (Property-Access) triggerte Laravels Attribute-
+  Magic, die eine `Relation`-Instanz vom `project()`-Method-Body
+  erwartete. `Gallery::project()` liefert aber direkt ein `?Project`
+  (Tree-Traversal), was zu „must return a relationship instance"
+  führte. Fix: `resolveProject()` ruft die Methode direkt und
+  prüft `instanceof Relation` — Duck-typed statt Attribute-magisch.
+
+- **Layout-Kollaps der Gallery-Bilder** (Phase 5c). Die alte CSS-
+  Regel `.gallery_item .img { height: 300px }` griff unter Tailwind-
+  4-Preflight nicht mehr durchgängig — Kacheln fielen auf 39 px
+  Caption-Höhe zusammen und Bilder wurden unsichtbar. Fix: Höhe
+  zusätzlich als Tailwind-Utility (`h-[300px]`) direkt am
+  Element, plus `grid-auto-rows: minmax(300px, auto)` am
+  Container.
+
+- **Blade-Compiler tokenisiert `<livewire:…>` in Kommentaren**
+  (Phase 5c). Ein zweites Auftauchen desselben Musters aus 5a:
+  wenn `<livewire:inline-editor>` wörtlich in einem Blade- oder
+  JS-Kommentar steht, ersetzt der Compiler den Tag durch das
+  fertig gerenderte Component-Markup mitten in einer `<script>`-
+  Sektion, HTML- und JS-Parser laufen auseinander („Unexpected
+  identifier 'html'"). Fix: den Namen ohne spitze Klammern
+  ausschreiben. Kommentare in `chapters/index.blade.php`
+  entsprechend gehärtet.
 
 - **Tastatur-Reorder persistierte nicht** (Phase-5b-Hotfix). Der
   `fetch`-Handler in `keyboard-reorder.js` schickte den Payload
@@ -1014,6 +1200,23 @@ Single Source für Sidebar und Breadcrumb.
   nachdem die alten Spalten aus dem Schema gefallen sind.
 
 ### Sicherheit
+
+- **Project-scoped Save-Gate für alle Inline-Editoren** (Phase 5c).
+  Jede Volt-Komponente (`inline-editor`, `rich-text-editor`,
+  `source-picker`, `audio-uploader`, `audiovisual-player`)
+  autorisiert vor jedem Save gegen `Gate::authorize('update',
+  $project)`; das Project wird server-seitig über die kanonische
+  `Model::project()`-Kette aufgelöst und ist nicht durch Client-
+  Input beeinflussbar. Reader-Rolle wird konsequent geblockt,
+  Fremd-Update-Tests laufen als `assertForbidden` durch.
+
+- **MIME-Whitelist und Größen-Limit im Audio-Uploader** (Phase 5c).
+  Serverseitige Rule
+  `file|mimetypes:audio/mpeg,audio/mp4,audio/wav,audio/ogg,audio/x-m4a|max:20480`
+  (20 MB), identisch zur bestehenden Store-Route. Server-generierter
+  Dateiname aus `Str::random(10)` (NF-SEC-201), kein Client-Input
+  im Path. PDF-Upload-Versuche werden mit `save-failed` gestoppt
+  und toasten die Fehlermeldung, DB bleibt unverändert.
 
 - **Rate-Limit auf `chapter.drag`** (Phase-5b-Hotfix). Neuer
   `throttle:60,1`-Middleware auf der Reorder-Route. Vorher

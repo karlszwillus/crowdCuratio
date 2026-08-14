@@ -38,6 +38,9 @@ use Livewire\Volt\Component;
  * - `$field`       — Feld-Name im Modell (name, subtitle, description …)
  * - `$rules`       — Laravel-Validation-Rules-String (default 'nullable|string')
  * - `$multiline`   — bool, ob <textarea> statt <input> genutzt wird
+ * - `$options`     — array<string, string>, wenn gesetzt wird ein
+ *                    <select> gerendert (statt Text-Input). Format
+ *                    ['value' => 'label']. `$multiline` wird ignoriert.
  * - `$label`       — barrierefreies Label (aria-label)
  *
  * Ereignisse:
@@ -59,16 +62,20 @@ new class extends Component
 
     public bool $multiline = false;
 
+    /** @var array<string, string> */
+    public array $options = [];
+
     public string $label = '';
 
     public string $value = '';
 
-    public function mount(Model $model, string $field, string $rules = 'nullable|string', bool $multiline = false, string $label = ''): void
+    public function mount(Model $model, string $field, string $rules = 'nullable|string', bool $multiline = false, array $options = [], string $label = ''): void
     {
         $this->model = $model;
         $this->field = $field;
         $this->rules = $rules;
         $this->multiline = $multiline;
+        $this->options = $options;
         $this->label = $label !== '' ? $label : $field;
 
         // Aktueller Wert des Feldes für die Anzeige. HasTranslations
@@ -106,6 +113,17 @@ new class extends Component
      * Löst das Project für den Authorize-Gate auf. Chapter, Entry,
      * Text usw. haben eigene Konventionen, wie sie ihr Project
      * erreichen — hier zentral aufgelöst.
+     *
+     * WICHTIG: kein Property-Access ($this->model->project). Manche
+     * Modelle (z. B. Gallery) definieren `project()` als reguläre
+     * Methode, die direkt das Projekt aus dem Tree hochwandert und
+     * NICHT eine `Relation`-Instanz liefert. Laravels Attribute-
+     * Magic würde dann eine Relation erwarten und mit
+     * „must return a relationship instance" aussteigen.
+     *
+     * Deshalb: Methode direkt aufrufen und Ergebnis-Typ prüfen.
+     * Ist es eine Relation, resolven wir sie mit ->first() / ->getResults();
+     * ist es schon ein Model, verwenden wir es direkt.
      */
     private function resolveProject()
     {
@@ -113,24 +131,39 @@ new class extends Component
             return $this->model;
         }
 
-        if (method_exists($this->model, 'project')) {
-            $project = $this->model->project;
-
-            if ($project === null && method_exists($this->model, 'project')) {
-                // Content-Modelle (Text, Image, …) haben project()
-                // als Methode, die den Tree hochwandert.
-                $project = $this->model->project();
-            }
-
-            return $project;
+        if (! method_exists($this->model, 'project')) {
+            return null;
         }
 
-        return null;
+        $result = $this->model->project();
+
+        if ($result instanceof \Illuminate\Database\Eloquent\Relations\Relation) {
+            return $result->getResults();
+        }
+
+        return $result;
     }
 }; ?>
 
 <div>
-    @if ($multiline)
+    @if (! empty($options))
+        {{-- Select nutzt `wire:model.live`, nicht `.blur`: bei einem
+             Dropdown feuert der Browser-Change-Event beim Klick auf
+             eine Option, aber Blur passiert erst später — das
+             frühere `wire:change="$refresh"` re-renderte dazwischen
+             mit dem alten `$value` und liess den UI-State zerfallen
+             (Type-Wechsel im Audiovisual). --}}
+        <select
+            wire:model.live="value"
+            aria-label="{{ $label }}"
+            @error('value') aria-invalid="true" aria-describedby="inline-editor-error-{{ $field }}" @enderror
+            class="w-full rounded-md border border-ink-300 bg-canvas-bg px-3 py-2 text-body text-ink-900 focus:border-primary focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-primary"
+        >
+            @foreach ($options as $optionValue => $optionLabel)
+                <option value="{{ $optionValue }}" @selected($value === (string) $optionValue)>{{ $optionLabel }}</option>
+            @endforeach
+        </select>
+    @elseif ($multiline)
         <textarea
             wire:model.blur="value"
             wire:model.live.debounce.1500ms="value"

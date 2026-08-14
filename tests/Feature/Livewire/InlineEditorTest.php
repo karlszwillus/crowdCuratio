@@ -179,6 +179,50 @@ it('InlineEditor rendert aria-invalid und aria-describedby im Fehler-Zustand', f
     $rendered->assertSee('id="inline-editor-error-name"', false);
 });
 
+it('InlineEditor mit options rendert ein <select> und die aktuellen Optionen', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole(RoleName::ADMIN->value);
+    $project = makeProject($owner);
+    $chapter = makeChapter($project, ['name' => 'Text']);
+
+    // Chapter hat kein Native-Select-Feld; wir nutzen den Test-
+    // stellvertretend für die Render-Logik. In der Praxis nutzt
+    // Audiovisual den Select-Modus für type=audio|video.
+    Livewire::actingAs($owner)
+        ->test('inline-editor', [
+            'model' => $chapter,
+            'field' => 'name',
+            'options' => ['Text' => 'Text', 'Bild' => 'Bild'],
+        ])
+        ->assertSee('<select', false)
+        ->assertSee('<option value="Text"', false)
+        ->assertSee('<option value="Bild"', false)
+        ->assertSee('selected', false);
+});
+
+it('InlineEditor mit options persistiert Auswahl-Änderung', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole(RoleName::ADMIN->value);
+    $project = makeProject($owner);
+    $chapter = makeChapter($project, ['name' => 'Alt']);
+
+    Livewire::actingAs($owner)
+        ->test('inline-editor', [
+            'model' => $chapter,
+            'field' => 'name',
+            'options' => ['Alt' => 'Alt', 'Neu' => 'Neu'],
+        ])
+        ->set('value', 'Neu')
+        ->assertDispatched('saved');
+
+    $chapter->refresh();
+    expect($chapter->name)->toBe('Neu');
+});
+
 it('InlineEditor rendert kein aria-invalid im Erfolg-Zustand', function () {
     /** @var TestCase $this */
     /** @var User $owner */
