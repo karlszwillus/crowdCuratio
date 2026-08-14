@@ -550,7 +550,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                  für neu Anlegen. --}}
                                                                                         </form>
                                                                                         <p class="metadata">
-                                                                                            {!! date('d.m.Y', strtotime($item->audiovisual->created_at)) !!}
+                                                                                            {{ __('saved') }} · {!! date('d.m.Y', strtotime($item->audiovisual->created_at)) !!}
                                                                                         </p>
                                                                                     </div>
                                                                                 </x-ui.block-card>
@@ -771,7 +771,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                 data-entry="{{$entry->name}}"
                                                                 data-id="{{$entry->id}}"
                                                                 data-toggle="modal"
-                                                                data-target="#contentModal">{{__('new_element')}} <x-icon name="plus-circle-fill" class="m-2" /> </button></span>
+                                                                data-target="#contentModal"
+                                                                class="addContent inline-flex w-full items-center justify-center gap-2 rounded-md
+                                                                       border-2 border-dashed border-line-200 bg-transparent
+                                                                       px-4 py-3 text-body text-ink-500
+                                                                       hover:border-ink-400 hover:bg-line-100/40 hover:text-ink-700"
+                                                                ><x-icon name="plus" size="4"/> <span>{{__('new_element')}}</span></button></span>
                                                 @endif
                                             </div>
                                         </li>
@@ -786,12 +791,18 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     </div>
                     @if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
                         <div class="mb-4">
-                        <span data-toggle="tooltip" data-placement="top" title="{{__('add_entry')}}"><button type="button"
-                                                                                                        class="addEntry btn btn-secondary add_entry"
-                                                                                                        data-chapter="{{$chapter->name}}"
-                                                                                                        data-id="{{$chapter->id}}"
-                                                                                                        data-toggle="modal"
-                                                                                                        data-target="#entryModal">{{__('new_entry')}} <x-icon name="plus-circle-fill" class="m-2" /> </button></span>
+                        <button type="button"
+                                title="{{__('add_entry')}}"
+                                data-chapter="{{$chapter->name}}"
+                                data-id="{{$chapter->id}}"
+                                data-toggle="modal"
+                                data-target="#entryModal"
+                                class="addEntry add_entry inline-flex w-full items-center justify-center gap-2 rounded-md
+                                       border-2 border-dashed border-line-200 bg-transparent
+                                       px-4 py-3 text-body text-ink-500
+                                       hover:border-ink-400 hover:bg-line-100/40 hover:text-ink-700">
+                            <x-icon name="plus" size="4"/> <span>{{__('new_entry')}}</span>
+                        </button>
                         </div>
                     @endif
                 </li>
@@ -800,9 +811,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
     @endif
 
     @if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
-        <a class="btn btn-secondary btn-lg add_chapter" data-toggle="modal" data-target="#myModal">
-
-            {{__('new_chapter')}} <x-icon name="plus-circle-fill" class="m-2" />
+        <a class="add_chapter mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md
+                  border-2 border-dashed border-line-200 bg-transparent
+                  px-4 py-4 text-body text-ink-500
+                  hover:border-ink-400 hover:bg-line-100/40 hover:text-ink-700 cursor-pointer"
+           data-toggle="modal" data-target="#myModal">
+            <x-icon name="plus" size="5"/> <span>{{__('new_chapter')}}</span>
         </a>
     @endif
     <hr class="mt-5 mb-5">

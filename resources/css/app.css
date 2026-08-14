@@ -38,6 +38,18 @@
     display: none !important;
 }
 
+/* Textumbruch (P3.19): Ueberschriften und Fliesstext brechen mit
+ * text-wrap: pretty — vermeidet einzelne Woerter in der letzten
+ * Zeile und Trennungen mitten im Wort. */
+h1, h2, h3, h4, .text-title, .text-heading {
+    text-wrap: balance;
+    overflow-wrap: break-word;
+}
+p, .text-body {
+    text-wrap: pretty;
+    overflow-wrap: break-word;
+}
+
 /*
  * Rich-Text-Editor: Quill-Toolbar ist per Default versteckt, wird
  * nur beim Fokus des Editors sichtbar (Handoff v4 § Screen 02:
