@@ -232,7 +232,18 @@
   "sections": "Bereiche",
   "projects": "Projekte",
   "switch_theme": "Thema wechseln",
-  "language": "Sprache"
+  "language": "Sprache",
+  "search_projects": "Projekte durchsuchen …",
+  "filter_by_status": "Nach Status filtern",
+  "filter_all": "Alle",
+  "status_published": "Veröffentlicht",
+  "status_draft": "Entwurf",
+  "status_in_review": "In Review",
+  "last_modified": "Zuletzt geändert",
+  "actions": "Aktionen",
+  "no_projects_yet": "Noch keine Projekte angelegt.",
+  "n_chapters": "{0} keine Kapitel|{1} 1 Kapitel|[2,*] :count Kapitel",
+  "n_projects_total": "{0} keine Projekte|{1} 1 Projekt|[2,*] :count Projekte"
 
 
 }

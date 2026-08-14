@@ -239,10 +239,15 @@ class ProjectPermissionService
      */
     public function listProjectsForUser(User $user): EloquentCollection
     {
+        // `withCount('chapters')` liefert `chapters_count`, das die
+        // Projektliste (Design-Sprint 5-D.4) im Untertitel unter dem
+        // Projektnamen rendert („N Kapitel"). Kein N+1, ein Sub-
+        // Select pro Query.
         if ($user->hasRole(RoleName::ADMIN->value)) {
             return Project::query()
                 ->join('users', 'users.id', '=', 'projects.user_id')
                 ->select('projects.*', 'users.name as user_name')
+                ->withCount('chapters')
                 ->whereNull('projects.deleted_at')
                 ->whereNull('users.deleted_at')
                 ->get();
@@ -252,6 +257,7 @@ class ProjectPermissionService
             ->join('users', 'users.id', '=', 'projects.user_id')
             ->leftJoin('project_user_permissions', 'project_user_permissions.project_id', '=', 'projects.id')
             ->select('projects.*', 'users.name as user_name')
+            ->withCount('chapters')
             ->distinct()
             ->where(function ($query) use ($user) {
                 $query->where('projects.user_id', $user->id)

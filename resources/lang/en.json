@@ -231,6 +231,17 @@
   "sections": "Sections",
   "projects": "Projects",
   "switch_theme": "Switch theme",
-  "language": "Language"
+  "language": "Language",
+  "search_projects": "Search projects …",
+  "filter_by_status": "Filter by status",
+  "filter_all": "All",
+  "status_published": "Published",
+  "status_draft": "Draft",
+  "status_in_review": "In review",
+  "last_modified": "Last modified",
+  "actions": "Actions",
+  "no_projects_yet": "No projects yet.",
+  "n_chapters": "{0} no chapters|{1} 1 chapter|[2,*] :count chapters",
+  "n_projects_total": "{0} no projects|{1} 1 project|[2,*] :count projects"
 
 }
