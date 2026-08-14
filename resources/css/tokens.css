@@ -1,21 +1,28 @@
 /*
- * crowdCuratio Design Tokens (v3)
+ * crowdCuratio Design Tokens (v4)
  *
- * Source of Truth: .werkbank/BRIEFINGS/redesign/version 3/tokens.md
- * Tailwind-4-`@theme`-Block — diese Tokens stehen ab Phase 5 als
- * CSS-Custom-Properties zur Verfügung; Tailwind generiert die
- * passenden Utility-Klassen daraus (z. B. `text-ink-900`,
- * `bg-primary`, `rounded-md`).
+ * Source of Truth: .werkbank/BRIEFINGS/redesign/version 4_inkl_design_handoff_crowdcuratio/tokens.md
+ * Tailwind-4-`@theme`-Block — diese Tokens stehen als CSS-Custom-
+ * Properties zur Verfügung; Tailwind generiert die passenden
+ * Utility-Klassen daraus (z. B. `text-ink-900`, `bg-primary`,
+ * `rounded-md`, `shadow-medium`).
  *
  * Tokens hier ergänzen — nicht Hex-Werte in Templates schreiben.
+ * Alle Chrome-, Nav-, Karten- und Button-Flächen lesen ausschließlich
+ * diese Tokens; ein Theme-Wechsel (`data-theme="aktivesMuseum"`)
+ * schaltet dann konsistent alle abhängigen Elemente um.
  */
 
 @theme {
-  /* Marke (Default-Theme: crowdCuratio) */
+  /* ============================================================
+   * 1 · Farben
+   * ============================================================ */
+
+  /* Marke (Default-Theme: crowdCuratio) — themen-abhängig, wird
+   * unten für Aktives Museum überschrieben. */
   --color-primary: #c23934;
   --color-primary-on: #ffffff;
 
-  /* Brand-Akzente — werden im Theme-Switch überschrieben */
   --color-brand-bar: #c23934;   /* Akzent-Rail, aktive Marker */
   --color-brand-line: #c23934;  /* Linien/Fokus */
   --color-tint-bg: #f7e7e6;     /* Aktiver Tree-/Listen-Eintrag */
@@ -23,7 +30,7 @@
   --color-logo-bg: #c23934;     /* Logo-Kachel */
   --color-logo-on: #ffffff;     /* Glyph auf Logo-Kachel */
 
-  /* Chrome (App-Shell) — werden im Theme-Switch überschrieben */
+  /* Chrome (App-Shell) — themen-abhängig. */
   --color-chrome-bg: #1b2330;
   --color-chrome-on: #f4f5f7;
   --color-chrome-on-dim: #b0b6be;
@@ -31,52 +38,99 @@
   --color-chrome-active: #262f3e;
   --color-canvas-bg: #f4f5f6;
 
-  /* Neutrale Skala — Text auf Hell */
-  --color-ink-900: #1b2330; /* Display, Headlines, primärer Text */
-  --color-ink-700: #374151; /* Body */
-  --color-ink-600: #4b5563; /* Sekundärer Text */
-  --color-ink-500: #6b7280; /* Muted (auf Hell — AA) */
-  --color-ink-400: #8a909c; /* Nur Large oder Caps-Labels */
+  /* Neutrale Skala — Text auf Hell (Kontrast-Verdikte in tokens.md). */
+  --color-ink-900: #1b2330; /* Display, Headlines, primärer Text — 14:1 */
+  --color-ink-700: #374151; /* Body — 9:1 */
+  --color-ink-600: #4b5563; /* Sekundärer Text — 7:1 */
+  --color-ink-500: #6b7280; /* Muted auf Hell — AA Normaltext, 4.9:1 */
+  --color-ink-400: #8a909c; /* Nur Large ≥ 18.66 px oder Caps-Labels — 3.1:1 */
 
-  /* Neutrale Skala — Text auf Dunkel */
-  --color-on-dark-300: #b0b6be; /* Muted auf Dunkel — AA */
+  /* Flächen und Linien im Hell-Bereich. */
+  --color-line-200: #e5e7eb; /* Rahmen */
+  --color-line-100: #eef0f2; /* Feine Trenner */
+  --color-paper-50: #f4f5f6; /* Canvas-Untergrund */
+  --color-paper-0:  #ffffff; /* Karten-Flächen */
 
-  /* Semantische Farben mit Hintergrund-Variante */
-  --color-success: #16744a;
+  /* Neutrale Skala — Text auf Dunkel-Chrome (`--chrome-bg #1b2330`). */
+  --color-on-dark-100: #f4f5f7; /* Primärer Text auf Dunkel — 15:1 */
+  --color-on-dark-300: #b0b6be; /* Muted auf Dunkel — AA, 6.8:1 */
+  --color-on-dark-400: #8b919b; /* Nur Large ≥ 18.66 px — 4.0:1 */
+
+  /* Semantische Farben mit Hintergrund-Variante (Feedback-Banner /
+   * Status-Badges). Kontrast Text/bg jeweils AA-verifiziert. */
+  --color-success:    #16744a;
   --color-success-bg: #e7f4ee;
-  --color-warning: #a26b16;
+  --color-warning:    #a26b16;
   --color-warning-bg: #fbf1dd;
-  --color-danger: #c0392b;
-  --color-danger-bg: #fae3e1;
-  --color-info: #2f5bd4;
-  --color-info-bg: #eaf0fc;
+  --color-danger:     #c0392b;
+  --color-danger-bg:  #fae3e1;
+  --color-info:       #2f5bd4;
+  --color-info-bg:    #eaf0fc;
 
-  /* Spacing — Tailwind-Stufen 1 = 4px … 32 = 128px */
+  /* Formular-Rahmen (dedizierter Token, damit Inputs konsistent
+   * dieselbe Rahmenfarbe tragen). */
+  --color-form-border: #d4d8de;
+
+  /* ============================================================
+   * 2 · Spacing — Tailwind-4er-Skala
+   * `--spacing: 4px` gibt die Basis vor; Tailwind generiert
+   * `p-1 = 4px` … `p-32 = 128px`. Mapping zu Design-Tokens:
+   * 1=4 · 2=8 · 3=12 · 4=16 · 6=24 · 8=32 · 12=48 · 16=64 · 24=96 · 32=128
+   * ============================================================ */
   --spacing: 4px;
 
-  /* Border-Radii */
-  --radius-sm: 6px;
-  --radius-md: 9px;
-  --radius-lg: 14px;
+  /* ============================================================
+   * 3 · Border-Radii
+   * ============================================================ */
+  --radius-sm: 6px;   /* kleine Elemente (Chips, kleine Tags) */
+  --radius-md: 9px;   /* Buttons, Inputs, Badges (rechteckig) */
+  --radius-lg: 14px;  /* Karten, Panels, Modals */
+  --radius-pill: 999px; /* Status-Badges, Toggles */
 
-  /* Typografie-Skala */
-  --text-display: 46px;
-  --text-title: 26px;
-  --text-heading: 18px;
-  --text-body: 14.5px;
-  --text-caption: 12px;
+  /* ============================================================
+   * 4 · Typografie
+   * Line-Height / Letter-Spacing pro Stufe direkt am Utility
+   * (`leading-*`, `tracking-*`) — Handoff v4 § 3.
+   * ============================================================ */
+  --text-display: 46px;   /* Seiten-H1 · 1.08 / -1.2px, weight 600 */
+  --text-title:   26px;   /* Sektions-H2 · 1.2 / -0.5px, weight 600 */
+  --text-heading: 18px;   /* Karten-Titel · 1.3 / -0.2px, weight 600 */
+  --text-body:    14.5px; /* Fließtext · 1.6 / 0 */
+  --text-caption: 12px;   /* Bildunterschrift · 1.45 / 0 */
+  --text-mono-caps: 11px; /* Plex-Mono-Labels · uppercase, tracking .1em */
+
+  /* ============================================================
+   * 5 · Elevation
+   * ============================================================ */
+  --shadow-subtle:   0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-medium:   0 12px 34px rgba(0, 0, 0, 0.18);
+  --shadow-strong:   0 18px 50px rgba(0, 0, 0, 0.35);
+  --shadow-floating: 0 24px 60px rgba(0, 0, 0, 0.45);
+  /* Popover/Menü (Handoff v4, Insert-Menü Screen 05·5). */
+  --shadow-popover:  0 18px 44px rgba(16, 20, 28, 0.22);
+
+  /* ============================================================
+   * 6 · Accessibility-Tokens
+   * ============================================================ */
+  --focus-outline: 2px solid var(--color-brand-bar);
+  --focus-offset:  2px;
+  --target-min:    44px; /* Mindest-Trefferfläche Icon-Buttons (WCAG 2.5.8) */
 }
 
 /*
- * Theme-Switch — zweite Marke „Aktives Museum" (Hell-Modus).
+ * Theme-Switch — zweite Marke „Aktives Museum" (Hell-Chrome).
  *
  * `<html data-theme="aktivesMuseum">` schaltet auf gelben Brand-
  * Akzent mit hellem App-Chrome. Tokens übersteuern die Defaults
  * aus dem @theme-Block oben; alles, was nicht hier überschrieben
- * ist (Semantik-Farben, Spacing, Radius, Typografie), bleibt
- * unverändert.
+ * ist (Semantik-Farben, Neutrals, Spacing, Radius, Typografie,
+ * Shadows), bleibt unverändert.
  *
- * Quelle: tokens.md § 1 Marke / § 1.2 Chrome (v3-Briefing).
+ * Quelle: tokens.md § 1.1 Marke / § 1.2 Chrome (v4-Briefing).
+ * Regel: Gelb ist Marken-/Akzentfarbe, nie Button-Fläche mit weißem
+ * Text (`#fff` auf `#f5cf11` = 1.4:1 ✕). Im AM-Theme trägt der
+ * Primary-Button dunkle Tinte `#1b2330` (14.8:1); Gelb bleibt
+ * Rail-Akzent und Fokus-Farbe.
  */
 [data-theme="aktivesMuseum"] {
   --color-primary: #1b2330;
