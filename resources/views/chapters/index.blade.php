@@ -105,9 +105,34 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     <div id="{{$chapter->id}}">
                         <div class="row border border-secondary p-4 mb-4 content">
                             <div style="float: left;" id="anchor_Chapter_{{$chapter->id}}">
-                                <h2>{!! $chapter->name !!}</h2>
-                                <p>{!! $chapter->subtitle !!}</p>
-                                <p>{!! $chapter->description !!}</p>
+                                @can('update', $project)
+                                    <livewire:inline-editor
+                                        :model="$chapter"
+                                        field="name"
+                                        rules="nullable|string|max:255"
+                                        :label="__('chapter_title')"
+                                        :key="'chapter-name-'.$chapter->id"
+                                    />
+                                    <livewire:inline-editor
+                                        :model="$chapter"
+                                        field="subtitle"
+                                        rules="nullable|string|max:255"
+                                        :label="__('chapter_subtitle')"
+                                        :key="'chapter-subtitle-'.$chapter->id"
+                                    />
+                                    <livewire:inline-editor
+                                        :model="$chapter"
+                                        field="description"
+                                        rules="nullable|string"
+                                        :multiline="true"
+                                        :label="__('chapter_description')"
+                                        :key="'chapter-description-'.$chapter->id"
+                                    />
+                                @else
+                                    <h2>{!! $chapter->name !!}</h2>
+                                    <p>{!! $chapter->subtitle !!}</p>
+                                    <p>{!! $chapter->description !!}</p>
+                                @endcan
                             </div>
                             <div class="ml-auto mr-3 icons">
                                 <form action="{{ route('chapters.destroy',$chapter->id) }}" method="POST"
@@ -134,12 +159,10 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                 data-toggle="tooltip" data-placement="top" title="{{__('delete_chapter')}}">
 											<i class="bi-x-circle-fill m-2"></i></button>
 									@endif
-									@if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
-									<span data-toggle="tooltip" data-placement="top" title="{{__('edit_entry')}}"><button type="button" data-id="{{$chapter->id}}"
-                                                                              data-toggle="modal"
-                                                                              data-target="#myModal"
-                                                                              class="open-ModifyChapter"><i class="bi-pencil-square m-2"></i></button></span>
-									@endif
+									{{-- Edit-Button für Chapter entfällt: Titel, Subtitel und
+									     Beschreibung werden per <livewire:inline-editor> direkt im
+									     Kapitel-Card editiert (Phase 5c.6.a). Add-Modal (myModal)
+									     bleibt für „Kapitel hinzufügen". --}}
 									<a onclick="collapseExpand({{$chapter->id}})"  id="{{$chapter->id}}"
                                        aria-expanded="true" aria-controls="collapseChapter_{{$chapter->id}}"><i
                                                 class="bi-caret-down-fill" id="chp_{{$chapter->id}}"></i></a>
@@ -902,27 +925,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
         // der nächste Add nicht aus dem letzten Update-Mode lebt.
         $('#myModal').on('hidden.bs.modal', resetChapterForm);
 
-        //Modify chapter
-        $('.open-ModifyChapter').click(function () {
-            $('#chapterTitle').val('');
-            $('#chapterSubtitle').val();
-            let id = $(this).attr("data-id");
-            let url = "{{ route('chapters.edit', ":id") }}";
-            url = url.replace(':id', id);
-
-            setChapterFormUpdate(id);
-
-            $.ajax({
-                type: 'GET',
-                url: url,
-                success: function (data) {
-                    $('input[name="chapterId"]').val(data.id);
-                    $('#chapterTitle').val(data.name[Object.keys(data.name)[0]]);
-                    $('#chapterSubtitle').val(data.subtitle[Object.keys(data.subtitle)[0]]);
-                    quillChapter.container.firstChild.innerHTML = data.description[Object.keys(data.description)[0]];
-                }
-            });
-        })
+        // Modify-Chapter-Handler entfällt seit Phase 5c.6.a — Kapitel-
+        // Titel, Subtitel und Beschreibung werden direkt im
+        // Kapitel-Card editiert, das Chapter-Edit-Modal ist raus.
+        // Add-Chapter-Modal (myModal) bleibt unangetastet,
+        // resetChapterForm/setChapterFormUpdate werden dort weiter
+        // genutzt.
 
         //Modify entry
         // Phase 2 / D.13: zentrale Helper für Entry-Form-Mode (analog
