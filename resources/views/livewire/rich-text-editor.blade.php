@@ -131,17 +131,19 @@ new class extends Component
 }; ?>
 
 <div
-    x-data="richTextEditor(@js($value))"
-    x-init="initQuill($refs.editor)"
+    x-data="{ ...richTextEditor(@js($value)), focused: false }"
+    x-init="initQuill($refs.editor); $refs.editor.addEventListener('focusin', () => focused = true); $refs.editor.addEventListener('focusout', (e) => { if (!$el.contains(e.relatedTarget)) focused = false; })"
     wire:ignore
-    class="rich-text-editor"
+    :class="focused ? 'rich-text-editor is-focused' : 'rich-text-editor'"
     aria-label="{{ $label }}"
 >
     {{-- Quill mountet auf $refs.editor. `wire:ignore` verhindert,
          dass Livewire das Editor-DOM beim Re-Render überschreibt —
          sonst würde die Caret-Position beim Auto-Save verloren
-         gehen. --}}
-    <div x-ref="editor" class="min-h-[6rem] bg-canvas-bg text-ink-900"></div>
+         gehen. Die Toolbar (`.ql-toolbar`) wird per CSS nur dann
+         sichtbar, wenn `is-focused` am Root sitzt (P1.3 Review-
+         Punkt: Toolbar nur am aktiven Block). --}}
+    <div x-ref="editor" class="min-h-[6rem] bg-transparent text-ink-900"></div>
 
     @error('value')
         <p class="mt-1 text-sm text-primary">

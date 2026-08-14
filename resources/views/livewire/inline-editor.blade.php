@@ -168,19 +168,20 @@ new class extends Component
     // nur einen sanften Background-Hint, Fokus einen dezenten Ring
     // vom brand-bar-Token. Das entspricht Handoff v4 § Screen 02:
     // Titel wirken wie Ueberschriften, keine Formularfelder.
+    // Ghost-Inputs: `appearance-none` und `outline-none` ueberschreiben
+    // den User-Agent-Default (Chrome/Firefox rendern <input> mit einem
+    // inset-Border von 2 px, unabhaengig von border-Klassen). Nur beim
+    // focus-visible zeigt der brand-bar-Ring an, dass das Feld aktiv
+    // ist — Hover ist unauffaellig als Background-Hint.
+    $shared = 'appearance-none w-full rounded-md border-0 bg-transparent px-2 py-1 -mx-2 '
+            . 'outline-none ring-0 transition-colors '
+            . 'hover:bg-line-100/60 '
+            . 'focus:bg-line-100/60 focus-visible:ring-2 focus-visible:ring-brand-bar/50';
+
     $variantClasses = match ($variant) {
-        'title'    => 'w-full rounded-md border-0 bg-transparent px-2 py-1 -mx-2 '
-                    . 'text-title font-semibold text-ink-900 tracking-tight '
-                    . 'transition-colors hover:bg-line-100/60 '
-                    . 'focus:bg-line-100/60 focus:outline-none focus:ring-2 focus:ring-brand-bar/40',
-        'heading'  => 'w-full rounded-md border-0 bg-transparent px-2 py-1 -mx-2 '
-                    . 'text-heading font-semibold text-ink-900 '
-                    . 'transition-colors hover:bg-line-100/60 '
-                    . 'focus:bg-line-100/60 focus:outline-none focus:ring-2 focus:ring-brand-bar/40',
-        'subtitle' => 'w-full rounded-md border-0 bg-transparent px-2 py-1 -mx-2 '
-                    . 'text-body text-ink-500 '
-                    . 'transition-colors hover:bg-line-100/60 '
-                    . 'focus:bg-line-100/60 focus:outline-none focus:ring-2 focus:ring-brand-bar/40',
+        'title'    => $shared.' text-title font-semibold text-ink-900 tracking-tight',
+        'heading'  => $shared.' text-heading font-semibold text-ink-900',
+        'subtitle' => $shared.' text-body text-ink-500',
         default    => 'w-full rounded-md border border-form-border bg-canvas-bg px-3 py-2 '
                     . 'text-body text-ink-900 '
                     . 'focus:border-primary focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-primary',
