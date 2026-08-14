@@ -5,10 +5,12 @@ use App\Models\Chapter;
 use App\Models\Entry;
 use App\Models\Gallery;
 use App\Models\Image;
+use App\Models\MediaContent;
 use App\Models\Project;
 use App\Models\Source;
 use App\Models\Text;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -156,15 +158,18 @@ function makeAudiovisual(array $overrides = []): Audiovisual
  * @param  TModel  $content
  * @return TModel
  */
-function attachToProject(\App\Models\Project $project, \Illuminate\Database\Eloquent\Model $content): \Illuminate\Database\Eloquent\Model
+function attachToProject(Project $project, Model $content): Model
 {
     $chapter = makeChapter($project);
     $entry = makeEntry($chapter);
-    \App\Models\MediaContent::create([
-        'content_id' => $content->id,
+    MediaContent::create([
+        // Model::getKey() ist auf Basis-Model typisiert und
+        // umgeht Larastans „property TModel::$id not found"-
+        // Warnung, die generische Templates nicht auflösen kann.
+        'content_id' => $content->getKey(),
         'content_type' => $content::class,
         'parent_id' => $entry->id,
-        'parent_type' => \App\Models\Entry::class,
+        'parent_type' => Entry::class,
         'position' => 1,
     ]);
 
