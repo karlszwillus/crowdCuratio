@@ -38,6 +38,11 @@ document.addEventListener('alpine:init', () => {
 // jQuery-Shim in modal.js weiter.
 import './modal';
 
+// Modal-Wire-Up — trigger-abhaengige Feldbelegung (aktuell entryModal
+// chapterId). Unabhaengig von @push('scripts')-Bloecken der Bestands-
+// Views, damit ein JS-Fehler dort den Add-Entry-Flow nicht blockiert.
+import './modal-wire';
+
 // Live-Breadcrumb — registriert die Alpine-Komponente `ccBreadcrumb`,
 // die in <x-ui.breadcrumb :tree="..."> verwendet wird. Reagiert auf
 // hashchange und leitet aus dem Tree-Daten-Objekt den aktuellen Pfad

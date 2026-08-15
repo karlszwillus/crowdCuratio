@@ -1111,15 +1111,29 @@ If not, see <https://www.gnu.org/licenses/>. -->
         }
 
 
-        //Add Entry
-        $('.addEntry').click(function () {
+        // Add Entry — Event-Delegation, damit auch der Trigger aus
+        // dem Sidebar-Tree (Livewire-gerendert, nicht beim Page-Load
+        // im DOM) greift. Ohne Delegation feuert der Handler nur
+        // fuer den Trigger im Chapter-Card, der Sidebar-Tree-Trigger
+        // oeffnet den Modal ohne gesetzte chapterId und der Request
+        // faellt in der Policy mit 403 durch.
+        //
+        // Persona-Smoke 2026-08-15: Selektoren auf #entry_frm bzw.
+        // #chapter_frm pinnen, sonst kreuzen sich Chapter- und
+        // Entry-Modal (beide haben ein hidden input[name=chapterId]).
+        // Wenn Bootstrap beim Oeffnen des Entry-Modals ein anderes
+        // Modal schliesst, feuert dessen hidden.bs.modal-Handler
+        // resetChapterForm — und das globale
+        // $('input[name=chapterId]').val('') leert auch das gerade
+        // per .addEntry gesetzte Feld im Entry-Modal → 403.
+        $(document).on('click', '.addEntry', function () {
             $('#entryTitle').val('');
-            $('#entrySubtitle').val();
-            let id = $(this).attr("data-id");
-            let chapter = $(this).attr("data-chapter");
-            $('input[name="chapterId"]').val(id);
+            $('#entrySubtitle').val('');
+            let id = $(this).attr('data-id');
+            let chapter = $(this).attr('data-chapter');
+            $('#entry_frm input[name="chapterId"]').val(id);
             $('#lblChapter').text(chapter);
-        })
+        });
 
         // Phase 2 / D.12: zentrale Helper für Chapter-Form-Mode.
         // Phase-1-Verzweigung im Controller ist weg — wir müssen jetzt
@@ -1131,7 +1145,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
         function resetChapterForm() {
             $('#chapter_frm').attr('action', chapterStoreUrl);
             $('#chapter_frm input[name="_method"]').val('');
-            $('input[name="chapterId"]').val('');
+            // Persona-Smoke 2026-08-15: Selector auf #chapter_frm
+            // pinnen — sonst leert der Reset auch den chapterId-
+            // Input im entryModal und der naechste Entry-Add faellt
+            // in der StoreEntryRequest::authorize() mit 403 durch.
+            $('#chapter_frm input[name="chapterId"]').val('');
         }
 
         function setChapterFormUpdate(id) {
@@ -1469,7 +1487,19 @@ If not, see <https://www.gnu.org/licenses/>. -->
             var prev = $(this).data('val');
             var current = $(this).val();
             if (prev !== current) {
-                $('#updateProjectBtn').html('<button id="btn_save" class="btn btn-secondary btn-block text-left" type="submit" name="btn_submit" value="Save"><x-icon name="file-earmark" class="m-2" />{{__('save')}}</button>');
+                // Persona-Smoke 2026-08-15: x-icon-Komponente darf
+                // hier NICHT inline im JS-String stehen — Blade rendert
+                // sie zu einem mehrzeiligen Inline-SVG mit doppelten
+                // Quotes, das den einfach-quotierten JS-String
+                // zerbricht (SyntaxError, gesamter Script-Push-Block
+                // bricht ab, addEntry und add-Text-Handler tot).
+                // Label-String ueber json_encode ausgeben.
+                $('#updateProjectBtn').html(
+                    '<button id="btn_save" class="btn btn-secondary btn-block text-left" '
+                    + 'type="submit" name="btn_submit" value="Save">'
+                    + @json(__('save'))
+                    + '</button>'
+                );
             }
 
         });

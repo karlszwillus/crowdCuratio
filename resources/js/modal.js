@@ -63,7 +63,7 @@ function hideBackdropIfEmpty() {
     bd.style.display = 'none';
 }
 
-function openModal(modal) {
+function openModal(modal, trigger = null) {
     if (!modal || modal.classList.contains('in')) return;
 
     const stackDepth = openStack().length;
@@ -77,6 +77,18 @@ function openModal(modal) {
     modal.setAttribute('aria-hidden', 'false');
     modal.removeAttribute('aria-modal');
     modal.setAttribute('aria-modal', 'true');
+
+    // Persona-Smoke 2026-08-15: Trigger als relatedTarget im show-
+    // Event mitgeben, damit Consumer (siehe modal-wire.js fuer
+    // #entryModal-chapterId) unabhaengig vom Bestands-jQuery-Handler
+    // in chapters/index verlaesslich an data-id/data-chapter kommen.
+    modal.dispatchEvent(new CustomEvent('cc-modal-show', {
+        bubbles: true,
+        detail: { relatedTarget: trigger },
+    }));
+    if (window.jQuery && trigger) {
+        window.jQuery(modal).trigger(window.jQuery.Event('show.bs.modal', { relatedTarget: trigger }));
+    }
 
     requestAnimationFrame(() => modal.classList.add('in', 'show'));
 
@@ -154,7 +166,7 @@ function handleToggleClick(event) {
     const modal = document.querySelector(targetSel);
     if (!modal) return;
 
-    openModal(modal);
+    openModal(modal, trigger);
 }
 
 function handleDismissClick(event) {
