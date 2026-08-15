@@ -20,10 +20,11 @@
     ][$meta['variant']] ?? 'bg-info-bg text-info';
 
     $chapterCount = $project->chapters_count ?? 0;
-    // Ziel-URL: Leserecht → Preview/Read, sonst Editor.
-    $href = $roleBadge === 'reader'
-        ? route('projects.show', $project->id)
-        : route('projects.edit', $project->id);
+    // Ziel-URL: immer der Editor. Reader landen dort im Read-Only-
+    // Modus (Edit-/Publish-Buttons werden per @can-Gate ausgeblendet).
+    // projects.show ist eine Legacy-View mit „show_product"-Ueberschrift
+    // ohne Nutzwert.
+    $href = route('projects.edit', $project->id);
 
     $roleBadgeLabel = $roleBadge === 'editor'
         ? __('role_editor_short')

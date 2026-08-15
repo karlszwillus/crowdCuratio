@@ -171,7 +171,18 @@ class DashboardController extends Controller
                 Gallery::class,
                 Audiovisual::class,
             ])
-            ->with(['user'])
+            // Eager-Load polymorph plus dessen project-Kette, damit
+            // commentBelongsToAccessibleProject() nicht lazy-loadet
+            // (AppServiceProvider hat Model::shouldBeStrict aktiv).
+            ->with([
+                'user',
+                'commentable' => function ($morphTo) {
+                    $morphTo->morphWith([
+                        Chapter::class => ['project'],
+                        Entry::class => ['chapter.project'],
+                    ]);
+                },
+            ])
             ->orderByDesc('created_at')
             ->limit(self::COMMENTS_LIMIT * 3) // Buffer wg. Filterung
             ->get()

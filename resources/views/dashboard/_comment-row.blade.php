@@ -15,25 +15,39 @@
         ->map(fn ($p) => mb_strtoupper(mb_substr($p, 0, 1)))
         ->implode('') ?: '?';
 
-    // Brotkrume aus commentable.
+    // Projekt aus commentable aufloesen. Ziel: die Zeile verlinkt
+    // MINDESTENS auf das Projekt, auch wenn der Content-Typ
+    // (Text/Image/Gallery/Audiovisual) heute noch keine sinnvolle
+    // Sub-Route hat — die kommt mit Backlog #39 (Kommentar-System-
+    // Redesign). Falls kein Projekt auflösbar (kaputtes Polymorph-
+    // Ziel), rendern wir ohne Link.
     $target = $comment->commentable;
+    $project = null;
     $breadcrumb = '—';
-    $link = '#';
+    $anchor = null;
 
     if ($target instanceof \App\Models\Project) {
+        $project = $target;
         $breadcrumb = $target->name;
-        $link = route('projects.edit', $target->id);
-    } elseif ($target instanceof \App\Models\Chapter && $target->project) {
-        $breadcrumb = $target->project->name.' › '.$target->name;
-        $link = route('projects.edit', $target->project->id).'#anchor_Chapter_'.$target->id;
-    } elseif ($target instanceof \App\Models\Entry && $target->chapter) {
-        $chapter = $target->chapter;
-        $project = $chapter->project ?? null;
-        if ($project) {
-            $breadcrumb = $project->name.' › '.$chapter->name.' › '.$target->name;
-            $link = route('projects.edit', $project->id).'#anchor_Entry_'.$target->id;
-        }
+    } elseif ($target instanceof \App\Models\Chapter) {
+        $project = $target->project ?? null;
+        $breadcrumb = trim(($project?->name ?? '').' › '.$target->name, ' ›');
+        $anchor = 'anchor_Chapter_'.$target->id;
+    } elseif ($target instanceof \App\Models\Entry) {
+        $chapter = $target->chapter ?? null;
+        $project = $chapter?->project ?? null;
+        $parts = array_filter([$project?->name, $chapter?->name, $target->name]);
+        $breadcrumb = implode(' › ', $parts);
+        $anchor = 'anchor_Entry_'.$target->id;
+    } elseif ($target !== null && method_exists($target, 'project')) {
+        // Text/Image/Gallery/Audiovisual: Projekt via project()-Kette.
+        $project = $target->project();
+        $breadcrumb = $project?->name ?? '—';
     }
+
+    $link = $project
+        ? route('projects.edit', $project->id).($anchor ? '#'.$anchor : '')
+        : '#';
 
     $text = trim(strip_tags((string) ($comment->comment ?? $comment->body ?? '')));
 @endphp
@@ -56,7 +70,21 @@
                 <span class="min-w-0 truncate text-caption text-ink-500">{{ $breadcrumb }}</span>
             </div>
             <span class="shrink-0 text-caption text-ink-500">
-                {{ $comment->created_at?->diffForHumans() }}
+                {{-- Comment nutzt $timestamps = false — created_at
+                     kommt als String aus der DB und wird nicht als
+                     Carbon gecastet. Defensiv per Carbon::parse
+                     wrappen. --}}
+                @php
+                    $createdAt = $comment->created_at;
+                    if (is_string($createdAt) && $createdAt !== '') {
+                        try {
+                            $createdAt = \Illuminate\Support\Carbon::parse($createdAt);
+                        } catch (\Throwable $e) {
+                            $createdAt = null;
+                        }
+                    }
+                @endphp
+                {{ $createdAt?->diffForHumans() }}
             </span>
         </div>
         <p class="mt-0.5 text-body text-ink-600"
