@@ -1,11 +1,24 @@
-@extends('projects.layout')
-@section('content')
-    @if (!env('APP_DEBUG', false))
-        <p>{{Request::url()}}</p>
-        <p>{{$exception->getMessage()}}</p>
-        <p>Line: {{$exception->getLine()}}</p>
-    @else
-        <p>Error on page: {{Request::url()}}</p>
-    @endif
+{{--
+crowdCuratio - Curating together virtually
+Copyright (C)2026 - berlinHistory e.V.
 
+Phase 5e.5: 500-Fehlerseite. Persona-freundlicher Text — kein
+Stacktrace, keine App-Debug-Details.
+
+Vor 5e.5 zeigte diese View im Non-Debug-Modus die
+Exception-Message inkl. Datei und Zeile ($exception->getMessage()
+und getLine()) an — ein Info-Leak an Endnutzer, den wir mit dem
+Rewrite schliessen. In APP_DEBUG=true landet der Nutzer ohnehin
+in Laravel Ignition und sieht diese View gar nicht.
+--}}
+
+@extends('projects.layout')
+
+@section('content')
+    @include('errors._error-shell', [
+        'code'     => '500',
+        'iconName' => 'alert-triangle',
+        'title'    => __('error_500_title'),
+        'body'     => __('error_500_body'),
+    ])
 @endsection

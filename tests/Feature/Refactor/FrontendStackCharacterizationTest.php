@@ -87,7 +87,9 @@ it('project edit view renders chapter card and add-chapter button for owner', fu
     $response->assertOk();
     $response->assertSee('lang="de"', false);
     $response->assertSee($chapter->name);
-    $response->assertSeeText('Kapitel hinzufügen');
+    // Phase 5e.3: Anlage-Verben substantivisch. „Kapitel hinzufuegen"
+    // heisst seit dem Vokabular-Sweep „Neues Kapitel".
+    $response->assertSeeText('Neues Kapitel');
 });
 
 it('image upload modal renders mandatory copyright and source fields', function () {

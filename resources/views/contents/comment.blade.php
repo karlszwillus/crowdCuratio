@@ -88,6 +88,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
     <script type="text/javascript">
 
         $(document).ready(function () {
+            // Phase 5e.4: DataTable-i18n durchgehend deutsch.
             $('#commentList').DataTable({
                 "paging": true,
                 //"ordering": false,
@@ -95,12 +96,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
                 "language": {
                     "search": "Suchen:",
                     "info": "Zeige Seite _PAGE_ von _PAGES_",
-                    "lengthMenu": "Zeige _MENU_ Einträge",
+                    "lengthMenu": "_MENU_ Eintraege pro Seite",
                     "paginate": {
-                        "first": "First",
-                        "last": "Last",
-                        "next": "Nächste Seite",
-                        "previous": "Vorherige Seite"
+                        "first": "Erste",
+                        "last": "Letzte",
+                        "next": "Weiter",
+                        "previous": "Zurueck"
                     }
                 }
             });

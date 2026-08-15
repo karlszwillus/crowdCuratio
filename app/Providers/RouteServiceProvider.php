@@ -41,7 +41,12 @@ class RouteServiceProvider extends ServiceProvider
      *
      * @var string
      */
-    public const HOME = '/projects';
+    // Phase 5e.1 (2026-08-15): mit dem neuen Dashboard-Screen wechselt
+    // der Post-Login-Redirect zurueck auf /dashboard. Vor 5e.1 war das
+    // Dashboard leer und Login redirected direkt auf /projects (5-D.7);
+    // jetzt sitzt in /dashboard die Wiederaufnahme-Zeile plus die vier
+    // Sektionen aus Screen 09.
+    public const HOME = '/dashboard';
 
     /**
      * The controller namespace for the application.
