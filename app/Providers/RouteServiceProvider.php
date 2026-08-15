@@ -34,10 +34,14 @@ class RouteServiceProvider extends ServiceProvider
      * The path to the "home" route for your application.
      *
      * This is used by Laravel authentication to redirect users after login.
+     * Aktueller Zustand: das Dashboard-View ist noch leer, deshalb
+     * fuehrt der Login-Redirect direkt auf die Projektliste. Sobald
+     * ein echtes Dashboard existiert, wandert der Wert zurueck auf
+     * '/dashboard'.
      *
      * @var string
      */
-    public const HOME = '/dashboard';
+    public const HOME = '/projects';
 
     /**
      * The controller namespace for the application.

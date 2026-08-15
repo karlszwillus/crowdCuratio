@@ -125,7 +125,144 @@ Handler und Ajax-Roundtrips sind entfernt. Die fünf Add-Modals
 in dieser Runde — deren Inline-Migration ist als Backlog-Feature
 vermerkt und braucht Design-Vorlage.
 
+**Phase-5-Design-Sprint — visuelle Angleichung an Designer-Handoff
+v4 abgeschlossen.** Zwischen Phase 5c und Phase 5d wird die
+Umsetzung optisch an den Handoff des Designers herangeführt: neun
+Sub-Wellen, ein Branch, ein PR. Grundlage sind die 60
+Design-Tokens aus `tokens.md`, die als Tailwind-4-`@theme`-Block
+alle Chrome-, Neutral-, Semantik- und Typografie-Werte liefern.
+IBM Plex Sans wird als projektweiter UI-Default gesetzt, IBM
+Plex Mono für Caps-Labels; Font-Files kommen selbst gehostet über
+`@fontsource`.
+
+Icons wechseln vollständig auf Lucide über
+`blade-ui-kit/blade-icons` plus `mallardduck/blade-lucide-icons`;
+die neue semantische `<x-icon name="…">`-Komponente ersetzt 84
+Bootstrap-Icons-Aufrufe und die Dependency `bootstrap-icons` fällt.
+
+Die App-Shell besteht aus einer sticky 60-px-Rail links (Logo +
+Bereichs-Icons + Utility-Zone mit Auto-Save-Punkt, Marken-Toggle,
+Sprache, User-Menü), einem 280-px-Sidebar-Panel dahinter
+(kontextabhängig: Projektliste zeigt globale Nav, Editor den
+Struktur-Baum mit Kapitel-Nummerierung, Klapp-Chevrons und
+aktiver Kante), und dem Canvas rechts. Die alte Top-Bar aus
+Phase 5b entfällt.
+
+Die Projektliste rendert als Card mit Filter-Chips
+(Alle/Veröffentlicht/Entwurf/In-Review mit Zählern), Suchfeld
+oben rechts und einer CSS-Grid-Tabelle mit Thumbnails, Status-
+Badges, Autor-Avataren und rechtsbündigen Aktions-Icons. Der
+Editor-Kopf ist eine sticky Chrome-Bar mit Brotkrumen (`Projekte
+/ Karls Projekt / Kapitel N / Eintragsname`), Segmented-Control
+„Bearbeiten · Übersetzen · Metadaten", rotem
+„Veröffentlichen"-Primary und einem ⋮-Menü, das Export (PDF,
+Web-Vorschau, ZIP-Download) und Projekt-Löschen aufnimmt.
+
+Kapitel sind offene Zonen auf dem Canvas (kein Rahmen), Einträge
+sind Karten mit Mono-Caps-Label „Eintrag · Kapitel N", und
+Content-Blöcke sind Karten mit Typ-Tag als Pill (Text/Bild/
+Galerie/Audio/Video/Zitat). Die neue `<x-ui.block-card>`-
+Komponente trägt einen `save-slot`-Prop, über den ein Alpine-
+Store pro Block einen „Gespeichert"-Chip in Grün oder eine
+Fehler-Meldung in Rot rendert; der globale Punkt in der Rail
+zeigt zusätzlich den letzten Save-Status projektweit.
+
+Copyright und Quelle sitzen als Pflichtfelder mit Sternchen und
+`aria-required` sichtbar am Fuß jeder Block-Card, nicht mehr im
+Details-Toggle. Der Rich-Text-Editor rendert seine Quill-Toolbar
+nur beim Fokus (unter 600 px Card-Breite fallen List/Link/Clean
+in einen Overflow); der aktive Block bekommt zusätzlich den
+2-px-`--brand-bar`-Rand aus dem Handoff-Screen 05a.
+
+Leere Medien-Blöcke (Bild, Audio, Video, Galerie) rendern als
+Streifenmuster-Platzhalter mit passendem Seitenverhältnis, Icon
+und Hint-Text statt einer weißen Fläche. Add-Trigger wechseln auf
+Ghost-Style mit dashed Border, damit sie nicht mit dem
+Publish-Primary konkurrieren. Der Login-Screen ist komplett neu:
+Split-Layout mit dunklem Marken-Panel links (Logo, Wortmarke,
+Claim, „Eingesetzt von berlinHistory e.V. · Aktives Museum") und
+Formular-Panel rechts (Duzen-Konvention, Sprach-Select,
+„Angemeldet bleiben", roter Primary). Nach erfolgreichem Login
+landen User direkt auf ihrer Projektliste.
+
+Beide Marken (crowdCuratio und Aktives Museum) sind an
+Projektliste, Editor und Login verifiziert; der Marken-Panel im
+Login bleibt bewusst themeunabhängig dunkel — er ist Signature,
+nicht Chrome. Coverage hält bei 77,9 % über die Design-Sprint-
+Umbauten.
+
 ### Hinzugefügt
+
+- **`<x-icon name="…">`-Komponente auf Lucide-Basis** (Phase
+  5-D.2). Neue anonyme Blade-Component wraps `blade-ui-kit/blade-
+  icons` und `mallardduck/blade-lucide-icons` und akzeptiert
+  auch Bootstrap-Icons-Altnamen (`bi-pencil`) über ein
+  `config/icon-mapping.php`. Größen sind auf Tailwind-Utility-
+  Stufen 4/5/6 (16/20/24 px) fest, `aria-hidden` ist Default,
+  `decorative=false` schaltet auf `role="img"` und `aria-label`.
+
+- **App-Shell aus Rail + Sidebar-Panel + Canvas** (Phase 5-D.3).
+  Zwei neue Layout-Komponenten: `<x-layout.rail>` (60 px, dunkles
+  Chrome, aktive Route via `aria-current` und 3-px-brand-bar-
+  Left-Border, Utility-Zone unten mit Save-Punkt/Marken-Toggle/
+  Sprache/User-Menü) und `<x-layout.sidebar-panel>` (280 px,
+  paper-0, Kopf-Slot mit Mono-Caps + Titel, Body-Slot für
+  Struktur-Baum oder Sekundär-Nav). Alt-Slot `log` mappt auf
+  `panel` für 5a/5b-Rückwärtskompat.
+
+- **Redesignte Projektliste** (Phase 5-D.4). Filter-Chips mit
+  Status-Zählern, CSS-Grid-Tabelle (2.4fr 1fr 1.3fr 1.2fr 0.7fr)
+  mit Thumbnails, Untertiteln „N Kapitel" (via `withCount` im
+  `ProjectPermissionService`), Status-Badges als Pills mit
+  Punkt-Glyph, Initialen-Avataren und rechtsbündigen Aktions-
+  Icons.
+
+- **Editor-Chrome mit Brotkrumen, Segmented Control und
+  Publish-Button** (Phase 5-D.5). Neue `<x-ui.segmented>` für den
+  Modus-Wechsel „Bearbeiten · Übersetzen · Metadaten" mit
+  ARIA-`role="tablist"` und Kachel-Look. Publish-Primary rechts,
+  ⋮-Menü rechts daneben (Export + Löschen). Sticky an der
+  Canvas-Oberkante mit `backdrop-blur`, damit Kontext beim
+  Scrollen sichtbar bleibt.
+
+- **`<x-ui.block-card>` für Text/Bild/Galerie/Audio/Video**
+  (Phase 5-D.6). Typ-Tag oben links als Pill (Icon + Label),
+  Aktions-Slot oben rechts, `editing`-Prop schaltet auf 2-px-
+  brand-bar-Rand plus „· wird bearbeitet"-Suffix. `save-slot`-
+  Prop hängt einen Pro-Block-Status-Chip an, der aus dem
+  Alpine-Store `saveStatus.blocks` gerendert wird.
+
+- **Rich-Text-Editor als Progressive-Disclosure** (Phase 5-D.6b
+  P1.3). Die Quill-Toolbar ist per Default versteckt und wird nur
+  bei Editor-Fokus sichtbar; der aktive Editor bekommt zusätzlich
+  einen 2-px-brand-bar-Rand. Unter 600 px Card-Breite fallen
+  List/Link/Clean-Gruppen weg (Container-Query).
+
+- **`<x-ui.media-placeholder>` mit Streifenmuster** (Phase 5-D.6b
+  P3.14). Leere Bild-, Audio-, Video- und Galerie-Blöcke rendern
+  ein diagonales 10-px-Streifenmuster in Line-100/Paper-50 plus
+  Icon + Hint-Text in einer paper-0-Karte. Passende Default-
+  Seitenverhältnisse pro Typ (4/3, 4/1, 16/9), Overrider via
+  `aspect`-Prop.
+
+- **Vollständiger Sidebar-Tree** (Phase 5-D.6b P2.8). Kapitel-
+  Nummerierung „1 · Kapitelname", Klapp-Chevrons pro Kapitel mit
+  Alpine-`x-collapse`, aktive Kante mit `tint-bg` und 3-px-Left-
+  Border via `::before`, „+ Eintrag hinzufügen" pro Kapitel und
+  „+ Kapitel hinzufügen" am Tree-Ende als schmaler Ghost-Trigger.
+
+- **Speicher-Feedback pro Block** (Phase 5-D.6b P2.12). Alpine-
+  Store `saveStatus` um eine `blocks`-Map erweitert; Slot ist
+  `{Model}-{id}`. Save-Payload (`model`, `id`) aus dem Inline-
+  Editor wird über die Bridge in den passenden Slot geschrieben,
+  Auto-Fade nach 10 s. Globale Rail-Punkt-Anzeige bleibt.
+
+- **Redesignter Login-Screen** (Phase 5-D.7). Split-Layout mit
+  520-px-Marken-Panel links (fest `bg-ink-900`, unabhängig vom
+  Theme) und Formular-Panel rechts mit Sprach-Select, Titel
+  „Anmelden", „Angemeldet bleiben", roter Primary-Button.
+  Duzen-Konvention konsequent. Nach Login wird auf `/projects`
+  weitergeleitet.
 
 - **Inline-Editor als Volt-Komponente** (Phase 5c). Neue
   `<livewire:inline-editor>` mit drei Modi (Text-Input, Textarea,
@@ -521,6 +658,34 @@ vermerkt und braucht Design-Vorlage.
   Verwerfen leerer Eingaben ab.
 
 ### Geändert
+
+- **Design-Tokens vollständig auf Handoff v4** (Phase 5-D.1).
+  `tokens.css` um `--color-line-100/200`, `--color-paper-0/50`,
+  `--color-on-dark-100/300/400`, `--radius-pill`, vier `--shadow-*`-
+  Stufen plus `--shadow-popover`, `--text-mono-caps`, `--color-form-
+  border` und die drei A11y-Tokens (Focus-Outline, Focus-Offset,
+  Target-Min) erweitert. Font-Tokens `--font-sans` (IBM Plex Sans),
+  `--font-mono` (IBM Plex Mono) und `--font-serif` (Source Serif 4)
+  im `@theme`-Block, damit Tailwind 4 die Utilities generiert und
+  IBM Plex Sans als projektweiter UI-Default rendert.
+
+- **Kapitel/Entry-Layout ohne Bootstrap-Grid** (Phase 5-D.6).
+  Die Bestandsstruktur mit `.row .border .border-secondary .p-4`
+  und mehrfach ineinander geschachtelten Card-Ebenen ist raus.
+  Kapitel-Titel sitzt frei auf dem Canvas als
+  `text-title font-semibold`, Entry-Karte trägt Mono-Caps-Label
+  „EINTRAG · KAPITEL N", Block-Cards tragen ihren Typ-Tag —
+  eine sichtbare Rahmenebene je Bereich, nicht drei ineinander.
+
+- **Add-Buttons als Ghost-Style** (Phase 5-D.6b P2.10). Die drei
+  Add-Trigger („+ Block hinzufügen", „+ Eintrag hinzufügen",
+  „+ Kapitel hinzufügen") laufen mit `border-2 border-dashed
+  border-line-200` auf transparentem Untergrund, damit sie nicht
+  mit dem roten Publish-Primary konkurrieren.
+
+- **Post-Login-Redirect auf `/projects`** (Phase 5-D.7). Der
+  `RouteServiceProvider::HOME`-Wert ist von `/dashboard` (leer)
+  auf `/projects` gehoben.
 
 - **Coverage-Mindestschwelle im CI auf 75 %** (Phase 5c). Der
   `pest --coverage --min`-Wert im `test`-Job der GitHub-Actions-
@@ -935,6 +1100,36 @@ vermerkt und braucht Design-Vorlage.
 
 ### Entfernt
 
+- **Bootstrap-Icons als Icon-Set und CDN-Include** (Phase 5-D.2).
+  Die `bootstrap-icons`-Dependency ist raus, 84 `bi-*`-Klassen in
+  13 Views auf `<x-icon>` gehoben, das CDN-`<link>` aus dem
+  Layout entfernt. Font-Awesome bleibt vorerst für die PDF-
+  Templates.
+
+- **Alte Top-Bar aus 5a/5b** (Phase 5-D.3). Die horizontale
+  `<nav>` mit Projekt-/Nutzer-/Kommentar-Menüs ist raus; Inhalte
+  wandern auf die Rail.
+
+- **DataTables-jQuery-Init an der Projektliste** (Phase 5-D.4).
+  Der Bestand nutzte `$('#projectList').DataTable(...)` mit
+  fest-verdrahteter deutscher Übersetzung. Aktive Filterung läuft
+  jetzt Alpine-basiert über die Filter-Chips.
+
+- **Bootstrap-3-Legacy-CSS für `li.chapter`/`li.entry`/`li.item`**
+  (Phase 5-D.6b). Die grauen Background-Farben plus Drag-Icon-
+  Sprite haben visuell einen Kapitel-Kasten simuliert, obwohl der
+  Chapter-Wrapper transparent war. `.list-group` und `.entry.group`
+  in `bootstrap-utilities.css` ohne Background/Rahmen.
+
+- **Chevron-Toggle in Chapter- und Entry-Aktionen** (Phase
+  5-D.6b). Das Auf-/Zuklappen läuft komplett über den Sidebar-
+  Tree; die zwei `<a>`-Trigger und die zugehörigen jQuery-
+  Handler `collapseExpand()` / `collapseExpandEntry()` sind raus.
+
+- **Export-Footer am Seitenende** (Phase 5-D.6b P3.15). PDF /
+  Preview / Download-ZIP wandern ins ⋮-Menü in der sticky
+  Editor-Chrome-Bar; der `@section('footer')`-Block ist raus.
+
 - **Sechs Modify-Modal-Handler und -Trigger** (Phase 5c). Die
   jQuery-Handler `.open-ModifyChapter`, `.open-ModifyEntry`,
   `.open-ModifyGallery`, `.open-ModifyText`, `.open-ModifyImage`
@@ -995,6 +1190,43 @@ vermerkt und braucht Design-Vorlage.
   in der ehemaligen `CommentTrait::commentAsUser`.
 
 ### Behoben
+
+- **Chapter/Entry-Rahmen aus Bootstrap-Legacy-CSS** (Phase 5-D.6b).
+  Der visuell wahrgenommene „Kapitel-Kasten" um Titel + Untertitel
+  + Description war der `<ul class="list-group">` der Entries mit
+  einem Bootstrap-3-Border und weißem Background aus
+  `bootstrap-utilities.css`, plus ein doppelter Border auf
+  `.entry.group`. Beide Regeln neutralisiert; die Entry-Karten
+  kommen jetzt allein aus dem Blade-Template.
+
+- **Ghost-Input mit User-Agent-Border** (Phase 5-D.6b). Chrome und
+  Firefox rendern `<input>` per Default mit einem inset-Border,
+  auch bei `border: 0`. `appearance: none` plus `outline: none`
+  plus `ring: 0` im Ruhezustand; nur bei `focus-visible` ein
+  weicher `ring-2 ring-brand-bar/50`.
+
+- **Scroll-Sprung überdeckt vom sticky Chrome** (Phase 5-D.6b).
+  Klick auf einen Sidebar-Tree-Link scrollt jetzt mit
+  `scroll-margin-top: 96px` an allen `[id^="anchor_"]`-Elementen
+  — die sticky Editor-Chrome-Bar überdeckt kein Sprung-Ziel mehr.
+
+- **Gallery-Grid rendert nicht mehr** (Phase 5-D.6). Die Regel
+  `.gallery_container { display: grid }` in
+  `public/css/crowdcuratio.css` wurde seit dem Vite-Umbau nicht
+  mehr geladen; Bilder kollabierten auf 40 px Höhe. Grid direkt
+  am Element mit `grid-cols-[repeat(auto-fill,minmax(180px,1fr))]`
+  und `h-[200px]` pro Kachel.
+
+- **`overflow-x-hidden` bricht `position: sticky`** (Phase 5-D.6b).
+  Der Canvas-Wrapper hatte `overflow-x-hidden`, was Chrome/Firefox
+  implizit als `overflow-y: auto` interpretieren und `position:
+  sticky` in Kind-Elementen deaktivieren. Auf `overflow-x-clip`
+  umgestellt.
+
+- **IBM Plex Sans wurde nicht gerendert** (Phase 5-D.7). Die
+  Webfonts waren in `app.js` importiert, aber Tailwind hatte
+  keinen `--font-sans`-Token im `@theme`, sodass Chrome auf
+  `ui-sans-serif` (San Francisco) fiel. Font-Token gesetzt.
 
 - **Entry-Feld-Save mit 403** (Phase 5c). `Entry` fehlte als
   einziges Content-Modell eine `project()`-Navigations-Methode —

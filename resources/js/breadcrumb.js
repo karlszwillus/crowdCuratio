@@ -20,31 +20,34 @@ document.addEventListener('alpine:init', () => {
 
         syncFromHash() {
             const hash = window.location.hash;
+            const parentItem = this.tree.parent;
             const rootItem = this.tree.root;
 
-            // Kapitel-Pfad: Projekt > Kapitel
+            // Basis-Pfad: Projekte > [Projektname]. Wenn `parent` fehlt
+            // (aeltere Trees ohne Projekte-Ebene), starten wir am Root.
+            const basePath = parentItem ? [parentItem, rootItem] : [rootItem];
+
+            // Kapitel-Pfad: Projekte > Projekt > Kapitel
             const chapterMatch = hash.match(/^#anchor_Chapter_(\d+)$/);
             if (chapterMatch) {
                 const chapter = this.tree.chapters?.[chapterMatch[1]];
                 if (chapter) {
                     this.path = [
-                        rootItem,
+                        ...basePath,
                         { label: chapter.label, href: chapter.href },
                     ];
                     return;
                 }
             }
 
-            // Abschnitt-Pfad: Projekt > Kapitel > Abschnitt. Wir kennen
-            // die Kapitel-Zugehörigkeit nicht aus dem Hash, müssen also
-            // den Tree durchsuchen, bis der Entry gefunden ist.
+            // Eintrag-Pfad: Projekte > Projekt > Kapitel > Eintrag.
             const entryMatch = hash.match(/^#anchor_Entry_(\d+)$/);
             if (entryMatch) {
                 for (const chapter of Object.values(this.tree.chapters ?? {})) {
                     const entry = chapter.entries?.[entryMatch[1]];
                     if (entry) {
                         this.path = [
-                            rootItem,
+                            ...basePath,
                             { label: chapter.label, href: chapter.href },
                             { label: entry.label, href: entry.href },
                         ];
@@ -53,8 +56,8 @@ document.addEventListener('alpine:init', () => {
                 }
             }
 
-            // Fallback: nur Projekt-Stamm.
-            this.path = [rootItem];
+            // Fallback: Projekte > Projekt.
+            this.path = basePath;
         },
     }));
 });

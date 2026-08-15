@@ -219,11 +219,11 @@ it('Banner mit dismissible rendert Close-Button mit aria-label', function () {
         ->toContain('Schliessbar');
 });
 
-// ---------- Icon ----------
+// ---------- Icon (Lucide via <x-icon>, Phase 5-D.2) ----------
 
-it('Icon rendert SVG mit aria-hidden und focusable=false', function () {
+it('Icon rendert Lucide-SVG mit aria-hidden default', function () {
     /** @var TestCase $this */
-    $html = Blade::render('<x-ui.icon name="check"/>');
+    $html = Blade::render('<x-icon name="check"/>');
 
     expect($html)
         ->toContain('<svg')
@@ -231,12 +231,25 @@ it('Icon rendert SVG mit aria-hidden und focusable=false', function () {
         ->toContain('focusable="false"');
 });
 
-it('Icon ohne Match in Library rendert leeres SVG', function () {
+it('Icon in decorative=false-Modus rendert role=img und aria-label', function () {
     /** @var TestCase $this */
-    $html = Blade::render('<x-ui.icon name="does-not-exist"/>');
+    $html = Blade::render('<x-icon name="pencil" :decorative="false" label="Bearbeiten"/>');
+
+    expect($html)
+        ->toContain('role="img"')
+        ->toContain('aria-label="Bearbeiten"');
+});
+
+it('Icon mappt bi-*-Altnamen ueber icon-mapping.php auf Lucide', function () {
+    /** @var TestCase $this */
+    // `bi-trash` steht in config/icon-mapping.php auf `trash-2`.
+    // Renders wird ueber die blade-lucide-icons-Komponente
+    // `lucide-trash-2` aufgeloest — SVG-Output enthaelt die Lucide-
+    // typische viewBox 0 0 24 24 und die stroke-Attribute.
+    $html = Blade::render('<x-icon name="bi-trash"/>');
 
     expect($html)->toContain('<svg');
-    expect(str_contains($html, '<path'))->toBeFalse();
+    expect($html)->toContain('viewBox="0 0 24 24"');
 });
 
 // ---------- Modal ----------
@@ -405,4 +418,83 @@ it('Breadcrumb bevorzugt :tree gegenüber :items, wenn beide gesetzt', function 
     expect($html)
         ->toContain('x-data="ccBreadcrumb(')
         ->not->toContain('Static-Item');
+});
+
+// ---------- Block-Card (Phase 5-D.6) ----------
+
+it('Block-Card rendert Typ-Tag mit Icon und Label', function () {
+    /** @var TestCase $this */
+    $html = Blade::render('<x-ui.block-card type="text">Inhalt</x-ui.block-card>');
+
+    // Typ-Tag ist ein Pill (rounded-full) mit Lucide-Icon als Inline-
+    // SVG plus dem lokalisierten Label. Fuer type="text" ist das der
+    // Sprachschluessel block_type_text (de: 'Text', en: 'Text').
+    expect($html)
+        ->toContain('rounded-full')
+        ->toContain('<svg') // Lucide-SVG-Icon
+        ->toContain(__('block_type_text'))
+        ->toContain('Inhalt');
+});
+
+it('Block-Card mit editing=true bekommt brand-bar-Rand und Suffix', function () {
+    /** @var TestCase $this */
+    $html = Blade::render('<x-ui.block-card type="image" :editing="true">Body</x-ui.block-card>');
+
+    // Editing-Zustand faerbt den Card-Rand um und haengt einen
+    // 'wird bearbeitet'-Suffix ans Typ-Tag (Handoff v4 Screen 05a).
+    expect($html)
+        ->toContain('border-brand-bar')
+        ->toContain(__('is_editing'));
+});
+
+it('Block-Card mit save-slot rendert Alpine-Store-Zugriff', function () {
+    /** @var TestCase $this */
+    $html = Blade::render('<x-ui.block-card type="text" save-slot="Text-42">Body</x-ui.block-card>');
+
+    expect($html)
+        ->toContain("blocks['Text-42']")
+        ->toContain('aria-live="polite"');
+});
+
+// ---------- Segmented Control (Phase 5-D.5) ----------
+
+it('Segmented rendert role=tablist mit aria-selected je Item', function () {
+    /** @var TestCase $this */
+    $items = [
+        ['label' => 'Bearbeiten', 'href' => '/edit', 'active' => true],
+        ['label' => 'Übersetzen', 'href' => '/translate'],
+        ['label' => 'Metadaten', 'href' => '/meta'],
+    ];
+
+    $html = Blade::render(
+        '<x-ui.segmented :items="$items" aria-label="Modus"/>',
+        ['items' => $items]
+    );
+
+    expect($html)
+        ->toContain('role="tablist"')
+        ->toContain('aria-label="Modus"')
+        ->toContain('aria-selected="true"')
+        ->toContain('aria-selected="false"')
+        ->toContain('aria-current="page"');
+});
+
+// ---------- Media-Placeholder (Phase 5-D.6b P3.14) ----------
+
+it('Media-Placeholder rendert Streifenmuster-Container mit Icon und Hint', function () {
+    /** @var TestCase $this */
+    $html = Blade::render('<x-ui.media-placeholder type="image"/>');
+
+    expect($html)
+        ->toContain('cc-media-placeholder')
+        ->toContain('aspect-ratio: 4/3')
+        ->toContain('role="img"')
+        ->toContain('aria-label');
+});
+
+it('Media-Placeholder respektiert aspect-Overrider', function () {
+    /** @var TestCase $this */
+    $html = Blade::render('<x-ui.media-placeholder type="video" aspect="21/9"/>');
+
+    expect($html)->toContain('aspect-ratio: 21/9');
 });

@@ -38,6 +38,96 @@
     display: none !important;
 }
 
+/* Scroll-Offset fuer sticky Editor-Chrome-Bar. Ohne diesen Wert
+ * springt der Browser bei Anchor-Links direkt an die Anker-
+ * Oberkante — und die sticky Bar (Breadcrumb + Segmented Control)
+ * ueberdeckt dann die ersten ~64 px des Ziel-Elements. */
+[id^="anchor_"] {
+    scroll-margin-top: 96px;
+}
+html {
+    scroll-behavior: smooth;
+}
+
+/* Textumbruch (P3.19): Ueberschriften und Fliesstext brechen mit
+ * text-wrap: pretty — vermeidet einzelne Woerter in der letzten
+ * Zeile und Trennungen mitten im Wort. */
+h1, h2, h3, h4, .text-title, .text-heading {
+    text-wrap: balance;
+    overflow-wrap: break-word;
+}
+p, .text-body {
+    text-wrap: pretty;
+    overflow-wrap: break-word;
+}
+
+/* Streifenmuster fuer Medien-Platzhalter (P3.14 aus 5-D.6b).
+ * Diagonales 10-px-Muster in Line-100/Paper-50 — visuell klar
+ * als 'leer' erkennbar, ohne zu unruhig zu wirken. */
+.cc-media-placeholder {
+    background-image: repeating-linear-gradient(
+        45deg,
+        var(--color-line-100) 0 10px,
+        var(--color-paper-50) 10px 20px
+    );
+}
+.cc-media-placeholder > * {
+    background: var(--color-paper-0);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    box-shadow: var(--shadow-subtle);
+}
+
+/*
+ * Rich-Text-Editor: Quill-Toolbar ist per Default versteckt, wird
+ * nur beim Fokus des Editors sichtbar (Handoff v4 § Screen 02:
+ * „Toolbar nur am aktiven Block"). Root-Element traegt bei Fokus
+ * die Klasse `is-focused` und zeigt einen 2-px-brand-bar-Rahmen.
+ */
+.rich-text-editor .ql-toolbar {
+    display: none !important;
+    border: none !important;
+    background: transparent !important;
+}
+.rich-text-editor.is-focused .ql-toolbar {
+    display: block !important;
+    border: none !important;
+    border-bottom: 1px solid var(--color-line-100) !important;
+    padding: 8px 0 !important;
+}
+.rich-text-editor .ql-container {
+    border: none !important;
+    font-family: inherit;
+    font-size: var(--text-body);
+}
+.rich-text-editor.is-focused {
+    border: 2px solid var(--color-brand-bar);
+    border-radius: var(--radius-md);
+    padding: 4px 8px;
+    margin: -6px -10px;
+}
+.rich-text-editor .ql-editor {
+    padding: 8px 0;
+    min-height: 3rem;
+}
+
+/* Toolbar-Overflow bei schmaler Block-Card-Breite (P3.16 aus
+ * 5-D.6b). Container-Query auf rich-text-editor selbst: unter
+ * 600 px (Tablet-Portrait, aber auch enge Editor-Sidebars) zeigen
+ * wir nur die essentiellen B/I/U/S-Buttons plus Header-Select;
+ * List, Link und Clean klappen weg. Ab 900 px sind alle Gruppen
+ * wieder sichtbar. */
+.rich-text-editor {
+    container-type: inline-size;
+    container-name: rte;
+}
+
+@container rte (max-width: 600px) {
+    .rich-text-editor .ql-formats:nth-child(n+3) {
+        display: none !important;
+    }
+}
+
 /*
  * Theme-Switch-Transition: weicher Wechsel zwischen den beiden Themes
  * statt hartem Re-Paint. Beim Klick auf den Sonne-/Mond-Button wechseln
@@ -86,8 +176,11 @@ html {
 }
 
 [id^="anchor_Chapter_"],
-[id^="anchor_Entry_"] {
-    scroll-margin-top: 1rem;
+[id^="anchor_Entry_"],
+[id^="anchor_MediaContent_"] {
+    /* Muss die sticky Editor-Chrome-Bar (Breadcrumb + Segmented
+     * Control, ~64 px) plus ein bisschen Luft einbeziehen. */
+    scroll-margin-top: 96px;
 }
 
 /*

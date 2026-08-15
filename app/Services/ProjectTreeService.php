@@ -60,6 +60,10 @@ class ProjectTreeService
         $project = $project->loadMissing(['chapters.entries']);
 
         return [
+            'parent' => [
+                'label' => __('projects'),
+                'href' => route('projects.index'),
+            ],
             'root' => [
                 'label' => (string) $project->name,
                 'href' => '#main-content',

@@ -285,7 +285,10 @@ new class extends Component
             <span class="font-medium">
                 {{ $query !== '' ? $query : '—' }}
             </span>
-            <i class="bi-pencil ml-1 text-chrome-on-dim" aria-hidden="true"></i>
+            {{-- Edit-Icon entfernt: der ganze Chip ist selbst ein
+                 Button (Hover/Focus-States sind da), der pencil-
+                 Icon hat den Chip in schmalen Card-Kontexten
+                 (Gallery-Bild-Kachel) unnoetig aufgeblaeht. --}}
         </button>
     @else
         <div class="relative flex flex-col gap-1">

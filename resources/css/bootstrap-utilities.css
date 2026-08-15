@@ -306,7 +306,11 @@
      * Höhe.
      */
     .list-group {
-        @apply m-0 block rounded-md border border-ink-400 bg-white;
+        /* Seit Phase 5-D.6b: kein Border und kein Background mehr,
+         * damit die Chapter-Zone (transparent auf Canvas) nicht als
+         * weisser Kasten wirkt. Sortable-Handler und Layout laufen
+         * ueber die Semantik der <ul>, nicht ueber die Rahmen. */
+        @apply m-0 block;
         padding-left: 0;
     }
 
@@ -424,7 +428,10 @@
      * chapters/index.blade.php auf x-ui.card umgezogen ist.
      */
     .entry.group {
-        @apply mb-4 block rounded-md border border-ink-700 bg-ink-400/5 p-3;
+        /* Seit Phase 5-D.6b: kein Border/Background — die Entry-Karten
+         * werden ueber das Blade-Template selbst gestaltet
+         * (Entry-Section-Wrapper mit border-line-200 bg-paper-0). */
+        @apply mb-4 block;
         list-style: none;
     }
 

@@ -46,7 +46,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     class="flex items-center gap-1 rounded-md px-3 py-2 text-body text-chrome-on hover:bg-chrome-active"
                 >
                     {{__('project')}}
-                    <x-ui.icon name="chevron-down" :size="14"/>
+                    <x-icon name="chevron-down" size="4"/>
                 </button>
                 <div
                     x-show="open"
@@ -69,7 +69,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     class="flex items-center gap-1 rounded-md px-3 py-2 text-body text-chrome-on hover:bg-chrome-active"
                 >
                     {{__('users')}}
-                    <x-ui.icon name="chevron-down" :size="14"/>
+                    <x-icon name="chevron-down" size="4"/>
                 </button>
                 <div
                     x-show="open"
@@ -134,10 +134,10 @@ If not, see <https://www.gnu.org/licenses/>. -->
                      und Alpine den Clone-Insert nicht zuverlässig durchführt.
                      Direkt-Embed + x-show ist hier robuster. --}}
                 <span x-show="$store.theme.current === 'aktivesMuseum'" x-cloak class="flex">
-                    <x-ui.icon name="sun" :size="18"/>
+                    <x-icon name="sun" size="5"/>
                 </span>
                 <span x-show="$store.theme.current !== 'aktivesMuseum'" x-cloak class="flex">
-                    <x-ui.icon name="moon" :size="18"/>
+                    <x-icon name="moon" size="5"/>
                 </span>
             </button>
 
@@ -152,7 +152,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                         class="flex items-center gap-1 rounded-md px-3 py-2 text-caption text-chrome-on-dim hover:bg-chrome-active"
                     >
                         {{ config('languages')[App::getLocale()] }}
-                        <x-ui.icon name="chevron-down" :size="14"/>
+                        <x-icon name="chevron-down" size="4"/>
                     </button>
                     <div
                         x-show="open"
@@ -179,7 +179,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     class="flex items-center gap-1 rounded-md bg-primary px-3 py-2 text-caption text-primary-on hover:opacity-90"
                 >
                     @if(isset(Auth::user()->name)){{ Auth::user()->name }} {{ Auth::user()->last_name }}@endif
-                    <x-ui.icon name="chevron-down" :size="14"/>
+                    <x-icon name="chevron-down" size="4"/>
                 </button>
                 <div
                     x-show="open"

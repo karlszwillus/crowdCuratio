@@ -26,7 +26,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
     @endif
     <p>{{__('users')}}</p><br>
     <a class="btn btn-secondary mb-5" href="{{ route('register') }}">
-        <i class="bi bi-plus m-2"></i>
+        <x-icon name="plus" class="m-2" />
         {{__('add_new')}}
     </a>
     <table id="userList" class="table table-striped table-bordered">
@@ -58,17 +58,16 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     </td>
                     <td>
                         <form action="{{ route('users.destroy',$value->id) }}" method="POST">
-                            <a href="{{ route('users.edit', $value->id) }}" title="{{__('edit_user')}}"><i
-                                        class="bi bi-pencil-fill m-2"></i></a>
+                            <a href="{{ route('users.edit', $value->id) }}" title="{{__('edit_user')}}"><x-icon name="pencil-fill" class="m-2" /></a>
                             @csrf
                             @method('DELETE')
                             @if(auth()->user()->id != $value->id)
                                 <button type="submit" onclick="return confirm('{{__('message_delete_confirm')}}')" title="{{__('delete_user')}}">
-                                    <i class="bi bi-trash"></i>
+                                    <x-icon name="trash" />
                                 </button>
                             @endif
                             @if(!is_null($value->welcome_valid_until))
-                                <a href="{{route('resend.invitation', $value->id)}}" title="{{__('resend_invitation')}}"><i class="bi bi-envelope"></i></a>
+                                <a href="{{route('resend.invitation', $value->id)}}" title="{{__('resend_invitation')}}"><x-icon name="envelope" /></a>
                             @endif
                         </form>
                     </td>

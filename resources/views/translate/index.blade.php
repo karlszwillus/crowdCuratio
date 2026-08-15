@@ -59,7 +59,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     </div>
                     <div class="col-sm-6">
                         <div id="chapterDescription_{{$chapter->id}}"></div>
-                        <div id="chapter_{{$chapter->id}}">{!! $chapter->getTranslation('description', 'en', false) !!}</div><a href="#chapter_{{$chapter->id}}" class="add-chapter-description" data-id="{{$chapter->id}}" > <i id="edit_chapter_{{$chapter->id}}" class="bi-pencil-square text-editor"></i></a>
+                        <div id="chapter_{{$chapter->id}}">{!! $chapter->getTranslation('description', 'en', false) !!}</div><a href="#chapter_{{$chapter->id}}" class="add-chapter-description" data-id="{{$chapter->id}}" > <x-icon name="square-pen" id="edit_chapter_{{$chapter->id}}" class="text-editor" /></a>
                         <div class="form-check mt-2">
                             <input type="checkbox" class="form-check-input" name="isTranslated" @if($chapter->is_translated) value="{!! $chapter->is_translated !!}"  @endif @if($chapter->is_translated > 0) checked @endif>
                             <label class="form-check-label" for="translationComplete">{{__('translation_is_complete')}}</label>
@@ -100,7 +100,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                         </div>
                         <div class="col-sm-6">
                             <div id="entryDescription_{{$entry->id}}"></div>
-                            <div id="entry_{{$entry->id}}">{!! $entry->getTranslation('description', 'en', false) !!}</div><a href="#entry_{{$entry->id}}" class="add-entry-description" data-id="{{$entry->id}}" > <i id="edit_entry_{{$entry->id}}" class="bi-pencil-square text-editor"></i></a>
+                            <div id="entry_{{$entry->id}}">{!! $entry->getTranslation('description', 'en', false) !!}</div><a href="#entry_{{$entry->id}}" class="add-entry-description" data-id="{{$entry->id}}" > <x-icon name="square-pen" id="edit_entry_{{$entry->id}}" class="text-editor" /></a>
                             <div class="form-check mt-2">
                                 <input type="checkbox" class="form-check-input" name="isTranslated" @if($entry->is_translated) value="{!! $entry->is_translated !!}"  @endif @if($entry->is_translated > 0) checked @endif>
                                 <label class="form-check-label" for="translationComplete">{{__('translation_is_complete')}}</label>
@@ -128,7 +128,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                             </div>
                                         <div class="col-sm-6">
                                             <div id="textContent_{{$item->id}}"></div>
-                                            <div id="text_{{$item->id}}">{!! $item->getTranslation('text', 'en', false) !!}</div><a href="#text_{{$item->id}}" class="add-text-content" data-id="{{$item->id}}" ><i class="bi-pencil-square text-editor"></i></a>
+                                            <div id="text_{{$item->id}}">{!! $item->getTranslation('text', 'en', false) !!}</div><a href="#text_{{$item->id}}" class="add-text-content" data-id="{{$item->id}}" ><x-icon name="pencil-square" class="text-editor" /></a>
                                         </div>
                                     </div>
                                     @if($item->origin)

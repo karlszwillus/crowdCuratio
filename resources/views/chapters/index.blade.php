@@ -34,61 +34,131 @@ If not, see <https://www.gnu.org/licenses/>. -->
 @endsection
 
 @section('main')
-    {{-- Tree-Daten für die Live-Breadcrumb. Die <x-ui.breadcrumb>-
-         Komponente watcht im :tree-Modus window.location.hash und
-         leitet daraus den Pfad ab — Klick im Sidebar-Tree ändert
-         den Hash, Breadcrumb folgt automatisch. ProjectTreeService
-         ist die Single Source of Truth (siehe SidebarTree-Volt). --}}
-    <x-ui.breadcrumb :tree="app(App\Services\ProjectTreeService::class)->breadcrumbTree($data)" />
+    {{-- Editor-Chrome (Handoff v4 Screen 02, Phase 5-D.5):
+         Brotkrumen links, Segmented Control mittig, Publish-Button
+         und ⋮-Menü rechts. Sticky an der Canvas-Oberkante, damit
+         Kontext und Publish beim Scrollen im Blick bleiben. --}}
+    <div class="sticky top-0 z-20 -mx-6 -mt-6 mb-6 flex flex-wrap items-center justify-between gap-4
+                border-b border-line-200 bg-canvas-bg/95 px-6 py-3
+                backdrop-blur supports-[backdrop-filter]:bg-canvas-bg/80">
+        <div class="min-w-0 flex-1">
+            <x-ui.breadcrumb :tree="app(App\Services\ProjectTreeService::class)->breadcrumbTree($data)" />
+        </div>
+
+        <div class="flex items-center gap-3">
+            @can('update', $project)
+                <x-ui.segmented
+                    :aria-label="__('editor_mode')"
+                    :items="[
+                        [
+                            'label' => __('edit'),
+                            'href' => route('chapters.index', $project->id),
+                            'active' => true,
+                        ],
+                        [
+                            'label' => __('translate'),
+                            'href' => route('translate', $project->id),
+                        ],
+                        [
+                            'label' => __('metadata'),
+                            'href' => route('project.metadata', $project->id),
+                        ],
+                    ]"
+                />
+            @endcan
+
+            @if (Auth::user()->can('publish', $project) || Auth::user()->can('preview'))
+                <button
+                    type="button"
+                    data-toggle="modal"
+                    data-target="#previewModal"
+                    class="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2
+                           text-body font-medium text-primary-on hover:opacity-90
+                           focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-bar"
+                >
+                    {{ __('publish') }}
+                </button>
+            @endif
+
+            @can('update', $project)
+                <div x-data="{ open: false }" class="relative">
+                    <button
+                        type="button"
+                        @click="open = !open"
+                        @click.outside="open = false"
+                        aria-haspopup="true"
+                        :aria-expanded="open"
+                        class="inline-flex size-9 items-center justify-center rounded-md text-ink-500
+                               hover:bg-line-100 hover:text-ink-900
+                               focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-bar"
+                        title="{{ __('more_actions') }}"
+                        :aria-label="'{{ __('more_actions') }}'"
+                    >
+                        <x-icon name="ellipsis-vertical" size="5"/>
+                    </button>
+                    <div
+                        x-show="open"
+                        x-transition
+                        x-cloak
+                        class="absolute right-0 z-30 mt-1 min-w-[14rem]
+                               rounded-md border border-line-200 bg-paper-0 py-1 shadow-popover"
+                    >
+                        @if (Auth::user()->can('publish', $project) || Auth::user()->can('preview'))
+                            <button type="button"
+                                    data-toggle="modal"
+                                    data-target="#previewModal"
+                                    class="flex w-full items-center gap-2 px-4 py-2 text-left text-body text-ink-900 hover:bg-line-100/60">
+                                <x-icon name="file-text" size="4"/>
+                                <span>{{ __('pdf') }}</span>
+                            </button>
+                            <button type="button"
+                                    data-toggle="modal"
+                                    data-target="#previewModal"
+                                    class="flex w-full items-center gap-2 px-4 py-2 text-left text-body text-ink-900 hover:bg-line-100/60">
+                                <x-icon name="globe" size="4"/>
+                                <span>{{ __('preview') }}</span>
+                            </button>
+                            <a href="https://app.crowdcurat.io/downloads/html.zip"
+                               target="_blank" rel="noopener"
+                               class="flex w-full items-center gap-2 px-4 py-2 text-left text-body text-ink-900 hover:bg-line-100/60">
+                                <x-icon name="download" size="4"/>
+                                <span>{{ __('download') }}</span>
+                            </a>
+                            <div class="my-1 border-t border-line-100"></div>
+                        @endif
+                        <form action="{{ route('projects.destroy', $project->id) }}" method="POST">
+                            @csrf
+                            @method('DELETE')
+                            <button
+                                type="submit"
+                                onclick="return confirm('{{ __('message_delete_confirm') }}')"
+                                class="flex w-full items-center gap-2 px-4 py-2 text-left text-body text-danger hover:bg-danger-bg"
+                            >
+                                <x-icon name="trash-2" size="4"/>
+                                <span>{{ __('delete_project') }}</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            @endcan
+        </div>
+    </div>
 
     @if ($message = Session::get('success'))
-        <div class="alert alert-success">
-            <p>{{ $message }}</p>
-        </div>
+        <x-ui.banner type="success" class="mb-4" dismissible>
+            {{ $message }}
+        </x-ui.banner>
     @endif
     @if ($errors->any())
-        <div class="alert alert-danger">
-            <strong>{{__('whoops')}}</strong> {{__('message_problem_input')}}<br><br>
-            <ul>
+        <x-ui.banner type="danger" class="mb-4" :title="__('whoops')">
+            {{ __('message_problem_input') }}
+            <ul class="mt-2 list-disc pl-5">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
             </ul>
-        </div>
+        </x-ui.banner>
     @endif
-    <div class="row border p-2 mb-4">
-        <form action="{{ route('projects.destroy',$project->id) }}" method="POST">
-            @csrf
-            @method('DELETE')
-            <div class="col-sm-3">
-                @if(Auth::user()->can('update', $project) || Auth::user()->can('delete'))
-                    <button class="btn btn-secondary btn-block text-left mt-1 mb-2" type="submit"
-                            onclick="return confirm('{{__('message_delete_confirm')}}')">
-                        <i class="bi bi-trash m-2"></i> {{__('delete_project')}}
-                    </button>
-                @endif
-            </div>
-            {{-- Reader-Frontend-Härtung Juni 2026: Backend blockt
-                 jetzt sowohl `translate` (translateCurrentProject)
-                 als auch `project.metadata` (editMetaData) via
-                 ProjectPolicy::update. Frontend zeigte die Buttons
-                 aber weiter dem Reader an — das gab im Smoke einen
-                 toten Klick-Pfad (403 oder weisse Seite). Buttons
-                 hinter @can('update', $project), damit sie nur
-                 Owner/Admin/Eingeladener-mit-edit sehen. --}}
-            @can('update', $project)
-                <div class="col-sm-3">
-                    <a href="{{route('translate', $project->id)}}"
-                       class="btn btn-secondary btn-block text-left mt-1 mb-2">{{__('translate')}}</a>
-                </div>
-                <div class="col-sm-3">
-                    <a href="{{route('project.metadata', $project->id)}}"
-                       class="btn btn-secondary btn-block text-left mt-1 mb-2">{{__('meta_data')}}</a>
-                </div>
-            @endcan
-        </form>
-
-    </div>
     @if(isset($data) /**&& count($data) > 0*/)
         <div class="row project mb-4">
             <div class="col-sm-2">
@@ -102,15 +172,23 @@ If not, see <https://www.gnu.org/licenses/>. -->
         <ul class="list-group ui-sortable-chapter sortable_list_chapter connectedSortableChapter" id="groupsList" data-reorder-element="chapter" data-reorder-url="{{ route('chapter.drag') }}" data-reorder-project="{{ $project->id }}">
             @foreach($data->chapters as $key => $chapter)
                 <li class="chapter group" data-chapter="{{$chapter->id}}" data-project="{{$project->id}}" id="{{$chapter->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
-                    <div id="{{$chapter->id}}">
-                        <div class="row border border-secondary p-4 mb-4 content">
-                            <div style="float: left;" id="anchor_Chapter_{{$chapter->id}}">
+                    {{-- Kapitel = Zone, keine Karte (Handoff v4 § P1.2).
+                         Kein Background, kein Border. Titel + Untertitel
+                         + Description sitzen offen auf dem Canvas; nur
+                         Entry und Block-Cards tragen Rahmen. Ein
+                         horizontaler Trenner unter der Kapitel-
+                         Beschreibung markiert den Uebergang zu den
+                         Entries. --}}
+                    <div id="{{$chapter->id}}" class="mb-10">
+                        <header class="mb-4 flex items-start justify-between gap-4">
+                            <div class="min-w-0 flex-1" id="anchor_Chapter_{{$chapter->id}}">
                                 @can('update', $project)
                                     <livewire:inline-editor
                                         :model="$chapter"
                                         field="name"
                                         rules="nullable|string|max:255"
                                         :label="__('chapter_title')"
+                                        :variant="'title'"
                                         :key="'chapter-name-'.$chapter->id"
                                     />
                                     <livewire:inline-editor
@@ -118,139 +196,164 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                         field="subtitle"
                                         rules="nullable|string|max:255"
                                         :label="__('chapter_subtitle')"
+                                        :variant="'subtitle'"
                                         :key="'chapter-subtitle-'.$chapter->id"
                                     />
-                                    <livewire:rich-text-editor
-                                        :model="$chapter"
-                                        field="description"
-                                        rules="nullable|string"
-                                        :label="__('chapter_description')"
-                                        :key="'chapter-description-'.$chapter->id"
-                                    />
                                 @else
-                                    <h2>{!! $chapter->name !!}</h2>
-                                    <p>{!! $chapter->subtitle !!}</p>
-                                    <p>{!! $chapter->description !!}</p>
+                                    <h2 class="text-title font-semibold text-ink-900">{!! $chapter->name !!}</h2>
+                                    <p class="mt-1 text-body text-ink-500">{!! $chapter->subtitle !!}</p>
                                 @endcan
                             </div>
-                            <div class="ml-auto mr-3 icons">
-                                <form action="{{ route('chapters.destroy',$chapter->id) }}" method="POST"
-                                      class="mb-5">
-                                    @csrf
-                                    <input type="hidden" name="project" value="{!! $project->id !!}"/>
-                                    @method('DELETE')
 
-									<span data-toggle="tooltip"
-                                              data-placement="top"
-                                              title="ältere Versionen"><a
-                                                    href="{{route('projects.edit',['project'=> $project, 'log'=> $chapter->id, 'model' => 'Chapter'])}}"
-                                                    class="text-log"><i
-                                                        class="bi bi-clock-history m-2"></i></a></span>
+                            <form action="{{ route('chapters.destroy',$chapter->id) }}" method="POST"
+                                  class="flex shrink-0 items-center gap-1 text-ink-500">
+                                @csrf
+                                <input type="hidden" name="project" value="{!! $project->id !!}"/>
+                                @method('DELETE')
 
-                                    @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
-                                        <span data-toggle="tooltip" data-placement="top"
-                                              title="{{__('add_comment')}}"><a href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Chapter', 'comment' => $chapter->id])}}" class="addComment"> @if(isset($chapter->comments) && count($chapter->comments) > 0)
-                                                    <i class="bi bi-chat-dots-fill m-2"></i> @else <i class="bi bi-chat m-2"></i>@endif
-											</a></span>
-                                    @endif
-									@if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
-                                        <button type="submit" onclick="return confirm('{{__('message_delete_confirm')}}')"
-                                                data-toggle="tooltip" data-placement="top" title="{{__('delete_chapter')}}">
-											<i class="bi-x-circle-fill m-2"></i></button>
-									@endif
-									{{-- Edit-Button für Chapter entfällt: Titel, Subtitel und
-									     Beschreibung werden per inline-editor-Volt-Komponente
-									     direkt im Kapitel-Card editiert (Phase 5c.6.a). Add-Modal
-									     (myModal) bleibt für „Kapitel hinzufügen". --}}
-									<a onclick="collapseExpand({{$chapter->id}})"  id="{{$chapter->id}}"
-                                       aria-expanded="true" aria-controls="collapseChapter_{{$chapter->id}}"><i
-                                                class="bi-caret-down-fill" id="chp_{{$chapter->id}}"></i></a>
-								</form>
-								<p class="date">{!! date('d.m.Y', strtotime($chapter->created_at)) !!}</p>
-                            </div>
-                        </div>
+                                <a href="{{route('projects.edit',['project'=> $project, 'log'=> $chapter->id, 'model' => 'Chapter'])}}"
+                                   title="{{ __('older_versions') }}"
+                                   class="inline-flex size-11 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
+                                    <x-icon name="rotate-ccw" size="4"/>
+                                </a>
+
+                                @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
+                                    <a href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Chapter', 'comment' => $chapter->id])}}"
+                                       title="{{ __('add_comment') }}"
+                                       class="addComment inline-flex size-11 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
+                                        @if(isset($chapter->comments) && count($chapter->comments) > 0)
+                                            <x-icon name="message-square-dot" size="4"/>
+                                        @else
+                                            <x-icon name="message-square" size="4"/>
+                                        @endif
+                                    </a>
+                                @endif
+
+                                @if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
+                                    <button type="submit"
+                                            onclick="return confirm('{{__('message_delete_confirm')}}')"
+                                            title="{{ __('delete_chapter') }}"
+                                            class="inline-flex size-11 items-center justify-center rounded-md hover:bg-danger-bg hover:text-danger">
+                                        <x-icon name="trash-2" size="4"/>
+                                    </button>
+                                @endif
+
+                                {{-- Chevron-Toggle entfaellt seit 5-D.6b: Kapitel
+                                     ist eine offene Zone, das Auf-/Zuklappen
+                                     laeuft ueber den Sidebar-Tree. --}}
+                            </form>
+                        </header>
+
+                        {{-- Kapitel-Beschreibung als Rich-Text-Editor,
+                             direkt unter dem Section-Header. --}}
+                        @can('update', $project)
+                            <livewire:rich-text-editor
+                                :model="$chapter"
+                                field="description"
+                                rules="nullable|string"
+                                :label="__('chapter_description')"
+                                :key="'chapter-description-'.$chapter->id"
+                            />
+                        @else
+                            <p class="text-body text-ink-700">{!! $chapter->description !!}</p>
+                        @endcan
+
+                        {{-- Grosser Vertikalspace zwischen Kapitel-Zone
+                             und den enthaltenen Entry-Karten, damit die
+                             Ebenen visuell nicht in einen 'Kapitel-
+                             Kasten' verschmelzen. Der Space macht klar:
+                             die Karten sitzen IN der Zone. --}}
+                        <div class="h-16" aria-hidden="true"></div>
                         <div class="collapse in" id="chapter_{{$chapter->id}}" aria-expanded="false">
                             @if(isset($chapter->entries) && count($chapter->entries) >0)
                                 <ul class="list-group ui-sortable-entry sortable_list_entry connectedSortableEntry" id="{{$chapter->id}}" data-reorder-element="entry" data-reorder-url="{{ route('chapter.drag') }}">
                                     @foreach($chapter->entries as $entry)
                                         <li class="entry group" data-chapter="{{$chapter->id}}" data-entry="{{$entry->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
-                                                <div id="P-{{$project->id}}-C-{{$chapter->id}}-entry-{{$entry->id}}"
-                                                             class="row border border-secondary p-4 mb-4 ml-auto w-11/12 content">
-                                                            <div style="float: left;" id="anchor_Entry_{{$entry->id}}">
-                                                                @can('update', $project)
-                                                                    <livewire:inline-editor
-                                                                        :model="$entry"
-                                                                        field="name"
-                                                                        rules="nullable|string|max:255"
-                                                                        :label="__('entry_title')"
-                                                                        :key="'entry-name-'.$entry->id"
-                                                                    />
-                                                                    <livewire:inline-editor
-                                                                        :model="$entry"
-                                                                        field="subtitle"
-                                                                        rules="nullable|string|max:255"
-                                                                        :label="__('entry_subtitle')"
-                                                                        :key="'entry-subtitle-'.$entry->id"
-                                                                    />
-                                                                    <livewire:rich-text-editor
-                                                                        :model="$entry"
-                                                                        field="description"
-                                                                        rules="nullable|string"
-                                                                        :label="__('entry_description')"
-                                                                        :key="'entry-description-'.$entry->id"
-                                                                    />
+                                            {{-- Entry als Karte mit Mono-Caps-Label
+                                                 (Handoff v4 Screen 02: „EINTRAG · KAPITEL 2").
+                                                 Bezug zum umschließenden Kapitel steht
+                                                 explizit im Kopf, nicht ueber CSS-Einrueckung. --}}
+                                            <div id="P-{{$project->id}}-C-{{$chapter->id}}-entry-{{$entry->id}}"
+                                                 class="mb-6 rounded-lg border border-line-200 bg-paper-0 p-6 shadow-subtle">
+                                                <p class="mb-2 text-mono-caps font-mono uppercase tracking-widest text-ink-500">
+                                                    {{ __('entry') }} · {{ __('chapter') }} {{ $key + 1 }}
+                                                </p>
+                                                <header class="mb-3 flex items-start justify-between gap-4">
+                                                    <div class="min-w-0 flex-1" id="anchor_Entry_{{$entry->id}}">
+                                                        @can('update', $project)
+                                                            <livewire:inline-editor
+                                                                :model="$entry"
+                                                                field="name"
+                                                                rules="nullable|string|max:255"
+                                                                :label="__('entry_title')"
+                                                                :variant="'heading'"
+                                                                :key="'entry-name-'.$entry->id"
+                                                            />
+                                                            <livewire:inline-editor
+                                                                :model="$entry"
+                                                                field="subtitle"
+                                                                rules="nullable|string|max:255"
+                                                                :label="__('entry_subtitle')"
+                                                                :variant="'subtitle'"
+                                                                :key="'entry-subtitle-'.$entry->id"
+                                                            />
+                                                        @else
+                                                            <h3 class="text-heading font-semibold text-ink-900">{!! $entry->name !!}</h3>
+                                                            <p class="mt-1 text-body text-ink-500">{!! $entry->subtitle !!}</p>
+                                                        @endcan
+                                                    </div>
+
+                                                    <form action="{{ route('entries.destroy',$entry->id) }}"
+                                                          method="POST"
+                                                          class="flex shrink-0 items-center gap-1 text-ink-500">
+                                                        @csrf
+                                                        <input type="hidden" name="project" value="{!! $project->id !!}"/>
+                                                        @method('DELETE')
+
+                                                        <a href="{{route('projects.edit',['project'=> $project, 'log'=> $entry->id, 'model' => 'Entry'])}}"
+                                                           title="{{ __('older_versions') }}"
+                                                           class="inline-flex size-11 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
+                                                            <x-icon name="rotate-ccw" size="4"/>
+                                                        </a>
+
+                                                        @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
+                                                            <a href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Entry', 'comment' => $entry->id])}}"
+                                                               title="{{ __('add_comment') }}"
+                                                               class="inline-flex size-11 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
+                                                                @if(isset($entry->comments) && count($entry->comments) > 0)
+                                                                    <x-icon name="message-square-dot" size="4"/>
                                                                 @else
-                                                                    <h3>{!! $entry->name !!}</h3>
-                                                                    <p>{!! $entry->subtitle !!}</p>
-                                                                    <p>{!! $entry->description !!}</p>
-                                                                @endcan
-                                                            </div>
-                                                            <div class="ml-auto mr-3 icons">
-                                                                <form action="{{ route('entries.destroy',$entry->id) }}"
-                                                                      method="POST"
-                                                                      class="mb-5">
-                                                                    @csrf
-                                                                    <input type="hidden" name="project" value="{!! $project->id !!}"/>
-                                                                    @method('DELETE')
+                                                                    <x-icon name="message-square" size="4"/>
+                                                                @endif
+                                                            </a>
+                                                        @endif
 
-                                                                    <span data-toggle="tooltip"
-                                                                              data-placement="top"
-                                                                              title="ältere Versionen"><a
-                                                                                    href="{{route('projects.edit',['project'=> $project, 'log'=> $entry->id, 'model' => 'Entry'])}}"
-                                                                                    class="text-log"><i
-                                                                                        class="bi bi-clock-history m-2"></i></a></span>
+                                                        @if(in_array('edit', $listPermissions) || Auth::user()->can('delete', $project))
+                                                            <button type="submit"
+                                                                    onclick="return confirm('{{__('message_delete_confirm')}}')"
+                                                                    title="{{ __('delete_entry') }}"
+                                                                    class="inline-flex size-11 items-center justify-center rounded-md hover:bg-danger-bg hover:text-danger">
+                                                                <x-icon name="trash-2" size="4"/>
+                                                            </button>
+                                                        @endif
 
-                                                                    @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
-                                                                        <span data-toggle="tooltip" data-placement="top"
-                                                                              title="{{__('add_comment')}}"><a href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Entry', 'comment' => $entry->id])}}"> @if(isset($entry->comments) && count($entry->comments) > 0)
-                                                                                    <i class="bi bi-chat-dots-fill m-2"></i>@else
-                                                                                    <i class="bi bi-chat m-2"></i>@endif
-																			</a></span>
-                                                                    @endif
+                                                        {{-- Chevron-Toggle entfaellt seit 5-D.6b: Auf-/
+                                                             Zuklappen laeuft ueber den Sidebar-Tree. --}}
+                                                    </form>
+                                                </header>
 
- 																	@if(in_array('edit', $listPermissions) || Auth::user()->can('delete', $project))
-                                                                        <button type="submit"
-                                                                                onclick="return confirm('{{__('message_delete_confirm')}}')"
-                                                                                data-toggle="tooltip" data-placement="top"
-                                                                                title="{{__('delete_entry')}}">
-																			<i class="bi-x-circle-fill m-2"></i>
-																	</button>
-                                                                    @endif
-
-                                                                    {{-- Edit-Button für Entry entfällt: Titel, Subtitel und
-                                                                         Beschreibung werden per inline-editor-Volt-Komponente
-                                                                         direkt im Entry-Card editiert (Phase 5c.6.b).
-                                                                         Add-Entry-Modal (entryModal) bleibt für „Eintrag
-                                                                         hinzufügen". --}}
-
-
-                                                                    <a onclick="collapseExpandEntry({{$entry->id}})" class="panel-heading "
-                                                                       role="button" aria-expanded="true" aria-controls="entry_{{$entry->id}}" ><i
-                                                                                class="bi-caret-down-fill" id="ent_{{$entry->id}}"></i></a>
-																</form>
-                                                                <p class="date">{!! date('d.m.Y', strtotime($entry->created_at)) !!}</p>
-                                                            </div>
-                                                        </div>
+                                                @can('update', $project)
+                                                    <livewire:rich-text-editor
+                                                        :model="$entry"
+                                                        field="description"
+                                                        rules="nullable|string"
+                                                        :label="__('entry_description')"
+                                                        :key="'entry-description-'.$entry->id"
+                                                    />
+                                                @else
+                                                    <p class="text-body text-ink-700">{!! $entry->description !!}</p>
+                                                @endcan
+                                            </div>
                                                     @if(isset($entry->mediaContent) && count($entry->mediaContent) > 0)
                                                         <div id="entry_{{$entry->id}}">
                                                             <ul class="list-group  ui-sortable-content sortable_list_content connectedSortableContent" data-entry="{{$entry->id}}" id="{{$entry->id}}" data-reorder-element="content" data-reorder-url="{{ route('chapter.drag') }}">
@@ -258,8 +361,8 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                     @if($item->content_type == 'App\Models\Text')
                                                                         @isset($item->text->text)
                                                                             <li class="item text content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
-                                                                                <div class="row border border-secondary p-4 mb-4 ml-auto w-10/12">
-                                                                                    <div id="anchor_MediaContent_{{$item->id}}">
+                                                                                <x-ui.block-card type="text" id="anchor_MediaContent_{{$item->id}}" class="mb-4" :save-slot="'Text-'.$item->text->id">
+                                                                                    <div>
                                                                                         <div class="text-scrollbar overflow-auto">
                                                                                             @can('update', $project)
                                                                                                 <livewire:rich-text-editor
@@ -273,36 +376,25 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                             @endcan
                                                                                         </div>
                                                                                     </div>
-                                                                                    <div class="text-right icons">
+                                                                                    <div class="mt-3 flex items-center justify-end gap-1">
                                                                                         <form action="{{ route('text.delete',$item->text->id) }}"
                                                                                               method="POST" class="mb-5">
                                                                                             @csrf
                                                                                             <input type="hidden" name="project" value="{!! $project->id !!}"/>
                                                                                             @method('DELETE')
-                                                                                            <span data-toggle="tooltip"
-                                                                                                      data-placement="top"
-                                                                                                      title="ältere Versionen"><a
-                                                                                                            href="{{route('projects.edit',['project'=> $project, 'log'=> $item->text->id, 'model' => 'Text'])}}"
-                                                                                                            class="text-log"><i
-                                                                                                                class="bi bi-clock-history m-2"></i></a></span>
+                                                                                            <a href="{{route('projects.edit',['project'=> $project, 'log'=> $item->text->id, 'model' => 'Text'])}}" title="{{ __('older_versions') }}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900"><x-icon name="rotate-ccw" size="4"/></a>
                                                                                             @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                                                                 <span data-toggle="tooltip"
                                                                                                       data-placement="top"
                                                                                                       title="{{__('add_comment')}}"><a
                                                                                                             href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Text', 'comment' => $item->text->id, 'type' => 'Text'])}}"> @if(isset($item->text->comments) && count($item->text->comments) > 0)
-                                                                                                            <i class="bi bi-chat-dots-fill m-2"></i> @else
-                                                                                                            <i class="bi bi-chat m-2"></i>@endif
+                                                                                                            <x-icon name="message-square-dot" size="4"/> @else
+                                                                                                            <x-icon name="message-square" size="4"/>@endif
 																									</a></span>
 																							@endif
 
  																								@if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
-                                                                                                <button type="submit"
-                                                                                                        onclick="return confirm('{{__('message_delete_confirm')}}')">
-                                                                                                    <i class="bi-x-circle-fill m-2"
-                                                                                                       data-toggle="tooltip"
-                                                                                                       data-placement="top"
-                                                                                                       title="{{__('delete_text')}}"></i>
-                                                                                                </button>
+                                                                                                <button type="submit" onclick="return confirm('{{__('message_delete_confirm')}}')" title="{{__('delete_text')}}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-danger-bg hover:text-danger"><x-icon name="trash-2" size="4"/></button>
                                                                                             @endif
 
                                                                                             {{-- Edit-Button für Text entfällt seit Phase 5c.6.c.4:
@@ -310,48 +402,56 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                  direkt im Content-Card editiert. Add-Text-Modal
                                                                                                  (contentModal) bleibt für „Text hinzufügen". --}}
                                                                                         </form>
-                                                                                        {{-- Metadaten hinter <details>-Toggle.
-                                                                                             Copyright/Quelle als inline source-picker
-                                                                                             mit Autocomplete + „Neu anlegen" — löst
-                                                                                             den letzten Modal für Text-Content ab
-                                                                                             (Phase 5c.6.c.4-Followup). --}}
-                                                                                        <details class="metadata mt-2 rounded-md border border-ink-300/60 bg-canvas-dim/40 px-3 py-2">
-                                                                                            <summary class="cursor-pointer select-none text-caption text-chrome-on-dim focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-                                                                                                {{ __('metadata') }}
-                                                                                            </summary>
-                                                                                            <div class="mt-2 space-y-2 text-caption text-chrome-on-dim">
-                                                                                                <div>{!! date('d.m.Y', strtotime($item->text->created_at)) !!}</div>
-                                                                                                @can('update', $project)
-                                                                                                    <livewire:source-picker
-                                                                                                        :model="$item->text"
-                                                                                                        field="copyright"
-                                                                                                        relation="copyrightText"
-                                                                                                        source-type="Copyright"
-                                                                                                        :label="__('copyright')"
-                                                                                                        :key="'text-copyright-'.$item->text->id" />
-                                                                                                    <livewire:source-picker
-                                                                                                        :model="$item->text"
-                                                                                                        field="origin"
-                                                                                                        relation="originText"
-                                                                                                        source-type="Origin"
-                                                                                                        :label="__('origin')"
-                                                                                                        :key="'text-origin-'.$item->text->id" />
-                                                                                                @else
-                                                                                                    <div>Copyright: {!! $item->text->copyrightText?->name !!}</div>
-                                                                                                    <div>{{ __('origin') }}: {!! $item->text->originText?->name !!}</div>
-                                                                                                @endcan
-                                                                                            </div>
-                                                                                        </details>
+                                                                                        {{-- Copyright + Quelle sind Pflichtfelder und
+                                                                                             sitzen sichtbar am Fuss der Block-Card
+                                                                                             (P1.4 aus Designer-Review: eingeklappt
+                                                                                             darf nur Optionales sein). Sternchen
+                                                                                             und aria-required kommen ueber das
+                                                                                             rules-Prop des source-picker. --}}
+                                                                                        <div class="mt-4 border-t border-line-100 pt-3">
+                                                                                            @can('update', $project)
+                                                                                                <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                                                                                                    <div>
+                                                                                                        <label class="mb-1 block text-caption font-medium text-ink-700">
+                                                                                                            {{ __('copyright') }} <span class="text-danger" aria-hidden="true">*</span>
+                                                                                                        </label>
+                                                                                                        <livewire:source-picker
+                                                                                                            :model="$item->text"
+                                                                                                            field="copyright"
+                                                                                                            relation="copyrightText"
+                                                                                                            source-type="Copyright"
+                                                                                                            :label="__('copyright')"
+                                                                                                            :key="'text-copyright-'.$item->text->id" />
+                                                                                                    </div>
+                                                                                                    <div>
+                                                                                                        <label class="mb-1 block text-caption font-medium text-ink-700">
+                                                                                                            {{ __('origin') }} <span class="text-danger" aria-hidden="true">*</span>
+                                                                                                        </label>
+                                                                                                        <livewire:source-picker
+                                                                                                            :model="$item->text"
+                                                                                                            field="origin"
+                                                                                                            relation="originText"
+                                                                                                            source-type="Origin"
+                                                                                                            :label="__('origin')"
+                                                                                                            :key="'text-origin-'.$item->text->id" />
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            @else
+                                                                                                <div class="text-caption text-ink-500">
+                                                                                                    Copyright: {!! $item->text->copyrightText?->name !!} · {{ __('origin') }}: {!! $item->text->originText?->name !!}
+                                                                                                </div>
+                                                                                            @endcan
+                                                                                        </div>
                                                                                     </div>
-                                                                                </div>
+                                                                                </x-ui.block-card>
                                                                             </li>
                                                                         @endisset
                                                                     @endif
                                                                     @if($item->content_type == 'App\Models\Audiovisual')
                                                                         @isset($item->audiovisual->link)
                                                                             <li class="item audiovisual content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
-                                                                                <div class="row border border-secondary p-4 mb-4 ml-auto w-10/12">
-                                                                                    <div id="anchor_MediaContent_{{$item->id}}">
+                                                                                <x-ui.block-card :type="$item->audiovisual->type === 'audio' ? 'audio' : 'video'" id="anchor_MediaContent_{{$item->id}}" class="mb-4" :save-slot="'Audiovisual-'.$item->audiovisual->id">
+                                                                                    <div>
                                                                                         {{-- Player als eigenständige Volt-Komponente
                                                                                              (Phase 5c.6.c.3). Rendert audio/iframe
                                                                                              und aktualisiert sich beim Speichern
@@ -409,37 +509,25 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                             </p>
                                                                                         @endcan
                                                                                     </div>
-                                                                                    <div class="text-right icons">
+                                                                                    <div class="mt-3 flex items-center justify-end gap-1">
                                                                                         <form action="{{ route('audiovisual.delete',$item->audiovisual->id) }}"
                                                                                               method="POST" class="mb-5">
                                                                                             @csrf
                                                                                             <input type="hidden" name="project" value="{!! $project->id !!}"/>
                                                                                             @method('DELETE')
-                                                                                           <span data-toggle="tooltip"
-                                                                                                      data-placement="top"
-                                                                                                      title="ältere Versionen"><a
-                                                                                                            href="{{route('projects.edit',['project'=> $project, 'log'=> $item->audiovisual->id, 'model' => 'Audiovisual'])}}"
-                                                                                                            class="text-log"><i
-                                                                                                                class="bi bi-clock-history m-2"></i></a></span>
+                                                                                           <a href="{{route('projects.edit',['project'=> $project, 'log'=> $item->audiovisual->id, 'model' => 'Audiovisual'])}}" title="{{ __('older_versions') }}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900"><x-icon name="rotate-ccw" size="4"/></a>
 
                                                                                             @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                                                                 <span data-toggle="tooltip"
                                                                                                       data-placement="top"
                                                                                                       title="{{__('add_comment')}}"><a
                                                                                                             href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Audiovisual', 'comment' => $item->audiovisual->id, 'type' => 'Audiovisual'])}}"> @if(isset($item->audiovisual->comments) && count($item->audiovisual->comments) > 0)
-                                                                                                            <i class="bi bi-chat-dots-fill m-2"></i> @else
-                                                                                                            <i
-                                                                                                                    class="bi bi-chat m-2"></i> @endif </a></span>
+                                                                                                            <x-icon name="message-square-dot" size="4"/> @else
+                                                                                                            <x-icon name="message-square" size="4"/> @endif </a></span>
                                                                                             @endif
 
  																							@if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
-                                                                                                <button type="submit"
-                                                                                                        onclick="return confirm('{{__('message_delete_confirm')}}')">
-                                                                                                    <i class="bi-x-circle-fill m-2"
-                                                                                                       data-toggle="tooltip"
-                                                                                                       data-placement="top"
-                                                                                                       title="{{__('delete_text')}}"></i>
-                                                                                                </button>
+                                                                                                <button type="submit" onclick="return confirm('{{__('message_delete_confirm')}}')" title="{{__('delete_text')}}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-danger-bg hover:text-danger"><x-icon name="trash-2" size="4"/></button>
                                                                                             @endif
 
                                                                                             {{-- Modify-Button für Audiovisual entfällt seit
@@ -450,10 +538,10 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                  für neu Anlegen. --}}
                                                                                         </form>
                                                                                         <p class="metadata">
-                                                                                            {!! date('d.m.Y', strtotime($item->audiovisual->created_at)) !!}
+                                                                                            {{ __('saved') }} · {!! date('d.m.Y', strtotime($item->audiovisual->created_at)) !!}
                                                                                         </p>
                                                                                     </div>
-                                                                                </div>
+                                                                                </x-ui.block-card>
                                                                             </li>
                                                                         @endisset
                                                                     @endif
@@ -463,7 +551,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                     @if(isset($item) && $item->content_type == 'App\Models\Gallery')
                                                                         @if(isset($item->gallery))
                                                                             <li class="item gallery content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
-                                                                                <div class="row border border-secondary p-4 mb-4 ml-auto w-10/12">
+                                                                                <x-ui.block-card type="gallery" class="mb-4" :save-slot="'Gallery-'.$item->gallery->id">
                                                                                     <div class="row">
                                                                                         <div class="">
                                                                                             @can('update', $project)
@@ -472,12 +560,14 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                     field="title"
                                                                                                     rules="nullable|string|max:255"
                                                                                                     :label="__('title')"
+                                                                                                    :variant="'heading'"
                                                                                                     :key="'gallery-title-'.$item->gallery->id"
                                                                                                 />
                                                                                                 <livewire:inline-editor
                                                                                                     :model="$item->gallery"
                                                                                                     field="subtitle"
                                                                                                     rules="nullable|string|max:255"
+                                                                                                    :variant="'subtitle'"
                                                                                                     :key="'gallery-subtitle-'.$item->gallery->id"
                                                                                                 />
                                                                                                 <livewire:rich-text-editor
@@ -493,28 +583,22 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                 <p>{{$item->gallery->description}}</p>
                                                                                             @endcan
                                                                                         </div>
-                                                                                        <div class="text-right icons">
+                                                                                        <div class="mt-3 flex items-center justify-end gap-1">
                                                                                             <form action="{{ route('gallery.delete',$item->gallery->id) }}"
                                                                                                   method="POST" class="mb-5">
                                                                                                 @csrf
                                                                                                 <input type="hidden" name="project" value="{!! $project->id !!}"/>
                                                                                                 @method('DELETE')
 
-                                                                                                <span data-toggle="tooltip"
-                                                                                                          data-placement="top"
-                                                                                                          title="ältere Versionen"><a
-                                                                                                                href="{{route('projects.edit',['project'=> $project, 'log'=> $item->gallery->id, 'model' => 'Gallery'])}}"
-                                                                                                                class="text-log"><i
-                                                                                                                    class="bi bi-clock-history m-2"></i></a></span>
+                                                                                                <a href="{{route('projects.edit',['project'=> $project, 'log'=> $item->gallery->id, 'model' => 'Gallery'])}}" title="{{ __('older_versions') }}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900"><x-icon name="rotate-ccw" size="4"/></a>
 
                                                                                                 @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                                                                     <span data-toggle="tooltip"
                                                                                                           data-placement="top"
                                                                                                           title="{{__('add_comment')}}"><a
                                                                                                                 href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Gallery', 'comment' => $item->gallery->id, 'type'=> 'Gallery'])}}" > @if(isset($item->gallery->comments) && count($item->gallery->comments) > 0)
-                                                                                                                <i class="bi bi-chat-dots-fill m-2"></i> @else
-                                                                                                                <i
-                                                                                                                        class="bi bi-chat m-2"></i> @endif </a></span>
+                                                                                                                <x-icon name="message-square-dot" size="4"/> @else
+                                                                                                                <x-icon name="message-square" size="4"/> @endif </a></span>
                                                                                                 @endif
 
  																								@if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
@@ -528,33 +612,32 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                                 data-id="{{$item->gallery->id}}"
                                                                                                                 data-entryId="{{$entry->id}}"
                                                                                                                 data-toggle="modal"
-                                                                                                                data-target="#imageModal"> <i
-                                                                                                                    class="bi bi-plus-circle m-2"></i> </button></span>
+                                                                                                                data-target="#imageModal"> <x-icon name="plus-circle" class="m-2" /> </button></span>
                                                                                                 @endif
                                                                                                 @if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
-                                                                                                    <button type="submit"
-                                                                                                            onclick="return confirm('{{__('message_delete_confirm')}}')">
-                                                                                                        <i class="bi-x-circle-fill m-2"
-                                                                                                           data-toggle="tooltip"
-                                                                                                           data-placement="top"
-                                                                                                           title="{{__('delete_image')}}"></i>
-                                                                                                    </button>
+                                                                                                    <button type="submit" onclick="return confirm('{{__('message_delete_confirm')}}')" title="{{__('delete_image')}}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-danger-bg hover:text-danger"><x-icon name="trash-2" size="4"/></button>
                                                                                                 @endif
                                                                                                 {{-- Gallery-Edit-Modal-Trigger entfällt seit 5c.6.c:
                                                                                                      Title/Subtitle/Description werden inline editiert.
                                                                                                      Bild-Hinzufügen (addImage) bleibt modal. --}}
                                                                                             </form>
                                                                                         </div>
-                                                                                    </div><div class="gallery_container">
+                                                                                    </div>
+                                                                                    {{-- public/css/crowdcuratio.css wird seit dem
+                                                                                         Vite-Umbau nicht mehr geladen — die alten
+                                                                                         .gallery_container-Grid-Regeln greifen nicht.
+                                                                                         Wir setzen das Grid komplett per Tailwind-
+                                                                                         Utilities direkt am Element. --}}
+                                                                                    @if ($item->gallery->images->isEmpty())
+                                                                                        <div class="mt-4">
+                                                                                            <x-ui.media-placeholder type="gallery"/>
+                                                                                        </div>
+                                                                                    @else
+                                                                                    <div class="mt-4 grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4">
                                                                                     @foreach($item->gallery->images as $image)
-                                                                                        <div class="row mt-4 gallery_item" id="gallery_items_{{$item->gallery->id}}">
-                                                                                            {{-- Höhe zusätzlich als Utility, weil die alte
-                                                                                                 crowdcuratio.css-Regel `.gallery_item .img
-                                                                                                 { height: 300px }` unter Tailwind 4 Preflight
-                                                                                                 nicht mehr zuverlässig greift und das Div
-                                                                                                 sonst auf Caption-Höhe kollabiert. --}}
+                                                                                        <div class="gallery_item relative" id="gallery_items_{{$item->gallery->id}}">
                                                                                             <div id="anchor_MediaContent_{{$item->id}}"
-                                                                                                 class="img relative h-[300px] w-full bg-cover bg-center bg-no-repeat"
+                                                                                                 class="img relative h-[200px] w-full overflow-hidden rounded-md bg-cover bg-center bg-no-repeat"
                                                                                                  style="background-image: url('{{route('image', $image->image)}}')" >
                                                                                                <div class="caption">
                                                                                                     @can('update', $project)
@@ -571,35 +654,24 @@ If not, see <https://www.gnu.org/licenses/>. -->
 																								{{-- <img src="{{route('image', $image->image)}}" alt="{{$item->alt}}" style=""> --}}
 
                                                                                             </div>
-                                                                                            <div class="text-right icons">
+                                                                                            <div class="mt-3 flex items-center justify-end gap-1">
                                                                                                 <form action="{{ route('image.delete',$image->id) }}"
                                                                                                       method="POST" class="mb-5">
                                                                                                     @csrf
                                                                                                     @method('DELETE')
-																									<span data-toggle="tooltip"
-                                                                                                              data-placement="top"
-                                                                                                              title="ältere Versionen"><a
-                                                                                                                    href="{{route('projects.edit',['project'=> $project, 'log'=> $image->id, 'model' => 'Image'])}}"
-                                                                                                                    class="text-log"><i
-                                                                                                                        class="bi bi-clock-history m-2"></i></a></span>
+																									<a href="{{route('projects.edit',['project'=> $project, 'log'=> $image->id, 'model' => 'Image'])}}" title="{{ __('older_versions') }}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900"><x-icon name="rotate-ccw" size="4"/></a>
 
                                                                                                     @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                                                                         <span data-toggle="tooltip"
                                                                                                               data-placement="top"
                                                                                                               title="{{__('add_comment')}}"><a
                                                                                                                     href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Image', 'comment' => $image->id, 'type'=> 'Image'])}}"> @if(isset($image->comments) && count($image->comments) > 0)
-                                                                                                                    <i class="bi bi-chat-dots-fill m-2"></i> @else
-                                                                                                                    <i class="bi bi-chat m-2"></i> @endif </a></span>
+                                                                                                                    <x-icon name="message-square-dot" size="4"/> @else
+                                                                                                                    <x-icon name="message-square" size="4"/> @endif </a></span>
                                                                                                     @endif
 
                                                                                                     @if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
-                                                                                                        <button type="submit"
-                                                                                                                onclick="return confirm('{{__('message_delete_confirm')}}')">
-                                                                                                            <i class="bi-x-circle-fill m-2"
-                                                                                                               data-toggle="tooltip"
-                                                                                                               data-placement="top"
-                                                                                                               title="{{__('delete_image')}}"></i>
-                                                                                                        </button>
+                                                                                                        <button type="submit" onclick="return confirm('{{__('message_delete_confirm')}}')" title="{{__('delete_image')}}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-danger-bg hover:text-danger"><x-icon name="trash-2" size="4"/></button>
                                                                                                     @endif
 
                                                                                                     {{-- Modify-Button für Image entfällt seit
@@ -608,42 +680,51 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                          in den Details unten editiert.
                                                                                                          imageModal bleibt für „Bild hinzufügen". --}}
                                                                                                 </form>
-                                                                                                {{-- Metadaten hinter <details>-Toggle,
-                                                                                                     Copyright/Quelle als inline
-                                                                                                     source-picker mit Autocomplete +
-                                                                                                     „Neu anlegen". --}}
-                                                                                                <details class="metadata mt-2 rounded-md border border-ink-300/60 bg-canvas-dim/40 px-3 py-2">
-                                                                                                    <summary class="cursor-pointer select-none text-caption text-chrome-on-dim focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-                                                                                                        {{ __('metadata') }}
-                                                                                                    </summary>
-                                                                                                    <div class="mt-2 space-y-2 text-caption text-chrome-on-dim">
-                                                                                                        <div>{{date('d.m.Y', strtotime($image->created_at))}}</div>
-                                                                                                        @can('update', $project)
-                                                                                                            <livewire:source-picker
-                                                                                                                :model="$image"
-                                                                                                                field="copyright"
-                                                                                                                relation="copyrightImage"
-                                                                                                                source-type="Copyright"
-                                                                                                                :label="__('copyright')"
-                                                                                                                :key="'image-copyright-'.$image->id" />
-                                                                                                            <livewire:source-picker
-                                                                                                                :model="$image"
-                                                                                                                field="origin"
-                                                                                                                relation="originImage"
-                                                                                                                source-type="Origin"
-                                                                                                                :label="__('origin')"
-                                                                                                                :key="'image-origin-'.$image->id" />
-                                                                                                        @else
-                                                                                                            <div>Copyright: {{$image->copyrightImage?->name}}</div>
-                                                                                                            <div>{{ __('origin') }}: {{$image->originImage?->name}}</div>
-                                                                                                        @endcan
-                                                                                                    </div>
-                                                                                                </details>
+                                                                                                {{-- Copyright + Quelle sichtbar am
+                                                                                                     Card-Fuss (P1.4). Innerhalb der
+                                                                                                     schmalen Gallery-Kachel stapeln
+                                                                                                     sich die beiden Felder
+                                                                                                     untereinander (P5-D.6b-Followup). --}}
+                                                                                                <div class="mt-3 border-t border-line-100 pt-2">
+                                                                                                    @can('update', $project)
+                                                                                                        <div class="grid grid-cols-1 gap-2">
+                                                                                                            <div>
+                                                                                                                <label class="mb-1 block text-caption font-medium text-ink-700">
+                                                                                                                    {{ __('copyright') }} <span class="text-danger" aria-hidden="true">*</span>
+                                                                                                                </label>
+                                                                                                                <livewire:source-picker
+                                                                                                                    :model="$image"
+                                                                                                                    field="copyright"
+                                                                                                                    relation="copyrightImage"
+                                                                                                                    source-type="Copyright"
+                                                                                                                    :label="__('copyright')"
+                                                                                                                    :key="'image-copyright-'.$image->id" />
+                                                                                                            </div>
+                                                                                                            <div>
+                                                                                                                <label class="mb-1 block text-caption font-medium text-ink-700">
+                                                                                                                    {{ __('origin') }} <span class="text-danger" aria-hidden="true">*</span>
+                                                                                                                </label>
+                                                                                                                <livewire:source-picker
+                                                                                                                    :model="$image"
+                                                                                                                    field="origin"
+                                                                                                                    relation="originImage"
+                                                                                                                    source-type="Origin"
+                                                                                                                    :label="__('origin')"
+                                                                                                                    :key="'image-origin-'.$image->id" />
+                                                                                                            </div>
+                                                                                                        </div>
+                                                                                                    @else
+                                                                                                        <div class="text-caption text-ink-500">
+                                                                                                            Copyright: {{$image->copyrightImage?->name}} · {{ __('origin') }}: {{$image->originImage?->name}}
+                                                                                                        </div>
+                                                                                                    @endcan
+                                                                                                </div>
                                                                                             </div>
                                                                                         </div>
                                                                                     @endforeach
 																					</div>
-                                                                                </div>
+                                                                                    @endif
+                                                                                </x-ui.block-card>
                                                                             </li>
                                                                         @endif
                                                                     @endif
@@ -667,7 +748,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                 data-entry="{{$entry->name}}"
                                                                 data-id="{{$entry->id}}"
                                                                 data-toggle="modal"
-                                                                data-target="#contentModal">{{__('new_element')}} <i class="bi bi-plus-circle-fill m-2"></i> </button></span>
+                                                                data-target="#contentModal"
+                                                                class="addContent inline-flex w-full items-center justify-center gap-2 rounded-md
+                                                                       border-2 border-dashed border-line-200 bg-transparent
+                                                                       px-4 py-3 text-body text-ink-500
+                                                                       hover:border-ink-400 hover:bg-line-100/40 hover:text-ink-700"
+                                                                ><x-icon name="plus" size="4"/> <span>{{__('new_element')}}</span></button></span>
                                                 @endif
                                             </div>
                                         </li>
@@ -682,12 +768,18 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     </div>
                     @if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
                         <div class="mb-4">
-                        <span data-toggle="tooltip" data-placement="top" title="{{__('add_entry')}}"><button type="button"
-                                                                                                        class="addEntry btn btn-secondary add_entry"
-                                                                                                        data-chapter="{{$chapter->name}}"
-                                                                                                        data-id="{{$chapter->id}}"
-                                                                                                        data-toggle="modal"
-                                                                                                        data-target="#entryModal">{{__('new_entry')}} <i class="bi bi-plus-circle-fill m-2"></i> </button></span>
+                        <button type="button"
+                                title="{{__('add_entry')}}"
+                                data-chapter="{{$chapter->name}}"
+                                data-id="{{$chapter->id}}"
+                                data-toggle="modal"
+                                data-target="#entryModal"
+                                class="addEntry add_entry inline-flex w-full items-center justify-center gap-2 rounded-md
+                                       border-2 border-dashed border-line-200 bg-transparent
+                                       px-4 py-3 text-body text-ink-500
+                                       hover:border-ink-400 hover:bg-line-100/40 hover:text-ink-700">
+                            <x-icon name="plus" size="4"/> <span>{{__('new_entry')}}</span>
+                        </button>
                         </div>
                     @endif
                 </li>
@@ -696,9 +788,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
     @endif
 
     @if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
-        <a class="btn btn-secondary btn-lg add_chapter" data-toggle="modal" data-target="#myModal">
-
-            {{__('new_chapter')}} <i class="bi bi-plus-circle-fill m-2"></i>
+        <a class="add_chapter mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md
+                  border-2 border-dashed border-line-200 bg-transparent
+                  px-4 py-4 text-body text-ink-500
+                  hover:border-ink-400 hover:bg-line-100/40 hover:text-ink-700 cursor-pointer"
+           data-toggle="modal" data-target="#myModal">
+            <x-icon name="plus" size="5"/> <span>{{__('new_chapter')}}</span>
         </a>
     @endif
     <hr class="mt-5 mb-5">
@@ -808,18 +903,9 @@ If not, see <https://www.gnu.org/licenses/>. -->
     @include('contents.image')
     @include('contents.audiovisual')
 @endsection
-@section('footer')
-    @if(Auth::user()->can('publish', $project) || Auth::user()->can('preview'))
-        <div class="footer-background p-3 my-3 border">
-            <button type="button" class="m-4" data-toggle="modal" data-target="#previewModal" >{{__('pdf')}} <i class="bi bi-file-earmark-pdf-fill"></i>
-            </button>
-            <button type="button" class="m-4" data-toggle="modal" data-target="#previewModal" >{{__('preview')}} <i class="bi bi-globe"></i>
-            </button>
-		<span class="right">	<a href="https://app.crowdcurat.io/downloads/html.zip" class="m-4"  target="_blank" >{{__('download')}} <i class="bi bi-globe"></i>
-            </a></span>
-        </div>
-    @endif
-@endsection
+{{-- Export-Buttons (PDF/Preview/Download) wandern seit Phase
+     5-D.6b-P3.15 ins ⋮-Menue neben 'Veroeffentlichen' in der
+     Editor-Chrome-Bar oben. Kein Footer-Block mehr am Seitenende. --}}
 @push('scripts')
     <script>
         $(".rotate").click(function() {
@@ -1383,7 +1469,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
             var prev = $(this).data('val');
             var current = $(this).val();
             if (prev !== current) {
-                $('#updateProjectBtn').html('<button id="btn_save" class="btn btn-secondary btn-block text-left" type="submit" name="btn_submit" value="Save"><i class="bi bi-file-earmark m-2"></i>{{__('save')}}</button>');
+                $('#updateProjectBtn').html('<button id="btn_save" class="btn btn-secondary btn-block text-left" type="submit" name="btn_submit" value="Save"><x-icon name="file-earmark" class="m-2" />{{__('save')}}</button>');
             }
 
         });
@@ -1447,30 +1533,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
         });
 
-        //collapse and expand chapter
-        function collapseExpand(id){
-
-            if($('#chapter_'+id).is(':animated') ) {
-
-                return false;
-
-            }
-
-            $('#chapter_'+id).slideToggle('slow');
-            $('#chp_'+id).toggleClass('bi-caret-down-fill').toggleClass('bi-caret-right-fill');
-
-        }
-
-        //collapse entry
-        function collapseExpandEntry(id){
-
-            if($('#entry_'+id).is(':animated') ) {
-                return false;
-            }
-
-            $('#entry_'+id).slideToggle('slow');
-            $('#ent_'+id).toggleClass('bi-caret-right-fill').toggleClass('bi-caret-down-fill');
-        }
+        // collapseExpand()- und collapseExpandEntry()-Handler
+        // entfallen seit Phase 5-D.6b: Kapitel und Eintrag sind
+        // offene Zonen, das Auf-/Zuklappen laeuft ueber den
+        // Sidebar-Tree (Alpine-x-collapse in
+        // sidebar-tree.blade.php).
 
         //Invitation for existing user
         @if(!empty(Session::get('error_code')) && Session::get('error_code') == 6)

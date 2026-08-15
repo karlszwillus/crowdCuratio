@@ -69,53 +69,111 @@ new class extends Component
 <nav
     aria-label="{{ __('project_structure') }}"
     class="text-body"
-    x-data="{ active: window.location.hash }"
+    x-data="{
+        active: window.location.hash,
+        expanded: {},
+        toggle(id) { this.expanded[id] = !this.expanded[id]; },
+        isExpanded(id) { return this.expanded[id] !== false; }
+    }"
     @hashchange.window="active = window.location.hash"
 >
-    <ol class="space-y-1">
-        <li>
-            <a
-                href="#main-content"
-                class="block rounded-md px-2 py-1 font-medium text-ink-900 hover:bg-chrome-active"
-                :aria-current="active === '#main-content' || active === '' ? 'page' : null"
-                :class="(active === '#main-content' || active === '') && 'bg-chrome-active'"
-            >
-                {{ $project->name }}
-            </a>
+    {{-- Kopfzeile 'STRUKTUR / Projektname' (Handoff v4 § Screen 02).
+         Sitzt in <x-layout.sidebar-panel> — der Panel-Kopf wird
+         dort gerendert; wir liefern hier nur den Content. --}}
 
-            @if ($project->chapters->isNotEmpty())
-                <ol class="ml-3 mt-1 space-y-1 border-l border-ink-400 pl-3">
-                    @foreach ($project->chapters as $chapter)
-                        <li>
-                            <a
-                                href="#anchor_Chapter_{{ $chapter->id }}"
-                                class="block rounded-md px-2 py-1 text-ink-800 hover:bg-chrome-active"
-                                :aria-current="active === '#anchor_Chapter_{{ $chapter->id }}' ? 'true' : null"
-                                :class="active === '#anchor_Chapter_{{ $chapter->id }}' && 'bg-chrome-active font-medium'"
-                            >
-                                {{ $chapter->name }}
-                            </a>
+    <p class="mb-3 text-mono-caps font-mono uppercase tracking-widest text-ink-500">
+        {{ __('structure') }}
+    </p>
+    <h2 class="mb-4 text-body font-semibold text-ink-900">
+        {{ $project->name }}
+    </h2>
 
-                            @if ($chapter->entries->isNotEmpty())
-                                <ol class="ml-3 mt-1 space-y-1 border-l border-ink-400 pl-3">
-                                    @foreach ($chapter->entries as $entry)
-                                        <li>
-                                            <a
-                                                href="#anchor_Entry_{{ $entry->id }}"
-                                                class="block rounded-md px-2 py-1 text-ink-700 hover:bg-chrome-active"
-                                                :aria-current="active === '#anchor_Entry_{{ $entry->id }}' ? 'true' : null"
-                                                :class="active === '#anchor_Entry_{{ $entry->id }}' && 'bg-chrome-active font-medium'"
-                                            >
-                                                {{ $entry->name }}
-                                            </a>
-                                        </li>
-                                    @endforeach
-                                </ol>
-                            @endif
-                        </li>
-                    @endforeach
-                </ol>
-            @endif
-        </li>
+    <ol class="list-none space-y-0.5">
+        @foreach ($project->chapters as $chapterIndex => $chapter)
+            @php $chapterExpandedKey = 'chapter-'.$chapter->id; @endphp
+            <li>
+                <div class="flex items-center gap-1">
+                    {{-- Klapp-Chevron. --}}
+                    @if ($chapter->entries->isNotEmpty())
+                        <button
+                            type="button"
+                            @click="toggle('{{ $chapterExpandedKey }}')"
+                            :aria-expanded="isExpanded('{{ $chapterExpandedKey }}')"
+                            :aria-label="isExpanded('{{ $chapterExpandedKey }}') ? '{{ __('collapse') }}' : '{{ __('expand') }}'"
+                            class="flex size-5 shrink-0 items-center justify-center rounded text-ink-500 hover:bg-line-100"
+                        >
+                            <x-icon x-show="isExpanded('{{ $chapterExpandedKey }}')" name="chevron-down" size="4"/>
+                            <x-icon x-show="!isExpanded('{{ $chapterExpandedKey }}')" name="chevron-right" size="4"/>
+                        </button>
+                    @else
+                        <span class="inline-block size-5 shrink-0" aria-hidden="true"></span>
+                    @endif
+
+                    {{-- Kapitel-Link mit Nummer.
+                         Der farbige Punkt aus Handoff v4 Screen 02
+                         entfaellt: er wirkte visuell wie ein
+                         Aufzaehlungszeichen und war doppelt gemoppelt
+                         mit der Nummer + der aktiven Left-Kante. --}}
+                    <a
+                        href="#anchor_Chapter_{{ $chapter->id }}"
+                        class="relative block flex-1 rounded-md px-2 py-1 text-body font-semibold text-ink-900 hover:bg-line-100"
+                        :aria-current="active === '#anchor_Chapter_{{ $chapter->id }}' ? 'true' : null"
+                        :class="active === '#anchor_Chapter_{{ $chapter->id }}' && 'bg-tint-bg text-tint-text before:absolute before:left-[-6px] before:top-1 before:bottom-1 before:w-[3px] before:rounded before:bg-brand-bar'"
+                    >
+                        <span class="text-ink-500">{{ $chapterIndex + 1 }} ·</span>
+                        {{ $chapter->name }}
+                    </a>
+                </div>
+
+                @if ($chapter->entries->isNotEmpty())
+                    <ol
+                        x-show="isExpanded('{{ $chapterExpandedKey }}')"
+                        x-collapse
+                        class="ml-6 mt-0.5 list-none space-y-0.5"
+                    >
+                        @foreach ($chapter->entries as $entry)
+                            <li>
+                                <a
+                                    href="#anchor_Entry_{{ $entry->id }}"
+                                    class="relative block rounded-md px-2 py-1 text-body text-ink-700 hover:bg-line-100"
+                                    :aria-current="active === '#anchor_Entry_{{ $entry->id }}' ? 'true' : null"
+                                    :class="active === '#anchor_Entry_{{ $entry->id }}' && 'bg-tint-bg text-tint-text font-medium before:absolute before:left-[-6px] before:top-1 before:bottom-1 before:w-[3px] before:rounded before:bg-brand-bar'"
+                                >
+                                    {{ $entry->name }}
+                                </a>
+                            </li>
+                        @endforeach
+
+                        @can('update', $project)
+                            <li>
+                                <button
+                                    type="button"
+                                    data-toggle="modal"
+                                    data-target="#entryModal"
+                                    data-chapter="{{ $chapter->name }}"
+                                    data-id="{{ $chapter->id }}"
+                                    class="addEntry add_entry ml-2 mt-1 inline-flex items-center gap-1 text-caption text-ink-500 hover:text-ink-900"
+                                >
+                                    <x-icon name="plus" size="4"/>
+                                    <span>{{ __('add_entry') }}</span>
+                                </button>
+                            </li>
+                        @endcan
+                    </ol>
+                @endif
+            </li>
+        @endforeach
+
+        @can('update', $project)
+            <li class="mt-3">
+                <a
+                    data-toggle="modal" data-target="#myModal"
+                    class="add_chapter inline-flex cursor-pointer items-center gap-1 text-caption text-ink-500 hover:text-ink-900"
+                >
+                    <x-icon name="plus" size="4"/>
+                    <span>{{ __('add_chapter') }}</span>
+                </a>
+            </li>
+        @endcan
     </ol>
 </nav>

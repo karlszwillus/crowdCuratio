@@ -67,7 +67,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                         <div class="input-group">
                     <span class="input-group-btn">
                         <span class="btn btn-default btn-file">
-                            <i class="bi bi-folder m-2"></i>{{__('browse')}} <input value="{{old('project_image')}}"
+                            <x-icon name="folder" class="m-2" />{{__('browse')}} <input value="{{old('project_image')}}"
                                                                                     name="project_image" type="file"
                                                                                     id="imgInp">
                         </span>
@@ -133,14 +133,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
 @section('action')
     <div class="col-sm-9">
         <button id="btn_save" class="btn btn-secondary btn-lg btn-block text-left" type="submit" name="btn_submit"
-                value="Save"><i
-                    class="bi bi-file-earmark m-2"></i>@if(isset($project->id)) {{__('save')}} @else Save @endif
+                value="Save"><x-icon name="file-earmark" class="m-2" />@if(isset($project->id)) {{__('save')}} @else Save @endif
         </button>
-        <!--<button class="btn btn-secondary btn-lg btn-block text-left" type="submit" name="btn_submit" value="Preview"><i
-                     class="bi bi-eye m-2"></i>Preview
+        <!--<button class="btn btn-secondary btn-lg btn-block text-left" type="submit" name="btn_submit" value="Preview"><x-icon name="eye" class="m-2" />Preview
          </button>
-         <button class="btn btn-secondary btn-lg btn-block text-left" type="submit" name="btn_submit" value="Publish"><i
-                     class="bi bi-globe m-2"></i>Publish
+         <button class="btn btn-secondary btn-lg btn-block text-left" type="submit" name="btn_submit" value="Publish"><x-icon name="globe" class="m-2" />Publish
          </button>!-->
         @if(isset($project->id))
             <form action="{{ route('projects.destroy',$project->id) }}" method="POST">
@@ -148,7 +145,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                 @method('DELETE')
                 <button class="btn btn-secondary btn-lg btn-block text-left mt-2" type="submit"
                         onclick="return confirm('{{__('message_delete_confirm')}}')">
-                    <i class="bi bi-trash m-2"></i> {{__('delete_project')}}
+                    <x-icon name="trash" class="m-2" /> {{__('delete_project')}}
                 </button>
             </form>
         @endif
@@ -157,8 +154,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
 @endsection
 @section('sidebar')
     <button id="btn_save" class="btn btn-secondary btn-lg btn-block text-left" type="submit" name="btn_submit"
-            value="Save"><i
-                class="bi bi-file-earmark m-2"></i>@if(isset($project->id)) {{__('save')}} @else {{__('save')}} @endif
+            value="Save"><x-icon name="file-earmark" class="m-2" />@if(isset($project->id)) {{__('save')}} @else {{__('save')}} @endif
     </button>
     @if(isset($project->id))
     <a class="btn btn-secondary btn-lg btn-block text-left" href="{{ route('projects.edit', $project->id) }}"> {{__('content')}}
@@ -179,12 +175,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                     <div class="col-sm-5 text-right"><a data-id="{{$key}}" data-project="{{$project->id}}"
                                                                         data-permission="{{json_encode($value['permission'])}}"
                                                                         href="" data-toggle="modal"
-                                                                        data-target="#userModal" class="edit-user"><i
-                                                    class="bi bi-pencil-fill"></i></a>
+                                                                        data-target="#userModal" class="edit-user"><x-icon name="pencil-fill" /></a>
                                         @csrf
                                         @method('DELETE')
                                         <button data-toggle="tooltip" data-placement="top" title="{{__('delete_user')}}" type="submit" onclick="return confirm('{{__('message_delete_confirm')}}')">
-                                            <i class="bi bi-trash"></i>
+                                            <x-icon name="trash" />
                                         </button>
                                     </div>
                                 </form>
@@ -199,11 +194,9 @@ If not, see <https://www.gnu.org/licenses/>. -->
             </div>
         </div>
     @endif
-    <!--<button class="btn btn-secondary btn-lg btn-block text-left" type="submit" name="btn_submit" value="Preview"><i
-                class="bi bi-eye m-2"></i>Preview
+    <!--<button class="btn btn-secondary btn-lg btn-block text-left" type="submit" name="btn_submit" value="Preview"><x-icon name="eye" class="m-2" />Preview
     </button>
-    <button class="btn btn-secondary btn-lg btn-block text-left" type="submit" name="btn_submit" value="Publish"><i
-                class="bi bi-globe m-2"></i>Publish
+    <button class="btn btn-secondary btn-lg btn-block text-left" type="submit" name="btn_submit" value="Publish"><x-icon name="globe" class="m-2" />Publish
     </button>-->
     <!-- Modal Chapter -->
 
@@ -530,11 +523,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
 
             /*imprintModify.root.addEventListener('keydown', evt => {
-                $('#updateProjectBtn').html('<button id="btn_save" class="btn btn-secondary btn-block text-left" type="submit" name="btn_submit" value="Save"><i class="bi bi-file-earmark m-2"></i>{{__('save')}}</button>');
+                $('#updateProjectBtn').html('<button id="btn_save" class="btn btn-secondary btn-block text-left" type="submit" name="btn_submit" value="Save"><x-icon name="file-earmark" class="m-2" />{{__('save')}}</button>');
             });
 
             termsModify.root.addEventListener('keydown', evt => {
-                $('#updateProjectBtn').html('<button id="btn_save" class="btn btn-secondary btn-block text-left" type="submit" name="btn_submit" value="Save"><i class="bi bi-file-earmark m-2"></i>{{__('save')}}</button>');
+                $('#updateProjectBtn').html('<button id="btn_save" class="btn btn-secondary btn-block text-left" type="submit" name="btn_submit" value="Save"><x-icon name="file-earmark" class="m-2" />{{__('save')}}</button>');
             });*/
 
             //Add imprint and terms to forms

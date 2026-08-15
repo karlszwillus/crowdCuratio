@@ -18,27 +18,62 @@ along with this program in the file LICENSE.
 If not, see <https://www.gnu.org/licenses/>.
 --}}
 
-{{-- App-Shell-Gerüst.
- - dunkles Chrome (Header + Sidebar-Hintergrund), heller Content-Canvas
- - semantische Landmarks: <header>, <aside>, <main>, <footer>
- - Tailwind-Grid statt Bootstrap-3-Cols
- - Slot-API spiegelt die alten @yield-Namen (`log`, `main`, `sidebar`,
-   `content`, `footer`), damit `projects/layout.blade.php` die Slots
-   aus dem Outer-Section-Stack füllen kann und die bestehenden
-   `@extends('projects.layout')`-Views in Welle 5b.1 unverändert
-   weiterlaufen. Saubere Komponenten-Umstellung der Views kommt ab
-   5b.3.
- - Wenn `$content` (Full-Width-Sektion) gesetzt ist, entfällt
-   die Sidebar-Spalte rechts.
+{{-- App-Shell-Gerüst (Phase 5-D.3).
+
+Konsistente Shell: Rail (60 px, dunkles Chrome) + Sidebar-Panel
+(280 px, hell) + Canvas (rest). Das ersetzt die Top-Bar aus 5a/5b.
+
+Slot-API:
+- `$rail-active`    (Prop) — 'projects' | 'users' | 'comments' | 'settings',
+                             markiert das aktive Rail-Icon.
+- `$panel`          — Inhalt des Sidebar-Panels (Struktur-Baum,
+                      Filter, Sekundärnavigation). Ohne Panel-Slot
+                      entfällt die Panel-Spalte und die Rail steht
+                      direkt neben dem Canvas (z. B. Full-Width-
+                      Views wie Settings).
+- `$panel-label`,
+  `$panel-title`    — optionaler Panel-Kopf (Mono-Caps + Titel).
+- `$panel-aria`     — ARIA-Label des Panels (Default: 'Panel').
+
+Legacy-Slots aus 5a/5b (`log`, `main`, `sidebar`, `content`,
+`footer`) werden weiter unterstützt, damit `projects/layout.blade.php`
+und die `@extends`-Views nicht auf einen Schlag angefasst werden
+müssen. `log` mappt auf `panel` (linke Sidebar-Position), `content`
+und `main` sind gleichwertige Canvas-Slots.
 --}}
 
 @props([
+    'railActive' => null,
+    'panel' => null,
+    'panelLabel' => null,
+    'panelTitle' => null,
+    'panelAria' => null,
+
+    // Legacy-Slots (5a/5b-Kompat).
     'log' => null,
     'main' => null,
     'sidebar' => null,
     'content' => null,
     'footer' => null,
 ])
+
+@php
+    // Legacy-`log` auf `panel` mappen, wenn dieser nicht explizit
+    // gesetzt ist — dann müssen wir die Bestandsviews nicht sofort
+    // anfassen.
+    $panelContent = $panel ?? $log;
+    $panelHasContent = $panelContent !== null && trim((string) $panelContent) !== '';
+
+    // Legacy-`content` (Full-Width) und `main` sind beide als Canvas
+    // gültig. `content` ist historisch der Full-Width-Modus (Settings,
+    // Auth-Register); `main` der Editor-Center.
+    $canvas = null;
+    if ($content !== null && trim((string) $content) !== '') {
+        $canvas = $content;
+    } elseif ($main !== null && trim((string) $main) !== '') {
+        $canvas = $main;
+    }
+@endphp
 
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
@@ -50,8 +85,12 @@ If not, see <https://www.gnu.org/licenses/>.
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+    {{-- Bootstrap-Icons-CDN entfaellt seit Phase 5-D.2: Icons kommen
+         ueber die `<x-icon>`-Komponente aus dem Lucide-Set (blade-ui-kit
+         + mallardduck/blade-lucide-icons). Font-Awesome bleibt fuer
+         die Preview-/PDF-Templates (drei Nutzungen in preview/*.blade.php),
+         wird spaeter im PDF-Refactor migriert. --}}
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdn.quilljs.com/1.1.6/quill.snow.css">
     <script src="https://cdn.quilljs.com/1.1.6/quill.js"></script>
 
@@ -79,50 +118,59 @@ If not, see <https://www.gnu.org/licenses/>.
 </head>
 <body class="bg-canvas-bg">
 
-    {{-- Skip-Link als erster Tab-Stop (WCAG 2.4.1). Im Default per
-         transform: translateY(-150%) versteckt, bei :focus springt
-         er nach unten ins Viewport. Style in resources/css/app.css
-         (.skip-link). Ziel ist der <main id="main-content">-Anker
-         weiter unten. --}}
+    {{-- Skip-Link als erster Tab-Stop (WCAG 2.4.1). --}}
     <a href="#main-content" class="skip-link">
         {{ __('skip_to_main') }}
     </a>
 
-    @include('layouts.navi-header')
+    <div class="flex min-h-screen">
+        {{-- Rail: immer sichtbar, sticky an linkem Rand. --}}
+        <x-layout.rail :active="$railActive" />
 
-    <div class="mx-auto w-full max-w-screen-2xl px-4">
-        @if($content !== null && trim((string) $content) !== '')
-            {{-- Full-Width-Sektion (Settings, Index, Auth-Register, Translate). --}}
-            <main role="main" id="main-content" class="py-4">
-                {{ $content }}
-            </main>
-        @else
-            {{-- Editor-Layout: drei Spalten — History links, Editor mitte, Tools rechts. --}}
-            <div class="grid grid-cols-12 gap-4 py-4">
-                <aside aria-label="{{ __('project_structure') }}" class="col-span-12 md:sticky md:top-20 md:col-span-2 md:h-fit md:self-start">
-                    {{ $log }}
-                </aside>
-                <main role="main" id="main-content" class="col-span-12 md:col-span-7">
-                    {{ $main }}
-                </main>
-                <aside aria-label="{{ __('tools') }}" class="col-span-12 md:col-span-3">
-                    {{ $sidebar }}
-                </aside>
+        {{-- Sidebar-Panel: kontextabhängig, entfällt bei Full-Width-
+             Views. --}}
+        @if ($panelHasContent)
+            <x-layout.sidebar-panel
+                :label="$panelLabel"
+                :title="$panelTitle"
+                :aria-label="$panelAria ?? __('project_structure')"
+            >
+                {{ $panelContent }}
+            </x-layout.sidebar-panel>
+        @endif
+
+        {{-- Canvas: Content-Bereich rechts. Bei fehlendem Panel füllt
+             er den ganzen Rest. `overflow-clip` statt `overflow-x-hidden`
+             — Letzteres bricht `position: sticky` in Chrome/Firefox,
+             weil es implizit auch `overflow-y: auto` erzeugt. --}}
+        <div class="flex-1 min-w-0 overflow-x-clip">
+            <div class="mx-auto w-full max-w-screen-2xl px-6 py-6">
+                @if ($canvas !== null)
+                    <main role="main" id="main-content">
+                        {{ $canvas }}
+                    </main>
+                @endif
+
+                @if ($sidebar !== null && trim((string) $sidebar) !== '')
+                    {{-- Rechte Zweit-Aside für Bestandsviews mit
+                         Tools-Panel (z. B. History-Drawer). Wird im
+                         5-D.5-Editor-Chrome-Refactor sinnvollerweise
+                         als Popover/Modal umgezogen. --}}
+                    <aside aria-label="{{ __('tools') }}" class="mt-6">
+                        {{ $sidebar }}
+                    </aside>
+                @endif
+
+                @if ($footer !== null && trim((string) $footer) !== '')
+                    <footer class="mt-8 border-t border-line-200 pt-4">
+                        {{ $footer }}
+                    </footer>
+                @endif
             </div>
-        @endif
-
-        @if($footer !== null && trim((string) $footer) !== '')
-            <footer class="border-t border-ink-400 py-4">
-                {{ $footer }}
-            </footer>
-        @endif
+        </div>
     </div>
 
-    {{-- Live-Region für ARIA-Announcements (WCAG 4.1.3). Wird heute
-         vom Tastatur-Reorder (resources/js/keyboard-reorder.js) und
-         später von weiteren Async-Aktionen befüllt. Globale Funktion
-         window.ccAnnounce(message) schreibt den Text rein, Screen-
-         Reader liest ihn höflich vor. --}}
+    {{-- Live-Region für ARIA-Announcements (WCAG 4.1.3). --}}
     <div
         id="cc-live-announcer"
         role="status"
@@ -131,10 +179,7 @@ If not, see <https://www.gnu.org/licenses/>.
         class="sr-only"
     ></div>
 
-    {{-- Toast-Region (Phase 5c.3). Rendert die aktive Toast-Liste
-         aus dem Alpine-Store `toast` reaktiv, jeder Toast wird nach
-         5 s automatisch entfernt. aria-live=assertive für Fehler
-         (der Standardweg), sonst polite. Position: rechts unten. --}}
+    {{-- Toast-Region (Phase 5c.3). --}}
     <div
         x-data
         aria-live="assertive"
@@ -171,9 +216,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
     @livewireScripts
 
-    {{-- View-spezifische Scripts. View-Files publishen via
-         @push('scripts') … @endpush. Ersetzt das alte
-         @yield('script')-Pattern aus dem Bootstrap-3-Layout. --}}
+    {{-- View-spezifische Scripts. --}}
     @stack('scripts')
 </body>
 </html>

@@ -25,6 +25,12 @@ document.addEventListener('alpine:init', () => {
         state: 'idle',
         lastSavedAt: null,
 
+        // Pro-Block-Status (P2.12 aus Designer-Review 5-D.6b).
+        // Key ist ein Slot-Bezeichner in der Form
+        // '{Model}-{id}' (z. B. 'Text-42'). Wert:
+        //   { state: 'idle'|'saving'|'saved'|'error', at: ms }
+        blocks: {},
+
         markSaving() {
             this.state = 'saving';
         },
@@ -51,9 +57,41 @@ document.addEventListener('alpine:init', () => {
             this.state = 'error';
         },
 
+        /**
+         * Pro-Block-Marker. Wird bei jedem `saved`-Event aus einem
+         * Inline-Editor gesetzt, sofern das Event `model` und `id`
+         * als Payload trägt.
+         */
+        markBlockSaved(slot) {
+            if (! slot) return;
+            this.blocks = {
+                ...this.blocks,
+                [slot]: { state: 'saved', at: Date.now() },
+            };
+            const currentSlot = slot;
+            setTimeout(() => {
+                const entry = this.blocks[currentSlot];
+                if (entry && entry.state === 'saved') {
+                    this.blocks = {
+                        ...this.blocks,
+                        [currentSlot]: { state: 'idle', at: entry.at },
+                    };
+                }
+            }, 10000);
+        },
+
+        markBlockError(slot) {
+            if (! slot) return;
+            this.blocks = {
+                ...this.blocks,
+                [slot]: { state: 'error', at: Date.now() },
+            };
+        },
+
         reset() {
             this.state = 'idle';
             this.lastSavedAt = null;
+            this.blocks = {};
         },
     });
 
@@ -61,12 +99,31 @@ document.addEventListener('alpine:init', () => {
     // Inline-Editor dispatched Events und mappen sie auf den Store.
     // Livewire 4 v3 hängt Events an das window-Event-Ziel, wenn
     // sie nicht mit `.to(Component)` bestimmt sind.
-    window.addEventListener('saved', () => {
-        window.Alpine.store('saveStatus').markSaved();
+    window.addEventListener('saved', (event) => {
+        const store = window.Alpine.store('saveStatus');
+        store.markSaved();
+
+        // Blocks: Payload {field, model, id} — wir bilden den Slot
+        // aus 'Model-id'. Bei fehlender Payload fällt der Block-
+        // Track aus, die globale State-Anzeige bleibt.
+        const detail = event.detail?.[0] ?? event.detail ?? {};
+        const modelName = detail.model;
+        const modelId = detail.id;
+        if (modelName && modelId != null) {
+            store.markBlockSaved(`${modelName}-${modelId}`);
+        }
     });
 
-    window.addEventListener('save-failed', () => {
-        window.Alpine.store('saveStatus').markError();
+    window.addEventListener('save-failed', (event) => {
+        const store = window.Alpine.store('saveStatus');
+        store.markError();
+
+        const detail = event.detail?.[0] ?? event.detail ?? {};
+        const modelName = detail.model;
+        const modelId = detail.id;
+        if (modelName && modelId != null) {
+            store.markBlockError(`${modelName}-${modelId}`);
+        }
     });
 
     window.addEventListener('save-started', () => {

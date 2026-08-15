@@ -110,14 +110,16 @@ BLADE);
         ->toContain('class="skip-link"')
         ->toContain('Zum Inhalt springen');
 
-    // Der Skip-Link muss noch vor dem Header kommen, damit Tab als
-    // erstes auf ihm landet.
+    // Der Skip-Link muss noch vor der Rail (erste <aside>) kommen,
+    // damit Tab als erstes auf ihn landet. Der <header>-Selector aus
+    // 5b entfaellt, seit Phase 5-D.3 uebernimmt die Rail als
+    // <aside aria-label="Hauptnavigation"> die Rolle des Nav-Chromes.
     $skipPos = strpos($html, 'href="#main-content"');
-    $headerPos = strpos($html, '<header');
-    expect($skipPos)->toBeInt()->toBeLessThan($headerPos);
+    $railPos = strpos($html, '<aside');
+    expect($skipPos)->toBeInt()->toBeLessThan($railPos);
 });
 
-it('Layout rendert Auto-Save-Indikator im Header mit drei State-Spans', function () {
+it('Layout rendert Auto-Save-Indikator in der Rail mit drei State-Spans', function () {
     /** @var TestCase $this */
     $html = Blade::render(<<<'BLADE'
 <x-layout>
@@ -125,14 +127,11 @@ it('Layout rendert Auto-Save-Indikator im Header mit drei State-Spans', function
 </x-layout>
 BLADE);
 
-    // Der Indikator sitzt neben dem Theme-Toggle im Navi-Header,
-    // ist im idle-Zustand versteckt (x-cloak + x-show), Alpine
-    // hört auf $store.saveStatus.
+    // Seit Phase 5-D.3 sitzt der Indikator als Farb-Punkt in der
+    // Rail statt als Text-Chip im Navi-Header. Der Store-Zugriff
+    // und die drei States (saving/saved/error) bleiben gleich.
     expect($html)
         ->toContain('$store.saveStatus.state')
-        ->toContain('speichert')
-        ->toContain('gespeichert')
-        ->toContain('nicht gespeichert')
         ->toContain('aria-live="polite"');
 });
 
@@ -153,7 +152,7 @@ BLADE);
         ->toContain('fixed bottom-4 right-4');
 });
 
-it('Layout-Komponente exponiert <header> und @livewireScripts vor </body>', function () {
+it('Layout-Komponente exponiert <aside>-Rail und @livewireScripts vor </body>', function () {
     /** @var TestCase $this */
     $html = Blade::render(<<<'BLADE'
 <x-layout>
@@ -163,7 +162,7 @@ BLADE);
 
     expect($html)
         ->toContain('<!DOCTYPE html>')
-        ->toContain('<header')
+        ->toContain('<aside') // Rail seit 5-D.3 statt <header>
         ->toContain('</body>');
 
     // @livewireScripts rendert je nach Setup unterschiedlichen Output;
