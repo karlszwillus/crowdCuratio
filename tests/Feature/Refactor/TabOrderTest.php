@@ -75,14 +75,17 @@ it('Editor-View: Skip-Link kommt im Markup vor dem Header', function () {
     $html = $response->getContent();
 
     $skipPos = strpos($html, 'href="#main-content"');
-    $headerPos = strpos($html, '<header');
+    // Seit Phase 5-D.3 gibt es keinen <header> mehr, die Rail ist
+    // ein <aside aria-label="Hauptnavigation">. Der Skip-Link sitzt
+    // vor der Rail, damit Tab als erstes darauf landet.
+    $railPos = strpos($html, '<aside');
 
     expect($skipPos)->toBeInt()->toBeGreaterThan(0);
-    expect($headerPos)->toBeInt()->toBeGreaterThan(0);
-    expect($skipPos)->toBeLessThan($headerPos);
+    expect($railPos)->toBeInt()->toBeGreaterThan(0);
+    expect($skipPos)->toBeLessThan($railPos);
 });
 
-it('Editor-View: Sidebar-Tree-Nav kommt nach dem Header und vor dem ersten Edit-Button', function () {
+it('Editor-View: Sidebar-Tree-Nav kommt nach der Rail und vor der Editor-Chrome-Bar', function () {
     /** @var TestCase $this */
     /** @var User $owner */
     $owner = User::factory()->create();
@@ -96,12 +99,16 @@ it('Editor-View: Sidebar-Tree-Nav kommt nach dem Header und vor dem ersten Edit-
     $response->assertOk();
     $html = $response->getContent();
 
-    $headerPos = strpos($html, '<header');
+    // Rail sitzt links (erste <aside>), dann der Sidebar-Panel mit
+    // dem Struktur-Baum als 'Projektstruktur', dann die Editor-
+    // Chrome-Bar (Brotkrumen) im Canvas rechts.
+    $railPos = strpos($html, 'aria-label="Hauptnavigation"');
     $treePos = strpos($html, 'aria-label="Projektstruktur"');
     $editorContentPos = strpos($html, 'aria-label="Breadcrumb"');
 
+    expect($railPos)->toBeInt()->toBeGreaterThan(0);
     expect($treePos)->toBeInt()->toBeGreaterThan(0);
-    expect($treePos)->toBeGreaterThan($headerPos);
+    expect($treePos)->toBeGreaterThan($railPos);
     expect($editorContentPos)->toBeInt()->toBeGreaterThan(0);
     expect($editorContentPos)->toBeGreaterThan($treePos);
 });

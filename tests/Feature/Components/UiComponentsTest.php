@@ -426,9 +426,13 @@ it('Block-Card rendert Typ-Tag mit Icon und Label', function () {
     /** @var TestCase $this */
     $html = Blade::render('<x-ui.block-card type="text">Inhalt</x-ui.block-card>');
 
+    // Typ-Tag ist ein Pill (rounded-full) mit Lucide-Icon als Inline-
+    // SVG plus dem lokalisierten Label. Fuer type="text" ist das der
+    // Sprachschluessel block_type_text (de: 'Text', en: 'Text').
     expect($html)
         ->toContain('rounded-full')
-        ->toContain('TYPE') // Lucide-Icon type als svg oder Muster
+        ->toContain('<svg') // Lucide-SVG-Icon
+        ->toContain(__('block_type_text'))
         ->toContain('Inhalt');
 });
 
@@ -436,9 +440,11 @@ it('Block-Card mit editing=true bekommt brand-bar-Rand und Suffix', function () 
     /** @var TestCase $this */
     $html = Blade::render('<x-ui.block-card type="image" :editing="true">Body</x-ui.block-card>');
 
+    // Editing-Zustand faerbt den Card-Rand um und haengt einen
+    // 'wird bearbeitet'-Suffix ans Typ-Tag (Handoff v4 Screen 05a).
     expect($html)
         ->toContain('border-brand-bar')
-        ->toContain('is_editing'); // Sprachschluessel-Suffix
+        ->toContain(__('is_editing'));
 });
 
 it('Block-Card mit save-slot rendert Alpine-Store-Zugriff', function () {

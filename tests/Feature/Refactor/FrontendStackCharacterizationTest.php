@@ -56,7 +56,7 @@ it('login page renders form with email, password and submit button', function ()
     $response->assertSee('type="submit"', false);
 });
 
-it('project list page renders datatable with new-project link for editor', function () {
+it('project list page renders new-project link for editor', function () {
     /** @var TestCase $this */
     /** @var User $owner */
     $owner = User::factory()->create();
@@ -68,7 +68,10 @@ it('project list page renders datatable with new-project link for editor', funct
     $response->assertOk();
     $response->assertSee('lang="de"', false);
     $response->assertSee($project->name);
-    $response->assertSeeText('Neu hinzufügen');
+    // Der Add-Trigger heisst seit dem Design-Sprint 5-D.4
+    // 'Neues Projekt' (kein 'Neu hinzufuegen' mehr, weil das die
+    // DataTable-Zeit war).
+    $response->assertSeeText('Neues Projekt');
 });
 
 it('project edit view renders chapter card and add-chapter button for owner', function () {
