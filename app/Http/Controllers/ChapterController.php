@@ -87,7 +87,16 @@ class ChapterController extends Controller
         // Sauber: per Rollen-Name filtern.
         $listRole = Role::where('name', '!=', RoleName::ADMIN->value)->pluck('name', 'id');
 
-        return view('chapters.index', compact('project', 'listPermissions', 'permissions', 'listRole'));
+        // Legacy-Alias: die View chapters/index.blade.php nutzt an
+        // drei Stellen `$data` als Alias fuer das Projekt (Breadcrumb-
+        // Tree, isset-Guard, chapters-Loop). Wir geben `$data` mit,
+        // damit die View sowohl von ProjectController::edit (setzt
+        // dort $data selbst) als auch nach Projekt-Neuanlage-
+        // Redirect hier funktioniert. Backlog: `$data`/`$project`-
+        // Doppelung in der View konsolidieren.
+        $data = $project;
+
+        return view('chapters.index', compact('project', 'data', 'listPermissions', 'permissions', 'listRole'));
     }
 
     /**
