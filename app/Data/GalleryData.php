@@ -53,12 +53,19 @@ final readonly class GalleryData
 
     public static function fromRequest(Request $request): self
     {
+        // Phase-5-Backlog-Sammler (2026-08-16): Hidden-Inputs im
+        // Translate-Blade ohne value-Attribut werden von der
+        // ConvertEmptyStringsToNull-Middleware zu null. `isset()`
+        // liefert bei Key-mit-null-Wert `false` — wir landen dann
+        // faelschlich im Direktschreib-Pfad und ueberschreiben die
+        // deutsche Variante. `$request->has()` prueft nur die
+        // Key-Anwesenheit.
         return new self(
             title: $request['galleryTitle'] ?? $request['title'] ?? null,
             subtitle: $request['gallerySubtitle'] ?? $request['subtitle'] ?? null,
             description: $request['galleryDescription'] ?? $request['description'] ?? null,
-            isTranslation: isset($request['translationGallery']),
-            isTranslated: isset($request['isTranslated']),
+            isTranslation: $request->has('translationGallery'),
+            isTranslated: $request->has('isTranslated'),
         );
     }
 }

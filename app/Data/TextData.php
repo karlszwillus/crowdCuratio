@@ -51,7 +51,9 @@ final readonly class TextData
             body: (string) $request['contentText'],
             originName: (string) $request['originText'],
             copyrightName: (string) $request['copyrightText'],
-            isTranslated: isset($request['isTranslatedText']),
+            // Phase-5-Backlog-Sammler (2026-08-16): has() statt
+            // isset (siehe ChapterData / GalleryData).
+            isTranslated: $request->has('isTranslatedText'),
         );
     }
 }

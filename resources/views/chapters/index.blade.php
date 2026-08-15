@@ -1552,18 +1552,10 @@ If not, see <https://www.gnu.org/licenses/>. -->
         // Sidebar-Tree (Alpine-x-collapse in
         // sidebar-tree.blade.php).
 
-        //Invitation for existing user
-        // Persona-Smoke 2026-08-15: Vanilla-Modal-API statt jQuery-Shim
-        // (siehe Kommentar in projects/create) — unabhaengig vom Load-
-        // Order-Rennen zwischen Vite-Modul und Inline-Push-Skript.
-        @if(!empty(Session::get('error_code')) && Session::get('error_code') == 6)
-        window.crowdCuratioModal && window.crowdCuratioModal.open('#newUserInvitation');
-        @endif
-
-        //User not existing
-        @if(!empty(Session::get('error_code')) && Session::get('error_code') == 7)
-        window.crowdCuratioModal && window.crowdCuratioModal.open('#newUser');
-        @endif
+        // Phase-5-Backlog-Sammler (2026-08-16, #52): frueher wurden hier
+        // die Legacy-Invite-Modals per Session::get('error_code') 6/7
+        // getriggert. Beide Modals sind mit dem Screen-3B-Umbau (5d.4)
+        // und dem Register-Reader-Default (5d.7) abgeloest.
 
         $('.edit-user').click(function (event) {
             //event.preventDefault();

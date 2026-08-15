@@ -48,7 +48,10 @@ final readonly class ImageData
             originName: (string) $request['originImage'],
             copyrightName: (string) $request['copyrightImage'],
             altText: $request['altText'] ?? null,
-            isTranslated: isset($request['isTranslated']),
+            // Phase-5-Backlog-Sammler (2026-08-16): has() statt
+            // isset — Hidden-Inputs ohne value werden zu null,
+            // isset() liefert dann false.
+            isTranslated: $request->has('isTranslated'),
         );
     }
 }

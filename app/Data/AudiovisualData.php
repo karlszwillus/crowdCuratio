@@ -53,13 +53,17 @@ final readonly class AudiovisualData
      */
     public static function fromRequest(Request $request, ?string $normalizedLink = null): self
     {
+        // Phase-5-Backlog-Sammler (2026-08-16): Hidden-Inputs ohne
+        // value-Attribut werden zu null (ConvertEmptyStringsToNull).
+        // `(bool) null` = false und `isset()` bei null = false —
+        // `$request->has()` prueft nur die Key-Anwesenheit.
         return new self(
             link: $normalizedLink ?? ($request['link'] ?? null),
             source: $request['source'] ?? null,
             copyright: $request['copyright'] ?? null,
             type: $request['type'] ?? null,
-            isTranslation: (bool) ($request['translationMode'] ?? false),
-            isTranslated: isset($request['isTranslated']),
+            isTranslation: $request->has('translationMode'),
+            isTranslated: $request->has('isTranslated'),
         );
     }
 }

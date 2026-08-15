@@ -107,6 +107,18 @@ class ChapterController extends Controller
      */
     public function store(StoreChapterRequest $request): RedirectResponse
     {
+        // Translation-Mode (Phase-5-Backlog-Sammler 2026-08-16): das
+        // Uebersetzungs-Formular submittet an dieselbe Route, meint
+        // aber ein Update. Wir dispatchen auf ChapterService::update,
+        // das intern per ChapterData::isTranslation zwischen Direkt-
+        // schreiben und setTranslation('en', ...) verzweigt.
+        if ($request->has('translationChapter')) {
+            $chapter = Chapter::findOrFail($request->validated()['chapterId']);
+            $this->chapters->update($chapter, ChapterData::fromRequest($request));
+
+            return redirect()->back()->with('success', __('message_edit_chapter_success'));
+        }
+
         $projectId = (int) $request->validated()['projectId'];
 
         $this->chapters->create(ChapterData::fromRequest($request), $projectId);

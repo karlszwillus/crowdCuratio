@@ -56,6 +56,18 @@ class Comment extends Model
 
     protected $dates = ['deleted_at'];
 
+    /**
+     * Phase-5-Backlog-Sammler (2026-08-16, #72): created_at ist in
+     * der DB als DATETIME-String gespeichert; ohne diesen Cast
+     * kommt sie als reiner String aus Eloquent zurueck und
+     * diffForHumans() failt am Consumer-Ende (Dashboard, Kommentar-
+     * Liste). Auch updated_at aufgenommen der Symmetrie halber.
+     */
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
     public $translatable = ['comment'];
 
     public function replies()

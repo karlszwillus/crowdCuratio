@@ -53,12 +53,16 @@ final readonly class EntryData
     {
         $validated = $request->validated();
 
+        // Phase-5-Backlog-Sammler (2026-08-16, analog ChapterData):
+        // Hidden-Inputs im Translate-Blade ohne value-Attribut
+        // schicken "" — `(bool) ""` waere false. `$request->has()`
+        // prueft nur die Key-Anwesenheit.
         return new self(
             name: $validated['entryTitle'],
             subtitle: $validated['entrySubtitle'] ?? null,
             description: $validated['entryDescription'] ?? null,
-            isTranslation: (bool) ($validated['translationEntry'] ?? false),
-            isTranslated: (bool) ($validated['isTranslated'] ?? false),
+            isTranslation: $request->has('translationEntry'),
+            isTranslated: $request->has('isTranslated'),
         );
     }
 }

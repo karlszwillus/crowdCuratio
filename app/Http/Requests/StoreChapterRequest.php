@@ -37,6 +37,24 @@ class StoreChapterRequest extends FormRequest
 {
     public function authorize(): bool
     {
+        // Translation-Mode (Phase-5-Backlog-Sammler 2026-08-16):
+        // die Uebersetzungs-Sicht submittet an denselben Endpunkt
+        // mit `translationChapter`-Flag + `chapterId`, ohne
+        // `projectId`. Semantisch ist das ein Update eines
+        // bestehenden Chapters — Authorization gegen
+        // ChapterPolicy::update statt createIn.
+        //
+        // has() statt filled(): der Hidden-Input im Translate-Blade
+        // hat kein value-Attribut („<input type=hidden name=…>"),
+        // sendet also einen leeren String — filled() wuerde dann
+        // false liefern und wir laendeten faelschlich im Create-Pfad.
+        if ($this->has('translationChapter') && $this->filled('chapterId')) {
+            $chapter = Chapter::find($this->input('chapterId'));
+
+            return $chapter !== null
+                && $this->user()->can('update', $chapter);
+        }
+
         $project = Project::find($this->input('projectId'));
 
         if ($project === null) {
@@ -48,6 +66,20 @@ class StoreChapterRequest extends FormRequest
 
     public function rules(): array
     {
+        // Translation-Mode: projectId entfaellt, chapterId ist
+        // Pflicht. Sonst normale Add-Rules. has() statt filled(),
+        // siehe Kommentar in authorize().
+        if ($this->has('translationChapter')) {
+            return [
+                'chapterId' => 'required|integer|exists:chapters,id',
+                'chapterTitle' => 'required|string|max:255',
+                'chapterSubtitle' => 'nullable|string|max:255',
+                'chapterDescription' => 'nullable|string',
+                'isTranslated' => 'sometimes',
+                'translationChapter' => 'sometimes',
+            ];
+        }
+
         return [
             'projectId' => 'required|integer|exists:projects,id',
             'chapterTitle' => 'required|string|max:255',
