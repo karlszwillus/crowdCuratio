@@ -364,13 +364,13 @@ If not, see <https://www.gnu.org/licenses/>. -->
             <?php endif; ?>
 
 
-            /*imprintModify.root.addEventListener('keydown', evt => {
-                $('#updateProjectBtn').html('<button id="btn_save" class="btn btn-secondary btn-block text-left" type="submit" name="btn_submit" value="Save"><x-icon name="file-earmark" class="m-2" />{{__('save')}}</button>');
-            });
-
-            termsModify.root.addEventListener('keydown', evt => {
-                $('#updateProjectBtn').html('<button id="btn_save" class="btn btn-secondary btn-block text-left" type="submit" name="btn_submit" value="Save"><x-icon name="file-earmark" class="m-2" />{{__('save')}}</button>');
-            });*/
+            // Phase-5-Backlog-Sammler (2026-08-16): toter Block
+            // rausgeworfen. Zwei updateProjectBtn.html-Aufrufe
+            // standen zwar in Block-Kommentaren, aber Blade rendert
+            // die x-icon-Komponente im Text zu Inline-SVG, dessen
+            // path- und viewBox-Attribute Sequenzen enthalten koennen,
+            // die den Kommentar-Block frueh schliessen. Rest wird als
+            // aktives JS geparst und wirft SyntaxError.
 
             //Add imprint and terms to forms
             $('#frm_project').submit(function() {
@@ -387,8 +387,8 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
         // Phase-5-Backlog-Sammler (2026-08-16, #52): die frueheren
         // Session-Trigger fuer newUserInvitation/newUser sind mit den
-        // Legacy-Modals raus. Der Invite-Flow lebt in der
-        // <livewire:project-permissions>-Sicht (Screen 3B).
+        // Legacy-Modals raus. Der Invite-Flow lebt in der Volt-Sicht
+        // project-permissions (Screen 3B).
         @isset($project->id)
 
             $('.edit-user').click(function (event) {
