@@ -84,6 +84,17 @@ Nutzung: `<x-layout.rail :active="'projects'" />` im äußeren
 
     {{-- Primäre Navigation. --}}
     <nav class="flex flex-col items-center gap-1" aria-label="{{ __('sections') }}">
+        {{-- Phase 5e.1: Dashboard als erster Menuepunkt (Screen 09).
+             Home-Icon, aktive Zeile analog zu Projekte. --}}
+        <a
+            href="{{ route('dashboard') }}"
+            class="{{ $itemBase }} {{ $active === 'dashboard' ? $itemActive : '' }}"
+            title="{{ __('start') }}"
+            @if ($active === 'dashboard') aria-current="page" @endif
+        >
+            <x-icon name="home" size="5" :decorative="false" :label="__('start')"/>
+        </a>
+
         <a
             href="{{ route('projects.index') }}"
             class="{{ $itemBase }} {{ $active === 'projects' ? $itemActive : '' }}"

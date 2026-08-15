@@ -242,6 +242,52 @@ entsprechend auf. Der Invite-Flow direkt in der Berechtigungs-
 sicht legt bestehende Nutzer:innen mit Reader-Default an; die
 Neuanlage-Kette folgt in einer späteren Iteration.
 
+**Phase-5e — Vokabular-Sweep und Fehlerseiten abgeschlossen.**
+Der komplette UI-Wortschatz wandert nach Glossar: `Eintrag` wird
+zum **Abschnitt**, `Block` zum **Inhalt**, `Galerie` zum
+**Bildergalerie**, `Item` und `Draft` fliegen raus,
+Genderungs-Formen (`AutorIn`, `BenutzerIn`) gehen auf die
+Doppelpunkt-Variante. Anlage-Verben werden substantivisch
+(„Neuer Abschnitt" statt „Abschnitt hinzufügen"). Alle
+Änderungen sitzen in `resources/lang/de.json` — 28 Keys
+umgezogen — und in einer DataTable-i18n-Nachjustierung
+(Kommentar-Liste). Das Backend-Domain-Modell bleibt englisch
+(Entry/Chapter/Text/Image/Gallery), das UI folgt dem Glossar.
+
+Die drei Fehlerseiten (403/404/500) sind persona-freundlich
+neu geschrieben: großer Statuscode-Anker, freundlicher Titel,
+konkreter Handlungsvorschlag und ein CTA zurück in die App.
+Der 500-Fehler hatte im Non-Debug-Modus vorher Exception-
+Message plus Datei und Zeile an Endnutzer ausgegeben — ein
+Info-Leak, der mit dem Rewrite geschlossen ist. Die 403-Sicht
+adressiert außerdem den Backlog-Punkt „Auth-Fehler auf der
+Übersetzungs-Route" inhaltlich: statt einer nackten
+Exception-Seite sehen betroffene Nutzer:innen die neue
+Sicht mit dem Hinweis „Wende dich an die Projekt-Inhaber:in".
+
+Zur Regression-Absicherung neu: ein Vokabular-Snapshot-Test
+scannt `de.json` und die Blade-Views nach den aussortierten
+Alt-Vokabeln und schlägt fehl, sobald jemand per Copy-Paste
+einen Rückfall einbaut. Und das Glossar-Kapitel in
+`docs/architecture.md` fasst UI-Vokabel ↔ Backend-Modell in
+einer Tabelle zusammen — als Nachschlagewerk für Onboarding.
+
+Das Dashboard (Screen 09) kam abends nach: der Designer
+lieferte ein durchgearbeitetes Briefing mit Screen-Datei und
+konkreten Design-Entscheidungen (einspaltige Prioritäts-
+Achse, vier Sektionen — Wiederaufnahme / Meine Projekte /
+Mir zugeteilt / Letzte Kommentare — Empty-States pro Sektion,
+CTA nur in einem). Der neue `DashboardController` lädt die
+Sektionen (`updated_at DESC`, max 6 Karten je Sektion,
+Kommentare 30-Tage-Fenster / max 5), die View sitzt in
+`resources/views/dashboard.blade.php` mit zwei Partials
+(`_project-card`, `_comment-row`). Rollen-Badge auf
+zugeteilten Karten unterscheidet Editor:in vs. Leserecht;
+Leserecht-Karten führen zur Leseansicht statt zum Editor
+(sonst 403). Sidebar-Rail bekommt „Start" als ersten
+Menüpunkt, `RouteServiceProvider::HOME` geht zurück auf
+`/dashboard`.
+
 ### Hinzugefügt
 
 - **`<x-icon name="…">`-Komponente auf Lucide-Basis** (Phase
@@ -773,6 +819,51 @@ Neuanlage-Kette folgt in einer späteren Iteration.
   Verwerfen leerer Eingaben ab.
 
 ### Geändert
+
+- **Dashboard-Landing (Screen 09)** (Phase 5e.1). Vier
+  Sektionen: **Wiederaufnahme-Zeile** mit zuletzt
+  bearbeitetem Projekt-Anker (entfällt bei leerem Zustand);
+  **Meine Projekte** als 3er-Kartenraster mit CTA-Empty-State
+  bei Erstlogin; **Mir zugeteilt** analog, aber Karten
+  tragen Rollen-Badge (Editor:in / Leserecht) und die
+  Leserecht-Karte führt zur Leseansicht statt zum Editor;
+  **Letzte Kommentare** als Listenkarte (30-Tage-Fenster,
+  max 5, mit line-clamp-2-Vorschau des Kommentartextes).
+  Neuer `DashboardController` mit vier isolierten Feeds
+  (max 6 Karten pro Sektion, `updated_at DESC`).
+  Sidebar-Rail bekommt „Start" als ersten Menüpunkt,
+  `RouteServiceProvider::HOME` wandert von `/projects`
+  zurück auf `/dashboard`. Designer-Briefing steckt in
+  `.werkbank/BRIEFINGS/redesign/dashboard-5e.md`, Screen
+  in `dashboard-screen/09-dashboard.png`.
+
+- **UI-Vokabular auf Glossar** (Phase 5e.2 + 5e.3). 28 Keys in
+  `resources/lang/de.json` umgezogen: `Eintrag` → `Abschnitt`,
+  `Block` → `Inhalt`, `Galerie` → `Bildergalerie`, `AutorIn`
+  → `Autor:in`, `BenutzerIn` → `Nutzer:in`, `Item` und
+  `Draft` raus. Anlage-Verben substantivisch — „Neuer
+  Abschnitt", „Neuer Inhalt", „Neues Kapitel", „Neuer:e
+  Nutzer:in". Backend-Domain-Modell (Entry/Chapter/Text/
+  Image/Gallery) bleibt englisch.
+
+- **Fehlerseiten 403/404/500 persona-freundlich neu**
+  (Phase 5e.5). Gemeinsame Hülle `_error-shell.blade.php`
+  mit großem Statuscode-Anker, Icon-Kreis in `danger-bg`,
+  freundlichem Titel und Body sowie CTA-Button („Zu meinen
+  Projekten" bzw. „Zur Anmeldung"). Der 500-Rewrite schließt
+  außerdem einen Info-Leak, siehe „Sicherheit".
+
+- **DataTable-i18n vollständig deutsch** (Phase 5e.4). Die
+  letzten englischen Strings in der Kommentar-Liste
+  (`resources/views/contents/comment.blade.php`) — „First",
+  „Last", generisches „Zeige _MENU_ Einträge" — auf saubere
+  deutsche Formulierungen gehoben.
+
+- **Glossar-Sektion in `docs/architecture.md`** (Phase 5e.6).
+  UI-Vokabel ↔ Backend-Modell-Tabelle plus explizite
+  „vermieden werden"-Liste als Onboarding-Anker für neue
+  Entwickler:innen und Referenz für den
+  Vokabular-Snapshot-Test.
 
 - **Design-Tokens vollständig auf Handoff v4** (Phase 5-D.1).
   `tokens.css` um `--color-line-100/200`, `--color-paper-0/50`,
@@ -1601,6 +1692,16 @@ Neuanlage-Kette folgt in einer späteren Iteration.
   nachdem die alten Spalten aus dem Schema gefallen sind.
 
 ### Sicherheit
+
+- **500-Fehlerseite: kein Exception-Leak mehr** (Phase 5e.5).
+  Die alte `resources/views/errors/500.blade.php` zeigte im
+  Non-Debug-Modus `$exception->getMessage()` plus Datei und
+  Zeile an Endnutzer — ein Info-Leak, der internen Kontext
+  (SQL-Fragmente, Pfade, Klassennamen) an nicht-authentifizierte
+  oder nicht-berechtigte Zugriffe preisgab. Der Rewrite zeigt
+  nur noch eine generische, persona-freundliche Fehlermeldung;
+  Debug-Details bleiben Laravel Ignition im `APP_DEBUG=true`-
+  Betrieb vorbehalten.
 
 - **Project-scoped Save-Gate für alle Inline-Editoren** (Phase 5c).
   Jede Volt-Komponente (`inline-editor`, `rich-text-editor`,

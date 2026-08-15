@@ -24,7 +24,7 @@ Konsistente Shell: Rail (60 px, dunkles Chrome) + Sidebar-Panel
 (280 px, hell) + Canvas (rest). Das ersetzt die Top-Bar aus 5a/5b.
 
 Slot-API:
-- `$rail-active`    (Prop) — 'projects' | 'users' | 'comments' | 'settings',
+- `$rail-active`    (Prop) — 'dashboard' | 'projects' | 'users' | 'comments' | 'settings',
                              markiert das aktive Rail-Icon.
 - `$panel`          — Inhalt des Sidebar-Panels (Struktur-Baum,
                       Filter, Sekundärnavigation). Ohne Panel-Slot

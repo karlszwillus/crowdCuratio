@@ -239,6 +239,56 @@ Controller mit-durchsweepen.
 
 ---
 
+## Glossar — UI-Vokabel ↔ Backend-Modell
+
+Vokabular für UI und Kommunikation. Backend-Klassen bleiben englisch
+(Domain-Modell), die UI folgt seit Phase 5e dem Glossar. Regressions
+gegen Alt-Vokabeln werden von
+`tests/Feature/Lang/VocabularySweepTest.php` abgefangen.
+
+| UI (Deutsch) | Backend (Klasse) | Bedeutung |
+|--------------|------------------|-----------|
+| Projekt | `App\Models\Project` | Wurzel-Container einer Ausstellung / Publikation |
+| Kapitel | `App\Models\Chapter` | Erste Gliederungsebene innerhalb eines Projekts |
+| Abschnitt | `App\Models\Entry` | Zweite Gliederungsebene, gruppiert Inhalte innerhalb eines Kapitels |
+| Inhalt | polymorph via `App\Models\MediaContent` | Einzelner Block innerhalb eines Abschnitts (Text, Bild, Audiovisuelles, Bildergalerie) |
+| Text | `App\Models\Text` | Inhalts-Typ „Text" |
+| Bild | `App\Models\Image` | Inhalts-Typ „Bild" |
+| Bildergalerie | `App\Models\Gallery` | Inhalts-Typ „mehrere Bilder als Set" |
+| Audiovisuelles | `App\Models\Audiovisual` | Inhalts-Typ „Audio oder Video" |
+| Nutzer:in | `App\Models\User` | Person mit Login |
+| Autor:in | `App\Models\User` (Rolle-Kontext) | Nutzer:in, die/der Inhalte anlegt |
+| Rolle | `Spatie\Permission\Models\Role` via `App\Support\RoleName` | System-weite Rolle (`Editor:in`, `Reviewer:in`, `Leser:in`, `Admin`) |
+| Berechtigung | `Spatie\Permission\Models\Permission` via `App\Support\PermissionName` | Einzelne Fähigkeit (`view`, `add`, `edit`, `delete`, `publish`, `comment`, `invite`) |
+| Owner:in | `Project::user_id` | Projekt-Ersteller:in, hat automatisch alle Rechte auf ihrem Projekt |
+| Einladung | `App\Models\Invitation` | Zuweisung einer Person zu einem Projekt mit einem Rechte-Set |
+| Kommentar | `App\Models\Comment` (polymorph) | Anmerkung an Projekt / Kapitel / Abschnitt / Inhalt |
+| Entwurf | `Project::status = 'Draft'` | Projekt in Bearbeitung, nicht veröffentlicht |
+| Veröffentlicht | `Project::status = 'Published'` | Projekt öffentlich zugänglich (PDF & Web) |
+
+**Vermieden werden:**
+
+- „Eintrag" (Ersatz: **Abschnitt**) — Eintrag klang nach Listenzeile,
+  Abschnitt macht die Gliederungs-Rolle deutlich.
+- „Block" (Ersatz: **Inhalt**) — Block war Editor-Slang, Inhalt
+  passt zum Ergebnis der Redaktionsarbeit.
+- „Galerie" (Ersatz: **Bildergalerie**) — verhindert Verwechslung mit
+  Museums-Galerien im Fachkontext.
+- „AutorIn" / „BenutzerIn" (Ersatz: **Autor:in** / **Nutzer:in**) —
+  Genderung mit Doppelpunkt statt Binnen-I.
+- „Item" (Ersatz: **Inhalt**) — englischer Anglizismus, tauchte in
+  generischen Success-Messages auf.
+- „Draft" (Ersatz: **Entwurf**) — außerhalb von DB-Match-Werten.
+
+**Rollen-Endungen:** UI-Labels tragen `:in` (Editor:in, Reviewer:in,
+Leser:in). Die Rollen-Namen in `roles`-Tabelle bleiben ohne
+`:in`-Endung (`Editor`, `Reviewer`, `Reader`, `Admin`), weil Spatie
+den String direkt matcht — ein Rename würde Bestandsdaten brechen.
+`RoleName`-Enum kapselt den Backend-String, `role_editor`/`role_reader`
+etc. in `resources/lang/de.json` liefern das UI-Label.
+
+---
+
 ## Was nicht in dieses Dokument gehört
 
 - **PDF-Export-Pipeline.** Aktuell zwei Engines (dompdf + mpdf)

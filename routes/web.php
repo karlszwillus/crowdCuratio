@@ -24,6 +24,7 @@ use App\Http\Controllers\Auth\MyWelcomeController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\ChapterController;
 use App\Http\Controllers\ContentController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EntryController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\ProjectController;
@@ -72,11 +73,12 @@ Route::group(
     }
 );
 
+// Phase 5e.1: Dashboard-Sicht (Screen 09) mit vier Sektionen
+// (Wiederaufnahme, Meine Projekte, Mir zugeteilt, Letzte
+// Kommentare). Data-Loading im DashboardController.
 Route::get(
     '/dashboard',
-    function () {
-        return view('dashboard');
-    }
+    [DashboardController::class, '__invoke']
 )->middleware(['auth'])->name('dashboard');
 
 Route::get('auth.policy', [PublicController::class, 'projectPolicy'])->name('auth.policy');
