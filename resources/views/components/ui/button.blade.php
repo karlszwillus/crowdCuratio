@@ -3,6 +3,17 @@
     'type' => 'button',
     'size' => 'md',
     'disabled' => false,
+    /**
+     * Rollen-bewusste Sperre (Phase 5d.1). Anders als `disabled`:
+     * Button bleibt sichtbar und fokussierbar, aria-disabled=true,
+     * KEIN natives `disabled`, Schloss-Icon links vom Label,
+     * Tooltip mit Grund. Fuer Reader/Editor-Rechte, damit die
+     * Persona versteht was sie NICHT darf statt den Trigger
+     * nicht zu finden (Persona-Befund B-K-B-04).
+     */
+    'locked' => false,
+    /** Tooltip-Text auf dem locked-Button; Pflicht wenn locked=true. */
+    'lockedReason' => null,
 ])
 
 @php
@@ -24,13 +35,25 @@
           . 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 '
           . 'disabled:opacity-50 disabled:cursor-not-allowed';
 
+    // is-disabled ist der Style-Anker fuer den locked-Zustand
+    // (siehe app.css, Phase 5d.1). Er darf NICHT das native
+    // disabled-Verhalten spielen, sondern nur visuell.
+    if ($locked) {
+        $base .= ' is-disabled';
+    }
+
     $classes = trim($base.' '.($variantClasses[$variant] ?? $variantClasses['primary']).' '.($sizeClasses[$size] ?? $sizeClasses['md']));
 @endphp
 
 <button
     type="{{ $type }}"
     @if ($disabled) disabled aria-disabled="true" @endif
+    @if ($locked && ! $disabled) aria-disabled="true" @endif
+    @if ($locked && $lockedReason) title="{{ $lockedReason }}" @endif
     {{ $attributes->merge(['class' => $classes]) }}
 >
+    @if ($locked)
+        <x-icon name="lock" size="4"/>
+    @endif
     {{ $slot }}
 </button>

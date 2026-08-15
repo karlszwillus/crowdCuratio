@@ -263,3 +263,27 @@ it('store: Admin lädt neuen User mit Role-Name als Single-String ein (kein Arra
     $created = User::query()->where('email', 'dora@example.test')->firstOrFail();
     expect($created->hasRole('Reader'))->toBeTrue();
 });
+
+it('store (Phase 5d.7): Admin laedt ohne roles-Field ein → User faellt auf Reader-Default', function () {
+    /** @var TestCase $this */
+    /** @var User $admin */
+    $admin = User::factory()->create();
+    $admin->assignRole('Admin');
+    $this->actingAs($admin);
+
+    $response = $this->post('/register', [
+        'firstName' => 'Emma',
+        'lastName' => 'Beispiel',
+        'email' => 'emma@example.test',
+        // KEIN roles-Field. Vorher wurde der User rollenlos angelegt
+        // — @can-Gates griffen nicht, Frontend zeigte kaputte Sichten.
+        // Seit 5d.7 fuellt der Controller auf Reader auf.
+        'policy' => 'on',
+    ]);
+
+    expect($response->status())->toBeIn([200, 302]);
+
+    /** @var User $created */
+    $created = User::query()->where('email', 'emma@example.test')->firstOrFail();
+    expect($created->hasRole('Reader'))->toBeTrue();
+});

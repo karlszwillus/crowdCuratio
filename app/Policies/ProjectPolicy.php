@@ -109,19 +109,33 @@ class ProjectPolicy
     }
 
     /**
-     * Nur der Project-Owner darf updaten. Admin-Shortcut über before().
+     * Owner oder Eingeladene:r mit `edit`-Permission auf dem
+     * Project-Pivot. Admin via `before()`.
+     *
+     * Phase 5d.4-Followup (2026-08-15): vorher war das ein reiner
+     * Owner-Check — die project-scoped `edit`-Toggles aus Screen 3B
+     * hatten damit keinen Effekt auf Inline-Editor und
+     * Rich-Text-Editor (beide autorisieren via
+     * `Gate::authorize('update', $project)`). Eingeladene Editor:innen
+     * konnten trotz aktiver Toggle-Karte weder Titel noch Beschreibung
+     * bearbeiten. Owner-Shortcut liegt im Service.
      */
     public function update(User $user, Project $project): bool
     {
-        return $user->id === (int) $project->user_id;
+        return $this->permissions->userHasPermissionOnProject($user, $project, PermissionName::EDIT);
     }
 
     /**
-     * Nur der Project-Owner darf löschen. Admin-Shortcut über before().
+     * Owner oder Eingeladene:r mit `delete`-Permission. Admin
+     * via `before()`.
+     *
+     * Phase 5d.4-Followup (2026-08-15): siehe update(). Reader und
+     * Reviewer fallen weiterhin durch, weil sie kein delete auf dem
+     * Pivot haben.
      */
     public function delete(User $user, Project $project): bool
     {
-        return $user->id === (int) $project->user_id;
+        return $this->permissions->userHasPermissionOnProject($user, $project, PermissionName::DELETE);
     }
 
     /**
@@ -143,11 +157,16 @@ class ProjectPolicy
     }
 
     /**
-     * Veröffentlichen eines Projects. Owner und Admin.
+     * Veröffentlichen eines Projects. Owner oder Eingeladene:r mit
+     * `publish`-Permission auf dem Pivot. Admin via `before()`.
+     *
+     * Phase 5d.4-Followup (2026-08-15): analog zu update()/delete()
+     * jetzt pivot-basiert, damit der publish-Toggle aus Screen 3B
+     * einen Effekt hat.
      */
     public function publish(User $user, Project $project): bool
     {
-        return $user->id === (int) $project->user_id;
+        return $this->permissions->userHasPermissionOnProject($user, $project, PermissionName::PUBLISH);
     }
 
     /**
@@ -160,5 +179,22 @@ class ProjectPolicy
     public function comment(User $user, Project $project): bool
     {
         return $this->permissions->userHasPermissionOnProject($user, $project, PermissionName::COMMENT);
+    }
+
+    /**
+     * Phase 5d.4: Berechtigungssicht (Screen 3B). Owner ODER
+     * Eingeladener mit `invite`-Permission auf dem konkreten
+     * Project. Admin via `before()`.
+     *
+     * Vor 5d.4 gab es keine invite-Method — der Add-User-Zugang
+     * lief ueber eine dreifache Inline-Bedingung in
+     * projects/create.blade.php (Owner ODER isAdmin ODER
+     * $listPermissions['invite']). Mit der Sicht-Extraktion nach
+     * /projects/{project}/permissions gehoert die Logik in die
+     * Policy.
+     */
+    public function invite(User $user, Project $project): bool
+    {
+        return $this->permissions->userHasPermissionOnProject($user, $project, PermissionName::INVITE);
     }
 }

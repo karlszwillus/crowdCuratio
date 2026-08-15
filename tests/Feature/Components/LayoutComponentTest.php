@@ -20,6 +20,7 @@ along with this program in the file LICENSE.
 If not, see <https://www.gnu.org/licenses/>.
  */
 
+use App\Models\User;
 use Illuminate\Support\Facades\Blade;
 use Tests\TestCase;
 
@@ -150,6 +151,31 @@ BLADE);
         ->toContain('$store.toast.items')
         ->toContain('$store.toast.dismiss')
         ->toContain('fixed bottom-4 right-4');
+});
+
+it('User-Menue rendert Profil, Passwort aendern und Abmelden (Phase 5d.6)', function () {
+    /** @var TestCase $this */
+    // Der Rail rendert das User-Menue nur wenn ein User authenticated
+    // ist. Wir loggen einen Dummy-User ein und pruefen die drei
+    // Menuepunkte + role=menu.
+    /** @var User $user */
+    $user = User::factory()->create();
+    auth()->login($user);
+
+    $html = Blade::render(<<<'BLADE'
+<x-layout>
+    <x-slot:main>X</x-slot:main>
+</x-layout>
+BLADE);
+
+    expect($html)
+        ->toContain('role="menu"')
+        ->toContain('href="'.route('profile').'"')
+        ->toContain('href="'.route('profile').'#password"')
+        ->toContain('action="'.route('logout').'"')
+        ->toContain(__('profile'))
+        ->toContain(__('change_password'))
+        ->toContain(__('log_out'));
 });
 
 it('Layout-Komponente exponiert <aside>-Rail und @livewireScripts vor </body>', function () {

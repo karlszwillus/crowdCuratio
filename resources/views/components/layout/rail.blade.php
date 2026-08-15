@@ -42,8 +42,10 @@ Nutzung: `<x-layout.rail :active="'projects'" />` im äußeren
 ])
 
 @php
-    $isAdmin = isset(Auth::user()->currentRole)
-        && Auth::user()->currentRole[0]->name === 'Admin';
+    // Persona-Smoke 2026-08-15: currentRole[0] crashte bei rollenlosen
+    // Usern (Undefined array key 0). Spatie's hasRole() ist robust
+    // gegen leere Rollen-Collection.
+    $isAdmin = Auth::check() && Auth::user()->hasRole(\App\Support\RoleName::ADMIN->value);
 
     $initials = Auth::check()
         ? mb_strtoupper(mb_substr(Auth::user()->name ?? '', 0, 1)
@@ -230,21 +232,42 @@ Nutzung: `<x-layout.rail :active="'projects'" />` im äußeren
                     x-show="open"
                     x-transition
                     x-cloak
-                    class="absolute bottom-0 left-full ml-2 min-w-[12rem]
+                    role="menu"
+                    aria-label="{{ __('profile') }}"
+                    class="absolute bottom-0 left-full ml-2 min-w-[14rem]
                            rounded-md border border-ink-300 bg-paper-0 py-1 shadow-popover"
                 >
+                    {{-- Phase 5d.6: drei Menuepunkte (Profil, Passwort
+                         aendern, Abmelden). Passwort-Aendern nutzt die
+                         gleiche Profile-Route mit #password-Anker —
+                         eine dedizierte Passwort-Sicht gibt es im
+                         Backend heute nicht (UpdateOwnProfileRequest
+                         validiert beide Felder in einem Formular). --}}
                     <a
-                        class="block px-4 py-2 text-body text-ink-900 hover:bg-chrome-active/40"
+                        role="menuitem"
+                        class="flex items-center gap-2 px-4 py-2 text-body text-ink-900 hover:bg-chrome-active/40"
                         href="{{ route('profile') }}"
                     >
+                        <x-icon name="user" size="4"/>
                         {{ __('profile') }}
                     </a>
+                    <a
+                        role="menuitem"
+                        class="flex items-center gap-2 px-4 py-2 text-body text-ink-900 hover:bg-chrome-active/40"
+                        href="{{ route('profile') }}#password"
+                    >
+                        <x-icon name="key" size="4"/>
+                        {{ __('change_password') }}
+                    </a>
+                    <div class="my-1 border-t border-line-200" role="separator"></div>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button
+                            role="menuitem"
                             type="submit"
-                            class="block w-full px-4 py-2 text-left text-body text-ink-900 hover:bg-chrome-active/40"
+                            class="flex w-full items-center gap-2 px-4 py-2 text-left text-body text-ink-900 hover:bg-chrome-active/40"
                         >
+                            <x-icon name="log-out" size="4"/>
                             {{ __('log_out') }}
                         </button>
                     </form>

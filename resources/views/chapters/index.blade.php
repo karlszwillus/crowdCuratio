@@ -47,24 +47,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
         <div class="flex items-center gap-3">
             @can('update', $project)
-                <x-ui.segmented
-                    :aria-label="__('editor_mode')"
-                    :items="[
-                        [
-                            'label' => __('edit'),
-                            'href' => route('chapters.index', $project->id),
-                            'active' => true,
-                        ],
-                        [
-                            'label' => __('translate'),
-                            'href' => route('translate', $project->id),
-                        ],
-                        [
-                            'label' => __('metadata'),
-                            'href' => route('project.metadata', $project->id),
-                        ],
-                    ]"
-                />
+                <x-projects.tabs :project="$project" active="edit"/>
             @endcan
 
             @if (Auth::user()->can('publish', $project) || Auth::user()->can('preview'))
@@ -1570,13 +1553,16 @@ If not, see <https://www.gnu.org/licenses/>. -->
         // sidebar-tree.blade.php).
 
         //Invitation for existing user
+        // Persona-Smoke 2026-08-15: Vanilla-Modal-API statt jQuery-Shim
+        // (siehe Kommentar in projects/create) — unabhaengig vom Load-
+        // Order-Rennen zwischen Vite-Modul und Inline-Push-Skript.
         @if(!empty(Session::get('error_code')) && Session::get('error_code') == 6)
-        $('#newUserInvitation').modal('show');
+        window.crowdCuratioModal && window.crowdCuratioModal.open('#newUserInvitation');
         @endif
 
         //User not existing
         @if(!empty(Session::get('error_code')) && Session::get('error_code') == 7)
-        $('#newUser').modal('show');
+        window.crowdCuratioModal && window.crowdCuratioModal.open('#newUser');
         @endif
 
         $('.edit-user').click(function (event) {

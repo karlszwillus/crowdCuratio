@@ -53,22 +53,28 @@ it('roles: bei adminUser=true optional', function () {
     expect($validator->errors()->has('roles'))->toBeFalse();
 });
 
-it('roles: bei adminUser=false zwingend required', function () {
+it('roles: bei adminUser=false optional (Phase 5d.7 — Controller-Fallback auf Reader)', function () {
+    // Vor 5d.7 war `roles` bei adminUser=false hart required — ein
+    // Missing-roles-POST scheiterte in der Validation, der User
+    // wurde gar nicht angelegt. Seit 5d.7 faellt der Controller auf
+    // Reader-Default zurueck, damit rollenlose User nicht entstehen.
     $request = new RegisterRequest;
     $request->merge([
         'firstName' => 'Ada',
         'lastName' => 'Lovelace',
         'email' => 'ada@example.test',
         'policy' => '1',
-        // adminUser absent ⇒ falsy ⇒ required
+        // adminUser absent — Rule ist trotzdem sometimes|nullable.
     ]);
 
     $validator = Validator::make($request->all(), $request->rules());
 
-    expect($validator->errors()->has('roles'))->toBeTrue();
+    expect($validator->errors()->has('roles'))->toBeFalse();
 });
 
-it('roles: ohne adminUser-Flag ist roles required', function () {
+it('roles: ohne adminUser-Flag ist roles optional (Phase 5d.7)', function () {
+    // Analog zum vorherigen Test — beide Wege enden im gleichen
+    // Reader-Default-Pfad, siehe RegisteredUserController::store.
     $request = new RegisterRequest;
     $request->merge([
         'firstName' => 'Ada',
@@ -80,5 +86,5 @@ it('roles: ohne adminUser-Flag ist roles required', function () {
 
     $validator = Validator::make($request->all(), $request->rules());
 
-    expect($validator->errors()->has('roles'))->toBeTrue();
+    expect($validator->errors()->has('roles'))->toBeFalse();
 });

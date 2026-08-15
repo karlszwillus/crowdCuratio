@@ -23,6 +23,7 @@ If not, see <https://www.gnu.org/licenses/>.
 namespace App\Providers;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 
@@ -68,5 +69,31 @@ class AppServiceProvider extends ServiceProvider
         // erleben. Sobald die Hotspots ruhig sind, darf das in
         // Production scharf werden.
         Model::shouldBeStrict(! $this->app->isProduction());
+
+        $this->registerLockedButtonDirective();
+    }
+
+    /**
+     * Blade-Direktive @disabledIf($condition, $reason) fuer das
+     * Locked-Pattern aus Phase 5d.1 auf rohen <button>-Tags.
+     *
+     * Sprueht bei true-Condition aria-disabled, title und
+     * is-disabled-Klasse in den umgebenden Tag; bei false-Condition
+     * schreibt sie nichts. Kein Schloss-Icon — dafuer bleibt
+     * <x-ui.button :locked> mit voller Handschrift.
+     *
+     * Nutzung:
+     *   <button @disabledIf(! $canAdd, __('permission_missing')) class="btn">
+     *     Nutzer einladen
+     *   </button>
+     */
+    private function registerLockedButtonDirective(): void
+    {
+        Blade::directive('disabledIf', function (string $expression): string {
+            // Compiler-Level: der Expression-String ist die Roh-PHP-Argumentliste,
+            // z. B. `! $canAdd, "Nur Editor:innen"`. Wir wickeln beide Argumente
+            // in einen Runtime-Helper, der die Attribute nur bei true schreibt.
+            return "<?php echo \App\Support\LockedButton::attributes({$expression}); ?>";
+        });
     }
 }

@@ -171,6 +171,19 @@ class ProjectController extends Controller
     }
 
     /**
+     * Phase 5d.4: Berechtigungssicht (Screen 3B). Ersetzt die alte
+     * Modal-Kaskade aus projects/create. View delegiert an die
+     * Livewire-Volt-Komponente resources/views/livewire/
+     * project-permissions.blade.php.
+     */
+    public function permissions(Project $project)
+    {
+        $this->authorize('invite', $project);
+
+        return view('projects.permissions', compact('project'));
+    }
+
+    /**
      * Show the form for editing the specified resource.
      *
      * @return Response
@@ -740,7 +753,9 @@ class ProjectController extends Controller
         App::setlocale('de');
         $data = $this->allData($id);
 
-        return view('translate.index', compact('data'));
+        // Phase 5d.4-Followup: $project fuer die einheitliche
+        // Tab-Leiste (<x-projects.tabs>) mitliefern.
+        return view('translate.index', compact('data', 'project'));
     }
 
     /**

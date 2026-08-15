@@ -66,6 +66,175 @@ it('Button mit disabled setzt aria-disabled', function () {
         ->toContain('aria-disabled="true"');
 });
 
+// ---------- Locked-Pattern (Phase 5d.1) ----------
+//
+// Unterschied disabled vs. locked:
+//   disabled  = native HTML-`disabled`, Fokus geht verloren, kein Klick,
+//               kein Tooltip lesbar. Fuer Formular-States.
+//   locked    = sichtbar, fokussierbar (aria-disabled=true), NICHT
+//               nativ disabled. Tooltip erklaert warum. Schloss-Icon
+//               links vom Label. Fuer rollen-bedingte Sperren, damit
+//               Reader/Editor-User verstehen, was sie NICHT duerfen.
+//
+// Persona-Befund B-K-B-04 (2026-06-23): Reader sieht Add-User-Button
+// gar nicht → sucht ihn und ist verwirrt. Fix: sichtbar, aber locked.
+
+it('Button mit locked rendert aria-disabled ohne natives disabled', function () {
+    /** @var TestCase $this */
+    $html = Blade::render(
+        '<x-ui.button :locked="true" lockedReason="Nur Editor:innen">Hinzufuegen</x-ui.button>'
+    );
+
+    // @phpstan-ignore-next-line property.notFound (Pest-Magic ->not->)
+    expect($html)
+        ->toContain('aria-disabled="true"')
+        ->not->toContain(' disabled ')
+        ->not->toContain('disabled>');
+});
+
+it('Button mit locked setzt Schloss-Icon links vom Label', function () {
+    /** @var TestCase $this */
+    $htmlLocked = Blade::render(
+        '<x-ui.button :locked="true" lockedReason="Nur Editor:innen">Hinzufuegen</x-ui.button>'
+    );
+    $htmlOpen = Blade::render(
+        '<x-ui.button>Hinzufuegen</x-ui.button>'
+    );
+
+    // Delta-Vergleich: der locked-Button hat ein zusaetzliches SVG,
+    // das im offenen Button nicht drin ist. Wir pruefen die Praesenz
+    // eines <svg-Elements im locked-Rendering, das im offenen fehlt.
+    expect($htmlLocked)->toContain('<svg');
+    expect(substr_count($htmlLocked, '<svg'))->toBeGreaterThan(substr_count($htmlOpen, '<svg'));
+
+    // Reihenfolge im Markup: SVG steht VOR dem Label.
+    $iconPos = strpos($htmlLocked, '<svg');
+    $labelPos = strpos($htmlLocked, 'Hinzufuegen');
+    expect($iconPos)->toBeInt()->toBeLessThan($labelPos);
+});
+
+it('Button mit locked setzt title-Attribut aus lockedReason', function () {
+    /** @var TestCase $this */
+    $html = Blade::render(
+        '<x-ui.button :locked="true" lockedReason="Nur Editor:innen duerfen einladen">'
+        .'Nutzer:in einladen</x-ui.button>'
+    );
+
+    expect($html)->toContain('title="Nur Editor:innen duerfen einladen"');
+});
+
+it('Button mit locked haengt is-disabled-Klasse an', function () {
+    /** @var TestCase $this */
+    $html = Blade::render(
+        '<x-ui.button :locked="true" lockedReason="Nur Editor:innen">Hinzufuegen</x-ui.button>'
+    );
+
+    // is-disabled ist der Style-Anker fuer 5d — abdimmen,
+    // cursor:not-allowed, ohne den nativen disabled-Pfad zu triggern.
+    expect($html)->toContain('is-disabled');
+});
+
+// ---------- @disabledIf-Direktive (Phase 5d.2) ----------
+//
+// Ergaenzung zur <x-ui.button :locked>-Prop: einige Bestands-Buttons
+// leben als rohe <button>-Tags in Legacy-Templates. Fuer die ist ein
+// Blade-Direktive-Sprue der schnellste Weg zum Locked-Zustand,
+// ohne die Komponente zu tauschen.
+//
+// Nutzung:
+//   <button @disabledIf(! $canAdd, 'Nur Editor:innen') class="...">
+// wird zu:
+//   <button aria-disabled="true" title="..." class="is-disabled ...">
+//
+// Wenn Condition false: die Direktive schreibt nichts (Button bleibt
+// offen). Kein Schloss-Icon in dieser Variante — bewusst schlank,
+// fuer die volle Behandlung bleibt <x-ui.button :locked>.
+
+it('@disabledIf mit true-Condition schreibt aria-disabled, title und data-locked', function () {
+    /** @var TestCase $this */
+    $html = Blade::render(
+        '<button @disabledIf(true, "Nur Editor:innen") class="btn">Add</button>'
+    );
+
+    // data-locked="1" statt is-disabled-Klasse — die Direktive kann
+    // keinen class-String in einen bestehenden class="..." Wert des
+    // umgebenden Tags mergen. CSS-Regel matcht beide Anker.
+    expect($html)
+        ->toContain('aria-disabled="true"')
+        ->toContain('title="Nur Editor:innen"')
+        ->toContain('data-locked="1"');
+});
+
+it('@disabledIf mit false-Condition rendert einen offenen Button', function () {
+    /** @var TestCase $this */
+    $html = Blade::render(
+        '<button @disabledIf(false, "irgendwas") class="btn">Add</button>'
+    );
+
+    // @phpstan-ignore-next-line property.notFound (Pest-Magic ->not->)
+    expect($html)
+        ->not->toContain('aria-disabled')
+        ->not->toContain('title=')
+        ->not->toContain('data-locked');
+});
+
+it('@disabledIf escaped den reason gegen HTML-Injection', function () {
+    /** @var TestCase $this */
+    // Reason kommt oft aus Uebersetzungs-Strings, sollte aber trotzdem
+    // sauber geescaped werden falls dynamisch (User-Input, DB-Wert).
+    $html = Blade::render(
+        '<button @disabledIf(true, $reason) class="btn">Add</button>',
+        ['reason' => 'Nur "Editor:innen" & Admins']
+    );
+
+    expect($html)
+        ->toContain('title="Nur &quot;Editor:innen&quot; &amp; Admins"');
+});
+
+// ---------- Save-Bar (Phase 5d.5) ----------
+//
+// Sticky-Sicherungs-Leiste am unteren Rand des Content-Bereichs.
+// Zeigt sich, wenn der umgebende Alpine-Scope einen isDirty-Boolean
+// auf true schaltet — mit Save- und optionalem Discard-Button.
+//
+// Karl-Entscheidung 2026-08-15 (5d.5): expliziter Save-Button,
+// nicht Undo-Toast. Wird von der Permission-Sicht (5d.4) genutzt,
+// und ist als Muster auch fuer andere „Batch-Aenderung"-Flows
+// vorbereitet.
+
+it('Save-Bar rendert Save-Button mit Alpine-Klick-Bindung', function () {
+    /** @var TestCase $this */
+    $html = Blade::render(
+        '<x-ui.save-bar dirty-expr="isDirty" save-expr="save()"/>'
+    );
+
+    // x-show="isDirty" bindet Sichtbarkeit ans Parent-Alpine-Scope
+    expect($html)
+        ->toContain('x-show="isDirty"')
+        ->toContain('@click="save()"')
+        ->toContain('aria-label');
+});
+
+it('Save-Bar rendert Discard-Button wenn discard-expr gesetzt ist', function () {
+    /** @var TestCase $this */
+    $html = Blade::render(
+        '<x-ui.save-bar dirty-expr="isDirty" save-expr="save()" discard-expr="reset()"/>'
+    );
+
+    expect($html)
+        ->toContain('@click="reset()"');
+});
+
+it('Save-Bar ohne discard-expr rendert nur den Save-Button', function () {
+    /** @var TestCase $this */
+    $html = Blade::render(
+        '<x-ui.save-bar dirty-expr="isDirty" save-expr="save()"/>'
+    );
+
+    // Es darf nur ein @click drin sein — der auf save().
+    expect(substr_count($html, '@click='))->toBe(1);
+});
+
 // ---------- Icon-Button ----------
 
 it('Icon-Button erzwingt label und setzt aria-label', function () {

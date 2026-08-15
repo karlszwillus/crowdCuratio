@@ -89,6 +89,10 @@ Route::group(
         Route::delete('/user/{userId}/project/{projectId}', [ProjectController::class, 'deleteUserFromProject'])->name(
             'project.user_delete'
         );
+        // Phase 5d.4: Berechtigungssicht (Screen 3B). Loest die alte
+        // Modal-Kaskade aus projects/create ab.
+        Route::get('/projects/{project}/permissions', [ProjectController::class, 'permissions'])
+            ->name('projects.permissions');
         Route::resource('/roles', RoleController::class);
         Route::resource('/chapters', ChapterController::class);
         Route::resource('/entries', EntryController::class);
