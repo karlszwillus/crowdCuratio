@@ -87,6 +87,16 @@ class RegisteredUserController extends Controller
             ? [Role::findByName(RoleName::ADMIN->value, 'web')]
             : $this->roleResolver->resolve($request->input('roles'));
 
+        // Phase 5d.7: least-privilege-Default. Wenn das Register-
+        // Formular keine Rolle mitliefert (und der Admin-Bypass nicht
+        // greift), bekommt der Eingeladene die Reader-Rolle — nicht
+        // gar keine. Vorher entstand ein rollenloser User, der sich
+        // im Frontend nur schwer erklaeren liess (@can-Gates greifen
+        // schlicht nicht mehr).
+        if ($resolvedRoles === []) {
+            $resolvedRoles = [Role::findByName(RoleName::READER->value, 'web')];
+        }
+
         $user = $this->userOnboarding->createInvitedUser($caller, $request, $resolvedRoles);
 
         if (isset($request->projectId)) {

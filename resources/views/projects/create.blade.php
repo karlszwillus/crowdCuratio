@@ -20,6 +20,21 @@ If not, see <https://www.gnu.org/licenses/>. -->
 @extends('projects.layout')
 
 @section('main')
+
+    {{-- Phase 5d.4-Followup: einheitlicher Projekt-Tab-Balken auf
+         allen vier Screens. Nur zeigen, wenn wir ein bestehendes
+         Projekt bearbeiten — bei der Neuanlage (POST /projects
+         ohne existierendes $project->id) gibt es noch keine Tabs. --}}
+    @if (isset($project->id))
+        <div class="mb-6 flex flex-wrap items-center justify-between gap-4
+                    border-b border-line-200 pb-3">
+            <div class="min-w-0 flex-1">
+                <x-ui.breadcrumb :tree="app(App\Services\ProjectTreeService::class)->breadcrumbTree($project)"/>
+            </div>
+            <x-projects.tabs :project="$project" active="meta"/>
+        </div>
+    @endif
+
     @if ($message = Session::get('success'))
         <div class="alert alert-success">
             <p>{{ $message }}</p>
@@ -162,71 +177,17 @@ If not, see <https://www.gnu.org/licenses/>. -->
     @endif
     @if(isset($project->id))
         @if(Auth::user()->id == $project->user_id || Auth::user()->isAdmin() || in_array('invite', $listPermissions))
-        <div class="container card p-4 mb-4 mt-4">
-            <div class="row">
-                <div class="col-sm-12">
-                    <p>{{__('user_permissions')}}</p>
-                    <hr>
-                    <div class="mt-7">
-                        @isset($listGrantedUsers)
-                            @foreach($listGrantedUsers as $key => $value)
-                                <div class="col-sm-7">{{$value['name']}}</div>
-                                <form action="{{ route('project.user_delete',['userId' => $key, 'projectId' => $project->id]) }}" method="POST">
-                                    <div class="col-sm-5 text-right"><a data-id="{{$key}}" data-project="{{$project->id}}"
-                                                                        data-permission="{{json_encode($value['permission'])}}"
-                                                                        href="" data-toggle="modal"
-                                                                        data-target="#userModal" class="edit-user"><x-icon name="pencil-fill" /></a>
-                                        @csrf
-                                        @method('DELETE')
-                                        <button data-toggle="tooltip" data-placement="top" title="{{__('delete_user')}}" type="submit" onclick="return confirm('{{__('message_delete_confirm')}}')">
-                                            <x-icon name="trash" />
-                                        </button>
-                                    </div>
-                                </form>
-                            @endforeach
-                        @endisset
-                    </div>
-                </div>
-                <div class="col-sm-12 mt-7">
-                    <a data-toggle="modal" data-target="#userInvitation" href=""
-                       class="btn btn-secondary btn-block btn-responsive add-user"> Add user</a>
-                </div>
-            </div>
-        </div>
-    @endif
-    <!--<button class="btn btn-secondary btn-lg btn-block text-left" type="submit" name="btn_submit" value="Preview"><x-icon name="eye" class="m-2" />Preview
-    </button>
-    <button class="btn btn-secondary btn-lg btn-block text-left" type="submit" name="btn_submit" value="Publish"><x-icon name="globe" class="m-2" />Publish
-    </button>-->
-    <!-- Modal Chapter -->
-
-    <x-ui.modal id="userInvitation" title="Add user">
-        <div class="row">
-            <div class="col-lg-12" id="detailUser">
-                <form action="{{route('check.email')}}"
-                      method="POST"
-                      enctype="multipart/form-data" class="form-group form-inline" id="frmCheckEmail">
-                    @csrf
-                    <input name="project" @isset($project->id) value="{{$project->id}}"
-                           @endisset type="hidden"/>
-                    <div class="form-group col-xs-8 mb-2">
-                        <input type="email" class="form-control" name="userEmail" placeholder="User email"
-                               style="width: 100% !important;">
-                    </div>
-                    <button id="" type="submit" class="btn btn-primary mb-2">{{__('invite')}}</button>
-                </form>
-            </div>
-        </div>
-    </x-ui.modal>
-
-
-    <x-ui.modal id="userModal" title="Add user permissions">
-        <div class="row">
-            <div id="infoMsg" class=""></div>
-            <div class="writeinfo"></div>
-            <div class="col-xs-12" id="editUserPermission"></div>
-        </div>
-    </x-ui.modal>
+            {{-- Phase 5d.4: die alte Permission-Card + drei Modals
+                 (userInvitation, userModal, newUserInvitation) sind
+                 in eine eigene Sicht /projects/{id}/permissions
+                 gewandert (Screen 3B, Handoff v4). Hier bleibt nur
+                 der Einstiegs-Link auf die neue Sicht. --}}
+            <a href="{{ route('projects.permissions', $project->id) }}"
+               class="btn btn-secondary btn-lg btn-block text-left mt-4">
+                <x-icon name="users" class="m-2"/>
+                {{ __('permissions') }}
+            </a>
+        @endif
 
     <x-ui.modal id="newUserInvitation" title="Add user">
         <div class="row">
@@ -396,7 +357,9 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     var action = $('');
                     var newDiv = $('<div class="card p-4 mb-4"><div class="row"><div class="col-sm-11"><p>Chapter</p><input name="chapter[]" type="text" class="form-control-plaintext border-0" value="' + someText + '" readonly></div></div></div>');
                     $('#newElement').append(newDiv);
-                    $("#myModal").modal('hide');
+                    // Direkt auf Vanilla-Modal-API (siehe Kommentar
+                    // beim Invite-Flow oben) — nicht via jQuery-Shim.
+                    window.crowdCuratioModal && window.crowdCuratioModal.close('#myModal');
                 }
             )
 
@@ -544,14 +507,22 @@ If not, see <https://www.gnu.org/licenses/>. -->
         })
 
         //Invitation for existing user
+        //
+        // Persona-Smoke 2026-08-15: die frueheren $('#x').modal('show')-
+        // Aufrufe schlagen in seltenen Load-Order-Faellen mit
+        // "modal is not a function" fehl (jQuery-Shim aus dem Vite-
+        // Modul noch nicht installiert, wenn das Push-Skript feuert).
+        // window.crowdCuratioModal.open ist unabhaengig vom Shim und
+        // steht sofort zur Verfuegung, sobald resources/js/modal.js
+        // ausgefuehrt ist.
         @isset($project->id)
             @if(!empty(Session::get('error_code')) && Session::get('error_code') == 6)
-            $('#newUserInvitation').modal('show');
+            window.crowdCuratioModal && window.crowdCuratioModal.open('#newUserInvitation');
             @endif
 
             //User not existing
             @if(!empty(Session::get('error_code')) && Session::get('error_code') == 7)
-            $('#newUser').modal('show');
+            window.crowdCuratioModal && window.crowdCuratioModal.open('#newUser');
             @endif
 
             $('.edit-user').click(function (event) {

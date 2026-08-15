@@ -214,14 +214,16 @@ it('viewAny: User ohne view-Permission darf die Project-Liste nicht sehen', func
     expect($policy->viewAny($noRole))->toBeFalse();
 });
 
-// ---------- update / delete / restore / publish — Negativtests ----------
+// ---------- update / delete / restore / publish ----------
 //
-// Block E / Welle E.7a (Architecture-Review-Befund): die destruktiven
-// Operationen waren in `ProjectPolicyTest` nicht durch Negativtests
-// abgedeckt. Heutiges Verhalten: nur Owner darf, Admin via before().
-// Eingeladene (auch mit edit-/delete-Permission auf dem Pivot) dürfen
-// heute NICHT — die ProjectPolicy nutzt für diese Methoden den
-// reinen Owner-Check, nicht den Service. Das fixieren wir hier.
+// Block E / Welle E.7a: destruktive Operationen sind hier
+// negativ- und positiv-getestet.
+//
+// Phase 5d.4-Followup (2026-08-15): update/delete/publish nutzen
+// jetzt den Service (userHasPermissionOnProject) statt reinen
+// Owner-Check. Vorher war die project-scoped edit/delete/publish-
+// Permission wirkungslos — die Toggle-Karten aus Screen 3B waren
+// dadurch faktisch Placebos. Owner-Shortcut liegt im Service.
 
 it('update: Fremder ohne Einladung darf das Project NICHT updaten', function () {
     /** @var TestCase $this */
@@ -317,4 +319,95 @@ it('publish: Owner darf sein Project veröffentlichen', function () {
     $policy = app(ProjectPolicy::class);
 
     expect($policy->publish($owner, $project))->toBeTrue();
+});
+
+// ---------- Pivot-basierte Positiv-Tests (Phase 5d.4-Followup) ----------
+
+it('update: Eingeladener mit edit-Permission auf dem Pivot darf updaten', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole(RoleName::READER->value);
+    /** @var User $invitee */
+    $invitee = User::factory()->create();
+    $invitee->assignRole(RoleName::READER->value);
+    $project = makeProject($owner);
+
+    $editId = Permission::where('name', PermissionName::EDIT->value)->value('id');
+    ProjectUserPermission::create([
+        'project_id' => $project->id,
+        'user_id' => $invitee->id,
+        'permission_id' => $editId,
+    ]);
+
+    $policy = app(ProjectPolicy::class);
+
+    expect($policy->update($invitee, $project))->toBeTrue();
+});
+
+it('update: Eingeladener OHNE edit-Permission darf NICHT updaten', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole(RoleName::READER->value);
+    /** @var User $reader */
+    $reader = User::factory()->create();
+    $reader->assignRole(RoleName::READER->value);
+    $project = makeProject($owner);
+
+    // Reader hat nur view im Pivot — kein edit.
+    $viewId = Permission::where('name', PermissionName::VIEW->value)->value('id');
+    ProjectUserPermission::create([
+        'project_id' => $project->id,
+        'user_id' => $reader->id,
+        'permission_id' => $viewId,
+    ]);
+
+    $policy = app(ProjectPolicy::class);
+
+    expect($policy->update($reader, $project))->toBeFalse();
+});
+
+it('delete: Eingeladener mit delete-Permission auf dem Pivot darf löschen', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole(RoleName::READER->value);
+    /** @var User $invitee */
+    $invitee = User::factory()->create();
+    $invitee->assignRole(RoleName::READER->value);
+    $project = makeProject($owner);
+
+    $deleteId = Permission::where('name', PermissionName::DELETE->value)->value('id');
+    ProjectUserPermission::create([
+        'project_id' => $project->id,
+        'user_id' => $invitee->id,
+        'permission_id' => $deleteId,
+    ]);
+
+    $policy = app(ProjectPolicy::class);
+
+    expect($policy->delete($invitee, $project))->toBeTrue();
+});
+
+it('publish: Eingeladener mit publish-Permission auf dem Pivot darf publishen', function () {
+    /** @var TestCase $this */
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $owner->assignRole(RoleName::READER->value);
+    /** @var User $invitee */
+    $invitee = User::factory()->create();
+    $invitee->assignRole(RoleName::READER->value);
+    $project = makeProject($owner);
+
+    $publishId = Permission::where('name', PermissionName::PUBLISH->value)->value('id');
+    ProjectUserPermission::create([
+        'project_id' => $project->id,
+        'user_id' => $invitee->id,
+        'permission_id' => $publishId,
+    ]);
+
+    $policy = app(ProjectPolicy::class);
+
+    expect($policy->publish($invitee, $project))->toBeTrue();
 });

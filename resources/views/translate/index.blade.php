@@ -23,6 +23,17 @@ If not, see <https://www.gnu.org/licenses/>. -->
 @endsection
 
 @section('content')
+
+    {{-- Phase 5d.4-Followup: einheitlicher Projekt-Tab-Balken auf
+         allen vier Screens. --}}
+    <div class="mb-6 flex flex-wrap items-center justify-between gap-4
+                border-b border-line-200 pb-3">
+        <div class="min-w-0 flex-1">
+            <x-ui.breadcrumb :tree="app(App\Services\ProjectTreeService::class)->breadcrumbTree($project)"/>
+        </div>
+        <x-projects.tabs :project="$project" active="translate"/>
+    </div>
+
     @if ($message = Session::get('success'))
         <div class="alert alert-success">
             <p>{{ $message }}</p>

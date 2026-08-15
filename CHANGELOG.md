@@ -191,6 +191,57 @@ Login bleibt bewusst themeunabhängig dunkel — er ist Signature,
 nicht Chrome. Coverage hält bei 77,9 % über die Design-Sprint-
 Umbauten.
 
+**Phase-5d — Rollen-bewusste UI abgeschlossen.** Die
+Berechtigungswelt bekommt eine eigene Sicht: aus einer
+dreifachen Modal-Kaskade in `projects/create` wird Screen 3B —
+ein Split-Layout mit Mitarbeitenden-Sidebar links und Detail-
+Panel rechts. Der Detail-Bereich zeigt oben vier Rollen-Vorlage-
+Buttons (Reader/Reviewer/Editor/Owner) und darunter eine
+Toggle-Karten-Matrix. Die Matrix wurde gegenüber Handoff v4
+bewusst um zwei Toggles erweitert (`comment` und `invite`),
+damit „Reviewer:in ohne Kommentar-Recht" und „Co-Owner mit
+Einladungs-Recht" ausdrückbar werden; die Design-Abweichung ist
+für die nächste Review-Runde in
+`.werkbank/BRIEFINGS/redesign/permission-matrix-6-toggles.md`
+dokumentiert. Owner-Rechte sind an `project.user_id` gekoppelt
+und werden per `@disabledIf` als sichtbar-aber-gesperrt
+gerendert.
+
+Als Fundament dafür ist ein neues Locked-Pattern entstanden:
+`<x-ui.button :locked lockedReason>` rendert `aria-disabled=
+"true"` (ohne native `disabled`), Schloss-Icon links vom Label,
+Tooltip mit Grund und die neue Style-Klasse `.is-disabled`; für
+rohe `<button>`-Tags im Bestand macht dieselbe Semantik die
+neue Blade-Direktive `@disabledIf($condition, $reason)`, die
+`aria-disabled`, `title` und `data-locked="1"` in einer Zeile
+setzt. Persona-Befund B-K-B-04 („Reader sucht den Add-User-
+Button und ist verwirrt") ist damit adressiert: statt Buttons
+für Nicht-Berechtigte auszublenden, zeigen wir sie gesperrt mit
+erklärendem Tooltip.
+
+Für die Berechtigungssicht neu ist die `<x-ui.save-bar>`-
+Komponente — eine Sticky-Bar am unteren Rand, die bei
+`@if($this->isDirty)` auftaucht (Livewire-3-`#[Computed]`) und
+Verwerfen/Speichern anbietet. Die globale Nutzer:innen-Liste
+`/users` folgt der Handschrift der Phase-5-D-Projektliste: CSS-
+Grid-Tabelle mit Filter-Chips nach Rolle, Suchfeld,
+Rollen-Chips als farbige Pills, Status-Spalte für „Einladung
+ausstehend". Das User-Menü im Rail bekommt einen dritten
+Menüpunkt „Passwort ändern" und wird A11y-technisch mit
+`role="menu"` und Divider aufgeräumt. Alle vier Projekt-Screens
+(Editor, Metadaten, Übersetzen, Berechtigungen) haben jetzt
+denselben Tab-Balken über die neue Komponente
+`<x-projects.tabs :project active>` — der Berechtigungen-Tab
+zeigt sich nur für User mit `invite`-Recht.
+
+Als Least-Privilege-Sicherheitsnetz fällt der Register-Flow
+ohne mitgeschickte Rolle auf Reader zurück (statt rollenlose
+User zu erzeugen, für die `@can`-Gates nicht mehr greifen); die
+`RegisterRequest`-Rules geben die alte `required`-Fessel
+entsprechend auf. Der Invite-Flow direkt in der Berechtigungs-
+sicht legt bestehende Nutzer:innen mit Reader-Default an; die
+Neuanlage-Kette folgt in einer späteren Iteration.
+
 ### Hinzugefügt
 
 - **`<x-icon name="…">`-Komponente auf Lucide-Basis** (Phase
@@ -263,6 +314,70 @@ Umbauten.
   „Anmelden", „Angemeldet bleiben", roter Primary-Button.
   Duzen-Konvention konsequent. Nach Login wird auf `/projects`
   weitergeleitet.
+
+- **Locked-Pattern für rollen-bedingte Sperren** (Phase 5d.1 +
+  5d.2). Neue Props `:locked` und `:lockedReason` auf
+  `<x-ui.button>` rendern den Button sichtbar-aber-gesperrt mit
+  `aria-disabled="true"` (ohne native `disabled`, damit Fokus
+  und Tooltip erreichbar bleiben), Schloss-Icon links vom Label
+  und `.is-disabled` als CSS-Anker. Für rohe `<button>`-Tags im
+  Bestand gibt es die Blade-Direktive `@disabledIf($condition,
+  $reason)`, die aria-disabled, `title` und `data-locked="1"`
+  in einer Zeile spraegt. Load-Time-Runtime-Helper unter
+  `App\Support\LockedButton::attributes`.
+
+- **Berechtigungs-Sicht als Screen 3B** (Phase 5d.4). Volt-
+  Komponente `<livewire:project-permissions>` unter
+  `/projects/{id}/permissions`. Split-Layout mit Mitarbeitenden-
+  Sidebar links (Avatar, Name, Rolle klein) und Detail rechts
+  (großer Avatar, Rollen-Vorlage-Buttons Reader/Reviewer/
+  Editor/Owner, sechs Permission-Toggle-Karten:
+  Bearbeiten, Hinzufügen, Löschen, Veröffentlichen, Kommen-
+  tieren, Einladen). Klick auf einen Rollen-Button setzt die
+  Toggles auf die Rollen-Standardbelegung (siehe
+  `RoleTableSeeder`); danach kann individuell abweichen. Owner
+  hat alle sechs implizit an und ist gesperrt (Owner-Rechte
+  hängen an `project.user_id`, nicht am Pivot). Löst die alte
+  Modal-Kaskade in `projects/create` (3 Modals, Session-
+  basierter Zwei-Schritt-Flow) ab.
+
+- **`<x-ui.save-bar>` für Batch-Änderungen** (Phase 5d.5).
+  Sticky-Bar am unteren Rand, taucht bei
+  `@if($this->isDirty)` auf (Livewire-3-`#[Computed]`) und
+  bietet Verwerfen + Speichern. Aktuell in der Berechtigungs-
+  Sicht verkabelt, wiederverwendbar für andere Batch-Formulare.
+  Karl-Entscheidung 2026-08-15: expliziter Save-Button statt
+  Undo-Toast.
+
+- **Redesignte Nutzer:innen-Liste** (Phase 5d.3).
+  `resources/views/users/index.blade.php` folgt der 5-D.4-
+  Handschrift: Kopfleiste mit Titel + Suche + „Neue:r
+  Nutzer:in", Filter-Chips nach Rolle mit Zählern (Admin bekommt
+  den Danger-Chip-Ton als visueller Anker), CSS-Grid-Tabelle
+  mit Avatar-Initialen, Rollen-Chip, Status-Spalte („Einladung
+  ausstehend" mit Clock-Icon), 44-px-Icon-Buttons für Edit /
+  Resend-Invitation / Delete. Löst die alte
+  Bootstrap-`.table`-Sicht mit DataTables-Init ab.
+
+- **User-Menü mit drittem Menüpunkt** (Phase 5d.6). Der Avatar-
+  Dropdown in der Rail bekommt „Passwort ändern" zwischen
+  „Mein Profil" und „Abmelden" (Anker auf die bestehende
+  Profil-Sicht). Semantik wird auf `role="menu"`, `role="menu-
+  item"` und `role="separator"` gehoben, Icons neben den
+  Labels.
+
+- **Einheitlicher Projekt-Tab-Balken** (Phase 5d.4-Followup).
+  Neue Blade-Komponente `<x-projects.tabs :project active>`
+  rendert vier Segmente (Bearbeiten · Metadaten · Übersetzen ·
+  Berechtigungen) auf Editor, Metadaten, Übersetzen und
+  Berechtigungen-Sicht. Der Berechtigungen-Tab erscheint nur
+  für User mit `invite`-Recht auf dem Projekt.
+
+- **`ProjectPolicy::invite`** (Phase 5d.4-Hotfix). Neue Method
+  gibt Owner und Eingeladenen mit `invite`-Permission Zugriff
+  auf die Berechtigungs-Sicht; Admin greift wie bisher via
+  `before()`. Ersetzt die dreifache Inline-Bedingung in
+  `projects/create.blade.php` durch eine Policy-Method.
 
 - **Inline-Editor als Volt-Komponente** (Phase 5c). Neue
   `<livewire:inline-editor>` mit drei Modi (Text-Input, Textarea,
@@ -686,6 +801,45 @@ Umbauten.
 - **Post-Login-Redirect auf `/projects`** (Phase 5-D.7). Der
   `RouteServiceProvider::HOME`-Wert ist von `/dashboard` (leer)
   auf `/projects` gehoben.
+
+- **Register-Rules ohne harte `roles`-Pflicht** (Phase 5d.7).
+  `RegisterRequest::rules` gibt `roles` als `sometimes|nullable`
+  frei; ein POST ohne Rollen-Feld läuft im Controller in den
+  Reader-Default (least privilege) statt in eine
+  ValidationException. Der Fallback verhindert rollenlose User,
+  bei denen `@can`-Gates nicht mehr greifen.
+
+- **`isAdmin`-Check im Rail auf `hasRole()`** (Phase 5d.6-
+  Hotfix). Vorher `Auth::user()->currentRole[0]->name === 'Admin'`
+  — crashte mit „Undefined array key 0" bei rollenlosen Usern.
+  Jetzt `Auth::user()->hasRole(RoleName::ADMIN->value)`, robust
+  gegen leere Rollen-Collection.
+
+- **Modal-Wire-Up trennt Trigger-Feldbelegung vom `@push`-Block**
+  (Persona-Smoke-Hotfix). Der Modal-Manager gibt bei
+  `handleToggleClick` den Trigger als `relatedTarget` mit ins
+  `cc-modal-show`-Event; ein neues `resources/js/modal-wire.js`
+  verkabelt `#entryModal.chapterId` aus `data-id`/`data-chapter`
+  des Triggers. Löst das Problem, dass ein JS-Fehler im
+  `@push('scripts')`-Block der `chapters/index.blade.php` die
+  Registrierung des delegierten `.addEntry`-Handlers unterbrach
+  — Modal öffnete, aber `chapterId` blieb leer → 403.
+
+- **`ProjectPolicy::update/delete/publish` auf project-scoped
+  Pivot** (Phase 5d.4-Followup). Vorher prüften diese drei
+  Methoden nur `$user->id === $project->user_id` (Owner-only).
+  Die project-scoped `edit`/`delete`/`publish`-Toggles aus
+  Screen 3B hatten damit keinen Effekt auf den Inline-Editor
+  und den Rich-Text-Editor — beide autorisieren via
+  `Gate::authorize('update', $project)` und liefen in die
+  Owner-only-Falle. Jetzt konsultiert die Policy den Service
+  `userHasPermissionOnProject(EDIT/DELETE/PUBLISH)` mit
+  Owner-Shortcut. Eingeladene Editor:innen können damit
+  tatsächlich das bearbeiten, wofür sie im Screen 3B den Toggle
+  gesetzt bekommen haben. Vier neue Positiv-Tests in
+  `ProjectPolicyTest`, der Kommentar am Test-Block wurde
+  umgeschrieben (pinnte vorher das Owner-only-Verhalten als
+  gewolltes Feature).
 
 - **Coverage-Mindestschwelle im CI auf 75 %** (Phase 5c). Der
   `pest --coverage --min`-Wert im `test`-Job der GitHub-Actions-
@@ -1120,6 +1274,21 @@ Umbauten.
   Sprite haben visuell einen Kapitel-Kasten simuliert, obwohl der
   Chapter-Wrapper transparent war. `.list-group` und `.entry.group`
   in `bootstrap-utilities.css` ohne Background/Rahmen.
+
+- **Modal-Kaskade für Add-User in `projects/create`**
+  (Phase 5d.4). Die drei `<x-ui.modal>`-Blöcke `userInvitation`
+  (E-Mail einladen) und `userModal` (bestehende User bearbeiten)
+  sind rausgeworfen; ihre Aufgabe übernimmt jetzt die
+  `<livewire:project-permissions>`-Sicht mit Sidebar + Detail-
+  Panel + Invite-Modal in der Volt-Component. Der dritte
+  `newUserInvitation`-Modal bleibt vorerst — er hängt am
+  `check.email`-Session-Flow und wird mit dem sauberen 5d.7-
+  Invite-Neubau abgeräumt (Backlog).
+
+- **DataTables-jQuery-Init an der Nutzer:innen-Liste**
+  (Phase 5d.3). Analog zur Projektliste läuft die neue
+  Nutzer:innen-Sicht ohne DataTables — Filter-Chips nach Rolle
+  und Alpine-Suche ersetzen den Bestand-Init.
 
 - **Chevron-Toggle in Chapter- und Entry-Aktionen** (Phase
   5-D.6b). Das Auf-/Zuklappen läuft komplett über den Sidebar-

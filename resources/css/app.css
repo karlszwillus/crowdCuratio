@@ -254,3 +254,37 @@ a:has(> i:only-child[class*="bi-"]) {
         transition: none;
     }
 }
+
+/*
+ * Locked-Pattern (Phase 5d.1). Rollen-bewusste Sperre auf Buttons
+ * und Links, die sichtbar bleiben, aber nicht ausloesbar sind.
+ * Anders als native `disabled`: Fokus bleibt erhalten, Tooltip
+ * lesbar, aria-disabled=true wird von der Komponente gesetzt.
+ *
+ * Nutzung ueber <x-ui.button :locked="true" lockedReason="..."/>
+ * (siehe resources/views/components/ui/button.blade.php).
+ *
+ * Visuelle Handschrift: abgedimmt (opacity 0.5), Cursor als
+ * not-allowed, Hover-Effekte deaktiviert. Focus-Ring bleibt.
+ */
+.is-disabled,
+[data-locked="1"] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/*
+ * Focus-Reaktivierung: der Button darf per Tab erreicht werden
+ * (Persona muss die Sperre spueren koennen), pointer-events: none
+ * blockt aber gleichzeitig den title-Tooltip bei Hover. Deshalb
+ * ein Wrapper-Escape: sobald der Button fokussiert ist, kommen
+ * pointer-events zurueck, damit ScreenReader-Nutzer via Tab und
+ * Sehende via Hover den Tooltip gleichermassen sehen koennen.
+ */
+.is-disabled:focus,
+.is-disabled:focus-visible,
+[data-locked="1"]:focus,
+[data-locked="1"]:focus-visible {
+    pointer-events: auto;
+}

@@ -63,16 +63,17 @@ class RegisterRequest extends FormRequest
 
     public function rules(): array
     {
-        // Beim Admin-Invite ist die Rollen-Wahl egal — der Controller
-        // setzt die Admin-Rolle direkt. Daher ist `roles` dort
-        // optional.
-        $rolesRule = $this->boolean('adminUser') ? 'sometimes' : 'required';
-
+        // Phase 5d.7: `roles` ist jetzt durchgehend optional. Beim
+        // Admin-Invite (`adminUser=true`) setzt der Controller die
+        // Admin-Rolle direkt; ohne `roles`-Field faellt der Controller
+        // auf den Reader-Default (least privilege) zurueck. Vorher
+        // schlug ein POST ohne `roles` an der Validation an, User
+        // wurde gar nicht angelegt.
         return [
             'firstName' => 'required|string|max:255',
             'lastName' => 'required|string|max:255',
             'email' => 'required|string|email|max:255',
-            'roles' => $rolesRule,
+            'roles' => 'sometimes|nullable',
             'policy' => 'required',
             'adminUser' => 'sometimes|boolean',
             'createProject' => 'sometimes|boolean',

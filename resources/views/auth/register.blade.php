@@ -79,9 +79,20 @@ If not, see <https://www.gnu.org/licenses/>. -->
             <div class="row mt-7">
                 <x-label for="lblRole" class="col-sm-2 col-form-label">{{__('role')}}</x-label>
                 <div class="col-sm-10">
-                    <select name="roles[]" class="" aria-label="Default select example">
+                    {{-- Phase 5d.7: Default-Rolle beim Invite ist Reader
+                         (least privilege). Vorher wurde die erste Rolle im
+                         Iterator vorbelegt — Reihenfolge kam aus der DB,
+                         war meist Editor. --}}
+                    <select name="roles[]" class="" aria-label="{{__('role')}}">
                         @foreach($roles as $key => $role)
-                            <option value="{{ $key }}" {{ (old('roles.0') == $role ? "selected":"") }}>{{$role}}</option>
+                            @php
+                                $oldSelection = old('roles.0');
+                                $isDefault = $oldSelection === null && $role === \App\Support\RoleName::READER->value;
+                                $isSelected = $oldSelection === $role;
+                            @endphp
+                            <option value="{{ $key }}" {{ ($isSelected || $isDefault) ? 'selected' : '' }}>
+                                {{ $role }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
