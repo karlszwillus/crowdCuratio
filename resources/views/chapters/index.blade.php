@@ -980,8 +980,16 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                             @endforeach
 
                                                                                             @can('update', $project)
-                                                                                                {{-- 5y.4: Drop-Zone als letzte Kachel im Raster (Briefing § 3). --}}
+                                                                                                {{-- 5y.4 + 5y.9: Drop-Zone als letzte Kachel — Klick UND echtes File-Drop.
+                                                                                                     Beim Drop landen die Dateien im imageModal-Input, der Klick oeffnet
+                                                                                                     das Modal ueber den bestehenden .addImage-Handler. --}}
                                                                                                 <button type="button"
+                                                                                                        x-data="{ dragging: false }"
+                                                                                                        @dragover.prevent="dragging = true"
+                                                                                                        @dragenter.prevent="dragging = true"
+                                                                                                        @dragleave.prevent="dragging = false"
+                                                                                                        @drop.prevent="dragging = false; window.__ccDroppedImageFiles = $event.dataTransfer.files; $el.click()"
+                                                                                                        :class="dragging ? 'border-primary bg-primary/10 text-primary' : ''"
                                                                                                         class="addImage group flex aspect-video w-full flex-col items-center justify-center gap-1 rounded-md border-2 border-dashed border-line-200 bg-transparent text-caption text-ink-500 hover:border-ink-400 hover:bg-line-100/40 hover:text-ink-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                                                                                                         data-chapter="{{ $chapter->name }}"
                                                                                                         data-entry="{{ $entry->name }}"
@@ -1656,6 +1664,20 @@ If not, see <https://www.gnu.org/licenses/>. -->
             $('#chapterLbl').text(chapter);
             $('#entryLbl').text(entry);
             $('#galleryLbl').text(gallery);
+            // 5y.4/5y.9: gedroppte Dateien aus der Drop-Zone ins File-Input
+            // uebernehmen, damit User im Modal nur noch Copyright/Origin
+            // ausfuellen muss.
+            if (window.__ccDroppedImageFiles && window.__ccDroppedImageFiles.length) {
+                const imageInput = document.getElementById('image');
+                if (imageInput) {
+                    try {
+                        const dt = new DataTransfer();
+                        for (const f of window.__ccDroppedImageFiles) dt.items.add(f);
+                        imageInput.files = dt.files;
+                    } catch (e) { /* aeltere Browser: File-Input bleibt leer, User waehlt manuell */ }
+                }
+                window.__ccDroppedImageFiles = null;
+            }
             initialize();
         })
 
