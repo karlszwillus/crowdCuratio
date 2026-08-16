@@ -357,6 +357,36 @@ Alpine `$dispatch` blieb wirkungslos, wenn die Trigger-Elemente
 kein `x-data` erben — `<x-comment.trigger>` bekommt seins
 explizit.
 
+**Phase-5y — Galerie-Block-Redesign in Arbeit.** Der Galerie-
+Block folgt jetzt dem Muster aus Screen 12/12A–D. Ein
+schmaler Pill-Kopf zeigt den Blocktyp, Aktionen wandern
+in einen Kopf-Slot, und die überflüssige 250-px-Leerfläche
+im Editor-Chrome ist weg. Die Bilder liegen in einem
+Auto-Fill-Grid mit 16:9-Kacheln (`object-contain`), Titel
+unter dem Bild, eine kleine Positionsnummer plus Griff oben
+links und eine Zeile Angaben-Status darunter — grün „Angaben
+vollständig" oder gelb „Bildbeschreibung fehlt · Ergänzen".
+Eine Bildbeschreibung kommt als eigenes translatables Feld
+neu hinzu (Migration `add_description_to_images`,
+`Image::$translatable` erweitert). Die Detailzeile öffnet
+inline unter der Kachel und bündelt vier Felder (Titel,
+Beschreibung, Urheberrecht, Quelle) in einem `<x-block.row>`-
+Container. Papierkorb ist strikt einer pro Ebene: der Kopf-
+Slot löscht die Galerie, das Kachel-Overlay das Bild — die
+Bild-Karte bekommt kein zweites Trash-Icon mehr.
+
+Sortieren geht per Maus (Sortable.js am Griff, POST auf
+`gallery.images.reorder`) und per Tastatur: Fokus auf den
+Griff, Leertaste hebt das Bild an, Pfeiltasten verschieben
+in beide Achsen, zweites Leertaste-Drücken legt ab, Esc
+rollt die vor der Aufnahme snapshottete Reihenfolge zurück.
+Bewegungen werden in einer `aria-live="polite"`-Region als
+„Bild an Position X von N verschoben" angesagt. Beim Ablegen
+speichert der bestehende POST-Endpunkt die neue Reihenfolge
+über den neuen `ContentReorderService::reorderImages(…)`.
+Nebenbei: Tab-Label „permissions" in der Editor-Segmented-
+Control ist jetzt „Berechtigungen".
+
 ### Hinzugefügt
 
 - **`<x-icon name="…">`-Komponente auf Lucide-Basis** (Phase

@@ -641,7 +641,60 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                          auf der Kachel (permanent Touch, hover/focus Desktop). --}}
                                                                                     <div x-data="{
                                                                                         editingImageId: null,
+                                                                                        pickedId: null,
+                                                                                        originalOrder: [],
+                                                                                        announcement: '',
                                                                                         reorderUrl: '{{ route("gallery.images.reorder", $item->gallery->id) }}',
+                                                                                        announce(text) {
+                                                                                            this.announcement = '';
+                                                                                            this.$nextTick(() => { this.announcement = text; });
+                                                                                        },
+                                                                                        snapshotOrder() {
+                                                                                            this.originalOrder = Array.from(this.$refs.grid.children)
+                                                                                                .map(el => el.dataset.imageId)
+                                                                                                .filter(Boolean);
+                                                                                        },
+                                                                                        currentIndex(id) {
+                                                                                            const items = Array.from(this.$refs.grid.children);
+                                                                                            return items.findIndex(el => el.dataset.imageId === String(id));
+                                                                                        },
+                                                                                        pick(id) {
+                                                                                            this.pickedId = id;
+                                                                                            this.snapshotOrder();
+                                                                                            const pos = this.currentIndex(id) + 1;
+                                                                                            const total = this.$refs.grid.children.length;
+                                                                                            this.announce(`Bild ${pos} von ${total} aufgenommen. Pfeiltasten verschieben, Leertaste ablegen, Esc abbrechen.`);
+                                                                                        },
+                                                                                        drop() {
+                                                                                            const pos = this.currentIndex(this.pickedId) + 1;
+                                                                                            const total = this.$refs.grid.children.length;
+                                                                                            this.announce(`Bild an Position ${pos} von ${total} abgelegt.`);
+                                                                                            this.pickedId = null;
+                                                                                            this.persistOrder();
+                                                                                        },
+                                                                                        cancel() {
+                                                                                            const grid = this.$refs.grid;
+                                                                                            const byId = {};
+                                                                                            Array.from(grid.children).forEach(el => { if (el.dataset.imageId) byId[el.dataset.imageId] = el; });
+                                                                                            this.originalOrder.forEach(id => { if (byId[id]) grid.appendChild(byId[id]); });
+                                                                                            this.pickedId = null;
+                                                                                            this.announce('Sortierung abgebrochen.');
+                                                                                        },
+                                                                                        moveBy(id, delta) {
+                                                                                            const grid = this.$refs.grid;
+                                                                                            const items = Array.from(grid.children);
+                                                                                            const from = this.currentIndex(id);
+                                                                                            const to = from + delta;
+                                                                                            if (from < 0 || to < 0 || to >= items.length) return;
+                                                                                            const target = items[to];
+                                                                                            if (delta > 0) {
+                                                                                                grid.insertBefore(items[from], target.nextSibling);
+                                                                                            } else {
+                                                                                                grid.insertBefore(items[from], target);
+                                                                                            }
+                                                                                            const pos = this.currentIndex(id) + 1;
+                                                                                            this.announce(`Bild an Position ${pos} von ${items.length} verschoben.`);
+                                                                                        },
                                                                                         initSortable() {
                                                                                             const grid = this.$refs.grid;
                                                                                             if (!grid || typeof Sortable === 'undefined') return;
@@ -673,6 +726,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                 .catch(() => Alpine.store('saveStatus')?.set?.('error'));
                                                                                         },
                                                                                     }" x-init="initSortable()">
+                                                                                    <div
+                                                                                        role="status"
+                                                                                        aria-live="polite"
+                                                                                        class="sr-only"
+                                                                                        x-text="announcement"
+                                                                                    ></div>
 
                                                                                         {{-- Raster --}}
                                                                                         <div x-show="editingImageId === null"
@@ -690,7 +749,21 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                             loading="lazy"
                                                                                                         />
                                                                                                         <span
-                                                                                                            class="gallery-drag-handle absolute left-1.5 top-1.5 inline-flex cursor-grab items-center gap-1 rounded px-1.5 py-0.5 text-caption font-semibold text-white active:cursor-grabbing"
+                                                                                                            @can('update', $project)
+                                                                                                                role="button"
+                                                                                                                tabindex="0"
+                                                                                                                :aria-pressed="pickedId === {{ $image->id }} ? 'true' : 'false'"
+                                                                                                                aria-keyshortcuts="Space ArrowUp ArrowDown ArrowLeft ArrowRight Escape"
+                                                                                                                @keydown.space.prevent="pickedId === {{ $image->id }} ? drop() : (pickedId === null && pick({{ $image->id }}))"
+                                                                                                                @keydown.enter.prevent="pickedId === {{ $image->id }} ? drop() : (pickedId === null && pick({{ $image->id }}))"
+                                                                                                                @keydown.escape.prevent="pickedId === {{ $image->id }} && cancel()"
+                                                                                                                @keydown.arrow-right.prevent="pickedId === {{ $image->id }} && moveBy({{ $image->id }}, 1)"
+                                                                                                                @keydown.arrow-down.prevent="pickedId === {{ $image->id }} && moveBy({{ $image->id }}, 1)"
+                                                                                                                @keydown.arrow-left.prevent="pickedId === {{ $image->id }} && moveBy({{ $image->id }}, -1)"
+                                                                                                                @keydown.arrow-up.prevent="pickedId === {{ $image->id }} && moveBy({{ $image->id }}, -1)"
+                                                                                                                :class="pickedId === {{ $image->id }} ? 'ring-2 ring-brand-bar ring-offset-1' : ''"
+                                                                                                            @endcan
+                                                                                                            class="gallery-drag-handle absolute left-1.5 top-1.5 inline-flex cursor-grab items-center gap-1 rounded px-1.5 py-0.5 text-caption font-semibold text-white active:cursor-grabbing focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-bar"
                                                                                                             style="background-color: rgba(27,35,48,.78);"
                                                                                                             aria-label="{{ __('gallery_position') }} {{ $loop->iteration }}"
                                                                                                         >
