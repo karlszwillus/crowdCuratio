@@ -162,6 +162,7 @@
   "gallery_field_description_hint": "For screen readers. Not the same as the title.",
   "gallery_status_complete": "Details complete",
   "gallery_status_missing": ":fields missing · Add",
+  "permissions": "Permissions",
   "saving": "Saving …",
   "setting": "Settings",
   "message_add_terms_success": "Terms & Conditions added successfully",

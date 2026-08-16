@@ -162,6 +162,7 @@
   "gallery_field_description_hint": "Für Screenreader. Nicht dasselbe wie der Titel.",
   "gallery_status_complete": "Angaben vollständig",
   "gallery_status_missing": ":fields fehlt · Ergänzen",
+  "permissions": "Berechtigungen",
   "saving": "Speichere …",
   "setting": "Einstellungen",
   "message_add_terms_success": "Terms & Conditions wurde erfolgreich hinzugefügt",
