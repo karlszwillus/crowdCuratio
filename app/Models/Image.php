@@ -56,9 +56,13 @@ class Image extends Model implements HasComments
      *
      * @var list<string>
      */
-    protected $fillable = ['gallery_id', 'image', 'origin', 'copyright', 'url', 'alt', 'position'];
+    protected $fillable = ['gallery_id', 'image', 'origin', 'copyright', 'url', 'alt', 'description', 'position'];
 
-    public $translatable = ['alt'];
+    /**
+     * `alt` = Titel/Bildunterschrift, `description` = Alt-Text fuer
+     * Screenreader (Phase 5y.7, weiches Pflichtfeld nach Handoff v5 § 5).
+     */
+    public $translatable = ['alt', 'description'];
 
     /**
      * Get image origin

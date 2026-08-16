@@ -633,82 +633,159 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                             <x-ui.media-placeholder type="gallery"/>
                                                                                         </div>
                                                                                     @else
-                                                                                    {{-- Phase 5y.2 + 5y.3: 240-px-Minimum je Kachel + 14-px-Gap.
-                                                                                         Kachel-Flaeche 16:9 mit `object-contain` — kein Crop; Archiv-
-                                                                                         scans, Hochformate, Screenshots behalten ihre Raender.
-                                                                                         Positionsnummer + Ziehgriff als Overlay oben links (permanent).
-                                                                                         Titel steht unter dem Bild, nie ueber der Bildkante. --}}
-                                                                                    <div class="mt-4 grid gap-[14px]" style="grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));">
-                                                                                    @foreach($item->gallery->images as $image)
-                                                                                        <div class="gallery_item relative" id="gallery_items_{{$item->gallery->id}}">
-                                                                                            <div id="anchor_MediaContent_{{$item->id}}"
-                                                                                                 class="relative flex aspect-video items-center justify-center overflow-hidden rounded-md bg-line-100">
-                                                                                                <img
-                                                                                                    src="{{ route('image', $image->image) }}"
-                                                                                                    alt="{{ $image->alt }}"
-                                                                                                    class="max-h-full max-w-full object-contain"
-                                                                                                    loading="lazy"
-                                                                                                />
-                                                                                                <span
-                                                                                                    class="absolute left-1.5 top-1.5 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-caption font-semibold text-white"
-                                                                                                    style="background-color: rgba(27,35,48,.78);"
-                                                                                                    aria-label="{{ __('gallery_position') }} {{ $loop->iteration }}"
-                                                                                                >
-                                                                                                    @can('update', $project)
-                                                                                                        <x-icon name="grip-vertical" size="3"/>
-                                                                                                    @endcan
-                                                                                                    <span>{{ $loop->iteration }}</span>
-                                                                                                </span>
-                                                                                            </div>
-                                                                                            <div class="mt-1.5 truncate text-body">
-                                                                                                @can('update', $project)
-                                                                                                    <livewire:inline-editor
-                                                                                                        :model="$image"
-                                                                                                        field="alt"
-                                                                                                        rules="nullable|string|max:255"
-                                                                                                        :key="'image-alt-'.$image->id"
-                                                                                                    />
-                                                                                                @else
-                                                                                                    @if (! empty(trim($image->alt ?? '')))
-                                                                                                        <span class="text-ink-900">{{ $image->alt }}</span>
-                                                                                                    @else
-                                                                                                        <span class="italic text-ink-500">{{ __('gallery_image_untitled') }}</span>
-                                                                                                    @endif
-                                                                                                @endcan
-                                                                                            </div>
-                                                                                            <div class="mt-3 flex items-center justify-end gap-1">
-                                                                                                <form action="{{ route('image.delete',$image->id) }}"
-                                                                                                      method="POST" class="mb-5">
-                                                                                                    @csrf
-                                                                                                    @method('DELETE')
-																									<a href="{{route('projects.edit',['project'=> $project, 'log'=> $image->id, 'model' => 'Image'])}}" title="{{ __('older_versions') }}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900"><x-icon name="rotate-ccw" size="4"/></a>
+                                                                                    {{-- Phase 5y.2 + 5y.3 + 5y.5 + 5y.7: Kachel-Raster ODER Detailzeile.
+                                                                                         Alpine-State `editingImageId` schaltet die beiden Ansichten um; die
+                                                                                         Detailzeile ersetzt das Raster im selben Block, ohne Modal (Briefing
+                                                                                         § 5). Papierkorb-Kaskade aus der alten Meta-Reihe unter der Kachel
+                                                                                         entfaellt komplett — Bild entfernen sitzt jetzt als Overlay unten
+                                                                                         auf der Kachel (permanent Touch, hover/focus Desktop). --}}
+                                                                                    <div x-data="{ editingImageId: null }">
 
-                                                                                                    @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
-                                                                                                        <x-comment.trigger
-                                                                                                            commentableType="App\Models\Image"
-                                                                                                            :commentableId="$image->id"
-                                                                                                            :count="isset($image->comments) ? count($image->comments) : 0"
+                                                                                        {{-- Raster --}}
+                                                                                        <div x-show="editingImageId === null"
+                                                                                             class="mt-4 grid gap-[14px]"
+                                                                                             style="grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));">
+                                                                                            @foreach($item->gallery->images as $image)
+                                                                                                <div class="gallery_item group relative" id="gallery_items_{{$item->gallery->id}}">
+                                                                                                    <div id="anchor_MediaContent_{{$item->id}}"
+                                                                                                         class="relative flex aspect-video items-center justify-center overflow-hidden rounded-md bg-line-100">
+                                                                                                        <img
+                                                                                                            src="{{ route('image', $image->image) }}"
+                                                                                                            alt="{{ $image->alt }}"
+                                                                                                            class="max-h-full max-w-full object-contain"
+                                                                                                            loading="lazy"
                                                                                                         />
-                                                                                                    @endif
+                                                                                                        <span
+                                                                                                            class="absolute left-1.5 top-1.5 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-caption font-semibold text-white"
+                                                                                                            style="background-color: rgba(27,35,48,.78);"
+                                                                                                            aria-label="{{ __('gallery_position') }} {{ $loop->iteration }}"
+                                                                                                        >
+                                                                                                            @can('update', $project)
+                                                                                                                <x-icon name="grip-vertical" size="3"/>
+                                                                                                            @endcan
+                                                                                                            <span>{{ $loop->iteration }}</span>
+                                                                                                        </span>
 
-                                                                                                    @if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
-                                                                                                        <button type="submit" onclick="return confirm('{{__('message_delete_confirm')}}')" title="{{__('delete_image')}}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-danger-bg hover:text-danger"><x-icon name="trash-2" size="4"/></button>
-                                                                                                    @endif
+                                                                                                        @can('update', $project)
+                                                                                                            {{-- Overlay-Aktionen unten: Angaben bearbeiten + Entfernen.
+                                                                                                                 Erscheint bei hover ODER focus-within — auf Touch-Geraeten
+                                                                                                                 per :focus-within immer, sobald man die Kachel antippt. --}}
+                                                                                                            <div class="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-gradient-to-t from-ink-900/80 to-transparent px-2 py-1.5 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
+                                                                                                                <button
+                                                                                                                    type="button"
+                                                                                                                    @click.stop="editingImageId = {{ $image->id }}"
+                                                                                                                    class="pointer-events-auto inline-flex items-center gap-1 rounded bg-white/90 px-2 py-1 text-caption font-medium text-ink-900 hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                                                                                                                    title="{{ __('gallery_actions_edit') }}"
+                                                                                                                >
+                                                                                                                    <x-icon name="pencil" size="3"/>
+                                                                                                                    <span>{{ __('gallery_actions_edit') }}</span>
+                                                                                                                </button>
+                                                                                                                @if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
+                                                                                                                    <form action="{{ route('image.delete', $image->id) }}" method="POST" class="pointer-events-auto">
+                                                                                                                        @csrf
+                                                                                                                        @method('DELETE')
+                                                                                                                        <button type="submit"
+                                                                                                                                onclick="return confirm('{{ __('message_delete_confirm') }}')"
+                                                                                                                                title="{{ __('delete_image') }}"
+                                                                                                                                class="inline-flex size-8 items-center justify-center rounded bg-white/90 text-danger hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                                                                                                                            <x-icon name="trash-2" size="3"/>
+                                                                                                                        </button>
+                                                                                                                    </form>
+                                                                                                                @endif
+                                                                                                            </div>
+                                                                                                        @endcan
+                                                                                                    </div>
 
-                                                                                                    {{-- Modify-Button für Image entfällt seit
-                                                                                                         Phase 5c.6.c.4-Followup — Copyright/
-                                                                                                         Quelle werden über den source-picker
-                                                                                                         in den Details unten editiert.
-                                                                                                         imageModal bleibt für „Bild hinzufügen". --}}
-                                                                                                </form>
-                                                                                                {{-- Copyright + Quelle sichtbar am
-                                                                                                     Card-Fuss (P1.4). Innerhalb der
-                                                                                                     schmalen Gallery-Kachel stapeln
-                                                                                                     sich die beiden Felder
-                                                                                                     untereinander (P5-D.6b-Followup). --}}
-                                                                                                <div class="mt-3 border-t border-line-100 pt-2">
+                                                                                                    <div class="mt-1.5 truncate text-body">
+                                                                                                        @if (! empty(trim($image->alt ?? '')))
+                                                                                                            <span class="text-ink-900">{{ $image->alt }}</span>
+                                                                                                        @else
+                                                                                                            <span class="italic text-ink-500">{{ __('gallery_image_untitled') }}</span>
+                                                                                                        @endif
+                                                                                                    </div>
+
                                                                                                     @can('update', $project)
-                                                                                                        <div class="grid grid-cols-1 gap-2">
+                                                                                                        {{-- Angaben-Status: weiches Pflichtfeld pro Bild (Briefing § 5).
+                                                                                                             Zeigt „Angaben vollstaendig" oder eine namentliche Warnung. --}}
+                                                                                                        @php
+                                                                                                            $missing = collect([
+                                                                                                                ! empty(trim(strip_tags((string) $image->description))) ? null : __('gallery_image_description'),
+                                                                                                                $image->copyrightImage ? null : __('copyright'),
+                                                                                                                $image->originImage ? null : __('origin'),
+                                                                                                            ])->filter()->values();
+                                                                                                        @endphp
+                                                                                                        @if ($missing->isEmpty())
+                                                                                                            <p class="mt-1 text-caption text-success">✓ {{ __('gallery_status_complete') }}</p>
+                                                                                                        @else
+                                                                                                            <p class="mt-1 text-caption text-warning">⚠ {{ __('gallery_status_missing', ['fields' => $missing->implode(', ')]) }}</p>
+                                                                                                        @endif
+                                                                                                    @endcan
+                                                                                                </div>
+                                                                                            @endforeach
+                                                                                        </div>
+
+                                                                                        {{-- Detailzeile: ersetzt das Raster fuer eine einzelne Kachel.
+                                                                                             Jedes Bild rendert seine eigene, per x-show gefiltert. --}}
+                                                                                        @can('update', $project)
+                                                                                            @foreach($item->gallery->images as $image)
+                                                                                                <div
+                                                                                                    x-show="editingImageId === {{ $image->id }}"
+                                                                                                    x-cloak
+                                                                                                    @keydown.escape.window="editingImageId = null"
+                                                                                                    class="mt-4 rounded-md border border-line-200 bg-paper-50 p-4"
+                                                                                                >
+                                                                                                    <header class="mb-4 flex items-center justify-between gap-3">
+                                                                                                        <button type="button"
+                                                                                                                @click="editingImageId = null"
+                                                                                                                class="inline-flex items-center gap-1 text-body text-primary hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                                                                                                            <x-icon name="chevron-left" size="4"/>
+                                                                                                            <span>{{ __('gallery_back_to_grid') }}</span>
+                                                                                                        </button>
+                                                                                                        <span class="text-caption text-ink-500">
+                                                                                                            {{ __('gallery_image_n_of_m', ['n' => $loop->iteration, 'm' => $item->gallery->images->count()]) }}
+                                                                                                        </span>
+                                                                                                        <button type="button"
+                                                                                                                @click="editingImageId = null"
+                                                                                                                title="{{ __('close') }}"
+                                                                                                                class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900">
+                                                                                                            <x-icon name="x" size="4"/>
+                                                                                                        </button>
+                                                                                                    </header>
+
+                                                                                                    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                                                                                                        {{-- Vorschau --}}
+                                                                                                        <div>
+                                                                                                            <div class="relative flex aspect-video items-center justify-center overflow-hidden rounded-md bg-line-100">
+                                                                                                                <img src="{{ route('image', $image->image) }}"
+                                                                                                                     alt="{{ $image->alt }}"
+                                                                                                                     class="max-h-full max-w-full object-contain"/>
+                                                                                                            </div>
+                                                                                                        </div>
+
+                                                                                                        {{-- Vier Felder: Titel · Bildbeschreibung · Urheberrecht · Quelle. --}}
+                                                                                                        <div class="grid grid-cols-1 gap-4">
+                                                                                                            <div>
+                                                                                                                <label class="mb-1 block text-caption font-medium text-ink-700">{{ __('title') }}</label>
+                                                                                                                <livewire:inline-editor
+                                                                                                                    :model="$image"
+                                                                                                                    field="alt"
+                                                                                                                    rules="nullable|string|max:255"
+                                                                                                                    :key="'image-detail-alt-'.$image->id"
+                                                                                                                />
+                                                                                                                <p class="mt-1 text-caption text-ink-500">{{ __('gallery_field_title_hint') }}</p>
+                                                                                                            </div>
+                                                                                                            <div>
+                                                                                                                <label class="mb-1 block text-caption font-medium text-ink-700">
+                                                                                                                    {{ __('gallery_image_description') }} <span class="text-danger" aria-hidden="true">*</span>
+                                                                                                                </label>
+                                                                                                                <livewire:inline-editor
+                                                                                                                    :model="$image"
+                                                                                                                    field="description"
+                                                                                                                    rules="nullable|string|max:2000"
+                                                                                                                    :key="'image-detail-description-'.$image->id"
+                                                                                                                />
+                                                                                                                <p class="mt-1 text-caption text-ink-500">{{ __('gallery_field_description_hint') }}</p>
+                                                                                                            </div>
                                                                                                             <div>
                                                                                                                 <label class="mb-1 block text-caption font-medium text-ink-700">
                                                                                                                     {{ __('copyright') }} <span class="text-danger" aria-hidden="true">*</span>
@@ -719,7 +796,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                                     relation="copyrightImage"
                                                                                                                     source-type="Copyright"
                                                                                                                     :label="__('copyright')"
-                                                                                                                    :key="'image-copyright-'.$image->id" />
+                                                                                                                    :key="'image-detail-copyright-'.$image->id" />
                                                                                                             </div>
                                                                                                             <div>
                                                                                                                 <label class="mb-1 block text-caption font-medium text-ink-700">
@@ -731,19 +808,14 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                                     relation="originImage"
                                                                                                                     source-type="Origin"
                                                                                                                     :label="__('origin')"
-                                                                                                                    :key="'image-origin-'.$image->id" />
+                                                                                                                    :key="'image-detail-origin-'.$image->id" />
                                                                                                             </div>
                                                                                                         </div>
-                                                                                                    @else
-                                                                                                        <div class="text-caption text-ink-500">
-                                                                                                            Copyright: {{$image->copyrightImage?->name}} · {{ __('origin') }}: {{$image->originImage?->name}}
-                                                                                                        </div>
-                                                                                                    @endcan
+                                                                                                    </div>
                                                                                                 </div>
-                                                                                            </div>
-                                                                                        </div>
-                                                                                    @endforeach
-																					</div>
+                                                                                            @endforeach
+                                                                                        @endcan
+                                                                                    </div>
                                                                                     @endif
                                                                                 </x-ui.block-card>
                                                                             </li>
