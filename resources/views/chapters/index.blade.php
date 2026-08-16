@@ -665,6 +665,78 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                         originalOrder: [],
                                                                                         announcement: '',
                                                                                         hadEdits: false,
+                                                                                        uploads: [],
+                                                                                        rejected: [],
+                                                                                        dropUrl: '{{ route('gallery.images.drop', $item->gallery->id) }}',
+                                                                                        handleFiles(fileList) {
+                                                                                            if (!fileList || !fileList.length) return;
+                                                                                            const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                                                                                            const maxBytes = 4 * 1024 * 1024;
+                                                                                            const queue = [];
+                                                                                            for (const file of fileList) {
+                                                                                                if (!allowed.includes(file.type)) {
+                                                                                                    this.rejected.push({ name: file.name, reason: '{{ __('gallery_rejected_reason_type') }}' });
+                                                                                                    continue;
+                                                                                                }
+                                                                                                if (file.size > maxBytes) {
+                                                                                                    this.rejected.push({ name: file.name, reason: '{{ __('gallery_rejected_reason_size') }}' });
+                                                                                                    continue;
+                                                                                                }
+                                                                                                queue.push(file);
+                                                                                            }
+                                                                                            if (!queue.length) return;
+                                                                                            let pending = queue.length;
+                                                                                            for (const file of queue) {
+                                                                                                const ghostId = 'ghost-' + Math.random().toString(36).slice(2, 9);
+                                                                                                const previewUrl = URL.createObjectURL(file);
+                                                                                                const entry = { id: ghostId, name: file.name, previewUrl, progress: 0, status: 'uploading', xhr: null };
+                                                                                                this.uploads.push(entry);
+                                                                                                this.uploadOne(entry, file, () => {
+                                                                                                    pending -= 1;
+                                                                                                    if (pending <= 0) {
+                                                                                                        setTimeout(() => { window.location.reload(); }, 600);
+                                                                                                    }
+                                                                                                });
+                                                                                            }
+                                                                                        },
+                                                                                        uploadOne(entry, file, done) {
+                                                                                            const token = document.querySelector('meta[name=csrf-token]')?.content;
+                                                                                            const xhr = new XMLHttpRequest();
+                                                                                            entry.xhr = xhr;
+                                                                                            xhr.open('POST', this.dropUrl);
+                                                                                            xhr.setRequestHeader('X-CSRF-TOKEN', token);
+                                                                                            xhr.setRequestHeader('Accept', 'application/json');
+                                                                                            xhr.upload.onprogress = (e) => {
+                                                                                                if (e.lengthComputable) {
+                                                                                                    entry.progress = Math.round((e.loaded / e.total) * 100);
+                                                                                                }
+                                                                                            };
+                                                                                            xhr.onload = () => {
+                                                                                                if (xhr.status >= 200 && xhr.status < 300) {
+                                                                                                    entry.status = 'done';
+                                                                                                    entry.progress = 100;
+                                                                                                } else {
+                                                                                                    entry.status = 'error';
+                                                                                                    this.rejected.push({ name: entry.name, reason: '{{ __('gallery_rejected_reason_server') }}' });
+                                                                                                    this.uploads = this.uploads.filter(u => u.id !== entry.id);
+                                                                                                }
+                                                                                                done();
+                                                                                            };
+                                                                                            xhr.onerror = () => {
+                                                                                                entry.status = 'error';
+                                                                                                this.rejected.push({ name: entry.name, reason: '{{ __('gallery_rejected_reason_server') }}' });
+                                                                                                this.uploads = this.uploads.filter(u => u.id !== entry.id);
+                                                                                                done();
+                                                                                            };
+                                                                                            const fd = new FormData();
+                                                                                            fd.append('file', file);
+                                                                                            xhr.send(fd);
+                                                                                        },
+                                                                                        cancelUpload(id) {
+                                                                                            const entry = this.uploads.find(u => u.id === id);
+                                                                                            if (entry && entry.xhr) entry.xhr.abort();
+                                                                                            this.uploads = this.uploads.filter(u => u.id !== id);
+                                                                                        },
                                                                                         prefersReducedMotion() {
                                                                                             return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
                                                                                         },
@@ -898,6 +970,22 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                             </p>
                                                                                         @endcannot
 
+                                                                                        {{-- 5y.9: Banner mit abgewiesenen Dateien. --}}
+                                                                                        <div x-show="rejected.length > 0" x-cloak
+                                                                                             class="mt-3 rounded-md border border-warning-bg bg-warning-bg/40 px-3 py-2 text-caption text-ink-700">
+                                                                                            <div class="flex items-center justify-between">
+                                                                                                <span class="font-semibold text-warning">⚠ {{ __('gallery_rejected_title') }}</span>
+                                                                                                <button type="button" @click="rejected = []" class="text-caption underline decoration-dotted underline-offset-2">
+                                                                                                    {{ __('gallery_rejected_dismiss') }}
+                                                                                                </button>
+                                                                                            </div>
+                                                                                            <ul class="mt-1 space-y-0.5">
+                                                                                                <template x-for="(r, i) in rejected" :key="i">
+                                                                                                    <li><span class="font-medium text-ink-900" x-text="r.name"></span> — <span x-text="r.reason"></span></li>
+                                                                                                </template>
+                                                                                            </ul>
+                                                                                        </div>
+
                                                                                         <div x-show="editingImageId === null"
                                                                                              x-ref="grid"
                                                                                              class="mt-4 grid gap-[14px]"
@@ -996,28 +1084,50 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                             @endforeach
 
                                                                                             @can('update', $project)
+                                                                                                {{-- 5y.9: Optimistische Ghost-Kacheln waehrend Upload. --}}
+                                                                                                <template x-for="entry in uploads" :key="entry.id">
+                                                                                                    <div class="relative">
+                                                                                                        <div class="relative flex aspect-video items-center justify-center overflow-hidden rounded-md bg-line-100">
+                                                                                                            <img :src="entry.previewUrl" alt="" class="max-h-full max-w-full object-contain opacity-70"/>
+                                                                                                            <div class="absolute inset-x-0 bottom-0 flex flex-col gap-1 bg-ink-900/70 px-2 py-1.5 text-caption text-white">
+                                                                                                                <div class="flex items-center justify-between">
+                                                                                                                    <span x-text="entry.status === 'done' ? '{{ __('gallery_upload_done') }}' : '{{ __('gallery_upload_progress') }}'"></span>
+                                                                                                                    <button type="button"
+                                                                                                                            x-show="entry.status !== 'done'"
+                                                                                                                            @click="cancelUpload(entry.id)"
+                                                                                                                            class="text-caption underline decoration-dotted underline-offset-2">
+                                                                                                                        {{ __('gallery_upload_cancel') }}
+                                                                                                                    </button>
+                                                                                                                </div>
+                                                                                                                <div class="h-1 w-full overflow-hidden rounded bg-white/20">
+                                                                                                                    <div class="h-full bg-info" :style="'width: ' + entry.progress + '%'"></div>
+                                                                                                                </div>
+                                                                                                            </div>
+                                                                                                        </div>
+                                                                                                        <div class="mt-1.5 truncate text-body text-ink-500" x-text="entry.name"></div>
+                                                                                                    </div>
+                                                                                                </template>
                                                                                                 {{-- 5y.4 + 5y.9: Drop-Zone als letzte Kachel — Klick UND echtes File-Drop.
                                                                                                      Beim Drop landen die Dateien im imageModal-Input, der Klick oeffnet
                                                                                                      das Modal ueber den bestehenden .addImage-Handler. --}}
-                                                                                                <button type="button"
-                                                                                                        x-data="{ dragging: false }"
-                                                                                                        @dragover.prevent="dragging = true"
-                                                                                                        @dragenter.prevent="dragging = true"
-                                                                                                        @dragleave.prevent="dragging = false"
-                                                                                                        @drop.prevent="dragging = false; window.__ccDroppedImageFiles = $event.dataTransfer.files; $el.click()"
-                                                                                                        :class="dragging ? 'border-primary bg-primary/10 text-primary' : ''"
-                                                                                                        class="addImage group flex aspect-video w-full flex-col items-center justify-center gap-1 rounded-md border-2 border-dashed border-line-200 bg-transparent text-caption text-ink-500 hover:border-ink-400 hover:bg-line-100/40 hover:text-ink-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                                                                                                        data-chapter="{{ $chapter->name }}"
-                                                                                                        data-entry="{{ $entry->name }}"
-                                                                                                        data-id="{{ $item->gallery->id }}"
-                                                                                                        data-entryId="{{ $entry->id }}"
-                                                                                                        data-toggle="modal"
-                                                                                                        data-target="#imageModal"
-                                                                                                        aria-label="{{ __('gallery_header_add') }}">
-                                                                                                    <x-icon name="image-plus" size="5"/>
-                                                                                                    <span class="text-caption font-medium">{{ __('gallery_dropzone_title') }}</span>
-                                                                                                    <span class="text-caption text-ink-500">{{ __('gallery_dropzone_hint') }}</span>
-                                                                                                </button>
+                                                                                                {{-- 5y.9: Drop-Zone mit optimistischem Upload.
+                                                                                                     Klick oeffnet den nativen File-Picker,
+                                                                                                     Drop laesst die Dateien direkt hochladen. --}}
+                                                                                                <div x-data="{ dragging: false }"
+                                                                                                     @dragover.prevent="dragging = true"
+                                                                                                     @dragenter.prevent="dragging = true"
+                                                                                                     @dragleave.prevent="dragging = false"
+                                                                                                     @drop.prevent="dragging = false; handleFiles($event.dataTransfer.files)"
+                                                                                                     :class="dragging ? 'border-primary bg-primary/10 text-primary' : 'border-line-200'"
+                                                                                                     class="group relative flex aspect-video w-full flex-col items-center justify-center gap-1 rounded-md border-2 border-dashed bg-transparent text-caption text-ink-500 hover:border-ink-400 hover:bg-line-100/40 hover:text-ink-700 focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary">
+                                                                                                    <label class="flex h-full w-full cursor-pointer flex-col items-center justify-center gap-1" aria-label="{{ __('gallery_header_add') }}">
+                                                                                                        <x-icon name="image-plus" size="5"/>
+                                                                                                        <span class="text-caption font-medium">{{ __('gallery_dropzone_title') }}</span>
+                                                                                                        <span class="text-caption text-ink-500">{{ __('gallery_dropzone_hint') }}</span>
+                                                                                                        <input type="file" class="sr-only" multiple accept="image/jpeg,image/png,image/gif,image/webp"
+                                                                                                               @change="handleFiles($event.target.files); $event.target.value = ''"/>
+                                                                                                    </label>
+                                                                                                </div>
                                                                                             @endcan
                                                                                         </div>
 

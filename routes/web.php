@@ -116,6 +116,8 @@ Route::group(
         // Phase 5y.6: Bild-Sortierung innerhalb einer Galerie.
         Route::post('/gallery/{gallery}/images/reorder', [ContentController::class, 'reorderImages'])
             ->name('gallery.images.reorder');
+        Route::post('/gallery/{gallery}/images/drop', [ContentController::class, 'dropImage'])
+            ->name('gallery.images.drop');
         Route::get('/edit/{id}/image', [ContentController::class, 'editImage'])->name(
             'image.edit'
         );

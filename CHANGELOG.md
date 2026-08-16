@@ -425,6 +425,23 @@ sichtbar), kein Overlay mit „Angaben bearbeiten"/Löschen.
 `bg-info-bg` mit dem Satz, dass Bilder in der Großansicht
 öffnen und Reihenfolge und Angaben nicht bearbeitbar sind.
 
+Die Drop-Zone lädt Dateien jetzt optimistisch hoch. Beim
+Ablegen (oder über den nativen Dateipicker im gleichen Feld)
+prüft der Client Format und Größe, hängt für jede gültige
+Datei eine Ghost-Kachel mit Vorschau, Fortschrittsbalken
+(`bg-info`) und „Abbrechen" ans Raster und schickt einen
+XHR-POST auf einen neuen JSON-Endpoint
+`gallery.images.drop`. Der Endpoint legt das Bild ohne
+Copyright und Quelle an — beide werden im Schema nullable
+(`make_image_sources_nullable`-Migration) und lassen sich in
+der Detailzeile nachpflegen. Der Angaben-Status-Chip auf
+der Kachel meldet die Lücken sofort. Nach dem letzten Upload
+lädt die Seite einmal neu, damit Raster, Header-Anzahl,
+Sammelwarnung und Publish-Check konsistent sind. Ein
+Teilfehler wirft die anderen Dateien nicht zurück — der
+Rejected-Banner listet Dateiname und Grund, „Hinweis
+schließen" räumt ihn ab.
+
 Der „Veröffentlichen"-Button prüft vor dem HTML-Export den
 Bestand an Bildern und listet die Lücken im Vorschau-Modal
 namentlich auf — jeder Eintrag mit Bildtitel und fehlendem
