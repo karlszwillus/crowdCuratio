@@ -639,12 +639,102 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                          § 5). Papierkorb-Kaskade aus der alten Meta-Reihe unter der Kachel
                                                                                          entfaellt komplett — Bild entfernen sitzt jetzt als Overlay unten
                                                                                          auf der Kachel (permanent Touch, hover/focus Desktop). --}}
-                                                                                    <div x-data="{
+                                                                                    <div x-ref="body" x-data="{
                                                                                         editingImageId: null,
                                                                                         pickedId: null,
                                                                                         originalOrder: [],
                                                                                         announcement: '',
-                                                                                        reorderUrl: '{{ route("gallery.images.reorder", $item->gallery->id) }}',
+                                                                                        hadEdits: false,
+                                                                                        prefersReducedMotion() {
+                                                                                            return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                                                                                        },
+                                                                                        interpolateHeight(fromH, toH, duration) {
+                                                                                            const body = this.$refs.body;
+                                                                                            if (!body) return;
+                                                                                            body.style.overflow = 'hidden';
+                                                                                            body.style.height = fromH + 'px';
+                                                                                            body.style.transition = 'height ' + duration + 'ms ease-out';
+                                                                                            requestAnimationFrame(() => {
+                                                                                                body.style.height = toH + 'px';
+                                                                                            });
+                                                                                            setTimeout(() => {
+                                                                                                body.style.height = '';
+                                                                                                body.style.overflow = '';
+                                                                                                body.style.transition = '';
+                                                                                            }, duration + 30);
+                                                                                        },
+                                                                                        flipElement(el, from, to, duration, delay) {
+                                                                                            if (!el) return;
+                                                                                            const dx = from.left - to.left;
+                                                                                            const dy = from.top - to.top;
+                                                                                            const sx = to.width === 0 ? 1 : from.width / to.width;
+                                                                                            const sy = to.height === 0 ? 1 : from.height / to.height;
+                                                                                            el.style.transformOrigin = 'top left';
+                                                                                            el.style.transition = 'none';
+                                                                                            el.style.transform = 'translate(' + dx + 'px, ' + dy + 'px) scale(' + sx + ', ' + sy + ')';
+                                                                                            requestAnimationFrame(() => {
+                                                                                                requestAnimationFrame(() => {
+                                                                                                    el.style.transition = 'transform ' + duration + 'ms cubic-bezier(0.2, 0.7, 0.3, 1) ' + delay + 'ms';
+                                                                                                    el.style.transform = '';
+                                                                                                });
+                                                                                            });
+                                                                                            setTimeout(() => {
+                                                                                                el.style.transition = '';
+                                                                                                el.style.transform = '';
+                                                                                                el.style.transformOrigin = '';
+                                                                                            }, duration + delay + 50);
+                                                                                        },
+                                                                                        focusFirstField(imageId) {
+                                                                                            const row = Array.from(this.$refs.body.querySelectorAll('.gallery-detail-row')).find(el => String(el.dataset.imageId) === String(imageId));
+                                                                                            if (!row) return;
+                                                                                            const field = row.querySelector('input:not([type=hidden]), textarea, [contenteditable], button:not([data-flip-skip])');
+                                                                                            if (field) field.focus({ preventScroll: true });
+                                                                                        },
+                                                                                        enterDetail(imageId) {
+                                                                                            if (this.prefersReducedMotion()) {
+                                                                                                this.editingImageId = imageId;
+                                                                                                this.$nextTick(() => this.focusFirstField(imageId));
+                                                                                                return;
+                                                                                            }
+                                                                                            const body = this.$refs.body;
+                                                                                            const tileFrame = Array.from(body.querySelectorAll('.gallery-tile-frame')).find(el => String(el.dataset.imageId) === String(imageId));
+                                                                                            const fromRect = tileFrame ? tileFrame.getBoundingClientRect() : null;
+                                                                                            const fromHeight = body.getBoundingClientRect().height;
+                                                                                            this.editingImageId = imageId;
+                                                                                            this.$nextTick(() => {
+                                                                                                const toHeight = body.getBoundingClientRect().height;
+                                                                                                this.interpolateHeight(fromHeight, toHeight, 200);
+                                                                                                const detailPreview = Array.from(body.querySelectorAll('.gallery-detail-preview')).find(el => String(el.dataset.imageId) === String(imageId));
+                                                                                                if (detailPreview && fromRect) {
+                                                                                                    const toRect = detailPreview.getBoundingClientRect();
+                                                                                                    this.flipElement(detailPreview, fromRect, toRect, 180, 0);
+                                                                                                }
+                                                                                                setTimeout(() => this.focusFirstField(imageId), 240);
+                                                                                            });
+                                                                                        },
+                                                                                        exitDetail() {
+                                                                                            if (this.hadEdits) { window.location.reload(); return; }
+                                                                                            if (this.prefersReducedMotion()) {
+                                                                                                this.editingImageId = null;
+                                                                                                return;
+                                                                                            }
+                                                                                            const body = this.$refs.body;
+                                                                                            const imageId = this.editingImageId;
+                                                                                            const detailPreview = Array.from(body.querySelectorAll('.gallery-detail-preview')).find(el => String(el.dataset.imageId) === String(imageId));
+                                                                                            const fromRect = detailPreview ? detailPreview.getBoundingClientRect() : null;
+                                                                                            const fromHeight = body.getBoundingClientRect().height;
+                                                                                            this.editingImageId = null;
+                                                                                            this.$nextTick(() => {
+                                                                                                const toHeight = body.getBoundingClientRect().height;
+                                                                                                this.interpolateHeight(fromHeight, toHeight, 200);
+                                                                                                const tileFrame = Array.from(body.querySelectorAll('.gallery-tile-frame')).find(el => String(el.dataset.imageId) === String(imageId));
+                                                                                                if (tileFrame && fromRect) {
+                                                                                                    const toRect = tileFrame.getBoundingClientRect();
+                                                                                                    this.flipElement(tileFrame, fromRect, toRect, 180, 0);
+                                                                                                }
+                                                                                            });
+                                                                                        },
+                                                                                        reorderUrl: '{{ route('gallery.images.reorder', $item->gallery->id) }}',
                                                                                         announce(text) {
                                                                                             this.announcement = '';
                                                                                             this.$nextTick(() => { this.announcement = text; });
@@ -702,6 +792,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                 handle: '.gallery-drag-handle',
                                                                                                 animation: 150,
                                                                                                 ghostClass: 'opacity-40',
+                                                                                                group: { name: 'gallery-images-' + this.reorderUrl, pull: false, put: false },
                                                                                                 onEnd: () => this.persistOrder(),
                                                                                             });
                                                                                         },
@@ -725,7 +816,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                     : Alpine.store('saveStatus')?.set?.('error'))
                                                                                                 .catch(() => Alpine.store('saveStatus')?.set?.('error'));
                                                                                         },
-                                                                                    }" x-init="initSortable()">
+                                                                                    }" x-init="initSortable(); window.addEventListener('saved', (e) => { if (e && e.detail && e.detail.model === 'Image') { hadEdits = true; } });">
                                                                                     <div
                                                                                         role="status"
                                                                                         aria-live="polite"
@@ -741,7 +832,8 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                             @foreach($item->gallery->images as $image)
                                                                                                 <div class="gallery_item group relative" id="gallery_items_{{$item->gallery->id}}" data-image-id="{{ $image->id }}">
                                                                                                     <div id="anchor_MediaContent_{{$item->id}}"
-                                                                                                         class="relative flex aspect-video items-center justify-center overflow-hidden rounded-md bg-line-100">
+                                                                                                         data-image-id="{{ $image->id }}"
+                                                                                                         class="gallery-tile-frame relative flex aspect-video items-center justify-center overflow-hidden rounded-md bg-line-100">
                                                                                                         <img
                                                                                                             src="{{ route('image', $image->image) }}"
                                                                                                             alt="{{ $image->alt }}"
@@ -780,7 +872,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                             <div class="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-gradient-to-t from-ink-900/80 to-transparent px-2 py-1.5 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100">
                                                                                                                 <button
                                                                                                                     type="button"
-                                                                                                                    @click.stop="editingImageId = {{ $image->id }}"
+                                                                                                                    @click.stop="enterDetail({{ $image->id }})"
                                                                                                                     class="pointer-events-auto inline-flex items-center gap-1 rounded bg-white/90 px-2 py-1 text-caption font-medium text-ink-900 hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                                                                                                                     title="{{ __('gallery_actions_edit') }}"
                                                                                                                 >
@@ -838,12 +930,13 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                 <div
                                                                                                     x-show="editingImageId === {{ $image->id }}"
                                                                                                     x-cloak
-                                                                                                    @keydown.escape.window="editingImageId = null"
-                                                                                                    class="mt-4 rounded-md border border-line-200 bg-paper-50 p-4"
+                                                                                                    data-image-id="{{ $image->id }}"
+                                                                                                    @keydown.escape.window="exitDetail()"
+                                                                                                    class="gallery-detail-row mt-4 rounded-md border border-line-200 bg-paper-50 p-4"
                                                                                                 >
                                                                                                     <header class="mb-4 flex items-center justify-between gap-3">
                                                                                                         <button type="button"
-                                                                                                                @click="editingImageId = null"
+                                                                                                                @click="exitDetail()"
                                                                                                                 class="inline-flex items-center gap-1 text-body text-primary hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
                                                                                                             <x-icon name="chevron-left" size="4"/>
                                                                                                             <span>{{ __('gallery_back_to_grid') }}</span>
@@ -852,7 +945,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                             {{ __('gallery_image_n_of_m', ['n' => $loop->iteration, 'm' => $item->gallery->images->count()]) }}
                                                                                                         </span>
                                                                                                         <button type="button"
-                                                                                                                @click="editingImageId = null"
+                                                                                                                @click="exitDetail()"
                                                                                                                 title="{{ __('close') }}"
                                                                                                                 class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900">
                                                                                                             <x-icon name="x" size="4"/>
@@ -862,7 +955,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                                                                                                         {{-- Vorschau --}}
                                                                                                         <div>
-                                                                                                            <div class="relative flex aspect-video items-center justify-center overflow-hidden rounded-md bg-line-100">
+                                                                                                            <div class="gallery-detail-preview relative flex aspect-video items-center justify-center overflow-hidden rounded-md bg-line-100" data-image-id="{{ $image->id }}">
                                                                                                                 <img src="{{ route('image', $image->image) }}"
                                                                                                                      alt="{{ $image->alt }}"
                                                                                                                      class="max-h-full max-w-full object-contain"/>

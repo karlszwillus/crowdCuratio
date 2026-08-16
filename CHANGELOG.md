@@ -383,7 +383,26 @@ rollt die vor der Aufnahme snapshottete Reihenfolge zurück.
 Bewegungen werden in einer `aria-live="polite"`-Region als
 „Bild an Position X von N verschoben" angesagt. Beim Ablegen
 speichert der bestehende POST-Endpunkt die neue Reihenfolge
-über den neuen `ContentReorderService::reorderImages(…)`.
+über den neuen `ContentReorderService::reorderImages(…)`. Der
+Sortable-Kontext bekommt eine benannte Gruppe mit
+`pull: false, put: false`, damit sich Bilder nicht aus der
+Galerie in andere DnD-Container ziehen lassen.
+
+Der Übergang Raster ⇄ Detailzeile folgt § 6 des Briefings:
+Blockhöhe wird vor und nach dem State-Wechsel gemessen und
+über 200 ms interpoliert, damit der Kontext darunter nicht
+springt. Parallel wandert die geklickte Kachel per FLIP
+(First-Last-Invert-Play) 180 ms lang mit
+`cubic-bezier(0.2, 0.7, 0.3, 1)` auf die Vorschau-Position
+der Detailzeile — und beim Zurückweg zurück auf die Kachel-
+Position im Raster. Nach dem Enter setzt ein Timer den Fokus
+auf das erste bearbeitbare Feld. `prefers-reduced-motion`
+überspringt sowohl FLIP als auch Höhen-Interpolation und
+wechselt hart. Ein Save-Event-Listener merkt sich Änderungen
+im Detailmodus und lädt den Editor beim Zurückweg voll neu,
+sodass die aktualisierten Titel + Angaben-Status wieder auf
+der Kachel sichtbar werden.
+
 Nebenbei: Tab-Label „permissions" in der Editor-Segmented-
 Control ist jetzt „Berechtigungen".
 
