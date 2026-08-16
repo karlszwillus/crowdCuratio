@@ -417,6 +417,23 @@ nach jeder Sortier-Aktion (Maus wie Tastatur) im Grid neu
 gezeichnet, damit die Zahl auf der Kachel immer die aktuelle
 Reihenfolge wiedergibt.
 
+Für Leserechte wird der Galerie-Block ausgedünnt: Kein
+Add-Button im Rasterkopf, keine Drop-Zone-Kachel am Ende
+des Rasters, kein Ziehgriff (nur die Positionsnummer bleibt
+sichtbar), kein Overlay mit „Angaben bearbeiten"/Löschen.
+Über dem Raster erscheint eine ruhige Hinweiszeile in
+`bg-info-bg` mit dem Satz, dass Bilder in der Großansicht
+öffnen und Reihenfolge und Angaben nicht bearbeitbar sind.
+
+Der „Veröffentlichen"-Button prüft vor dem HTML-Export den
+Bestand an Bildern und listet die Lücken im Vorschau-Modal
+namentlich auf — jeder Eintrag mit Bildtitel und fehlendem
+Feld (Bildbeschreibung, Urheberrecht oder Quelle). Sind alle
+Angaben vollständig, erscheint eine grüne
+`bg-success-bg`-Zeile mit „Alle Bilder haben vollständige
+Angaben." Der HTML-Export-Button bleibt in beiden Fällen
+freigeschaltet — das Ziel ist Bewusstsein, nicht Blockade.
+
 Nebenbei: Tab-Label „permissions" in der Editor-Segmented-
 Control ist jetzt „Berechtigungen".
 

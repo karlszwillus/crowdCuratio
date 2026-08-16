@@ -859,8 +859,8 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                 @endif
                                                                                             </div>
                                                                                             <div class="flex flex-wrap items-center gap-3">
-                                                                                                <span class="text-caption text-ink-500">{{ __('gallery_header_order_hint') }}</span>
                                                                                                 @can('update', $project)
+                                                                                                    <span class="text-caption text-ink-500">{{ __('gallery_header_order_hint') }}</span>
                                                                                                     <button type="button"
                                                                                                             class="addImage inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-caption font-medium text-primary-on hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                                                                                                             data-chapter="{{ $chapter->name }}"
@@ -875,6 +875,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                 @endcan
                                                                                             </div>
                                                                                         </div>
+
+                                                                                        @cannot('update', $project)
+                                                                                            <p class="mt-2 rounded-md bg-info-bg px-3 py-2 text-caption text-info">
+                                                                                                {{ __('gallery_reader_hint') }}
+                                                                                            </p>
+                                                                                        @endcannot
 
                                                                                         <div x-show="editingImageId === null"
                                                                                              x-ref="grid"
@@ -1221,6 +1227,54 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
     <x-ui.modal id="previewModal" :title="__('create_html_output')">
         <div class="row m-2">
+            @php
+                // 5y.10: Prüft Bild-Angaben projektweit und listet fehlende Felder namentlich auf.
+                // Veröffentlichen bleibt möglich — die Lücken erscheinen im Preview, hier wird
+                // vor dem Export darauf hingewiesen.
+                $publishCheckMissing = collect();
+                if (isset($data) && isset($data->chapters)) {
+                    foreach ($data->chapters as $publishCheckChapter) {
+                        foreach ($publishCheckChapter->entries as $publishCheckEntry) {
+                            foreach ($publishCheckEntry->mediaContent as $publishCheckMc) {
+                                if (! isset($publishCheckMc->gallery)) {
+                                    continue;
+                                }
+                                foreach ($publishCheckMc->gallery->images as $publishCheckImage) {
+                                    $publishCheckFields = collect([
+                                        empty(trim(strip_tags((string) $publishCheckImage->description))) ? __('publish_check_field_description') : null,
+                                        $publishCheckImage->copyrightImage ? null : __('publish_check_field_copyright'),
+                                        $publishCheckImage->originImage ? null : __('publish_check_field_origin'),
+                                    ])->filter()->values();
+                                    if ($publishCheckFields->isNotEmpty()) {
+                                        $publishCheckMissing->push([
+                                            'title' => trim($publishCheckImage->alt ?? '') !== '' ? $publishCheckImage->alt : __('gallery_image_untitled'),
+                                            'fields' => $publishCheckFields->implode(', '),
+                                        ]);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            @endphp
+            @if ($publishCheckMissing->isNotEmpty())
+                <div class="mb-4 rounded-md border border-warning-bg bg-warning-bg/40 px-4 py-3">
+                    <h4 class="text-body font-semibold text-warning">⚠ {{ __('publish_check_title') }}</h4>
+                    <p class="mt-1 text-caption text-ink-700">{{ __('publish_check_intro') }}</p>
+                    <ul class="mt-2 space-y-1 text-caption text-ink-700">
+                        @foreach ($publishCheckMissing as $publishCheckRow)
+                            <li>
+                                <span class="font-medium text-ink-900">{{ $publishCheckRow['title'] }}</span>
+                                — {{ $publishCheckRow['fields'] }}
+                            </li>
+                        @endforeach
+                    </ul>
+                </div>
+            @else
+                <p class="mb-4 rounded-md bg-success-bg px-3 py-2 text-caption text-success">
+                    ✓ {{ __('publish_check_all_clear') }}
+                </p>
+            @endif
             <div id="headerComment"></div>
             <div id="listComment"></div>
             <form id="" action="{{route('preview')}}" method="get">
