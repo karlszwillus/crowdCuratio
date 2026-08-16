@@ -288,6 +288,68 @@ Leserecht-Karten führen zur Leseansicht statt zum Editor
 Menüpunkt, `RouteServiceProvider::HOME` geht zurück auf
 `/dashboard`.
 
+**Phase-5x — Kommentar-System auf Handoff-Design abgeschlossen.**
+Das komplette Kommentar-Erlebnis rutscht auf das Design v5.
+Statt der alten Sidebar-Section unter dem Beitrag gleitet ein
+Slide-out-Panel rechts rein (`<x-layout.comment-panel>`, 26 rem,
+`shadow-floating`, weiche 350-ms-Transition mit
+`cubic-bezier(0.16, 1, 0.3, 1)`); Trigger sind die Kommentar-
+Icons am jeweiligen Block — kein Full-Page-Reload mehr. Der
+Panel-Inhalt läuft über die neue Volt-Komponente
+`comment-panel-list`, die per Livewire-Event
+`comment-panel:load` den aktiven Block bekommt und Kommentare
+plus Composer rendert. Der `comment-composer` löst die Legacy-
+Reply-Forms ab; Leser:innen sehen dort eine aria-live-
+Hinweiszeile statt eines Textfelds.
+
+Datenmodell auf backed enum: `comments.status` wandert von
+integer 1..5 auf String-Enum (`open` · `in_progress` ·
+`resolved` · `rejected`), mit Migrations-Downpath für den
+Wartungsfenster-Rollback. Ein toleranter `CommentStatusCast`
+absorbiert Alt-Werte während der Übergangsphase. Berechtigungen
+kondensieren in eine neue `CommentPolicy`: Bearbeiten strikt
+autor-only (auch Owner dürfen fremden Text nicht editieren),
+Löschen als Hard-Delete mit Reply-Kaskade (Owner darf alle,
+Autor:in nur ohne Antworten), Status-Wechsel an das
+`comment`-Recht gebunden, Antworten ignorieren Status-Setzer
+still. `CommentService::deleteComment` schreibt die Regel im
+Service-Layer weiter.
+
+Neue globale Sicht unter `/allComments` (Screen 11) folgt dem
+Muster von Users/Projects: Titel + Suche, Filter-Chips mit
+Status-Zählern, CSS-Grid-Zeilen mit Autor:in-Initialen,
+Projekt+Blocktyp, Text-Snippet, Status-Chip in Design-Token-
+Farben, Datum und Aktion-Deep-Link mit `?model=…&comment=…` in
+den Editor-Panel-Auto-Open. Der Rail bekommt einen roten
+Primary-Badge über dem Kommentar-Icon mit der Anzahl offener
+Wurzelkommentare pro User (`CommentCounter`-Service, memo-
+gecacht pro Request); Struktur-Baum-Zähler pro Chapter und
+Entry im Sidebar-Panel zeigen den gleichen Wert pro
+commentable-Modell. Dashboard-Rows zeigen jetzt ebenfalls auf
+`?model=…&comment=…`, damit ein Klick von der Landing-Seite
+direkt das richtige Panel im Editor öffnet.
+
+Karten-System auf Design-Tokens: Chip-Switcher statt Select
+für den Status, `bg-info-bg/text-info`-Familie statt
+erfundener `-50/-700`-Varianten, Reply-Karten in einem
+`border-l-2 border-line-200`-Threading-Container mit sichtbarer
+Einrückungslinie, „Erledigte anzeigen"-Toggle im Panel-Header
+mit `sessionStorage`-Merker (per Default sind erledigt +
+abgelehnt aus). Der Sichtbarkeits-Filter greift auf DOM-Ebene
+per Alpine `x-show`, ohne Livewire-Roundtrip.
+
+Nebenbei drei stille Bugfixes, die entlang des Wegs auftauchten:
+der globale `*, *::before, *::after`-Reset in `app.css` (aus
+dem Theme-Wechsel-Fade) fraß Tailwinds `transition-opacity`
+und `transition-transform`-Klassen — Panel-Slide-Animationen
+umgehen ihn jetzt per inline-`style`. Die
+`grid-cols-[…fr]`-arbitrary-Klasse ist in Tailwind 4 ab sechs
+Spalten oder mit Dezimalzahlen instabil, für die Comments-
+Übersicht setzen wir das Grid deswegen per inline-Style. Und
+Alpine `$dispatch` blieb wirkungslos, wenn die Trigger-Elemente
+kein `x-data` erben — `<x-comment.trigger>` bekommt seins
+explizit.
+
 ### Hinzugefügt
 
 - **`<x-icon name="…">`-Komponente auf Lucide-Basis** (Phase
