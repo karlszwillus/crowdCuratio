@@ -633,26 +633,48 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                             <x-ui.media-placeholder type="gallery"/>
                                                                                         </div>
                                                                                     @else
-                                                                                    <div class="mt-4 grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-4">
+                                                                                    {{-- Phase 5y.2 + 5y.3: 240-px-Minimum je Kachel + 14-px-Gap.
+                                                                                         Kachel-Flaeche 16:9 mit `object-contain` — kein Crop; Archiv-
+                                                                                         scans, Hochformate, Screenshots behalten ihre Raender.
+                                                                                         Positionsnummer + Ziehgriff als Overlay oben links (permanent).
+                                                                                         Titel steht unter dem Bild, nie ueber der Bildkante. --}}
+                                                                                    <div class="mt-4 grid gap-[14px]" style="grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));">
                                                                                     @foreach($item->gallery->images as $image)
                                                                                         <div class="gallery_item relative" id="gallery_items_{{$item->gallery->id}}">
                                                                                             <div id="anchor_MediaContent_{{$item->id}}"
-                                                                                                 class="img relative h-[200px] w-full overflow-hidden rounded-md bg-cover bg-center bg-no-repeat"
-                                                                                                 style="background-image: url('{{route('image', $image->image)}}')" >
-                                                                                               <div class="caption">
+                                                                                                 class="relative flex aspect-video items-center justify-center overflow-hidden rounded-md bg-line-100">
+                                                                                                <img
+                                                                                                    src="{{ route('image', $image->image) }}"
+                                                                                                    alt="{{ $image->alt }}"
+                                                                                                    class="max-h-full max-w-full object-contain"
+                                                                                                    loading="lazy"
+                                                                                                />
+                                                                                                <span
+                                                                                                    class="absolute left-1.5 top-1.5 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-caption font-semibold text-white"
+                                                                                                    style="background-color: rgba(27,35,48,.78);"
+                                                                                                    aria-label="{{ __('gallery_position') }} {{ $loop->iteration }}"
+                                                                                                >
                                                                                                     @can('update', $project)
-                                                                                                        <livewire:inline-editor
-                                                                                                            :model="$image"
-                                                                                                            field="alt"
-                                                                                                            rules="nullable|string|max:255"
-                                                                                                            :key="'image-alt-'.$image->id"
-                                                                                                        />
-                                                                                                    @else
-                                                                                                        {{$image->alt}}
+                                                                                                        <x-icon name="grip-vertical" size="3"/>
                                                                                                     @endcan
-                                                                                                </div>
-																								{{-- <img src="{{route('image', $image->image)}}" alt="{{$item->alt}}" style=""> --}}
-
+                                                                                                    <span>{{ $loop->iteration }}</span>
+                                                                                                </span>
+                                                                                            </div>
+                                                                                            <div class="mt-1.5 truncate text-body">
+                                                                                                @can('update', $project)
+                                                                                                    <livewire:inline-editor
+                                                                                                        :model="$image"
+                                                                                                        field="alt"
+                                                                                                        rules="nullable|string|max:255"
+                                                                                                        :key="'image-alt-'.$image->id"
+                                                                                                    />
+                                                                                                @else
+                                                                                                    @if (! empty(trim($image->alt ?? '')))
+                                                                                                        <span class="text-ink-900">{{ $image->alt }}</span>
+                                                                                                    @else
+                                                                                                        <span class="italic text-ink-500">{{ __('gallery_image_untitled') }}</span>
+                                                                                                    @endif
+                                                                                                @endcan
                                                                                             </div>
                                                                                             <div class="mt-3 flex items-center justify-end gap-1">
                                                                                                 <form action="{{ route('image.delete',$image->id) }}"

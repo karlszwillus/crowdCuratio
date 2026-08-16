@@ -152,6 +152,8 @@
   "comment_show_resolved": "Show resolved",
   "comment_hide_resolved": "Hide resolved",
   "comment_reply_label": "Reply",
+  "gallery_position": "Position",
+  "gallery_image_untitled": "Untitled",
   "saving": "Saving …",
   "setting": "Settings",
   "message_add_terms_success": "Terms & Conditions added successfully",

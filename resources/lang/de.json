@@ -152,6 +152,8 @@
   "comment_show_resolved": "Erledigte anzeigen",
   "comment_hide_resolved": "Erledigte ausblenden",
   "comment_reply_label": "Antwort",
+  "gallery_position": "Position",
+  "gallery_image_untitled": "Ohne Titel",
   "saving": "Speichere …",
   "setting": "Einstellungen",
   "message_add_terms_success": "Terms & Conditions wurde erfolgreich hinzugefügt",
