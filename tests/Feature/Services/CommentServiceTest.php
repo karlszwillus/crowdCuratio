@@ -23,6 +23,7 @@ If not, see <https://www.gnu.org/licenses/>.
 use App\Models\Comment;
 use App\Models\User;
 use App\Services\CommentService;
+use App\Support\CommentStatus;
 use Illuminate\Http\Request;
 use Tests\TestCase;
 
@@ -60,7 +61,7 @@ it('addComment legt einen Comment am commentable an', function () {
 
     expect($comment)->not->toBeNull();
     expect($comment->comment)->toBe('Test-Body');
-    expect((int) $comment->status)->toBe(1);
+    expect($comment->status)->toBe(CommentStatus::OPEN);
     expect($comment->user_id)->toBe($owner->id);
 });
 
@@ -152,17 +153,22 @@ it('setCommentStatus aktualisiert den status-Wert', function () {
     ]);
 
     $service = new CommentService;
+    // Legacy-Int 3 mappt via fromLegacyInt() auf REJECTED.
     $service->setCommentStatus($comment->id, 3);
 
     $comment->refresh();
 
-    expect((int) $comment->status)->toBe(3);
+    expect($comment->status)->toBe(CommentStatus::REJECTED);
 });
 
 it('dispatchSaveAction routet btn_submit=Edit an editComment', function () {
     /** @var TestCase $this */
     /** @var User $owner */
     $owner = User::factory()->create();
+    // Phase 5x.7: dispatchSaveAction ruft Gate::authorize('update')
+    // auf, das setzt einen aktiven User voraus. Owner ist auch
+    // Autor, darf also seinen eigenen Kommentar editieren.
+    $this->actingAs($owner);
     $project = makeProject($owner);
     $comment = Comment::create([
         'user_id' => $owner->id,
@@ -193,6 +199,9 @@ it('dispatchSaveAction routet btn_submit=delete an deleteComment', function () {
     /** @var TestCase $this */
     /** @var User $owner */
     $owner = User::factory()->create();
+    // Phase 5x.7: Gate::authorize('delete') laeuft — Projekt-Owner
+    // darf alles loeschen.
+    $this->actingAs($owner);
     $project = makeProject($owner);
     $comment = Comment::create([
         'user_id' => $owner->id,

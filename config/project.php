@@ -26,13 +26,10 @@ return [
         'default' => 'Draft',
     ],
 
-    'comment' => [
-        '1' => 'open',
-        '2' => 'accepted',
-        '3' => 'decline',
-        '4' => 'cancel',
-        '5' => 'done',
-    ],
+    // Phase 5x.4: Kommentar-Status lebt jetzt als Backed-Enum in
+    // App\Support\CommentStatus. Die alte int-Map (open=1, accepted=2,
+    // decline=3, cancel=4, done=5) ist Migration-Historie und wird
+    // von CommentStatus::fromLegacyInt() gemappt.
 
     'mail' => [
         'default' => 'Du erhältst diese Email, da für Dich soeben ein Account erstellt worden ist, mit dem Du Zugang zum CMS hast.',

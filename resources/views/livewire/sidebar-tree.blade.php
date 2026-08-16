@@ -116,12 +116,33 @@ new class extends Component
                          mit der Nummer + der aktiven Left-Kante. --}}
                     <a
                         href="#anchor_Chapter_{{ $chapter->id }}"
-                        class="relative block flex-1 rounded-md px-2 py-1 text-body font-semibold text-ink-900 hover:bg-line-100"
+                        class="relative flex flex-1 items-center justify-between gap-2 rounded-md px-2 py-1 text-body font-semibold text-ink-900 hover:bg-line-100"
                         :aria-current="active === '#anchor_Chapter_{{ $chapter->id }}' ? 'true' : null"
                         :class="active === '#anchor_Chapter_{{ $chapter->id }}' && 'bg-tint-bg text-tint-text before:absolute before:left-[-6px] before:top-1 before:bottom-1 before:w-[3px] before:rounded before:bg-brand-bar'"
                     >
-                        <span class="text-ink-500">{{ $chapterIndex + 1 }} ·</span>
-                        {{ $chapter->name }}
+                        <span class="min-w-0 truncate">
+                            <span class="text-ink-500">{{ $chapterIndex + 1 }} ·</span>
+                            {{ $chapter->name }}
+                        </span>
+                        @php
+                            // Zaehler nur fuer User mit comment-Recht — Reader ohne
+                            // Kommentar-Berechtigung koennen mit der Zahl nichts anfangen
+                            // und der Rail-Badge signalisiert ihnen ohnehin nichts
+                            // (Phase 5x-Followup nach Karls Feedback).
+                            $chapterOpen = Auth::user()?->can('comment', $project)
+                                ? \App\Services\CommentCounter::openCountForCommentable(
+                                    \App\Models\Chapter::class, $chapter->id,
+                                )
+                                : 0;
+                        @endphp
+                        @if ($chapterOpen > 0)
+                            <span
+                                class="inline-flex min-w-[1.15rem] shrink-0 items-center justify-center rounded-full
+                                       bg-info-bg px-1 text-[10px] font-semibold leading-none text-info"
+                                aria-label="{{ $chapterOpen }} {{ __('comment') }}"
+                                title="{{ $chapterOpen }} {{ __('comment') }}"
+                            >{{ $chapterOpen }}</span>
+                        @endif
                     </a>
                 </div>
 
@@ -135,11 +156,27 @@ new class extends Component
                             <li>
                                 <a
                                     href="#anchor_Entry_{{ $entry->id }}"
-                                    class="relative block rounded-md px-2 py-1 text-body text-ink-700 hover:bg-line-100"
+                                    class="relative flex items-center justify-between gap-2 rounded-md px-2 py-1 text-body text-ink-700 hover:bg-line-100"
                                     :aria-current="active === '#anchor_Entry_{{ $entry->id }}' ? 'true' : null"
                                     :class="active === '#anchor_Entry_{{ $entry->id }}' && 'bg-tint-bg text-tint-text font-medium before:absolute before:left-[-6px] before:top-1 before:bottom-1 before:w-[3px] before:rounded before:bg-brand-bar'"
                                 >
-                                    {{ $entry->name }}
+                                    <span class="min-w-0 truncate">{{ $entry->name }}</span>
+                                    @php
+                                        // Sichtbarkeits-Regel wie fuer den Chapter-Zaehler.
+                                        $entryOpen = Auth::user()?->can('comment', $project)
+                                            ? \App\Services\CommentCounter::openCountForCommentable(
+                                                \App\Models\Entry::class, $entry->id,
+                                            )
+                                            : 0;
+                                    @endphp
+                                    @if ($entryOpen > 0)
+                                        <span
+                                            class="inline-flex min-w-[1.15rem] shrink-0 items-center justify-center rounded-full
+                                                   bg-info-bg px-1 text-[10px] font-semibold leading-none text-info"
+                                            aria-label="{{ $entryOpen }} {{ __('comment') }}"
+                                            title="{{ $entryOpen }} {{ __('comment') }}"
+                                        >{{ $entryOpen }}</span>
+                                    @endif
                                 </a>
                             </li>
                         @endforeach

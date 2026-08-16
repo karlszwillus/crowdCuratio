@@ -446,6 +446,10 @@ class ContentController extends Controller
         $this->authorize('comment', $image);
 
         if (isset($request['name']) && $request['name'] === 'edit') {
+            // Phase 5x.7: strikte Autor-Regel per CommentPolicy::update.
+            $comment = Comment::findOrFail((int) $request['pk']);
+            $this->authorize('update', $comment);
+
             $this->comments->editComment((int) $request['pk'], (string) $request['value']);
 
             return redirect()->back()->with('success', 'Comment edited successfully');
@@ -539,11 +543,15 @@ class ContentController extends Controller
             // geladen sein, weil contents.comment.blade.php auf
             // $comment->project->name, $comment->user->name und
             // $comment->content->content_type zugreift (E.7b 4a, ADR-0022).
-            $comments = Comment::with(['user', 'project', 'content'])
+            // Phase 5x-Followup: Antworten bleiben in der Liste (sie
+            // sind eigenstaendige Beitraege), aber der Status haengt am
+            // Root — deshalb eager-load `parent`, damit die View den
+            // Root-Status zeigen kann statt des Antwort-eigenen Werts.
+            $comments = Comment::with(['user', 'project', 'content', 'parent'])
                 ->whereNotNull('project_id')
                 ->get();
 
-            return view('contents.comment', compact('comments'));
+            return view('comments.index', compact('comments'));
         }
 
         $projects = Project::query()
@@ -559,12 +567,12 @@ class ContentController extends Controller
             ->whereNotNull('project_id')
             ->pluck('projects.id')->toArray();
 
-        $comments = Comment::with(['user', 'project', 'content'])
+        $comments = Comment::with(['user', 'project', 'content', 'parent'])
             ->whereIn('project_id', $projects)
             ->whereNotNull('project_id')
             ->get();
 
-        return view('contents.comment', compact('comments'));
+        return view('comments.index', compact('comments'));
     }
 
     /**

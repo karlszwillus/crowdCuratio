@@ -23,6 +23,7 @@ If not, see <https://www.gnu.org/licenses/>.
 use App\Models\Comment;
 use App\Models\Project;
 use App\Models\User;
+use App\Support\CommentStatus;
 use App\Support\PermissionName;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
@@ -76,11 +77,11 @@ it('Owner kann den Comment-Status ueber die Volt-Komponente aendern', function (
         'comment' => $comment,
         'project' => $project,
     ])
-        ->assertSet('currentStatus', 1)
-        ->call('updateStatus', 4)
-        ->assertSet('currentStatus', 4);
+        ->assertSet('currentStatus', CommentStatus::OPEN->value)
+        ->call('updateStatus', CommentStatus::REJECTED->value)
+        ->assertSet('currentStatus', CommentStatus::REJECTED->value);
 
-    expect((int) $comment->fresh()->status)->toBe(4);
+    expect($comment->fresh()->status)->toBe(CommentStatus::REJECTED);
 });
 
 it('Fremder User ohne Permission bekommt 403', function () {
@@ -109,11 +110,11 @@ it('Fremder User ohne Permission bekommt 403', function () {
         'comment' => $comment,
         'project' => $project,
     ])
-        ->call('updateStatus', 4)
+        ->call('updateStatus', CommentStatus::REJECTED->value)
         ->assertStatus(403);
 
     // Status in der DB unveraendert geblieben.
-    expect((int) $comment->fresh()->status)->toBe(1);
+    expect($comment->fresh()->status)->toBe(CommentStatus::OPEN);
 });
 
 it('Ungueltiger Status wird stillschweigend verworfen', function () {
@@ -138,8 +139,8 @@ it('Ungueltiger Status wird stillschweigend verworfen', function () {
         'comment' => $comment,
         'project' => $project,
     ])
-        ->call('updateStatus', 999)
-        ->assertSet('currentStatus', 1);
+        ->call('updateStatus', 'quatsch-status')
+        ->assertSet('currentStatus', CommentStatus::OPEN->value);
 
-    expect((int) $comment->fresh()->status)->toBe(1);
+    expect($comment->fresh()->status)->toBe(CommentStatus::OPEN);
 });

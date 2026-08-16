@@ -52,6 +52,10 @@ Nutzung: `<x-layout.rail :active="'projects'" />` im äußeren
             . mb_substr(Auth::user()->last_name ?? '', 0, 1))
         : '';
 
+    // Phase 5x.10: offener Kommentar-Zaehler fuer den Rail-Badge.
+    // Beruecksichtigt eigene + eingeladene Projekte, Status open + in_progress.
+    $openCommentCount = \App\Services\CommentCounter::openCountForUser(Auth::user());
+
     $itemBase = 'group relative flex h-11 w-11 items-center justify-center rounded-md '
               . 'text-chrome-on-dim hover:bg-chrome-active hover:text-chrome-on '
               . 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 '
@@ -118,10 +122,19 @@ Nutzung: `<x-layout.rail :active="'projects'" />` im äußeren
         <a
             href="{{ route('all.comments') }}"
             class="{{ $itemBase }} {{ $active === 'comments' ? $itemActive : '' }}"
-            title="{{ __('comments') }}"
+            title="{{ __('comments') }}{{ $openCommentCount > 0 ? ' · '.$openCommentCount : '' }}"
             @if ($active === 'comments') aria-current="page" @endif
         >
-            <x-icon name="message-square" size="5" :decorative="false" :label="__('comments')"/>
+            <span class="relative flex">
+                <x-icon name="message-square" size="5" :decorative="false" :label="__('comments')"/>
+                @if ($openCommentCount > 0)
+                    <span
+                        class="absolute -right-2 -top-2 inline-flex min-w-[1.15rem] items-center justify-center
+                               rounded-full bg-primary px-1 text-[10px] font-semibold leading-none text-primary-on"
+                        aria-label="{{ trans_choice(':count offene Kommentare|:count offene Kommentare', $openCommentCount, ['count' => $openCommentCount]) }}"
+                    >{{ $openCommentCount }}</span>
+                @endif
+            </span>
         </a>
 
         @if ($isAdmin)

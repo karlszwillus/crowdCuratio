@@ -15,38 +15,48 @@
         ->map(fn ($p) => mb_strtoupper(mb_substr($p, 0, 1)))
         ->implode('') ?: '?';
 
-    // Projekt aus commentable aufloesen. Ziel: die Zeile verlinkt
-    // MINDESTENS auf das Projekt, auch wenn der Content-Typ
-    // (Text/Image/Gallery/Audiovisual) heute noch keine sinnvolle
-    // Sub-Route hat — die kommt mit Backlog #39 (Kommentar-System-
-    // Redesign). Falls kein Projekt auflösbar (kaputtes Polymorph-
-    // Ziel), rendern wir ohne Link.
+    // Projekt aus commentable aufloesen + Panel-Query fuer Deep-Link.
+    // Phase 5x.9-Follow-up: der Link uebergibt jetzt `model` und
+    // `comment` als Query-Params, damit das Kommentar-Panel im Editor
+    // beim Load automatisch fuer den richtigen Block oeffnet
+    // (URL-Trigger, siehe <x-layout.comment-panel>).
     $target = $comment->commentable;
     $project = null;
     $breadcrumb = '—';
     $anchor = null;
+    $panelType = null;
+    $panelId = null;
 
     if ($target instanceof \App\Models\Project) {
         $project = $target;
         $breadcrumb = $target->name;
+        $panelType = \App\Models\Project::class;
+        $panelId = $target->id;
     } elseif ($target instanceof \App\Models\Chapter) {
         $project = $target->project ?? null;
         $breadcrumb = trim(($project?->name ?? '').' › '.$target->name, ' ›');
         $anchor = 'anchor_Chapter_'.$target->id;
+        $panelType = \App\Models\Chapter::class;
+        $panelId = $target->id;
     } elseif ($target instanceof \App\Models\Entry) {
         $chapter = $target->chapter ?? null;
         $project = $chapter?->project ?? null;
         $parts = array_filter([$project?->name, $chapter?->name, $target->name]);
         $breadcrumb = implode(' › ', $parts);
         $anchor = 'anchor_Entry_'.$target->id;
+        $panelType = \App\Models\Entry::class;
+        $panelId = $target->id;
     } elseif ($target !== null && method_exists($target, 'project')) {
         // Text/Image/Gallery/Audiovisual: Projekt via project()-Kette.
         $project = $target->project();
         $breadcrumb = $project?->name ?? '—';
+        $panelType = $comment->commentable_type;
+        $panelId = $comment->commentable_id;
     }
 
     $link = $project
-        ? route('projects.edit', $project->id).($anchor ? '#'.$anchor : '')
+        ? route('projects.edit', ['project' => $project->id, 'model' => $panelType, 'comment' => $panelId])
+            .($anchor ? '#'.$anchor : '')
         : '#';
 
     $text = trim(strip_tags((string) ($comment->comment ?? $comment->body ?? '')));

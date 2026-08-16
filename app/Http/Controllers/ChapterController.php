@@ -27,6 +27,7 @@ use App\Http\Requests\StoreChapterRequest;
 use App\Http\Requests\StoreCommentRequest;
 use App\Http\Requests\UpdateChapterRequest;
 use App\Models\Chapter;
+use App\Models\Comment;
 use App\Models\Permission;
 use App\Models\Project;
 use App\Services\ChapterService;
@@ -242,6 +243,13 @@ class ChapterController extends Controller
         $this->authorize('comment', $chapter);
 
         if (isset($request['name']) && $request['name'] === 'edit') {
+            // Phase 5x.7: strikte Autor-Regel per CommentPolicy::update
+            // — auch der Owner darf hier NICHT vorbei. Vorher hing die
+            // Absicherung nur an authorize('comment', $chapter), das
+            // ist project-scoped, nicht comment-scoped.
+            $comment = Comment::findOrFail((int) $request['pk']);
+            $this->authorize('update', $comment);
+
             $this->comments->editComment((int) $request['pk'], (string) $request['value']);
 
             return redirect()->back()->with('success', 'Comment edited successfully');
