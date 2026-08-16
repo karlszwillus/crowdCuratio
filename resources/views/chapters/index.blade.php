@@ -524,75 +524,104 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                         @if(isset($item->gallery))
                                                                             <li class="item gallery content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
                                                                                 <x-ui.block-card type="gallery" class="mb-4" :save-slot="'Gallery-'.$item->gallery->id">
-                                                                                    <div class="row">
-                                                                                        <div class="">
-                                                                                            @can('update', $project)
-                                                                                                <livewire:inline-editor
-                                                                                                    :model="$item->gallery"
-                                                                                                    field="title"
-                                                                                                    rules="nullable|string|max:255"
-                                                                                                    :label="__('title')"
-                                                                                                    :variant="'heading'"
-                                                                                                    :key="'gallery-title-'.$item->gallery->id"
-                                                                                                />
-                                                                                                <livewire:inline-editor
-                                                                                                    :model="$item->gallery"
-                                                                                                    field="subtitle"
-                                                                                                    rules="nullable|string|max:255"
-                                                                                                    :variant="'subtitle'"
-                                                                                                    :key="'gallery-subtitle-'.$item->gallery->id"
-                                                                                                />
-                                                                                                <livewire:rich-text-editor
-                                                                                                    :model="$item->gallery"
-                                                                                                    field="description"
-                                                                                                    rules="nullable|string"
-                                                                                                    :label="__('gallery_description')"
-                                                                                                    :key="'gallery-description-'.$item->gallery->id"
-                                                                                                />
-                                                                                            @else
-                                                                                                <h4>{{$item->gallery->title}}</h4>
-                                                                                                <p>{{$item->gallery->subtitle}}</p>
-                                                                                                <p>{{$item->gallery->description}}</p>
-                                                                                            @endcan
-                                                                                        </div>
-                                                                                        <div class="mt-3 flex items-center justify-end gap-1">
+                                                                                    {{-- Phase 5y.1: Block-Aktionen wandern in den
+                                                                                         `actions`-Slot der Block-Card. Vorher standen
+                                                                                         Rueckgaengig/Kommentare/Bild-hinzufuegen/Loeschen
+                                                                                         als eigene Row unter dem Beschreibungs-Editor —
+                                                                                         daraus entstand die 250-px-Leerflaeche zwischen
+                                                                                         Beschreibung und Bild-Raster (Briefing § 2). --}}
+                                                                                    <x-slot:actions>
+                                                                                        <a href="{{route('projects.edit',['project'=> $project, 'log'=> $item->gallery->id, 'model' => 'Gallery'])}}"
+                                                                                           title="{{ __('older_versions') }}"
+                                                                                           class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900">
+                                                                                            <x-icon name="rotate-ccw" size="4"/>
+                                                                                        </a>
+
+                                                                                        @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
+                                                                                            <x-comment.trigger
+                                                                                                commentableType="App\Models\Gallery"
+                                                                                                :commentableId="$item->gallery->id"
+                                                                                                :count="isset($item->gallery->comments) ? count($item->gallery->comments) : 0"
+                                                                                            />
+                                                                                        @endif
+
+                                                                                        @if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
+                                                                                            {{-- „+ Bilder"-Zugang bleibt in der Aktions-Zeile;
+                                                                                                 die vom Briefing empfohlene „+ Bilder"-Zeile
+                                                                                                 am Rasterkopf kommt in 5y.4 dazu. --}}
+                                                                                            <button type="button"
+                                                                                                    class="addImage inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900"
+                                                                                                    data-chapter="{{$chapter->name}}"
+                                                                                                    data-entry="{{$entry->name}}"
+                                                                                                    data-id="{{$item->gallery->id}}"
+                                                                                                    data-entryId="{{$entry->id}}"
+                                                                                                    data-toggle="modal"
+                                                                                                    data-target="#imageModal"
+                                                                                                    title="{{__('add_content')}}">
+                                                                                                <x-icon name="plus-circle" size="4"/>
+                                                                                            </button>
+                                                                                        @endif
+
+                                                                                        @if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
                                                                                             <form action="{{ route('gallery.delete',$item->gallery->id) }}"
-                                                                                                  method="POST" class="mb-5">
+                                                                                                  method="POST"
+                                                                                                  class="inline-flex">
                                                                                                 @csrf
                                                                                                 <input type="hidden" name="project" value="{!! $project->id !!}"/>
                                                                                                 @method('DELETE')
-
-                                                                                                <a href="{{route('projects.edit',['project'=> $project, 'log'=> $item->gallery->id, 'model' => 'Gallery'])}}" title="{{ __('older_versions') }}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900"><x-icon name="rotate-ccw" size="4"/></a>
-
-                                                                                                @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
-                                                                                                    <x-comment.trigger
-                                                                                                        commentableType="App\Models\Gallery"
-                                                                                                        :commentableId="$item->gallery->id"
-                                                                                                        :count="isset($item->gallery->comments) ? count($item->gallery->comments) : 0"
-                                                                                                    />
-                                                                                                @endif
-
- 																								@if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
-                                                                                                    <span data-toggle="tooltip"
-                                                                                                          data-placement="top"
-                                                                                                          title="{{__('add_content')}}"> <button
-                                                                                                                type="button"
-                                                                                                                class="addImage"
-                                                                                                                data-chapter="{{$chapter->name}}"
-                                                                                                                data-entry="{{$entry->name}}"
-                                                                                                                data-id="{{$item->gallery->id}}"
-                                                                                                                data-entryId="{{$entry->id}}"
-                                                                                                                data-toggle="modal"
-                                                                                                                data-target="#imageModal"> <x-icon name="plus-circle" class="m-2" /> </button></span>
-                                                                                                @endif
-                                                                                                @if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
-                                                                                                    <button type="submit" onclick="return confirm('{{__('message_delete_confirm')}}')" title="{{__('delete_image')}}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-danger-bg hover:text-danger"><x-icon name="trash-2" size="4"/></button>
-                                                                                                @endif
-                                                                                                {{-- Gallery-Edit-Modal-Trigger entfällt seit 5c.6.c:
-                                                                                                     Title/Subtitle/Description werden inline editiert.
-                                                                                                     Bild-Hinzufügen (addImage) bleibt modal. --}}
+                                                                                                <button type="submit"
+                                                                                                        onclick="return confirm('{{__('message_delete_confirm')}}')"
+                                                                                                        title="{{__('delete_block')}}"
+                                                                                                        class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-danger-bg hover:text-danger">
+                                                                                                    <x-icon name="trash-2" size="4"/>
+                                                                                                </button>
                                                                                             </form>
-                                                                                        </div>
+                                                                                        @endif
+                                                                                    </x-slot:actions>
+
+                                                                                    <div>
+                                                                                        @can('update', $project)
+                                                                                            <livewire:inline-editor
+                                                                                                :model="$item->gallery"
+                                                                                                field="title"
+                                                                                                rules="nullable|string|max:255"
+                                                                                                :label="__('title')"
+                                                                                                :variant="'heading'"
+                                                                                                :key="'gallery-title-'.$item->gallery->id"
+                                                                                            />
+                                                                                            <livewire:inline-editor
+                                                                                                :model="$item->gallery"
+                                                                                                field="subtitle"
+                                                                                                rules="nullable|string|max:255"
+                                                                                                :variant="'subtitle'"
+                                                                                                :key="'gallery-subtitle-'.$item->gallery->id"
+                                                                                            />
+                                                                                            {{-- Phase 5y.1: der Rich-Text-Editor bleibt
+                                                                                                 fuer Editor:innen dauerhaft anzeigbar
+                                                                                                 (er ist die Bearbeitungsflaeche); dort
+                                                                                                 verursacht seine Mindesthoehe keine
+                                                                                                 Leerflaeche mehr, weil die Aktionen jetzt
+                                                                                                 im Kopf liegen und nicht mehr darunter. --}}
+                                                                                            <livewire:rich-text-editor
+                                                                                                :model="$item->gallery"
+                                                                                                field="description"
+                                                                                                rules="nullable|string"
+                                                                                                :label="__('gallery_description')"
+                                                                                                :key="'gallery-description-'.$item->gallery->id"
+                                                                                            />
+                                                                                        @else
+                                                                                            <h4 class="text-heading font-semibold text-ink-900">{{$item->gallery->title}}</h4>
+                                                                                            @if (! empty(trim($item->gallery->subtitle ?? '')))
+                                                                                                <p class="text-body text-ink-600">{{$item->gallery->subtitle}}</p>
+                                                                                            @endif
+                                                                                            {{-- Phase 5y.1: leere Beschreibung darf keine
+                                                                                                 Zeile reservieren (Briefing § 2 Punkt 4). --}}
+                                                                                            @if (! empty(trim(strip_tags((string) $item->gallery->description))))
+                                                                                                <div class="text-body text-ink-800">
+                                                                                                    {!! $item->gallery->description !!}
+                                                                                                </div>
+                                                                                            @endif
+                                                                                        @endcan
                                                                                     </div>
                                                                                     {{-- public/css/crowdcuratio.css wird seit dem
                                                                                          Vite-Umbau nicht mehr geladen — die alten
