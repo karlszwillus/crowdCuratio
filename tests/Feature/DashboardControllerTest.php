@@ -76,14 +76,19 @@ it('Dashboard-Sections: rendert vier Sektionen fuer Erstlogin-User', function ()
     $user = User::factory()->create();
     $user->assignRole(RoleName::READER->value);
 
-    $component = Livewire::actingAs($user)->test('dashboard-sections');
-
-    $component->assertOk();
-    $component->assertSeeText(__('my_projects'));
-    $component->assertSeeText(__('assigned_to_me'));
-    $component->assertSeeText(__('recent_comments'));
-    // Erstlogin: Empty-State-CTA fuer Meine Projekte.
-    $component->assertSeeText(__('empty_own_projects_title'));
+    // `#[Lazy]` an der Komponente bewirkt, dass der erste
+    // Render-Zyklus nur den placeholder() liefert (Skelett-Grid).
+    // Der `$refresh`-Call zwingt den zweiten Roundtrip mit dem
+    // echten Content — sonst matcht der Test gegen das Skelett.
+    Livewire::actingAs($user)
+        ->test('dashboard-sections')
+        ->call('$refresh')
+        ->assertOk()
+        ->assertSeeText(__('my_projects'))
+        ->assertSeeText(__('assigned_to_me'))
+        ->assertSeeText(__('recent_comments'))
+        // Erstlogin: Empty-State-CTA fuer Meine Projekte.
+        ->assertSeeText(__('empty_own_projects_title'));
 });
 
 it('Dashboard-Sections: Owner sieht sein Projekt in „Meine Projekte"', function () {
@@ -95,6 +100,7 @@ it('Dashboard-Sections: Owner sieht sein Projekt in „Meine Projekte"', functio
 
     Livewire::actingAs($owner)
         ->test('dashboard-sections')
+        ->call('$refresh')
         ->assertOk()
         ->assertSeeText('Frauenbewegung Berlin');
 });
