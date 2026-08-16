@@ -53,13 +53,22 @@ final readonly class AudiovisualData
      */
     public static function fromRequest(Request $request, ?string $normalizedLink = null): self
     {
+        // Phase-5-Sammler (2026-08-16): `$request->has()` prueft nur
+        // die Key-Anwesenheit. Ein Test-Payload `translationMode => false`
+        // laesst `has()` `true` liefern, obwohl der User die Uebersetzung
+        // gar nicht will — das schrieb `link` dann per `setTranslation`
+        // in die EN-Spalte statt in die Basis-Spalte, sichtbar am
+        // fehlgeschlagenen YouTube-Embed-Test in
+        // `ContentCharacterizationTest`. `->boolean()` interpretiert
+        // 'false', '0', 0 sauber als `false` und respektiert
+        // gleichzeitig das Checkbox-Muster (`on` → `true`).
         return new self(
             link: $normalizedLink ?? ($request['link'] ?? null),
             source: $request['source'] ?? null,
             copyright: $request['copyright'] ?? null,
             type: $request['type'] ?? null,
-            isTranslation: (bool) ($request['translationMode'] ?? false),
-            isTranslated: isset($request['isTranslated']),
+            isTranslation: $request->boolean('translationMode'),
+            isTranslated: $request->boolean('isTranslated'),
         );
     }
 }

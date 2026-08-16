@@ -58,8 +58,12 @@ class Comment extends Model
     protected $dates = ['deleted_at'];
 
     /**
-     * created_at/updated_at als datetime, status ueber den
-     * CommentStatusCast (Phase 5x.4 + Legacy-Toleranz):
+     * Phase-5-Backlog-Sammler (2026-08-16, #72): created_at ist in
+     * der DB als DATETIME-String gespeichert; ohne diesen Cast
+     * kommt sie als reiner String aus Eloquent zurueck und
+     * diffForHumans() failt am Consumer-Ende (Dashboard, Kommentar-
+     * Liste). Auch updated_at aufgenommen der Symmetrie halber.
+     * Status ueber deN CommentStatusCast (Phase 5x.4 + Legacy-Toleranz):
      * absorbiert alte Integer-Werte 1..5 waehrend des Wartungs-
      * fensters, normalisiert im Schreibpfad auf String-Backing.
      */

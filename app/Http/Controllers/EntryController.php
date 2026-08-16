@@ -76,6 +76,17 @@ class EntryController extends Controller
      */
     public function store(StoreEntryRequest $request): RedirectResponse
     {
+        // Translation-Mode (Phase-5-Backlog-Sammler 2026-08-16):
+        // Uebersetzungs-Formular submittet an dieselbe Route,
+        // meint aber ein Update. EntryService::update verzweigt
+        // intern via EntryData::isTranslation.
+        if ($request->has('translationEntry')) {
+            $entry = Entry::findOrFail($request->validated()['entryId']);
+            $this->entries->update($entry, EntryData::fromRequest($request));
+
+            return redirect()->back()->with('success', __('message_edit_entry_success'));
+        }
+
         $chapterId = (int) $request->validated()['chapterId'];
 
         $this->entries->create(EntryData::fromRequest($request), $chapterId);

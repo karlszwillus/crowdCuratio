@@ -25,19 +25,20 @@ declare(strict_types=1);
 use App\Models\User;
 use App\Support\PermissionName;
 use App\Support\RoleName;
+use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 /*
 |--------------------------------------------------------------------------
-| Dashboard (Phase 5e.1, Screen 09)
+| Dashboard-Chrome (Phase 5e.1, Backlog #70)
 |--------------------------------------------------------------------------
 |
-| Smoke-Tests fuer die neue Landing-Page: Route erreichbar, vier
-| Sektionen sichtbar, Empty-States rendern korrekt. Die Details
-| (Karten-Layout, Rollen-Badge, line-clamp-Kommentare) werden
-| durch die Persona-Smoke abgesichert.
+| Seit Backlog #70 leben die vier Sektionen in einer Livewire-Volt-
+| Component mit #[Lazy]. Der Controller rendert nur noch den
+| Chrome-Kontext (Greeting, Suche, „+ Neues Projekt") — dieser Test
+| pinnt genau das. Die Sektions-Feeds pinnt DashboardSectionsTest.
 */
 
 beforeEach(function () {
@@ -53,12 +54,10 @@ beforeEach(function () {
 it('Dashboard: Route ist mit auth-Middleware geschuetzt', function () {
     /** @var TestCase $this */
     $response = $this->get('/dashboard');
-
-    // 302 → Login-Redirect (auth-middleware).
     $response->assertStatus(302);
 });
 
-it('Dashboard: gerendert fuer einen Erstlogin-User zeigt Empty-States', function () {
+it('Dashboard-Chrome rendert Greeting + Suche + Neues-Projekt-CTA', function () {
     /** @var TestCase $this */
     /** @var User $user */
     $user = User::factory()->create(['name' => 'Rolfo']);
@@ -67,25 +66,41 @@ it('Dashboard: gerendert fuer einen Erstlogin-User zeigt Empty-States', function
     $response = $this->actingAs($user)->get('/dashboard');
 
     $response->assertOk();
-    // Greeting (per Kontext-Zeit variabel, aber der Name muss drin sein).
     $response->assertSee('Rolfo');
-    // Alle vier Sektionen-Ueberschriften.
-    $response->assertSeeText(__('my_projects'));
-    $response->assertSeeText(__('assigned_to_me'));
-    $response->assertSeeText(__('recent_comments'));
-    // Erstlogin: Empty-State mit CTA fuer Meine Projekte.
-    $response->assertSeeText(__('empty_own_projects_title'));
+    $response->assertSee(__('search_projects'), false);
 });
 
-it('Dashboard: Owner sieht seine Projekte in „Meine Projekte"', function () {
+it('Dashboard-Sections: rendert vier Sektionen fuer Erstlogin-User', function () {
+    /** @var TestCase $this */
+    /** @var User $user */
+    $user = User::factory()->create();
+    $user->assignRole(RoleName::READER->value);
+
+    // `#[Lazy]` an der Komponente bewirkt, dass der erste
+    // Render-Zyklus nur den placeholder() liefert (Skelett-Grid).
+    // Der `$refresh`-Call zwingt den zweiten Roundtrip mit dem
+    // echten Content — sonst matcht der Test gegen das Skelett.
+    Livewire::actingAs($user)
+        ->test('dashboard-sections')
+        ->call('$refresh')
+        ->assertOk()
+        ->assertSeeText(__('my_projects'))
+        ->assertSeeText(__('assigned_to_me'))
+        ->assertSeeText(__('recent_comments'))
+        // Erstlogin: Empty-State-CTA fuer Meine Projekte.
+        ->assertSeeText(__('empty_own_projects_title'));
+});
+
+it('Dashboard-Sections: Owner sieht sein Projekt in „Meine Projekte"', function () {
     /** @var TestCase $this */
     /** @var User $owner */
     $owner = User::factory()->create();
     $owner->assignRole(RoleName::READER->value);
     $project = makeProject($owner, ['name' => 'Frauenbewegung Berlin']);
 
-    $response = $this->actingAs($owner)->get('/dashboard');
-
-    $response->assertOk();
-    $response->assertSeeText('Frauenbewegung Berlin');
+    Livewire::actingAs($owner)
+        ->test('dashboard-sections')
+        ->call('$refresh')
+        ->assertOk()
+        ->assertSeeText('Frauenbewegung Berlin');
 });

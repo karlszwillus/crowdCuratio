@@ -36,6 +36,20 @@ class StoreEntryRequest extends FormRequest
 {
     public function authorize(): bool
     {
+        // Translation-Mode (Phase-5-Backlog-Sammler 2026-08-16):
+        // Uebersetzungs-Sicht submittet mit `translationEntry` +
+        // `entryId`, ohne `chapterId`. Update-Semantik statt Create.
+        //
+        // has() statt filled(): der Hidden-Input im Translate-Blade
+        // hat kein value-Attribut, sendet also einen leeren String —
+        // filled() waere in dem Fall false.
+        if ($this->has('translationEntry') && $this->filled('entryId')) {
+            $entry = Entry::find($this->input('entryId'));
+
+            return $entry !== null
+                && $this->user()->can('update', $entry);
+        }
+
         $chapter = Chapter::find($this->input('chapterId'));
 
         if ($chapter === null) {
@@ -47,6 +61,17 @@ class StoreEntryRequest extends FormRequest
 
     public function rules(): array
     {
+        if ($this->has('translationEntry')) {
+            return [
+                'entryId' => 'required|integer|exists:entries,id',
+                'entryTitle' => 'required|string|max:255',
+                'entrySubtitle' => 'nullable|string|max:255',
+                'entryDescription' => 'nullable|string',
+                'isTranslated' => 'sometimes',
+                'translationEntry' => 'sometimes',
+            ];
+        }
+
         return [
             'chapterId' => 'required|integer|exists:chapters,id',
             'entryTitle' => 'required|string|max:255',

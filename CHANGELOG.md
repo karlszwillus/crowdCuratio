@@ -288,6 +288,13 @@ Leserecht-Karten führen zur Leseansicht statt zum Editor
 Menüpunkt, `RouteServiceProvider::HOME` geht zurück auf
 `/dashboard`.
 
+**Phase-5-Sammler.** Sammelbranch für die kleineren Restposten
+zwischen den grossen Sub-Wellen der Phase 5: einzelne
+Aufraeumarbeiten, die zu klein fuer einen eigenen Feature-
+Branch sind, und Vorarbeiten, die spaeteren Sub-Wellen den
+Boden bereiten (z. B. gemeinsame Helfer, Vokabular-Nachzuege,
+Test-Regressionen). Konkrete Aenderungen listet dieser Absatz
+inkrementell auf, je nachdem was in den Branch einlaeuft.
 **Phase-5x — Kommentar-System auf Handoff-Design abgeschlossen.**
 Das komplette Kommentar-Erlebnis rutscht auf das Design v5.
 Statt der alten Sidebar-Section unter dem Beitrag gleitet ein

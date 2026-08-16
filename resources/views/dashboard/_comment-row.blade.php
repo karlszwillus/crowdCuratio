@@ -80,21 +80,7 @@
                 <span class="min-w-0 truncate text-caption text-ink-500">{{ $breadcrumb }}</span>
             </div>
             <span class="shrink-0 text-caption text-ink-500">
-                {{-- Comment nutzt $timestamps = false — created_at
-                     kommt als String aus der DB und wird nicht als
-                     Carbon gecastet. Defensiv per Carbon::parse
-                     wrappen. --}}
-                @php
-                    $createdAt = $comment->created_at;
-                    if (is_string($createdAt) && $createdAt !== '') {
-                        try {
-                            $createdAt = \Illuminate\Support\Carbon::parse($createdAt);
-                        } catch (\Throwable $e) {
-                            $createdAt = null;
-                        }
-                    }
-                @endphp
-                {{ $createdAt?->diffForHumans() }}
+                {{ $comment->created_at?->diffForHumans() }}
             </span>
         </div>
         <p class="mt-0.5 text-body text-ink-600"

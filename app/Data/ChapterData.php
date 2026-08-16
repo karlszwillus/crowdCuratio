@@ -54,12 +54,18 @@ final readonly class ChapterData
     {
         $validated = $request->validated();
 
+        // Phase-5-Backlog-Sammler (2026-08-16): das Translate-Blade
+        // schickt <input type="hidden" name="translationChapter"> OHNE
+        // value-Attribut. `(bool) ""` ist false, wir landen dann
+        // faelschlich im Direktschreib-Pfad und ueberschreiben die
+        // deutsche Variante. `$request->has()` prueft nur, ob der
+        // Key im Payload liegt.
         return new self(
             name: $validated['chapterTitle'],
             subtitle: $validated['chapterSubtitle'] ?? null,
             description: $validated['chapterDescription'] ?? null,
-            isTranslation: (bool) ($validated['translationChapter'] ?? false),
-            isTranslated: (bool) ($validated['isTranslated'] ?? false),
+            isTranslation: $request->has('translationChapter'),
+            isTranslated: $request->has('isTranslated'),
         );
     }
 }

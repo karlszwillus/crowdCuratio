@@ -142,7 +142,11 @@ class ContentController extends Controller
         // auf den Request-Bag-Keys ist post-Middleware unzuverlässig
         // — Keys können present sein mit Wert `null`. `filled()`
         // testet idiomatisch "vorhanden und nicht leer/null".
-        if ($request->filled('translationMode')) {
+        // Phase-5-Backlog-Sammler (2026-08-16): das Translate-Blade
+        // sendet <input type="hidden" name="translationMode"> OHNE
+        // value — `filled()` waere false. `has()` prueft nur die
+        // Key-Anwesenheit.
+        if ($request->has('translationMode')) {
             // E.7b 4a-Hotfix-II.d: Source-Translation hat keinen
             // Project-Bezug (Sources sind global geteilt). Reader-
             // Schutz via globale 'edit'-Permission als Defense-in-Depth.
@@ -271,7 +275,11 @@ class ContentController extends Controller
         // `ConvertEmptyStringsToNull` (analog saveImage), damit
         // `null`-Werte nicht in `saveTranslatedText`/`translateField`
         // mit `findOrFail(null)` enden.
-        if ($request->filled('translationMode')) {
+        // Phase-5-Backlog-Sammler (2026-08-16): das Translate-Blade
+        // sendet <input type="hidden" name="translationMode"> OHNE
+        // value — `filled()` waere false. `has()` prueft nur die
+        // Key-Anwesenheit.
+        if ($request->has('translationMode')) {
             if ($request->filled('textId')) {
                 // E.7b 4a-Hotfix-II.b: project-scoped Gate.
                 $text = Text::findOrFail($request['textId']);
