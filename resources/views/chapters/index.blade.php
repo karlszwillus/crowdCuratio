@@ -545,22 +545,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                             />
                                                                                         @endif
 
-                                                                                        @if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
-                                                                                            {{-- „+ Bilder"-Zugang bleibt in der Aktions-Zeile;
-                                                                                                 die vom Briefing empfohlene „+ Bilder"-Zeile
-                                                                                                 am Rasterkopf kommt in 5y.4 dazu. --}}
-                                                                                            <button type="button"
-                                                                                                    class="addImage inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900"
-                                                                                                    data-chapter="{{$chapter->name}}"
-                                                                                                    data-entry="{{$entry->name}}"
-                                                                                                    data-id="{{$item->gallery->id}}"
-                                                                                                    data-entryId="{{$entry->id}}"
-                                                                                                    data-toggle="modal"
-                                                                                                    data-target="#imageModal"
-                                                                                                    title="{{__('add_content')}}">
-                                                                                                <x-icon name="plus-circle" size="4"/>
-                                                                                            </button>
-                                                                                        @endif
+                                                                                        {{-- 5y.4: „+ Bilder"-Zugang lebt jetzt im Rasterkopf und als Drop-Zone im Raster. --}}
 
                                                                                         @if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
                                                                                             <form action="{{ route('gallery.delete',$item->gallery->id) }}"
@@ -629,9 +614,28 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                          Wir setzen das Grid komplett per Tailwind-
                                                                                          Utilities direkt am Element. --}}
                                                                                     @if ($item->gallery->images->isEmpty())
-                                                                                        <div class="mt-4">
-                                                                                            <x-ui.media-placeholder type="gallery"/>
-                                                                                        </div>
+                                                                                        @can('update', $project)
+                                                                                            {{-- 5y.4 § 7 leer: Drop-Zone ueber volle Blockbreite, kein leeres Raster. --}}
+                                                                                            <button type="button"
+                                                                                                    class="addImage mt-4 flex w-full flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-line-200 bg-transparent px-4 py-8 text-body text-ink-500 hover:border-ink-400 hover:bg-line-100/40 hover:text-ink-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                                                                                                    data-chapter="{{ $chapter->name }}"
+                                                                                                    data-entry="{{ $entry->name }}"
+                                                                                                    data-id="{{ $item->gallery->id }}"
+                                                                                                    data-entryId="{{ $entry->id }}"
+                                                                                                    data-toggle="modal"
+                                                                                                    data-target="#imageModal">
+                                                                                                <x-icon name="image-plus" size="5"/>
+                                                                                                <span class="text-body font-medium text-ink-700">{{ __('gallery_dropzone_title') }}</span>
+                                                                                                <span class="text-caption text-ink-500">{{ __('gallery_dropzone_hint') }}</span>
+                                                                                                <span class="mt-1 inline-flex items-center gap-1 rounded-md border border-line-200 bg-paper-0 px-3 py-1 text-caption font-medium text-ink-900">
+                                                                                                    {{ __('gallery_dropzone_button') }}
+                                                                                                </span>
+                                                                                            </button>
+                                                                                        @else
+                                                                                            <p class="mt-4 rounded-md border border-line-200 bg-paper-50 px-4 py-3 text-body text-ink-500">
+                                                                                                {{ __('placeholder_gallery_hint') }}
+                                                                                            </p>
+                                                                                        @endcan
                                                                                     @else
                                                                                     {{-- Phase 5y.2 + 5y.3 + 5y.5 + 5y.7: Kachel-Raster ODER Detailzeile.
                                                                                          Alpine-State `editingImageId` schaltet die beiden Ansichten um; die
@@ -796,7 +800,17 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                 onEnd: () => this.persistOrder(),
                                                                                             });
                                                                                         },
+                                                                                        renumberPositions() {
+                                                                                            const grid = this.$refs.grid;
+                                                                                            if (!grid) return;
+                                                                                            Array.from(grid.children).forEach((el, index) => {
+                                                                                                if (!el.dataset || !el.dataset.imageId) return;
+                                                                                                const num = el.querySelector('[data-image-position]');
+                                                                                                if (num) num.textContent = index + 1;
+                                                                                            });
+                                                                                        },
                                                                                         persistOrder() {
+                                                                                            this.renumberPositions();
                                                                                             const ids = Array.from(this.$refs.grid.children)
                                                                                                 .map(el => el.dataset.imageId)
                                                                                                 .filter(Boolean);
@@ -825,6 +839,43 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                     ></div>
 
                                                                                         {{-- Raster --}}
+                                                                                        {{-- 5y.4: Rasterkopf mit Anzahl, Sammelwarnung, Reihenfolge-Hinweis und Add-Button. --}}
+                                                                                        <div x-show="editingImageId === null"
+                                                                                             class="mt-5 flex flex-wrap items-center justify-between gap-3 border-b border-line-200 pb-2">
+                                                                                            <div class="flex flex-wrap items-center gap-3">
+                                                                                                <span class="text-caption font-semibold uppercase tracking-wider text-ink-500">{{ __('gallery_header_label') }}</span>
+                                                                                                <span class="text-body text-ink-700">{{ trans_choice('gallery_header_count', $item->gallery->images->count(), ['count' => $item->gallery->images->count()]) }}</span>
+                                                                                                @php
+                                                                                                    $missingCount = $item->gallery->images->filter(fn($img) =>
+                                                                                                        empty(trim(strip_tags((string) $img->description)))
+                                                                                                        || ! $img->copyrightImage
+                                                                                                        || ! $img->originImage
+                                                                                                    )->count();
+                                                                                                @endphp
+                                                                                                @if ($missingCount > 0)
+                                                                                                    <span class="inline-flex items-center gap-1 rounded-md bg-warning-bg px-2 py-0.5 text-caption text-warning">
+                                                                                                        {{ trans_choice('gallery_header_missing', $missingCount, ['count' => $missingCount]) }}
+                                                                                                    </span>
+                                                                                                @endif
+                                                                                            </div>
+                                                                                            <div class="flex flex-wrap items-center gap-3">
+                                                                                                <span class="text-caption text-ink-500">{{ __('gallery_header_order_hint') }}</span>
+                                                                                                @can('update', $project)
+                                                                                                    <button type="button"
+                                                                                                            class="addImage inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-caption font-medium text-primary-on hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                                                                                                            data-chapter="{{ $chapter->name }}"
+                                                                                                            data-entry="{{ $entry->name }}"
+                                                                                                            data-id="{{ $item->gallery->id }}"
+                                                                                                            data-entryId="{{ $entry->id }}"
+                                                                                                            data-toggle="modal"
+                                                                                                            data-target="#imageModal">
+                                                                                                        <x-icon name="plus" size="3"/>
+                                                                                                        <span>{{ __('gallery_header_add') }}</span>
+                                                                                                    </button>
+                                                                                                @endcan
+                                                                                            </div>
+                                                                                        </div>
+
                                                                                         <div x-show="editingImageId === null"
                                                                                              x-ref="grid"
                                                                                              class="mt-4 grid gap-[14px]"
@@ -862,7 +913,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                             @can('update', $project)
                                                                                                                 <x-icon name="grip-vertical" size="3"/>
                                                                                                             @endcan
-                                                                                                            <span>{{ $loop->iteration }}</span>
+                                                                                                            <span data-image-position>{{ $loop->iteration }}</span>
                                                                                                         </span>
 
                                                                                                         @can('update', $project)
@@ -921,6 +972,23 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                     @endcan
                                                                                                 </div>
                                                                                             @endforeach
+
+                                                                                            @can('update', $project)
+                                                                                                {{-- 5y.4: Drop-Zone als letzte Kachel im Raster (Briefing § 3). --}}
+                                                                                                <button type="button"
+                                                                                                        class="addImage group flex aspect-video w-full flex-col items-center justify-center gap-1 rounded-md border-2 border-dashed border-line-200 bg-transparent text-caption text-ink-500 hover:border-ink-400 hover:bg-line-100/40 hover:text-ink-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                                                                                                        data-chapter="{{ $chapter->name }}"
+                                                                                                        data-entry="{{ $entry->name }}"
+                                                                                                        data-id="{{ $item->gallery->id }}"
+                                                                                                        data-entryId="{{ $entry->id }}"
+                                                                                                        data-toggle="modal"
+                                                                                                        data-target="#imageModal"
+                                                                                                        aria-label="{{ __('gallery_header_add') }}">
+                                                                                                    <x-icon name="image-plus" size="5"/>
+                                                                                                    <span class="text-caption font-medium">{{ __('gallery_dropzone_title') }}</span>
+                                                                                                    <span class="text-caption text-ink-500">{{ __('gallery_dropzone_hint') }}</span>
+                                                                                                </button>
+                                                                                            @endcan
                                                                                         </div>
 
                                                                                         {{-- Detailzeile: ersetzt das Raster fuer eine einzelne Kachel.

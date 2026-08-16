@@ -403,6 +403,20 @@ im Detailmodus und lädt den Editor beim Zurückweg voll neu,
 sodass die aktualisierten Titel + Angaben-Status wieder auf
 der Kachel sichtbar werden.
 
+Über dem Raster sitzt der Kopf aus Briefing § 3: `BILDER`-
+Pill, Anzahl-Chip (`trans_choice` mit `count`), Sammel-
+Warnung, wenn Angaben fehlen, Hinweis „Reihenfolge =
+Ausstellungsreihenfolge" und rechts der Primary-Button
+„Bilder hinzufügen". Am Ende des Rasters liegt eine
+gestrichelte 16:9-Drop-Zone-Kachel mit demselben Modal-
+Trigger — der alte Plus-Icon-Button neben dem Papierkorb
+in der Blockkopf-Zeile entfällt. Bei leerer Galerie ersetzt
+eine schlanke, ganzflächige Drop-Zone das große
+`media-placeholder`-Streifenmuster. Positionsnummern werden
+nach jeder Sortier-Aktion (Maus wie Tastatur) im Grid neu
+gezeichnet, damit die Zahl auf der Kachel immer die aktuelle
+Reihenfolge wiedergibt.
+
 Nebenbei: Tab-Label „permissions" in der Editor-Segmented-
 Control ist jetzt „Berechtigungen".
 
