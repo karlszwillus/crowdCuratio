@@ -32,8 +32,10 @@ use App\Models\Image;
 use App\Models\MediaContent;
 use App\Models\Project;
 use App\Models\Text;
+use App\Support\CommentStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 /**
  * Kapselt die Schreibpfade auf Comments — Hinzufügen, Antworten,
@@ -64,7 +66,7 @@ class CommentService
         $comment = new Comment;
         $comment->comment = $request->comment;
         $comment->project_id = $request->IdProjectComment;
-        $comment->status = 1;
+        $comment->status = CommentStatus::OPEN;
         $comment->created_at = now();
         $comment->user()->associate($request->user());
 
@@ -105,29 +107,56 @@ class CommentService
     }
 
     /**
-     * Löscht einen Comment (Soft-Delete, weil das Comment-Modell
-     * SoftDeletes verwendet).
+     * Loescht einen Comment. Phase 5x.7 (BRIEFING-kommentare § 8):
+     * Hard-Delete, keine Soft-Delete-Leiche in der Liste. Wird der
+     * Kommentar als Wurzel geloescht, kaskadiert der Loeschvorgang
+     * auf alle Antworten mit.
+     *
+     * Der Aufrufer muss die Berechtigung (Owner ODER Autor ohne
+     * Antworten) VORHER pruefen — siehe CommentPolicy::delete.
      */
     public function deleteComment(int $commentId): void
     {
         $comment = Comment::find($commentId);
-
-        if ($comment !== null) {
-            $comment->delete();
+        if ($comment === null) {
+            return;
         }
+
+        // Kaskade: alle Antworten hart mitloeschen, damit keine
+        // orphan replies zurueckbleiben.
+        Comment::where('parent_id', $comment->id)->forceDelete();
+
+        $comment->forceDelete();
     }
 
     /**
      * Setzt den Status eines bestehenden Comments.
+     *
+     * Phase 5x.4: Akzeptiert sowohl den neuen Enum als auch Legacy-
+     * Integer-Werte (Rueckwaertskompat fuer noch-nicht-migrierte
+     * Aufrufer).
+     *
+     * Phase 5x.7 (BRIEFING-kommentare § 5): Antworten haben KEINEN
+     * eigenen Status — der Status haengt am Wurzel-Kommentar. Ein
+     * Aufruf auf einer Antwort wird stumm ignoriert (kein Fehler),
+     * damit die UI aufeinander abgestimmt bleibt.
      */
-    public function setCommentStatus(int $commentId, int $status): void
+    public function setCommentStatus(int $commentId, CommentStatus|int $status): void
     {
         $comment = Comment::find($commentId);
-
-        if ($comment !== null) {
-            $comment->status = $status;
-            $comment->save();
+        if ($comment === null) {
+            return;
         }
+
+        // Antwort? Root-Status ist maßgeblich, wir tun nichts.
+        if ($comment->parent_id !== null) {
+            return;
+        }
+
+        $comment->status = is_int($status)
+            ? CommentStatus::fromLegacyInt($status)
+            : $status;
+        $comment->save();
     }
 
     /**
@@ -221,12 +250,21 @@ class CommentService
         $action = $request['btn_submit'];
 
         if ($action === 'Edit') {
+            // Phase 5x.7: Autor-only-Regel per CommentPolicy::update.
+            $comment = Comment::findOrFail((int) $request['pk']);
+            Gate::authorize('update', $comment);
+
             $this->editComment((int) $request['pk'], (string) $request['value']);
 
             return true;
         }
 
         if ($action === 'delete') {
+            // Phase 5x.7: CommentPolicy::delete — Owner darf alle
+            // (Hard-Delete + Kaskade), Autor nur ohne Antworten.
+            $comment = Comment::findOrFail((int) $request['id']);
+            Gate::authorize('delete', $comment);
+
             $this->deleteComment((int) $request['id']);
 
             return true;

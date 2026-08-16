@@ -22,6 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Services;
 
+use App\Support\CommentStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
 
@@ -38,6 +39,12 @@ class CommentRetrieve
         $data = [];
         $status = [];
         $data['pathComment'] = '';
+        // Phase 5x.8: der Composer (<livewire:comment-composer>) braucht
+        // den commentable-Typ als FQCN, um in seinem save() das Modell
+        // aufzuloesen. Der Aufrufer uebergibt $class ohnehin schon —
+        // wir reichen ihn im Response weiter, damit die Blade-Seite
+        // keinen zweiten Ableitungspfad braucht.
+        $data['commentableType'] = $class;
         // Defensiv initialisieren, damit der foreach-Loop unten
         // auch dann nicht crasht, wenn der switch keinen Case für
         // $class trifft (z. B. MediaContent — wird heute von
@@ -96,8 +103,13 @@ class CommentRetrieve
             'comments.replies.user',
         ])->findOrFail($id);
 
-        foreach (config('project.comment') as $v => $k) {
-            $status[$v] = $k;
+        // Phase 5x.4: Status-Map aus dem Enum statt aus der alten
+        // config('project.comment'). Key ist der DB-Wert (String),
+        // Wert der Label-String — Frontend verlangt weiterhin
+        // ein Array-Format.
+        $status = [];
+        foreach (CommentStatus::cases() as $case) {
+            $status[$case->value] = $case->value;
         }
 
         foreach ($model->comments as $key => $value) {

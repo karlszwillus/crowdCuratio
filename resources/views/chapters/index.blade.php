@@ -201,15 +201,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                 </a>
 
                                 @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
-                                    <a href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Chapter', 'comment' => $chapter->id])}}"
-                                       title="{{ __('add_comment') }}"
-                                       class="addComment inline-flex size-11 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
-                                        @if(isset($chapter->comments) && count($chapter->comments) > 0)
-                                            <x-icon name="message-square-dot" size="4"/>
-                                        @else
-                                            <x-icon name="message-square" size="4"/>
-                                        @endif
-                                    </a>
+                                    <x-comment.trigger
+                                        commentableType="App\Models\Chapter"
+                                        :commentableId="$chapter->id"
+                                        :count="isset($chapter->comments) ? count($chapter->comments) : 0"
+                                    />
                                 @endif
 
                                 @if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
@@ -300,15 +296,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                         </a>
 
                                                         @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
-                                                            <a href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Entry', 'comment' => $entry->id])}}"
-                                                               title="{{ __('add_comment') }}"
-                                                               class="inline-flex size-11 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
-                                                                @if(isset($entry->comments) && count($entry->comments) > 0)
-                                                                    <x-icon name="message-square-dot" size="4"/>
-                                                                @else
-                                                                    <x-icon name="message-square" size="4"/>
-                                                                @endif
-                                                            </a>
+                                                            <x-comment.trigger
+                                                                commentableType="App\Models\Entry"
+                                                                :commentableId="$entry->id"
+                                                                :count="isset($entry->comments) ? count($entry->comments) : 0"
+                                                            />
                                                         @endif
 
                                                         @if(in_array('edit', $listPermissions) || Auth::user()->can('delete', $project))
@@ -367,14 +359,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                             @method('DELETE')
                                                                                             <a href="{{route('projects.edit',['project'=> $project, 'log'=> $item->text->id, 'model' => 'Text'])}}" title="{{ __('older_versions') }}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900"><x-icon name="rotate-ccw" size="4"/></a>
                                                                                             @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
-                                                                                                <span data-toggle="tooltip"
-                                                                                                      data-placement="top"
-                                                                                                      title="{{__('add_comment')}}"><a
-                                                                                                            href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Text', 'comment' => $item->text->id, 'type' => 'Text'])}}"> @if(isset($item->text->comments) && count($item->text->comments) > 0)
-                                                                                                            <x-icon name="message-square-dot" size="4"/> @else
-                                                                                                            <x-icon name="message-square" size="4"/>@endif
-																									</a></span>
-																							@endif
+                                                                                                <x-comment.trigger
+                                                                                                    commentableType="App\Models\Text"
+                                                                                                    :commentableId="$item->text->id"
+                                                                                                    :count="isset($item->text->comments) ? count($item->text->comments) : 0"
+                                                                                                />
+                                                                                            @endif
 
  																								@if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
                                                                                                 <button type="submit" onclick="return confirm('{{__('message_delete_confirm')}}')" title="{{__('delete_text')}}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-danger-bg hover:text-danger"><x-icon name="trash-2" size="4"/></button>
@@ -501,12 +491,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                            <a href="{{route('projects.edit',['project'=> $project, 'log'=> $item->audiovisual->id, 'model' => 'Audiovisual'])}}" title="{{ __('older_versions') }}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900"><x-icon name="rotate-ccw" size="4"/></a>
 
                                                                                             @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
-                                                                                                <span data-toggle="tooltip"
-                                                                                                      data-placement="top"
-                                                                                                      title="{{__('add_comment')}}"><a
-                                                                                                            href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Audiovisual', 'comment' => $item->audiovisual->id, 'type' => 'Audiovisual'])}}"> @if(isset($item->audiovisual->comments) && count($item->audiovisual->comments) > 0)
-                                                                                                            <x-icon name="message-square-dot" size="4"/> @else
-                                                                                                            <x-icon name="message-square" size="4"/> @endif </a></span>
+                                                                                                <x-comment.trigger
+                                                                                                    commentableType="App\Models\Audiovisual"
+                                                                                                    :commentableId="$item->audiovisual->id"
+                                                                                                    :count="isset($item->audiovisual->comments) ? count($item->audiovisual->comments) : 0"
+                                                                                                />
                                                                                             @endif
 
  																							@if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
@@ -576,12 +565,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                 <a href="{{route('projects.edit',['project'=> $project, 'log'=> $item->gallery->id, 'model' => 'Gallery'])}}" title="{{ __('older_versions') }}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900"><x-icon name="rotate-ccw" size="4"/></a>
 
                                                                                                 @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
-                                                                                                    <span data-toggle="tooltip"
-                                                                                                          data-placement="top"
-                                                                                                          title="{{__('add_comment')}}"><a
-                                                                                                                href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Gallery', 'comment' => $item->gallery->id, 'type'=> 'Gallery'])}}" > @if(isset($item->gallery->comments) && count($item->gallery->comments) > 0)
-                                                                                                                <x-icon name="message-square-dot" size="4"/> @else
-                                                                                                                <x-icon name="message-square" size="4"/> @endif </a></span>
+                                                                                                    <x-comment.trigger
+                                                                                                        commentableType="App\Models\Gallery"
+                                                                                                        :commentableId="$item->gallery->id"
+                                                                                                        :count="isset($item->gallery->comments) ? count($item->gallery->comments) : 0"
+                                                                                                    />
                                                                                                 @endif
 
  																								@if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
@@ -645,12 +633,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
 																									<a href="{{route('projects.edit',['project'=> $project, 'log'=> $image->id, 'model' => 'Image'])}}" title="{{ __('older_versions') }}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900"><x-icon name="rotate-ccw" size="4"/></a>
 
                                                                                                     @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
-                                                                                                        <span data-toggle="tooltip"
-                                                                                                              data-placement="top"
-                                                                                                              title="{{__('add_comment')}}"><a
-                                                                                                                    href="{{route('projects.edit', ['project'=> $project,'model'=> 'App\Models\Image', 'comment' => $image->id, 'type'=> 'Image'])}}"> @if(isset($image->comments) && count($image->comments) > 0)
-                                                                                                                    <x-icon name="message-square-dot" size="4"/> @else
-                                                                                                                    <x-icon name="message-square" size="4"/> @endif </a></span>
+                                                                                                        <x-comment.trigger
+                                                                                                            commentableType="App\Models\Image"
+                                                                                                            :commentableId="$image->id"
+                                                                                                            :count="isset($image->comments) ? count($image->comments) : 0"
+                                                                                                        />
                                                                                                     @endif
 
                                                                                                     @if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))

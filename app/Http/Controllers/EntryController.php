@@ -26,6 +26,7 @@ use App\Data\EntryData;
 use App\Http\Requests\StoreCommentRequest;
 use App\Http\Requests\StoreEntryRequest;
 use App\Http\Requests\UpdateEntryRequest;
+use App\Models\Comment;
 use App\Models\Entry;
 use App\Services\CommentRetrieve;
 use App\Services\CommentService;
@@ -197,6 +198,11 @@ class EntryController extends Controller
         $this->authorize('comment', $entry);
 
         if (isset($request['name']) && $request['name'] === 'edit') {
+            // Phase 5x.7: strikte Autor-Regel per CommentPolicy::update,
+            // analog ChapterController::saveComment.
+            $comment = Comment::findOrFail((int) $request['pk']);
+            $this->authorize('update', $comment);
+
             $this->comments->editComment((int) $request['pk'], (string) $request['value']);
 
             return redirect()->back()->with('success', 'Comment edited successfully');

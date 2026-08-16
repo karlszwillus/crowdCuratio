@@ -22,6 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 use App\Models\Comment;
 use App\Models\User;
+use App\Support\CommentStatus;
 use App\Support\PermissionName;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -101,7 +102,8 @@ it('setStatusProject setzt den Status eines bestehenden Comments', function () {
 
     $comment->refresh();
 
-    expect((int) $comment->status)->toBe(3);
+    // Legacy-Int 3 mappt via CommentStatusCast auf REJECTED (5x.4).
+    expect($comment->status)->toBe(CommentStatus::REJECTED);
 });
 
 // ---------- ChapterController ----------
@@ -268,7 +270,8 @@ it('setStatusEntry setzt den Status eines Comments', function () {
 
     $comment->refresh();
 
-    expect((int) $comment->status)->toBe(2);
+    // Legacy-Int 2 mappt via CommentStatusCast auf IN_PROGRESS (5x.4).
+    expect($comment->status)->toBe(CommentStatus::IN_PROGRESS);
 });
 
 // ---------- updateStatus (ContentController shared Endpoint) ----------
@@ -294,5 +297,6 @@ it('updateStatus per POST-Route setzt einen Comment-Status', function () {
 
     $comment->refresh();
 
-    expect($comment->status)->toBe(4);
+    // Legacy-Int 4 mappt via CommentStatusCast auf REJECTED (5x.4).
+    expect($comment->status)->toBe(CommentStatus::REJECTED);
 });
