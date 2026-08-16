@@ -686,15 +686,25 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                             }
                                                                                             if (!queue.length) return;
                                                                                             let pending = queue.length;
+                                                                                            const totalAtStart = queue.length;
+                                                                                            const uploadedIds = [];
                                                                                             for (const file of queue) {
                                                                                                 const ghostId = 'ghost-' + Math.random().toString(36).slice(2, 9);
                                                                                                 const previewUrl = URL.createObjectURL(file);
                                                                                                 const entry = { id: ghostId, name: file.name, previewUrl, progress: 0, status: 'uploading', xhr: null };
                                                                                                 this.uploads.push(entry);
-                                                                                                this.uploadOne(entry, file, () => {
+                                                                                                this.uploadOne(entry, file, (newId) => {
+                                                                                                    if (newId) uploadedIds.push(newId);
                                                                                                     pending -= 1;
                                                                                                     if (pending <= 0) {
-                                                                                                        setTimeout(() => { window.location.reload(); }, 600);
+                                                                                                        const url = new URL(window.location.href);
+                                                                                                        // 5y.9: bei genau einer erfolgreich hochgeladenen Datei
+                                                                                                        // die Detailzeile direkt oeffnen, damit der Nutzer
+                                                                                                        // Copyright/Quelle in einem Rutsch nachpflegt.
+                                                                                                        if (totalAtStart === 1 && uploadedIds.length === 1) {
+                                                                                                            url.searchParams.set('editImage', uploadedIds[0]);
+                                                                                                        }
+                                                                                                        setTimeout(() => { window.location.href = url.toString(); }, 600);
                                                                                                     }
                                                                                                 });
                                                                                             }
@@ -715,18 +725,24 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                 if (xhr.status >= 200 && xhr.status < 300) {
                                                                                                     entry.status = 'done';
                                                                                                     entry.progress = 100;
+                                                                                                    let newId = null;
+                                                                                                    try {
+                                                                                                        const payload = JSON.parse(xhr.responseText);
+                                                                                                        newId = payload && payload.image && payload.image.id ? payload.image.id : null;
+                                                                                                    } catch (e) { /* ignore */ }
+                                                                                                    done(newId);
                                                                                                 } else {
                                                                                                     entry.status = 'error';
                                                                                                     this.rejected.push({ name: entry.name, reason: '{{ __('gallery_rejected_reason_server') }}' });
                                                                                                     this.uploads = this.uploads.filter(u => u.id !== entry.id);
+                                                                                                    done(null);
                                                                                                 }
-                                                                                                done();
                                                                                             };
                                                                                             xhr.onerror = () => {
                                                                                                 entry.status = 'error';
                                                                                                 this.rejected.push({ name: entry.name, reason: '{{ __('gallery_rejected_reason_server') }}' });
                                                                                                 this.uploads = this.uploads.filter(u => u.id !== entry.id);
-                                                                                                done();
+                                                                                                done(null);
                                                                                             };
                                                                                             const fd = new FormData();
                                                                                             fd.append('file', file);
@@ -918,7 +934,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                     : Alpine.store('saveStatus')?.set?.('error'))
                                                                                                 .catch(() => Alpine.store('saveStatus')?.set?.('error'));
                                                                                         },
-                                                                                    }" x-init="initSortable(); window.addEventListener('saved', (e) => { if (e && e.detail && e.detail.model === 'Image') { hadEdits = true; } });">
+                                                                                    }" x-init="initSortable(); window.addEventListener('saved', (e) => { if (e && e.detail && e.detail.model === 'Image') { hadEdits = true; } }); { const params = new URLSearchParams(window.location.search); const editParam = params.get('editImage'); if (editParam) { const parsed = parseInt(editParam, 10); if (!isNaN(parsed)) { $nextTick(() => { editingImageId = parsed; setTimeout(() => focusFirstField(parsed), 100); }); } params.delete('editImage'); const clean = window.location.pathname + (params.toString() ? '?' + params.toString() : ''); window.history.replaceState({}, '', clean); } }">
                                                                                     <div
                                                                                         role="status"
                                                                                         aria-live="polite"
