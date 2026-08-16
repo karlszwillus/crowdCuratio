@@ -22,6 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Models;
 
+use App\Casts\CommentStatusCast;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -56,7 +57,30 @@ class Comment extends Model
 
     protected $dates = ['deleted_at'];
 
+    /**
+     * created_at/updated_at als datetime, status ueber den
+     * CommentStatusCast (Phase 5x.4 + Legacy-Toleranz):
+     * absorbiert alte Integer-Werte 1..5 waehrend des Wartungs-
+     * fensters, normalisiert im Schreibpfad auf String-Backing.
+     */
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'status' => CommentStatusCast::class,
+    ];
+
     public $translatable = ['comment'];
+
+    /**
+     * Root-Kommentar einer Antwort. Antworten erben den Status vom
+     * Root (Phase 5x.7 § 5), die /allComments-Uebersicht braucht die
+     * Relation, um in der Zeile den Root-Status statt des Antwort-
+     * eigenen Wertes zu zeigen.
+     */
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(Comment::class, 'parent_id');
+    }
 
     public function replies()
     {

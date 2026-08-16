@@ -21,136 +21,20 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
 @endsection
 @section('sidebar')
-    @if(isset($isComment) && $isComment == true)
-        @if(isset($comments['comment']) && count($comments['comment']) > 0)
-            @foreach($comments['comment'] as $key => $comment)
-                <div class="row mb-4 mt-4">
-                    <div class="form-group col-sm-8">
-                        @if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
-                            <label class="col-xs-6 control-label">{{$comment['user']}}</label>
-                            <livewire:comment-status-switcher
-                                :comment="$comment['model']"
-                                :project="$project"
-                                :key="'comment-status-'.$comment['id']"
-                            />
-                        @else
-                            {{$comment['user']}} <strong>{{$comment['status'][$comment['stat']]}}</strong>
-                        @endif
-                    </div>
-                    <div class="col-sm-4">
-                        {{$comment['created']}}
-                    </div>
-                    <div class="col-sm-12">
-                        @if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
-                            <livewire:comment-text-editor
-                                :comment="$comment['model']"
-                                :project="$project"
-                                :key="'comment-text-'.$comment['id']"
-                            />
-                        @else
-                            {{$comment['comment']}}
-                        @endif
-                    </div>
-                </div>
-                @if(isset($comment['replies']) && count($comment['replies']) > 0)
-                    @foreach($comment['replies'] as $keyReply => $reply)
-                        <div class="row mr-3 mt-2 mb-4 ml-auto w-11/12">
-                            <div class="col-sm-8">
-                                {{$reply['user']}}
-                            </div>
-                            <div class="col-sm-4">
-                                {{$reply['created']}}
-                            </div>
-                            <div class="col-sm-12">
-                                @if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
-                                    <livewire:comment-text-editor
-                                        :comment="$reply['model']"
-                                        :project="$project"
-                                        :key="'comment-text-reply-'.$reply['id']"
-                                    />
-                                @else
-                                    {{$reply['comment']}}
-                                @endif
-                            </div>
-                        </div>
-                    @endforeach
-                    @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
-                        <div class="row mr-3 mt-2 mb-4 ml-auto w-11/12">
-                            <a href="#reply_{{$comment['id']}}" class="enable-reply text-primary" id="{{$comment['id']}}">{{__('reply')}}</a>
-                            <form action="{{route($comment['path'], $comment['id'])}}" method="post" class="reply reply_{{$comment['id']}}" data-id="reply_{{$comment['id']}}">
-                                @csrf
-                                <input name="question" type="hidden" value="{{$comment['commentable_id']}}">
-                                <input name="commentId" type="hidden" id="commentIdReply" value="{{$comment['id']}}">
-                                <input name="projectId" type="hidden" id="IdProjectComment" value="{{$project->id}}">
-                                <div class="col-xs-12 mt-7">
-                                    <textarea id="{{$comment['id']}}" name="reply" class="form-control mb-3 enable-textarea"
-                                              placeholder="{{__('leave_comment')}}" ></textarea>
-                                </div>
-                                <div class="col-xs-12">
-                                    <button name="btn_submit" value="reply" id="commentProjectId_{{$comment['id']}}" type="submit" class="btn btn-primary float-right reply-comment" disabled>{{__('save')}}</button>
-                                </div>
-                            </form>
-                        </div>
-                    @endif
-                @else
-                    @if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
-                        <div class="row mr-3 mt-2 mb-4 ml-auto w-11/12">
-                            <a href="#reply_{{$comment['id']}}" class="enable-reply text-primary" id="{{$comment['id']}}">{{__('reply')}}</a>
-                            <form id="frmComment" action="{{route($comment['path'], $comment['id'])}}" method="post" class="reply reply_{{$comment['id']}}" data-id="reply_{{$comment['id']}}">
-                                @csrf
-                                <input name="question" type="hidden" value="{{$comment['commentable_id']}}">
-                                <input name="commentId" type="hidden" id="commentIdReply" value="{{$comment['id']}}">
-                                <input name="projectId" type="hidden" id="IdProjectComment" value="{{$project->id}}">
-                                <div class="col-xs-12 mt-7">
-                                    <textarea id="{{$comment['id']}}" name="reply" class="form-control mb-3 enable-textarea"
-                                              placeholder="{{__('leave_comment')}}"></textarea>
-                                </div>
-                                <div class="col-xs-12">
-                                    <button name="btn_submit" value="reply" id="commentProjectId_{{$comment['id']}}" type="submit" class="btn btn-primary float-right reply-comment" disabled>{{__('save')}}</button>
-                                </div>
-                            </form>
-                        </div>
-                    @endif
-                @endif
+    {{-- Phase 5x.1 + 5x.9: das Kommentar-Panel ist immer im DOM. Der
+         Inhalt ist eine Livewire-Komponente, die auf `comment-panel:load`
+         hoert und die Kommentare fuer den aktiven Block per
+         `CommentRetrieve` nachlaedt. Die Kommentar-Icons in der Editor-
+         Struktur feuern das Event `panel:load-and-open` — Panel und
+         Livewire-Liste reagieren gleichzeitig. Der frueher noetige
+         Full-Page-Reload zu `?comment=…` faellt damit weg. --}}
+    <x-layout.comment-panel>
+        <livewire:comment-panel-list :projectId="$project->id" />
+    </x-layout.comment-panel>
 
-            @endforeach
-            @if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
-                <div class="comment">
-                    <form id="frmComment" action="{{route($comments['pathComment'])}}" method="post">
-                        @csrf
-                        <input name="commentId" type="hidden" >
-                        <input name="id" type="hidden" value="{{$comments['id']}}">
-                        <input name="IdProjectComment" type="hidden" value="{{$project->id}}">
-                        <div class="col-xs-12 mt-7">
-                                    <textarea id="{{$comments['id']}}" name="comment" class="form-control mb-3 enable-textarea"
-                                              placeholder="{{__('leave_comment')}}"></textarea>
-                        </div>
-                        <div class="col-xs-12">
-                            <button id="commentProjectId_{{$comments['id']}}" type="submit" class="btn btn-primary float-right reply-comment" disabled>{{__('save')}}</button>
-                        </div>
-                    </form>
-                </div>
-            @endif
-        @else
-            @if(in_array('edit', $listPermissions) || Auth::user()->can('update', $project))
-                <div class="comment">
-                    <form id="frmComment" action="{{route($comments['pathComment'])}}" method="post">
-                        @csrf
-                        <input name="commentId" type="hidden" >
-                        <input name="id" type="hidden" value="{{$comments['id']}}">
-                        <input name="IdProjectComment" type="hidden" value="{{$project->id}}">
-                        <div class="col-xs-12 mt-7">
-                                    <textarea id="{{$comments['id']}}" name="comment" class="form-control mb-3 enable-textarea"
-                                              placeholder="{{__('leave_comment')}}"></textarea>
-                        </div>
-                        <div class="col-xs-12">
-                            <button id="commentProjectId_{{$comments['id']}}" type="submit" class="btn btn-primary float-right reply-comment" disabled>{{__('save')}}</button>
-                        </div>
-                    </form>
-                </div>
-            @endif
-        @endif
-    @endif
+    {{-- Version-Log bleibt bewusst ausserhalb des Panels — er ist keine
+         Kommentar-UI, sondern ein separates Historien-Widget. Wird im
+         5-D.5-Editor-Chrome-Refactor voraussichtlich zum History-Drawer. --}}
     <div class="card p-4 mb-4 mt-4">
         <div class="row versions">
            {{-- <span class="ml-3">{{__('version')}}</span> --}}

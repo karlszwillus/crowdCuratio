@@ -38,6 +38,18 @@
     display: none !important;
 }
 
+/*
+ * Shadow-Utilities aus den Design-Tokens (tokens.css). Die Werte sind
+ * durchgestimmt fuer die App-Chrome-Hoehe: `subtle` fuer Karten in
+ * Ruhe, `medium` fuer Hover/Aktiv, `floating` fuer Slide-outs und
+ * Drawer, `popover` fuer Menues und Chips.
+ */
+.shadow-subtle   { box-shadow: var(--shadow-subtle); }
+.shadow-medium   { box-shadow: var(--shadow-medium); }
+.shadow-strong   { box-shadow: var(--shadow-strong); }
+.shadow-floating { box-shadow: var(--shadow-floating); }
+.shadow-popover  { box-shadow: var(--shadow-popover); }
+
 /* Scroll-Offset fuer sticky Editor-Chrome-Bar. Ohne diesen Wert
  * springt der Browser bei Anchor-Links direkt an die Anker-
  * Oberkante — und die sticky Bar (Breadcrumb + Segmented Control)
