@@ -36,6 +36,7 @@ use App\Models\Source;
 use App\Models\Text;
 use App\Services\CommentRetrieve;
 use App\Services\CommentService;
+use App\Services\ContentReorderService;
 use App\Services\GalleryService;
 use App\Services\ImageService;
 use App\Services\TextService;
@@ -58,8 +59,30 @@ class ContentController extends Controller
         private readonly TextService $texts,
         private readonly ImageService $images,
         private readonly GalleryService $galleries,
+        private readonly ContentReorderService $reorder,
     ) {
         $this->middleware('auth');
+    }
+
+    /**
+     * Phase 5y.6: Bild-Reihenfolge innerhalb einer Galerie speichern.
+     * Erwartet einen `ids`-Payload mit der neuen Reihenfolge; die
+     * Positionen werden von 1 hochgezaehlt.
+     */
+    public function reorderImages(Request $request, Gallery $gallery): JsonResponse
+    {
+        // Project-scoped Gate — die Galerie muss beschrieben werden
+        // koennen, damit die Reihenfolge geaendert werden darf.
+        $this->authorize('update', $gallery);
+
+        $ids = $request->input('ids', []);
+        if (! is_array($ids)) {
+            $ids = [];
+        }
+
+        $this->reorder->reorderImages($gallery->id, $ids);
+
+        return response()->json(['ok' => true]);
     }
 
     /**

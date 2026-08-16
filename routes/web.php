@@ -113,6 +113,9 @@ Route::group(
             'resend.invitation'
         );
         Route::post('/image/store', [ContentController::class, 'saveImage'])->name('image.store');
+        // Phase 5y.6: Bild-Sortierung innerhalb einer Galerie.
+        Route::post('/gallery/{gallery}/images/reorder', [ContentController::class, 'reorderImages'])
+            ->name('gallery.images.reorder');
         Route::get('/edit/{id}/image', [ContentController::class, 'editImage'])->name(
             'image.edit'
         );

@@ -639,14 +639,48 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                          § 5). Papierkorb-Kaskade aus der alten Meta-Reihe unter der Kachel
                                                                                          entfaellt komplett — Bild entfernen sitzt jetzt als Overlay unten
                                                                                          auf der Kachel (permanent Touch, hover/focus Desktop). --}}
-                                                                                    <div x-data="{ editingImageId: null }">
+                                                                                    <div x-data="{
+                                                                                        editingImageId: null,
+                                                                                        reorderUrl: '{{ route("gallery.images.reorder", $item->gallery->id) }}',
+                                                                                        initSortable() {
+                                                                                            const grid = this.$refs.grid;
+                                                                                            if (!grid || typeof Sortable === 'undefined') return;
+                                                                                            Sortable.create(grid, {
+                                                                                                handle: '.gallery-drag-handle',
+                                                                                                animation: 150,
+                                                                                                ghostClass: 'opacity-40',
+                                                                                                onEnd: () => this.persistOrder(),
+                                                                                            });
+                                                                                        },
+                                                                                        persistOrder() {
+                                                                                            const ids = Array.from(this.$refs.grid.children)
+                                                                                                .map(el => el.dataset.imageId)
+                                                                                                .filter(Boolean);
+                                                                                            const token = document.querySelector('meta[name=csrf-token]')?.content;
+                                                                                            Alpine.store('saveStatus')?.set?.('saving');
+                                                                                            fetch(this.reorderUrl, {
+                                                                                                method: 'POST',
+                                                                                                headers: {
+                                                                                                    'X-CSRF-TOKEN': token,
+                                                                                                    'Content-Type': 'application/json',
+                                                                                                    'Accept': 'application/json',
+                                                                                                },
+                                                                                                body: JSON.stringify({ ids }),
+                                                                                            })
+                                                                                                .then(r => r.ok
+                                                                                                    ? Alpine.store('saveStatus')?.set?.('saved')
+                                                                                                    : Alpine.store('saveStatus')?.set?.('error'))
+                                                                                                .catch(() => Alpine.store('saveStatus')?.set?.('error'));
+                                                                                        },
+                                                                                    }" x-init="initSortable()">
 
                                                                                         {{-- Raster --}}
                                                                                         <div x-show="editingImageId === null"
+                                                                                             x-ref="grid"
                                                                                              class="mt-4 grid gap-[14px]"
                                                                                              style="grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));">
                                                                                             @foreach($item->gallery->images as $image)
-                                                                                                <div class="gallery_item group relative" id="gallery_items_{{$item->gallery->id}}">
+                                                                                                <div class="gallery_item group relative" id="gallery_items_{{$item->gallery->id}}" data-image-id="{{ $image->id }}">
                                                                                                     <div id="anchor_MediaContent_{{$item->id}}"
                                                                                                          class="relative flex aspect-video items-center justify-center overflow-hidden rounded-md bg-line-100">
                                                                                                         <img
@@ -656,7 +690,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                             loading="lazy"
                                                                                                         />
                                                                                                         <span
-                                                                                                            class="absolute left-1.5 top-1.5 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-caption font-semibold text-white"
+                                                                                                            class="gallery-drag-handle absolute left-1.5 top-1.5 inline-flex cursor-grab items-center gap-1 rounded px-1.5 py-0.5 text-caption font-semibold text-white active:cursor-grabbing"
                                                                                                             style="background-color: rgba(27,35,48,.78);"
                                                                                                             aria-label="{{ __('gallery_position') }} {{ $loop->iteration }}"
                                                                                                         >
