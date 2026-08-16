@@ -434,6 +434,15 @@ Angaben vollständig, erscheint eine grüne
 Angaben." Der HTML-Export-Button bleibt in beiden Fällen
 freigeschaltet — das Ziel ist Bewusstsein, nicht Blockade.
 
+Die Audio- und Video-Blöcke ziehen mit: Versionen, Kommentar
+und Löschen wandern aus der Fuß-Zeile in den Blockkopf-
+Aktions-Slot, damit die Anatomie gleich der Galerie ist. Die
+alte Fuß-Zeile schrumpft auf einen Angaben-Status („✓
+Angaben vollständig" oder „⚠ Urheberrecht/Quelle fehlt")
+plus Speicherdatum. Die Publish-Prüfung im Vorschau-Modal
+listet Audio-/Video-Blöcke mit fehlendem Urheberrecht oder
+fehlender Quelle jetzt namentlich neben den Bildern.
+
 Nebenbei: Tab-Label „permissions" in der Editor-Segmented-
 Control ist jetzt „Berechtigungen".
 
