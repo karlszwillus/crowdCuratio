@@ -1386,7 +1386,10 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     foreach ($data->chapters as $publishCheckChapter) {
                         foreach ($publishCheckChapter->entries as $publishCheckEntry) {
                             foreach ($publishCheckEntry->mediaContent as $publishCheckMc) {
-                                if (isset($publishCheckMc->gallery)) {
+                                // MediaContent::gallery/audiovisual sind polymorph ueber content_id
+                                // aufgeloest — ohne content_type-Filter greift die Relation auch
+                                // in fremde Projekte. Bug in 5y.10, gefixt in 5y.10-Followup.
+                                if ($publishCheckMc->content_type === \App\Models\Gallery::class && isset($publishCheckMc->gallery)) {
                                     foreach ($publishCheckMc->gallery->images as $publishCheckImage) {
                                         $publishCheckFields = collect([
                                             empty(trim(strip_tags((string) $publishCheckImage->description))) ? __('publish_check_field_description') : null,
@@ -1401,7 +1404,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                         }
                                     }
                                 }
-                                if (isset($publishCheckMc->audiovisual) && ! empty($publishCheckMc->audiovisual->link)) {
+                                if ($publishCheckMc->content_type === \App\Models\Audiovisual::class && isset($publishCheckMc->audiovisual) && ! empty($publishCheckMc->audiovisual->link)) {
                                     $publishCheckAv = $publishCheckMc->audiovisual;
                                     $publishCheckAvFields = collect([
                                         empty(trim(strip_tags((string) $publishCheckAv->copyright))) ? __('publish_check_field_copyright') : null,
