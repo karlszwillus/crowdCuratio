@@ -52,6 +52,11 @@ function ensureBanner() {
 }
 
 function enterDiffMode(subjectType, subjectId, fields) {
+    // Immer erst alle bestehenden Overlays und Locks entfernen, bevor
+    // die neue Fassung reinkommt. Sonst summieren sich die Diffs zweier
+    // hintereinander angeklickter Fassungen visuell — Karl hat das im
+    // Panel als „additives" Verhalten gemeldet.
+    clearDiffState();
     document.documentElement.dataset.historyDiff = 'on';
     ensureBanner();
 
@@ -77,9 +82,11 @@ function enterDiffMode(subjectType, subjectId, fields) {
     });
 }
 
-function exitDiffMode() {
-    delete document.documentElement.dataset.historyDiff;
-    document.getElementById(BANNER_ID)?.remove();
+/**
+ * Overlays und Locks abraeumen — ohne Banner und Root-Flag anzufassen.
+ * enterDiffMode ruft das VOR dem naechsten Fassungs-Rendering.
+ */
+function clearDiffState() {
     document
         .querySelectorAll('[data-history-field][data-history-diff-active="on"]')
         .forEach((target) => {
@@ -90,6 +97,12 @@ function exitDiffMode() {
     document.querySelectorAll('[data-history-lock="on"]').forEach((block) => {
         block.removeAttribute('data-history-lock');
     });
+}
+
+function exitDiffMode() {
+    delete document.documentElement.dataset.historyDiff;
+    document.getElementById(BANNER_ID)?.remove();
+    clearDiffState();
 }
 
 // Livewire dispatched das Event ueber das window-Objekt.
