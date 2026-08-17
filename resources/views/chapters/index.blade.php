@@ -156,12 +156,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
             @foreach($data->chapters as $key => $chapter)
                 @php
                     // Design v6 § 2 (uebersetzt auf 5e-Vokabular): Kapitel als Klammer.
-                    // Der 3-px-Rail links laeuft ueber die ganze Kapitelgruppe; leere
-                    // Kapitel bekommen ihn in Neutral-Grau, gefuellte in brand-bar.
+                    // Alle Kapitel ruhen in line-200; nur das aktuell bearbeitete
+                    // wechselt auf brand-bar. „Aktuell" heisst hier: irgendwo im
+                    // Kapitel liegt der Tastatur-/Maus-Fokus (focus-within).
                     $chapterEntryCount = isset($chapter->entries) ? count($chapter->entries) : 0;
-                    $chapterRailColor = $chapterEntryCount > 0 ? 'border-brand-bar' : 'border-line-200';
                 @endphp
-                <li class="chapter group border-l-[3px] {{ $chapterRailColor }} pl-4" data-chapter="{{$chapter->id}}" data-project="{{$project->id}}" id="{{$chapter->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
+                <li class="chapter group border-l-[3px] border-line-200 focus-within:border-brand-bar pl-4 transition-colors" data-chapter="{{$chapter->id}}" data-project="{{$project->id}}" id="{{$chapter->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
                     {{-- Kapitel = Klammer (Design v6 § 2, in 5e-Vokabular).
                          Rail links über die ganze Gruppe; Titel + Untertitel
                          + Description sitzen offen auf dem Canvas. Der
