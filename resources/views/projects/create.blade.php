@@ -50,99 +50,176 @@ If not, see <https://www.gnu.org/licenses/>. -->
             </ul>
         </div>
     @endif
+    <p class="mb-4 text-caption text-ink-500">{{ __('metadata_page_hint') }}</p>
+
     <form id="frm_project" name="projectForm"
           action="@if(isset($project->id)) {{ route('projects.update',$project->id) }} @else {{ route('projects.store') }} @endif"
           method="POST"
-          enctype="multipart/form-data">
-    <div class="card p-4 mb-4">
-        <div class="row">
-            <div class="col-sm-11">
-                    @csrf
-                    @if(isset($project->id))
-                        @method('PUT')
-                    @endif
-                    <div class="form-group mx-sm-3 mb-2 col-sm-5">
-                        <label for="inputProject">{{__('project_name')}} <span
-                                    style="color: red">{{__('label_mandatory')}}</span></label>
-                        <input name="name" type="text" class="form-control" placeholder="Add name"
-                               value="@if(isset($project->name)) {{$project->name}} @else {{old('name')}} @endif" autocomplete="off">
+          enctype="multipart/form-data"
+          x-data="{ nameLen: @js(isset($project->name) ? mb_strlen((string) $project->name) : 0) }">
+        @csrf
+        @if(isset($project->id))
+            @method('PUT')
+        @endif
+
+        {{-- 5aa.2 § 3: Projektname. Jedes Feld eine Karte, ein Label,
+             Sternchen in danger direkt am Label, kein „* (Pflichtfeld)". --}}
+        <div class="mb-4 rounded-md border border-line-200 bg-paper-0 p-5">
+            <label for="inputProjectName" class="mb-1 block text-caption font-semibold text-ink-700">
+                {{ __('project_name') }} <span class="text-danger" aria-hidden="true">*</span>
+            </label>
+            <p class="mb-2 text-caption text-ink-500">{{ __('metadata_field_name_hint') }}</p>
+            <div class="flex flex-wrap items-center gap-3">
+                <input id="inputProjectName"
+                       name="name"
+                       type="text"
+                       maxlength="80"
+                       required
+                       autocomplete="off"
+                       @input="nameLen = $event.target.value.length"
+                       value="@if(isset($project->name)){{$project->name}}@else{{old('name')}}@endif"
+                       class="w-full max-w-lg rounded-md border border-line-200 bg-canvas-bg px-3 py-2 text-body text-ink-900 focus:border-primary focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-primary"/>
+                <span class="text-caption font-mono text-ink-500"
+                      x-text="`${nameLen} / 80`">
+                </span>
+            </div>
+        </div>
+
+        {{-- Projektbild: eigene Vorschau + Datei-Meta, kein natives Browser-Label
+             (Design v6 § 3: „DurchsuchenChoose File No file chosen" ist doppelt
+             lokalisierte Browser-Zeichenkette und darf nicht im UI stehen). --}}
+        <div class="mb-4 rounded-md border border-line-200 bg-paper-0 p-5"
+             x-data="{
+                 file: null,
+                 preview: @js(isset($project->logo) ? route('image', $project->logo) : null),
+                 fileName: @js($project->logo ?? null),
+                 removed: false,
+                 pickFile(event) {
+                     const file = event.target.files[0];
+                     if (!file) return;
+                     this.file = file;
+                     this.fileName = file.name;
+                     this.removed = false;
+                     const reader = new FileReader();
+                     reader.onload = (e) => { this.preview = e.target.result; };
+                     reader.readAsDataURL(file);
+                 },
+                 remove() {
+                     this.file = null;
+                     this.preview = null;
+                     this.fileName = null;
+                     this.removed = true;
+                     this.$refs.input.value = '';
+                 },
+             }">
+            <label class="mb-1 block text-caption font-semibold text-ink-700">
+                {{ __('project_thumbnail') }}
+                <span class="text-caption font-normal text-ink-500">{{ __('label_optional') }}</span>
+            </label>
+            <p class="mb-3 text-caption text-ink-500">{{ __('metadata_field_thumbnail_hint') }}</p>
+
+            <div class="flex flex-wrap items-start gap-4">
+                <div class="relative flex shrink-0 items-center justify-center overflow-hidden rounded-md bg-line-100"
+                     style="width: 120px; height: 120px;">
+                    <template x-if="preview">
+                        <img :src="preview" alt="" class="max-h-full max-w-full object-cover"/>
+                    </template>
+                    <template x-if="! preview">
+                        <x-icon name="image" size="6"/>
+                    </template>
+                </div>
+
+                <div class="flex min-w-0 flex-1 flex-col gap-2">
+                    <p class="truncate text-body text-ink-900" x-text="fileName || '—'"></p>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <label class="cursor-pointer rounded-md border border-line-200 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-chrome-active focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary">
+                            <span x-text="fileName ? '{{ __('metadata_field_thumbnail_replace') }}' : '{{ __('metadata_field_thumbnail_choose') }}'"></span>
+                            <input x-ref="input" type="file" name="project_image" accept="image/*"
+                                   @change="pickFile($event)"
+                                   class="sr-only"/>
+                        </label>
+                        <button type="button" x-show="fileName" @click="remove()"
+                                class="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-caption text-danger hover:bg-danger-bg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger">
+                            <x-icon name="trash-2" size="3"/>
+                            <span>{{ __('metadata_field_thumbnail_remove') }}</span>
+                        </button>
                     </div>
-            </div>
-
-        </div>
-    </div>
-    <div class="card p-4 mb-4">
-        <div class="row">
-            <div class="col-sm-9">
-                <div class="form-group mx-sm-3 mb-2 col-sm-10">
-                    <p for="inputProject">{{__('project_thumbnail')}} {{__('label_optional')}}</p>
-                    <p for="thumbnail">{{__('add_project_thumbnail')}}</p>
-                    <div class="form-group">
-                        <label>200px x 200px</label>
-                        <div class="input-group">
-                    <span class="input-group-btn">
-                        <span class="btn btn-default btn-file">
-                            <x-icon name="folder" class="m-2" />{{__('browse')}} <input value="{{old('project_image')}}"
-                                                                                    name="project_image" type="file"
-                                                                                    id="imgInp">
-                        </span>
-                    </span>
-                            <input name="logo" value="@if(isset($project->logo)) {{$project->logo}} @else {{old('logo')}} @endif" type="text" class="form-control border-0"
-                                   style="background-color: white"
-                                   readonly>
-
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-            <div class="col-sm-2">
-                </br>
-
-                <img id='img-upload' src="@if(isset($project->logo)){{route('image', $project->logo)}} @endif"/>
-
-            </div>
-
-        </div>
-    </div>
-
-    <hr class="mt-5 mb-5">
-
-    <div class="card p-4 mb-4">
-        <div class="row">
-            <div class="col-sm-11">
-                <div class="form-group mx-sm-12 mb-2 col-sm-12">
-                    <label >{{__('description')}} </label>
-                    <div id="descriptionId"></div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-    <div class="card p-4 mb-4">
-        <div class="row">
-            <div class="col-sm-11">
-                <div class="form-group mx-sm-12 mb-2 col-sm-12">
-                    <label for="inputProject">{{__('project_imprint')}} <span
-                                style="color: red">{{__('label_mandatory')}}</span></label>
-                    <div id="imprintId"></div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-    <div class="card p-4 mb-4">
-        <div class="row">
-            <div class="col-sm-11">
-                <div class="form-group mx-sm-12 mb-2 col-sm-12">
-                    <label for="inputProject">{{__('project_terms')}} {{__('label_optional')}}</label>
-                    <div id="termsId"></div>
+                    <input type="hidden" name="logo"
+                           :value="removed ? '' : @js($project->logo ?? '')"/>
                 </div>
             </div>
         </div>
-    </div>
+
+        {{-- Beschreibung — Quill-Editor bleibt im bestehenden #descriptionId. --}}
+        <div class="mb-4 rounded-md border border-line-200 bg-paper-0 p-5">
+            <label class="mb-1 block text-caption font-semibold text-ink-700">{{ __('description') }}</label>
+            <div id="descriptionId" class="rounded-md border border-line-200 bg-canvas-bg"></div>
+        </div>
+
+        {{-- Impressum — Systemtext-Übernahme prominent. --}}
+        <div class="mb-4 rounded-md border border-line-200 bg-paper-0 p-5"
+             x-data="{ syncFromSystem() { alert('{{ __('metadata_use_system_text') }}: {{ __('feature_not_yet') }}'); } }">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <label class="mb-1 block text-caption font-semibold text-ink-700">
+                        {{ __('project_imprint') }} <span class="text-danger" aria-hidden="true">*</span>
+                    </label>
+                    <p class="mb-3 text-caption text-ink-500">{{ __('metadata_imprint_intro') }}</p>
+                </div>
+                <button type="button" @click="syncFromSystem()"
+                        class="inline-flex items-center gap-1 rounded-md border border-line-200 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-chrome-active focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                    <x-icon name="corner-down-left" size="3"/>
+                    <span>{{ __('metadata_use_system_text') }}</span>
+                </button>
+            </div>
+            <div id="imprintId" class="rounded-md border border-line-200 bg-canvas-bg"></div>
+        </div>
+
+        {{-- Geschäftsbedingungen — analog zum Impressum. --}}
+        <div class="mb-4 rounded-md border border-line-200 bg-paper-0 p-5"
+             x-data="{ syncFromSystem() { alert('{{ __('metadata_use_system_text') }}: {{ __('feature_not_yet') }}'); } }">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                    <label class="mb-1 block text-caption font-semibold text-ink-700">
+                        {{ __('project_terms') }}
+                        <span class="text-caption font-normal text-ink-500">{{ __('label_optional') }}</span>
+                    </label>
+                    <p class="mb-3 text-caption text-ink-500">{{ __('metadata_terms_intro') }}</p>
+                </div>
+                <button type="button" @click="syncFromSystem()"
+                        class="inline-flex items-center gap-1 rounded-md border border-line-200 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-chrome-active focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                    <x-icon name="corner-down-left" size="3"/>
+                    <span>{{ __('metadata_use_system_text') }}</span>
+                </button>
+            </div>
+            <div id="termsId" class="rounded-md border border-line-200 bg-canvas-bg"></div>
+        </div>
+
+        {{-- Klebende Speicher-Fußzeile am Seitenende — Design v6 § 3.
+             Ein Primär-Button, ein sekundärer, Speicherstand links. --}}
+        <div class="sticky bottom-0 -mx-4 mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-line-200 bg-paper-0/95 px-6 py-3 shadow-medium backdrop-blur">
+            <p class="text-caption text-ink-500">
+                @isset($project->updated_at)
+                    {{ __('metadata_footer_last_saved') }}
+                    {{ $project->updated_at->format('d.m.Y, H:i') }}
+                @else
+                    {{ __('metadata_page_hint') }}
+                @endisset
+            </p>
+            <div class="flex items-center gap-2">
+                @isset($project->id)
+                    <a href="{{ route('projects.edit', $project->id) }}"
+                       class="inline-flex items-center gap-1 rounded-md border border-line-200 bg-canvas-bg px-3 py-2 text-body text-ink-900 hover:bg-chrome-active focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                        {{ __('metadata_footer_discard') }}
+                    </a>
+                @endisset
+                <button type="submit"
+                        class="inline-flex items-center gap-1 rounded-md bg-primary px-4 py-2 text-body font-medium text-primary-on hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                    <x-icon name="save" size="4"/>
+                    <span>{{ __('save') }}</span>
+                </button>
+            </div>
+        </div>
     </form>
 @endsection
 @section('action')
@@ -168,35 +245,39 @@ If not, see <https://www.gnu.org/licenses/>. -->
     </div>
 @endsection
 @section('sidebar')
-    <button id="btn_save" class="btn btn-secondary btn-lg btn-block text-left" type="submit" name="btn_submit"
-            value="Save"><x-icon name="file-earmark" class="m-2" />@if(isset($project->id)) {{__('save')}} @else {{__('save')}} @endif
-    </button>
+    {{-- 5aa.2 § 3: Rechte Spalte trägt Prüfung, Kennzahlen, Verlauf und
+         Löschen. Speichern liegt in der klebenden Fußzeile, „Berechtigungen"
+         und „Zurück zu Projektdetails" sind Tabs — hier daher nicht mehr. --}}
     @if(isset($project->id))
-    <a class="btn btn-secondary btn-lg btn-block text-left" href="{{ route('projects.edit', $project->id) }}"> {{__('content')}}
-    </a>
-    @endif
-    @if(isset($project->id))
-        @if(Auth::user()->id == $project->user_id || Auth::user()->isAdmin() || in_array('invite', $listPermissions))
-            {{-- Phase 5d.4: die alte Permission-Card und alle drei
-                 Legacy-Modals sind in die Sicht
-                 /projects/{id}/permissions gewandert (Screen 3B,
-                 Handoff v4). --}}
-            <a href="{{ route('projects.permissions', $project->id) }}"
-               class="btn btn-secondary btn-lg btn-block text-left mt-4">
-                <x-icon name="users" class="m-2"/>
-                {{ __('permissions') }}
+        <div class="flex flex-col gap-3">
+            <a href="#publish-check"
+               class="inline-flex items-center gap-2 rounded-md border border-line-200 bg-paper-0 px-3 py-2 text-body text-ink-900 hover:bg-chrome-active focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                <x-icon name="clipboard-check" size="4"/>
+                <span>{{ __('metadata_sidebar_publish_check') }}</span>
             </a>
-        @endif
-
-    {{-- Phase-5-Backlog-Sammler (2026-08-16, #52):
-         Die Legacy-Invite-Modals `newUserInvitation` und `newUser`
-         sind endgueltig raus. Der Session-basierte Zwei-Schritt-Flow
-         (Session::get('error_code') 6/7) ist mit der Volt-Component
-         `<livewire:project-permissions>` (Screen 3B, 5d.4) und dem
-         Register-Reader-Default (5d.7) abgeloest. Der check.email-
-         Endpoint selbst bleibt vorerst als Route stehen und wird in
-         einem Route-Cleanup-Ticket entfernt. --}}
-
+            <div class="rounded-md border border-line-200 bg-paper-0 px-3 py-2 text-body text-ink-500">
+                <p class="mb-1 text-caption font-semibold uppercase tracking-wider text-ink-700">
+                    {{ __('metadata_sidebar_stats') }}
+                </p>
+                <p>{{ trans_choice('n_chapters', isset($project->chapters) ? count($project->chapters) : 0) }}</p>
+            </div>
+            <a href="{{ route('projects.edit', $project->id) }}#history"
+               class="inline-flex items-center gap-2 rounded-md border border-line-200 bg-paper-0 px-3 py-2 text-body text-ink-900 hover:bg-chrome-active focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                <x-icon name="history" size="4"/>
+                <span>{{ __('metadata_sidebar_history') }}</span>
+            </a>
+        </div>
+        {{-- Löschen bewusst ausserhalb der Speicher-Fusszeile. --}}
+        <form action="{{ route('projects.destroy', $project->id) }}" method="POST" class="mt-4">
+            @csrf
+            @method('DELETE')
+            <button type="submit"
+                    onclick="return confirm('{{__('message_delete_confirm')}}')"
+                    class="inline-flex w-full items-center gap-2 rounded-md border border-danger-bg bg-transparent px-3 py-2 text-body text-danger hover:bg-danger-bg/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger">
+                <x-icon name="trash-2" size="4"/>
+                <span>{{ __('delete_project') }}</span>
+            </button>
+        </form>
     @endif
 @endsection
 @push('scripts')
