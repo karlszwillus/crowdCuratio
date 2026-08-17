@@ -154,17 +154,29 @@ If not, see <https://www.gnu.org/licenses/>. -->
         </div>
         <ul class="list-group ui-sortable-chapter sortable_list_chapter connectedSortableChapter" id="groupsList" data-reorder-element="chapter" data-reorder-url="{{ route('chapter.drag') }}" data-reorder-project="{{ $project->id }}">
             @foreach($data->chapters as $key => $chapter)
-                <li class="chapter group" data-chapter="{{$chapter->id}}" data-project="{{$project->id}}" id="{{$chapter->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
-                    {{-- Kapitel = Zone, keine Karte (Handoff v4 § P1.2).
-                         Kein Background, kein Border. Titel + Untertitel
-                         + Description sitzen offen auf dem Canvas; nur
-                         Entry und Block-Cards tragen Rahmen. Ein
-                         horizontaler Trenner unter der Kapitel-
-                         Beschreibung markiert den Uebergang zu den
-                         Entries. --}}
+                @php
+                    // Design v6 § 2 (uebersetzt auf 5e-Vokabular): Kapitel als Klammer.
+                    // Der 3-px-Rail links laeuft ueber die ganze Kapitelgruppe; leere
+                    // Kapitel bekommen ihn in Neutral-Grau, gefuellte in brand-bar.
+                    $chapterEntryCount = isset($chapter->entries) ? count($chapter->entries) : 0;
+                    $chapterRailColor = $chapterEntryCount > 0 ? 'border-brand-bar' : 'border-line-200';
+                @endphp
+                <li class="chapter group border-l-[3px] {{ $chapterRailColor }} pl-4" data-chapter="{{$chapter->id}}" data-project="{{$project->id}}" id="{{$chapter->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
+                    {{-- Kapitel = Klammer (Design v6 § 2, in 5e-Vokabular).
+                         Rail links über die ganze Gruppe; Titel + Untertitel
+                         + Description sitzen offen auf dem Canvas. Der
+                         Kapitel-Chip nennt Nummer und Abschnittsanzahl,
+                         Aktionen sitzen im ⋯-Menü der Titelzeile. --}}
                     <div id="{{$chapter->id}}" class="mb-10">
                         <header class="mb-4 flex items-start justify-between gap-4">
                             <div class="min-w-0 flex-1" id="anchor_Chapter_{{$chapter->id}}">
+                                {{-- Kapitel-Chip: Mono-Caps Nummer + Abschnitts-Zaehler. --}}
+                                <div class="mb-2 inline-flex items-center gap-2 rounded-md bg-line-100 px-2 py-0.5 text-caption font-semibold uppercase tracking-wider text-ink-700">
+                                    <x-icon name="square" size="3"/>
+                                    <span>{{ __('chapter_chip_label') }} {{ $loop->iteration }}</span>
+                                    <span class="text-ink-500">·</span>
+                                    <span class="text-ink-500">{{ trans_choice('chapter_chip_entries', $chapterEntryCount, ['count' => $chapterEntryCount]) }}</span>
+                                </div>
                                 @can('update', $project)
                                     <livewire:inline-editor
                                         :model="$chapter"
@@ -188,12 +200,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                 @endcan
                             </div>
 
-                            <form action="{{ route('chapters.destroy',$chapter->id) }}" method="POST"
-                                  class="flex shrink-0 items-center gap-1 text-ink-500">
-                                @csrf
-                                <input type="hidden" name="project" value="{!! $project->id !!}"/>
-                                @method('DELETE')
-
+                            <div class="flex shrink-0 items-center gap-1 text-ink-500">
                                 <a href="{{route('projects.edit',['project'=> $project, 'log'=> $chapter->id, 'model' => 'Chapter'])}}"
                                    title="{{ __('older_versions') }}"
                                    class="inline-flex size-11 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
@@ -208,19 +215,58 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                     />
                                 @endif
 
+                                {{-- ⋯-Menue: Löschen liegt hier statt in der Titelzeile.
+                                     Duplizieren und Verschieben sind Design-Ziel aus v6,
+                                     werden aber erst gebaut, wenn Backend da ist —
+                                     aktuell disabled mit Tooltip auf Backlog. --}}
                                 @if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
-                                    <button type="submit"
-                                            onclick="return confirm('{{__('message_delete_confirm')}}')"
-                                            title="{{ __('delete_chapter') }}"
-                                            class="inline-flex size-11 items-center justify-center rounded-md hover:bg-danger-bg hover:text-danger">
-                                        <x-icon name="trash-2" size="4"/>
-                                    </button>
+                                    <div x-data="{ open: false }" class="relative">
+                                        <button type="button"
+                                                @click="open = !open"
+                                                @click.outside="open = false"
+                                                :aria-expanded="open"
+                                                aria-haspopup="menu"
+                                                title="{{ __('more_actions') }}"
+                                                class="inline-flex size-11 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                                            <x-icon name="ellipsis-vertical" size="4"/>
+                                        </button>
+                                        <div x-show="open"
+                                             x-transition
+                                             x-cloak
+                                             role="menu"
+                                             class="absolute right-0 z-30 mt-1 min-w-[14rem] rounded-md border border-line-200 bg-paper-0 py-1 shadow-popover">
+                                            <button type="button"
+                                                    disabled
+                                                    aria-disabled="true"
+                                                    title="{{ __('feature_not_yet') }}"
+                                                    class="flex w-full items-center gap-2 px-4 py-2 text-left text-body text-ink-400 opacity-60">
+                                                <x-icon name="copy" size="4"/>
+                                                <span>{{ __('chapter_menu_duplicate') }}</span>
+                                            </button>
+                                            <button type="button"
+                                                    disabled
+                                                    aria-disabled="true"
+                                                    title="{{ __('feature_not_yet') }}"
+                                                    class="flex w-full items-center gap-2 px-4 py-2 text-left text-body text-ink-400 opacity-60">
+                                                <x-icon name="move" size="4"/>
+                                                <span>{{ __('chapter_menu_move') }}</span>
+                                            </button>
+                                            <div class="my-1 border-t border-line-100"></div>
+                                            <form action="{{ route('chapters.destroy',$chapter->id) }}" method="POST">
+                                                @csrf
+                                                <input type="hidden" name="project" value="{!! $project->id !!}"/>
+                                                @method('DELETE')
+                                                <button type="submit"
+                                                        onclick="return confirm('{{__('message_delete_confirm')}}')"
+                                                        class="flex w-full items-center gap-2 px-4 py-2 text-left text-body text-danger hover:bg-danger-bg">
+                                                    <x-icon name="trash-2" size="4"/>
+                                                    <span>{{ __('delete_chapter') }}</span>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
                                 @endif
-
-                                {{-- Chevron-Toggle entfaellt seit 5-D.6b: Kapitel
-                                     ist eine offene Zone, das Auf-/Zuklappen
-                                     laeuft ueber den Sidebar-Tree. --}}
-                            </form>
+                            </div>
                         </header>
 
                         {{-- Kapitel-Beschreibung als Rich-Text-Editor,
@@ -1277,27 +1323,48 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                     @endforeach
                                 </ul>
                             @else
-                                <ul class="list-group ui-sortable-entry sortable_list_entry connectedSortableEntry" id="{{$chapter->id}}" data-reorder-element="entry" data-reorder-url="{{ route('chapter.drag') }}">
-                                    <li>&nbsp;</li>
-                                </ul>
+                                @can('update', $project)
+                                    {{-- 5z.2 § 2 (in 5e-Vokabular): Leeres Kapitel als Zustand,
+                                         nicht als 500-px-Weiß. Info-Banner + primäre Aktion. --}}
+                                    <div class="mb-4 rounded-md border border-info-bg bg-info-bg/40 px-4 py-3 text-body text-ink-700">
+                                        {{ __('chapter_empty_banner') }}
+                                    </div>
+                                    <div class="mb-4">
+                                        <button type="button"
+                                                title="{{__('add_entry')}}"
+                                                data-chapter="{{$chapter->name}}"
+                                                data-id="{{$chapter->id}}"
+                                                data-toggle="modal"
+                                                data-target="#entryModal"
+                                                class="addEntry inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-body font-medium text-primary-on hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                                            <x-icon name="plus" size="4"/>
+                                            <span>{{ __('chapter_empty_action') }}</span>
+                                        </button>
+                                    </div>
+                                @endcan
                             @endif
                         </div>
                     </div>
                     @if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
-                        <div class="mb-4">
-                        <button type="button"
-                                title="{{__('add_entry')}}"
-                                data-chapter="{{$chapter->name}}"
-                                data-id="{{$chapter->id}}"
-                                data-toggle="modal"
-                                data-target="#entryModal"
-                                class="addEntry add_entry inline-flex w-full items-center justify-center gap-2 rounded-md
-                                       border-2 border-dashed border-line-200 bg-transparent
-                                       px-4 py-3 text-body text-ink-500
-                                       hover:border-ink-400 hover:bg-line-100/40 hover:text-ink-700">
-                            <x-icon name="plus" size="4"/> <span>{{__('new_entry')}}</span>
-                        </button>
-                        </div>
+                        @if(isset($chapter->entries) && count($chapter->entries) > 0)
+                            {{-- 5z.2: „+ Neuer Abschnitt" INNERHALB der Klammer — eingerückt,
+                                 paper-50, sekundär (Design v6 § 2 „Zwei Einfüge-Zonen unterscheiden"). --}}
+                            <div class="mb-6 ml-4">
+                                <button type="button"
+                                        title="{{__('add_entry')}}"
+                                        data-chapter="{{$chapter->name}}"
+                                        data-id="{{$chapter->id}}"
+                                        data-toggle="modal"
+                                        data-target="#entryModal"
+                                        class="addEntry add_entry inline-flex w-full items-center justify-center gap-2 rounded-md
+                                               border border-dashed border-line-200 bg-paper-50
+                                               px-4 py-2.5 text-body text-ink-500
+                                               hover:border-ink-400 hover:bg-line-100/40 hover:text-ink-700
+                                               focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                                    <x-icon name="plus" size="4"/> <span>{{__('new_entry')}}</span>
+                                </button>
+                            </div>
+                        @endif
                     @endif
                 </li>
             @endforeach
