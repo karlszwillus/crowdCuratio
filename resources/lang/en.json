@@ -450,5 +450,6 @@
   "history_actor_system": "System",
   "history_current": "Current",
   "history_restore_button": "Restore",
-  "history_open_button": "Open history"
+  "history_open_button": "Open history",
+  "history_has_changes": "has changes"
 }
