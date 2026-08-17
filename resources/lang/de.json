@@ -508,5 +508,6 @@
   "revision_kind_translation": "Übersetzung",
   "revision_summary_created": "angelegt",
   "revision_summary_single_field": "Feld :field geändert",
-  "revision_summary_multi_field": ":count Felder geändert"
+  "revision_summary_multi_field": ":count Felder geändert",
+  "revision_summary_restored_from": "wiederhergestellt aus v:version"
 }

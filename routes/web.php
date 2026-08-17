@@ -359,6 +359,17 @@ Route::group(
             'translate.save'
         );
 
+        // Phase 5ab.2: Verlauf-Panel-Feed und Wiederherstellen.
+        Route::get(
+            '/revisions/{subjectType}/{subjectId}',
+            [\App\Http\Controllers\RevisionController::class, 'index']
+        )->whereNumber('subjectId')->name('revisions.index');
+
+        Route::post(
+            '/revisions/{revision}/restore',
+            [\App\Http\Controllers\RevisionController::class, 'restore']
+        )->name('revisions.restore');
+
         Route::post(
             '/project/save-translate-text',
             [ContentController::class, 'saveTranslatedText']

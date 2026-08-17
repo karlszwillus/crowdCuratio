@@ -437,5 +437,6 @@
   "revision_kind_translation": "Translation",
   "revision_summary_created": "created",
   "revision_summary_single_field": "Field :field changed",
-  "revision_summary_multi_field": ":count fields changed"
+  "revision_summary_multi_field": ":count fields changed",
+  "revision_summary_restored_from": "restored from v:version"
 }
