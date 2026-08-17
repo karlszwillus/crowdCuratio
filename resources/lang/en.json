@@ -47,6 +47,7 @@
   "entry_menu_duplicate": "Duplicate section",
   "entry_menu_move": "Move section",
   "text_paragraph_legend": "⏎ new paragraph · ⇧⏎ line break — spacing appears in the exhibition exactly like this.",
+  "source_missing_hint": "⚠ Will be listed by name when publishing",
   "cancel": "Cancel",
   "add": "Add",
   "log_out": "Log out",

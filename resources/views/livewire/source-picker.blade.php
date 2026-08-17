@@ -276,19 +276,24 @@ new class extends Component
     @keydown.escape.window="if (open) $wire.call('cancelEdit')"
 >
     @if (! $editing)
+        @php
+            // Design v6 § 4 (in 5e-Vokabular): eine Beschriftung genügt — sie steht
+            // im umgebenden <label>, hier zeigen wir nur den Wert im Feldrahmen.
+            // Fehlt der Wert, wechselt der Rahmen auf warning (namentliche
+            // Publish-Prüfung).
+            $sourceIsEmpty = $query === '';
+        @endphp
         <button
             type="button"
             wire:click="startEdit"
-            class="inline-flex items-center gap-1 rounded-md border border-transparent px-2 py-0.5 text-caption text-ink-900 hover:border-ink-300 hover:bg-canvas-bg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            class="{{ $sourceIsEmpty ? 'border-warning bg-warning-bg/40 text-warning' : 'border-line-200 bg-canvas-bg text-ink-900 hover:border-ink-300' }} inline-flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-body focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
-            <span class="text-chrome-on-dim">{{ $label }}:</span>
             <span class="font-medium">
-                {{ $query !== '' ? $query : '—' }}
+                {{ $query !== '' ? $query : __('add') }}
             </span>
-            {{-- Edit-Icon entfernt: der ganze Chip ist selbst ein
-                 Button (Hover/Focus-States sind da), der pencil-
-                 Icon hat den Chip in schmalen Card-Kontexten
-                 (Gallery-Bild-Kachel) unnoetig aufgeblaeht. --}}
+            @if ($sourceIsEmpty)
+                <span class="text-caption">{{ __('source_missing_hint') }}</span>
+            @endif
         </button>
     @else
         <div class="relative flex flex-col gap-1">
