@@ -113,13 +113,20 @@ new class extends Component
     public function with(): array
     {
         if ($this->subjectType === null || $this->subjectId === null) {
-            return ['revisions' => collect(), 'grouped' => collect()];
+            return ['revisions' => collect(), 'grouped' => collect(), 'restoreProject' => null];
         }
 
         $fqcn = RevisionSubject::TYPES[$this->subjectType] ?? null;
         if ($fqcn === null) {
-            return ['revisions' => collect(), 'grouped' => collect()];
+            return ['revisions' => collect(), 'grouped' => collect(), 'restoreProject' => null];
         }
+
+        // Projekt einmal aufloesen und in `with()` durchreichen. Blade
+        // nutzt es fuer @can(history.restore), damit wir nicht pro
+        // Revision-Karte $revision->subject lazy-loaden — shouldBeStrict()
+        // sperrt das sonst.
+        $anchorSubject = RevisionSubject::resolve($this->subjectType, $this->subjectId);
+        $restoreProject = $anchorSubject ? RevisionSubject::projectFor($anchorSubject) : null;
 
         $query = Revision::query()
             ->with('actor:id,name')
@@ -182,6 +189,7 @@ new class extends Component
         return [
             'revisions' => $revisions,
             'grouped' => $grouped,
+            'restoreProject' => $restoreProject,
         ];
     }
 }; ?>
@@ -278,7 +286,7 @@ new class extends Component
                                         </div>
                                         @if ($isSelected)
                                             <div class="mt-3 flex flex-wrap gap-2 border-t border-line-200 pt-2">
-                                                @can(App\Support\PermissionName::HISTORY_RESTORE->value, $revision->subject?->project() instanceof \App\Models\Project ? $revision->subject->project() : null)
+                                                @can(App\Support\PermissionName::HISTORY_RESTORE->value, $restoreProject)
                                                     <button
                                                         type="button"
                                                         onclick="event.stopPropagation(); window.dispatchEvent(new CustomEvent('history:restore-request', { detail: { revisionId: {{ $revision->id }}, version: {{ $revision->version }} } }))"
