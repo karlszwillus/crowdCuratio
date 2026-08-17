@@ -519,7 +519,6 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                 </div>
                                                                                             @endcan
                                                                                         </div>
-                                                                                    </div>
                                                                                 </x-ui.block-card>
                                                                             </li>
                                                                         @endisset
