@@ -451,5 +451,7 @@
   "history_current": "Current",
   "history_restore_button": "Restore",
   "history_open_button": "Open history",
-  "history_has_changes": "has changes"
+  "history_has_changes": "has changes",
+  "history_diff_banner": "Read only — compare mode active",
+  "history_diff_close": "Close comparison"
 }

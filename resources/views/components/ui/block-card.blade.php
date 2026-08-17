@@ -63,6 +63,14 @@ Slots:
      * gematcht. Ohne Wert entfaellt der Status-Chip.
      */
     'saveSlot' => null,
+
+    /**
+     * Phase 5ab.4: Subject-Bezeichner fuer den Diff-Modus („Chapter:5",
+     * „Text:42", …). Wenn gesetzt, kann der Editor beim Klick auf eine
+     * Fassungs-Karte im Verlauf-Panel den Diff genau in diesen Block
+     * rendern. Verkabelung folgt pro Content-Typ.
+     */
+    'historySubject' => null,
 ])
 
 @php
@@ -93,7 +101,10 @@ Slots:
         : 'bg-paper-50 text-ink-500';
 @endphp
 
-<article {{ $attributes->merge(['class' => $cardClasses]) }}>
+<article
+    {{ $attributes->merge(['class' => $cardClasses]) }}
+    @if ($historySubject) data-history-subject="{{ $historySubject }}" @endif
+>
     {{-- Kopf: Typ-Tag links, optionale Aktionen rechts. --}}
     <header class="mb-3 flex items-start justify-between gap-3">
         <div class="flex items-center gap-2">

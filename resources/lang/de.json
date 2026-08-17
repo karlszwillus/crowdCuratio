@@ -522,5 +522,7 @@
   "history_current": "Aktuell",
   "history_restore_button": "Wiederherstellen",
   "history_open_button": "Verlauf ansehen",
-  "history_has_changes": "hat bereits Änderungen"
+  "history_has_changes": "hat bereits Änderungen",
+  "history_diff_banner": "Nur zum Ansehen — Vergleichsmodus aktiv",
+  "history_diff_close": "Vergleich schließen"
 }

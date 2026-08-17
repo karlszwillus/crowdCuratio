@@ -161,7 +161,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     // Kapitel liegt der Tastatur-/Maus-Fokus (focus-within).
                     $chapterEntryCount = isset($chapter->entries) ? count($chapter->entries) : 0;
                 @endphp
-                <li class="chapter group border-l-[3px] border-line-200 focus-within:border-brand-bar pl-4 transition-colors" data-chapter="{{$chapter->id}}" data-project="{{$project->id}}" id="{{$chapter->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
+                <li class="chapter group border-l-[3px] border-line-200 focus-within:border-brand-bar pl-4 transition-colors" data-chapter="{{$chapter->id}}" data-project="{{$project->id}}" data-history-subject="Chapter:{{$chapter->id}}" id="{{$chapter->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
                     {{-- Kapitel = Klammer (Design v6 § 2, in 5e-Vokabular).
                          Rail links über die ganze Gruppe; Titel + Untertitel
                          + Description sitzen offen auf dem Canvas. Der

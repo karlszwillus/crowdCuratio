@@ -52,12 +52,62 @@ new class extends Component
     public function select(int $revisionId): void
     {
         $this->selectedRevisionId = $revisionId;
-        // Diff im Block einschalten: der Editor lauscht auf dieses Event
-        // und schaltet das Subject in den Diff-Modus (5ab.4).
+        // Diff im Block einschalten (5ab.4). Wir rendern pro Feld ein
+        // Wort-Level-Diff und schicken das komplette Objekt als Payload;
+        // der Editor haengt die HTML-Fragmente per Alpine an die
+        // passenden Block-Felder.
+        /** @var Revision|null $revision */
+        $revision = Revision::query()->find($revisionId);
+        if ($revision === null) {
+            return;
+        }
+
+        /** @var array<string, array{old: mixed, new: mixed}> $changes */
+        $changes = $revision->snapshot['changes'] ?? [];
+        $fields = [];
+        foreach ($changes as $field => $delta) {
+            $old = self::stringifyDelta($delta['old'] ?? null);
+            $new = self::stringifyDelta($delta['new'] ?? null);
+            if ($old === '' && $new === '') {
+                continue;
+            }
+            $diff = \App\Support\RevisionDiff::renderWordDiff($old, $new);
+            $fields[$field] = [
+                'html' => $diff['html'],
+                'added' => $diff['added'],
+                'removed' => $diff['removed'],
+                'old' => $old,
+                'new' => $new,
+            ];
+        }
+
         $this->dispatch(
             'revision-selected',
             revisionId: $revisionId,
+            subjectType: RevisionSubject::shortName($revision->subject_type),
+            subjectId: (int) $revision->subject_id,
+            fields: $fields,
         );
+    }
+
+    /**
+     * Snapshot-Werte kommen als String, Zahl oder Array (JSON-translatable
+     * Felder). Wir wandeln alles in String — Arrays werden als deutsche
+     * Version genommen, sonst der erste Wert. `null` faellt auf ''.
+     */
+    private static function stringifyDelta(mixed $value): string
+    {
+        if ($value === null) {
+            return '';
+        }
+        if (is_array($value)) {
+            return (string) ($value['de'] ?? reset($value) ?? '');
+        }
+        if (is_scalar($value)) {
+            return (string) $value;
+        }
+
+        return '';
     }
 
     public function with(): array
