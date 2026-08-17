@@ -205,11 +205,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
                             </div>
 
                             <div class="flex shrink-0 items-center gap-1 text-ink-500">
-                                <a href="{{route('projects.edit',['project'=> $project, 'log'=> $chapter->id, 'model' => 'Chapter'])}}"
-                                   title="{{ __('older_versions') }}"
-                                   class="inline-flex size-11 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
-                                    <x-icon name="rotate-ccw" size="4"/>
-                                </a>
+                                {{-- Phase 5ab.3: Verlauf-Trigger — oeffnet das Panel
+                                     rechts statt Full-Page-Reload auf ?log=. --}}
+                                <x-ui.history-trigger
+                                    subjectType="Chapter"
+                                    :subjectId="$chapter->id"
+                                />
 
                                 @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                     <x-comment.trigger
@@ -343,11 +344,10 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                     </div>
 
                                                     <div class="flex shrink-0 items-center gap-1 text-ink-500">
-                                                        <a href="{{route('projects.edit',['project'=> $project, 'log'=> $entry->id, 'model' => 'Entry'])}}"
-                                                           title="{{ __('older_versions') }}"
-                                                           class="inline-flex size-11 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
-                                                            <x-icon name="rotate-ccw" size="4"/>
-                                                        </a>
+                                                        <x-ui.history-trigger
+                                                            subjectType="Entry"
+                                                            :subjectId="$entry->id"
+                                                        />
 
                                                         @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                             <x-comment.trigger
@@ -433,11 +433,10 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                         {{-- Design v6 § 4 (in 5e-Vokabular): Text-Block-Aktionen
                                                                                              wandern aus der Fußzeile in den Blockkopf, analog zu
                                                                                              Galerie und Audio/Video. --}}
-                                                                                        <a href="{{route('projects.edit',['project'=> $project, 'log'=> $item->text->id, 'model' => 'Text'])}}"
-                                                                                           title="{{ __('older_versions') }}"
-                                                                                           class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900">
-                                                                                            <x-icon name="rotate-ccw" size="4"/>
-                                                                                        </a>
+                                                                                        <x-ui.history-trigger
+                                                                                            subjectType="Text"
+                                                                                            :subjectId="$item->text->id"
+                                                                                        />
                                                                                         @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                                                             <x-comment.trigger
                                                                                                 commentableType="App\Models\Text"
@@ -549,11 +548,10 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                             <li class="item audiovisual content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
                                                                                 <x-ui.block-card :type="$item->audiovisual->type === 'audio' ? 'audio' : 'video'" id="anchor_MediaContent_{{$item->id}}" class="mb-4" :save-slot="'Audiovisual-'.$item->audiovisual->id">
                                                                                     <x-slot:actions>
-                                                                                        <a href="{{route('projects.edit',['project'=> $project, 'log'=> $item->audiovisual->id, 'model' => 'Audiovisual'])}}"
-                                                                                           title="{{ __('older_versions') }}"
-                                                                                           class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900">
-                                                                                            <x-icon name="rotate-ccw" size="4"/>
-                                                                                        </a>
+                                                                                        <x-ui.history-trigger
+                                                                                            subjectType="Audiovisual"
+                                                                                            :subjectId="$item->audiovisual->id"
+                                                                                        />
                                                                                         @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                                                             <x-comment.trigger
                                                                                                 commentableType="App\Models\Audiovisual"
@@ -682,11 +680,10 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                          daraus entstand die 250-px-Leerflaeche zwischen
                                                                                          Beschreibung und Bild-Raster (Briefing § 2). --}}
                                                                                     <x-slot:actions>
-                                                                                        <a href="{{route('projects.edit',['project'=> $project, 'log'=> $item->gallery->id, 'model' => 'Gallery'])}}"
-                                                                                           title="{{ __('older_versions') }}"
-                                                                                           class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900">
-                                                                                            <x-icon name="rotate-ccw" size="4"/>
-                                                                                        </a>
+                                                                                        <x-ui.history-trigger
+                                                                                            subjectType="Gallery"
+                                                                                            :subjectId="$item->gallery->id"
+                                                                                        />
 
                                                                                         @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                                                             <x-comment.trigger
