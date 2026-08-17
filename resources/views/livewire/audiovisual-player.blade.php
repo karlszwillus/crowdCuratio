@@ -76,11 +76,15 @@ new class extends Component
         @if (empty(trim((string) $audiovisual->link)))
             <x-ui.media-placeholder type="audio"/>
         @else
+            {{-- 5z.7: Plyr enhanced das native <audio> — kein Browser-⋮-
+                 Menue mit „Herunterladen" mehr, einheitlicher Chrome. --}}
             <audio
                 controls
-                class="embed-responsive-item w-full"
+                class="cc-plyr w-full"
                 id="audio_{{ $audiovisual->id }}"
                 src="{{ route('audio', $audiovisual->link) }}"
+                wire:key="av-audio-{{ $audiovisual->id }}-{{ md5((string) $audiovisual->link) }}"
+                wire:ignore
             ></audio>
         @endif
 
@@ -95,15 +99,38 @@ new class extends Component
         @if (empty(trim((string) $audiovisual->link)))
             <x-ui.media-placeholder type="video"/>
         @else
-            <iframe
-                wire:key="av-iframe-{{ $audiovisual->id }}-{{ md5((string) $audiovisual->link) }}"
-                width="100%"
-                height="315"
-                src="{!! $audiovisual->link !!}"
-                frameborder="0"
-                allowfullscreen
-                title="{{ __('audiovisual_player') }}"
-            ></iframe>
+            @php
+                // 5z.7: YouTube-Embed-ID aus der bestehenden Embed-URL ziehen.
+                // Plyr rendert dann seinen eigenen Player-Chrome mit
+                // Zwei-Klick-Einbettung; noCookie ist im Plyr-Init aktiv,
+                // damit vor dem Play kein Drittanbieter-Request rausgeht.
+                $ytEmbedId = null;
+                if (preg_match('#(?:youtube\.com/embed/|youtu\.be/|youtube\.com/watch\?v=)([A-Za-z0-9_-]{6,})#', (string) $audiovisual->link, $m)) {
+                    $ytEmbedId = $m[1];
+                }
+            @endphp
+            @if ($ytEmbedId)
+                <div
+                    class="cc-plyr-video"
+                    data-plyr-provider="youtube"
+                    data-plyr-embed-id="{{ $ytEmbedId }}"
+                    wire:key="av-video-{{ $audiovisual->id }}-{{ md5((string) $audiovisual->link) }}"
+                    wire:ignore
+                    aria-label="{{ __('audiovisual_player') }}"
+                ></div>
+            @else
+                {{-- Nicht-YouTube-Fallback: rohes iframe rendern (bleibt
+                     bis 5z.8, das andere Quellen sauber abfängt). --}}
+                <iframe
+                    wire:key="av-iframe-{{ $audiovisual->id }}-{{ md5((string) $audiovisual->link) }}"
+                    width="100%"
+                    height="315"
+                    src="{!! $audiovisual->link !!}"
+                    frameborder="0"
+                    allowfullscreen
+                    title="{{ __('audiovisual_player') }}"
+                ></iframe>
+            @endif
         @endif
 
         @can('update', $audiovisual->project())

@@ -28,6 +28,26 @@
 @import "./bootstrap-utilities.css";
 
 /*
+ * Plyr (Phase 5z.7) — einheitlicher Player-Chrome für Audio und YouTube.
+ * Wir laden das offizielle Plyr-CSS und überschreiben die Farb-Custom-
+ * Properties auf unsere Tokens. Weitere Deep-Styling-Anpassungen bleiben
+ * bewusst zurückhaltend — Ziel ist ein professioneller Standard-Look,
+ * kein eigenes Design.
+ */
+@import "plyr/dist/plyr.css";
+
+:root {
+    --plyr-color-main: var(--color-ink-900);
+    --plyr-audio-controls-background: var(--color-paper-50);
+    --plyr-audio-control-color: var(--color-ink-700);
+    --plyr-audio-control-color-hover: var(--color-ink-900);
+    --plyr-audio-progress-buffered-background: var(--color-line-200);
+    --plyr-range-fill-background: var(--color-ink-900);
+    --plyr-video-control-color: #ffffff;
+    --plyr-video-background: #000000;
+}
+
+/*
  * Alpine-Cloak: Elemente mit `x-cloak` sind initial verborgen, bis
  * Alpine den ersten DOM-Walk gemacht hat. Ohne diese Regel würde ein
  * `x-show`-Element vor der Hydrate-Phase kurz aufflackern. `!important`

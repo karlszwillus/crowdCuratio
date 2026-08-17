@@ -23,6 +23,7 @@ If not, see <https://www.gnu.org/licenses/>.
 use App\Models\Audiovisual;
 use App\Services\AudiovisualService;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Livewire\Volt\Component;
 use Livewire\WithFileUploads;
@@ -105,28 +106,114 @@ new class extends Component
             id: $this->audiovisual->getKey(),
         );
     }
+
+    /**
+     * 5z.7: Audio entfernen. Leert `link` — dann greift der leere-Zustand
+     * im audiovisual-player (media-placeholder). Die Datei im Storage
+     * bleibt liegen (kein Zugriff auf Cleanup-Runner an der Stelle),
+     * das folgt in einem Backlog-Ticket.
+     */
+    public function removeAudio(): void
+    {
+        $project = $this->audiovisual->project();
+        Gate::authorize('update', $project);
+
+        $this->audiovisual->link = '';
+        $this->audiovisual->save();
+
+        $this->dispatch(
+            'saved',
+            field: 'link',
+            model: 'Audiovisual',
+            id: $this->audiovisual->getKey(),
+        );
+    }
+
+    /**
+     * Meta-Zeile für die aktuelle Audiodatei: Format (Extension in Caps),
+     * Größe (KB/MB) und Upload-Datum aus dem Storage. Alles null-safe;
+     * wenn die Datei aus irgendwelchen Gründen nicht mehr im Storage
+     * liegt, bleiben die Felder leer.
+     *
+     * @return array{format: ?string, size: ?string, uploaded: ?string}
+     */
+    public function fileMeta(): array
+    {
+        $link = (string) $this->audiovisual->link;
+        if ($link === '') {
+            return ['format' => null, 'size' => null, 'uploaded' => null];
+        }
+
+        $format = strtoupper(pathinfo($link, PATHINFO_EXTENSION) ?: '');
+
+        $disk = Storage::disk('public');
+        $path = 'uploads/audios/'.$link;
+        $size = null;
+        $uploaded = null;
+        if ($disk->exists($path)) {
+            $bytes = $disk->size($path);
+            $size = $bytes >= 1024 * 1024
+                ? number_format($bytes / 1024 / 1024, 1, ',', '.').' MB'
+                : max(1, (int) round($bytes / 1024)).' KB';
+            $uploaded = date('d.m.Y', $disk->lastModified($path));
+        }
+
+        return ['format' => $format ?: null, 'size' => $size, 'uploaded' => $uploaded];
+    }
 }; ?>
 
+@php
+    $meta = $this->fileMeta();
+    $hasFile = ! empty(trim((string) $audiovisual->link));
+    $metaParts = array_filter([
+        $meta['format'],
+        $meta['size'],
+        $meta['uploaded'] ? __('audio_meta_uploaded').' '.$meta['uploaded'] : null,
+    ]);
+@endphp
 <div
     x-data
-    class="flex items-center gap-3"
+    class="flex flex-wrap items-center justify-between gap-3"
     aria-label="{{ __('audio_file') }}"
 >
-    <span class="text-caption text-chrome-on-dim">
-        {{ __('current_file') }}:
-        <code class="rounded bg-canvas-dim px-1">{{ $audiovisual->link }}</code>
-    </span>
+    <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+        @if ($hasFile)
+            {{-- 5z.7: Statt Storage-Key eine Meta-Zeile aus Format,
+                 Groesse und Datum. Der Key erscheint nirgends mehr
+                 sichtbar. --}}
+            <span class="text-body text-ink-900">{{ __('audio_file') }}</span>
+            <span class="font-mono text-caption text-ink-500">
+                {{ implode(' · ', $metaParts) ?: __('audio_meta_no_file') }}
+            </span>
+        @else
+            <span class="text-body text-ink-500">{{ __('audio_meta_no_file') }}</span>
+        @endif
+    </div>
 
-    <label class="cursor-pointer rounded-md border border-ink-300 bg-canvas-bg px-3 py-1 text-body text-ink-900 hover:bg-chrome-active focus-within:outline focus-within:outline-2 focus-within:outline-offset-1 focus-within:outline-primary">
-        {{ __('replace_audio') }}
-        <input
-            type="file"
-            wire:model="file"
-            accept="audio/mpeg,audio/mp4,audio/wav,audio/ogg,audio/x-m4a"
-            class="sr-only"
-            @error('file') aria-invalid="true" aria-describedby="audio-uploader-error-{{ $audiovisual->id }}" @enderror
-        />
-    </label>
+    <div class="flex items-center gap-2">
+        <label class="cursor-pointer rounded-md border border-ink-300 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-chrome-active focus-within:outline focus-within:outline-2 focus-within:outline-offset-1 focus-within:outline-primary">
+            {{ $hasFile ? __('replace_audio') : __('upload_file') }}
+            <input
+                type="file"
+                wire:model="file"
+                accept="audio/mpeg,audio/mp4,audio/wav,audio/ogg,audio/x-m4a"
+                class="sr-only"
+                @error('file') aria-invalid="true" aria-describedby="audio-uploader-error-{{ $audiovisual->id }}" @enderror
+            />
+        </label>
+
+        @if ($hasFile)
+            <button
+                type="button"
+                wire:click="removeAudio"
+                wire:confirm="{{ __('audio_remove_confirm') }}"
+                class="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-caption text-danger hover:bg-danger-bg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger"
+            >
+                <x-icon name="trash-2" size="3"/>
+                <span>{{ __('audio_remove') }}</span>
+            </button>
+        @endif
+    </div>
 
     <span
         wire:loading
