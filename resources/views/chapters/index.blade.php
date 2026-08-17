@@ -1531,101 +1531,231 @@ If not, see <https://www.gnu.org/licenses/>. -->
         </div>
     </x-ui.modal>
 
-    <x-ui.modal id="previewModal" :title="__('create_html_output')">
-        <div class="row m-2">
-            @php
-                // 5y.10: Prüft Bild-Angaben projektweit und listet fehlende Felder namentlich auf.
-                // Veröffentlichen bleibt möglich — die Lücken erscheinen im Preview, hier wird
-                // vor dem Export darauf hingewiesen.
-                $publishCheckMissing = collect();
-                if (isset($data) && isset($data->chapters)) {
-                    foreach ($data->chapters as $publishCheckChapter) {
-                        foreach ($publishCheckChapter->entries as $publishCheckEntry) {
-                            foreach ($publishCheckEntry->mediaContent as $publishCheckMc) {
-                                // MediaContent::gallery/audiovisual sind polymorph ueber content_id
-                                // aufgeloest — ohne content_type-Filter greift die Relation auch
-                                // in fremde Projekte. Bug in 5y.10, gefixt in 5y.10-Followup.
-                                if ($publishCheckMc->content_type === \App\Models\Gallery::class && isset($publishCheckMc->gallery)) {
-                                    foreach ($publishCheckMc->gallery->images as $publishCheckImage) {
-                                        $publishCheckFields = collect([
-                                            empty(trim(strip_tags((string) $publishCheckImage->description))) ? __('publish_check_field_description') : null,
-                                            $publishCheckImage->copyrightImage ? null : __('publish_check_field_copyright'),
-                                            $publishCheckImage->originImage ? null : __('publish_check_field_origin'),
-                                        ])->filter()->values();
-                                        if ($publishCheckFields->isNotEmpty()) {
-                                            $publishCheckMissing->push([
-                                                'title' => trim($publishCheckImage->alt ?? '') !== '' ? $publishCheckImage->alt : __('gallery_image_untitled'),
-                                                'fields' => $publishCheckFields->implode(', '),
-                                            ]);
+    @php
+        // 5aa.4 Design v6 § 5: Umfangszeile — projektweite Zählung von Kapitel,
+        // Eintrag und Block, damit der Modal-Titel eine Größe hat.
+        $exportChapterCount = 0;
+        $exportEntryCount = 0;
+        $exportBlockCount = 0;
+        if (isset($data) && isset($data->chapters)) {
+            $exportChapterCount = count($data->chapters);
+            foreach ($data->chapters as $exportChapter) {
+                $exportEntryCount += count($exportChapter->entries ?? []);
+                foreach ($exportChapter->entries ?? [] as $exportEntry) {
+                    $exportBlockCount += count($exportEntry->mediaContent ?? []);
+                }
+            }
+        }
+    @endphp
+    <x-ui.modal id="previewModal" :title="__('export_modal_title')" size="lg">
+        <div x-data="{
+                 format: 'html',
+                 accent: '#c23934',
+                 accents: [
+                     { hex: '#c23934', name: 'Rot', ratio: '5.4 : 1' },
+                     { hex: '#1b2330', name: 'Anthrazit', ratio: '15.6 : 1' },
+                     { hex: '#0f766e', name: 'Teal', ratio: '5.9 : 1' },
+                     { hex: '#7c2d12', name: 'Braun', ratio: '9.5 : 1' },
+                 ],
+                 language: 'de',
+                 collapse: false,
+                 background_second: false,
+             }">
+            <p class="mb-4 text-caption text-ink-500">
+                {{ __('export_scope', ['chapters' => $exportChapterCount, 'entries' => $exportEntryCount, 'blocks' => $exportBlockCount]) }}
+            </p>
+
+            <form id="exportForm" action="{{route('preview')}}" method="get">
+                @csrf
+                <input name="project" type="hidden" value="{{$project->id}}">
+                <input name="colorAccent" type="hidden" :value="accent">
+                <input name="colorChapter" type="hidden" :value="accent">
+
+                {{-- Format als zwei Radio-Karten. --}}
+                <fieldset class="mb-6">
+                    <legend class="mb-2 text-caption font-semibold uppercase tracking-wider text-ink-500">
+                        {{ __('export_format_label') }}
+                    </legend>
+                    <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                        <label
+                            :class="format === 'html' ? 'border-primary bg-primary/5' : 'border-line-200 bg-canvas-bg'"
+                            class="flex cursor-pointer flex-col gap-1 rounded-md border-2 p-3 hover:border-ink-300"
+                        >
+                            <div class="flex items-center gap-2">
+                                <input type="radio" name="format_ui" value="html" x-model="format" class="size-4 accent-primary"/>
+                                <span class="text-body font-semibold text-ink-900">{{ __('export_format_html_title') }}</span>
+                            </div>
+                            <p class="text-caption text-ink-500">{{ __('export_format_html_desc') }}</p>
+                        </label>
+                        <label
+                            :class="format === 'pdf' ? 'border-primary bg-primary/5' : 'border-line-200 bg-canvas-bg'"
+                            class="flex cursor-pointer flex-col gap-1 rounded-md border-2 p-3 hover:border-ink-300"
+                        >
+                            <div class="flex items-center gap-2">
+                                <input type="radio" name="format_ui" value="pdf" x-model="format" class="size-4 accent-primary"/>
+                                <span class="text-body font-semibold text-ink-900">{{ __('export_format_pdf_title') }}</span>
+                            </div>
+                            <p class="text-caption text-ink-500">{{ __('export_format_pdf_desc') }}</p>
+                        </label>
+                    </div>
+                    <input type="checkbox" name="pdf" value="1" x-show="false" :checked="format === 'pdf'" class="hidden"/>
+                </fieldset>
+
+                {{-- Prüfung vor dem Export: Bild-, AV- und Transkript-Lücken namentlich. --}}
+                @php
+                    // 5y.10: Prüft Bild-Angaben projektweit und listet fehlende Felder namentlich auf.
+                    // Veröffentlichen bleibt möglich — die Lücken erscheinen im Preview, hier wird
+                    // vor dem Export darauf hingewiesen.
+                    $publishCheckMissing = collect();
+                    if (isset($data) && isset($data->chapters)) {
+                        foreach ($data->chapters as $publishCheckChapter) {
+                            foreach ($publishCheckChapter->entries as $publishCheckEntry) {
+                                foreach ($publishCheckEntry->mediaContent as $publishCheckMc) {
+                                    // MediaContent::gallery/audiovisual sind polymorph ueber content_id
+                                    // aufgeloest — ohne content_type-Filter greift die Relation auch
+                                    // in fremde Projekte. Bug in 5y.10, gefixt in 5y.10-Followup.
+                                    if ($publishCheckMc->content_type === \App\Models\Gallery::class && isset($publishCheckMc->gallery)) {
+                                        foreach ($publishCheckMc->gallery->images as $publishCheckImage) {
+                                            $publishCheckFields = collect([
+                                                empty(trim(strip_tags((string) $publishCheckImage->description))) ? __('publish_check_field_description') : null,
+                                                $publishCheckImage->copyrightImage ? null : __('publish_check_field_copyright'),
+                                                $publishCheckImage->originImage ? null : __('publish_check_field_origin'),
+                                            ])->filter()->values();
+                                            if ($publishCheckFields->isNotEmpty()) {
+                                                $publishCheckMissing->push([
+                                                    'title' => trim($publishCheckImage->alt ?? '') !== '' ? $publishCheckImage->alt : __('gallery_image_untitled'),
+                                                    'fields' => $publishCheckFields->implode(', '),
+                                                    'anchor' => '#anchor_MediaContent_'.$publishCheckMc->id,
+                                                ]);
+                                            }
                                         }
                                     }
-                                }
-                                if ($publishCheckMc->content_type === \App\Models\Audiovisual::class && isset($publishCheckMc->audiovisual) && ! empty($publishCheckMc->audiovisual->link)) {
-                                    $publishCheckAv = $publishCheckMc->audiovisual;
-                                    $publishCheckAvFields = collect([
-                                        empty(trim(strip_tags((string) $publishCheckAv->copyright))) ? __('publish_check_field_copyright') : null,
-                                        empty(trim(strip_tags((string) $publishCheckAv->source))) ? __('publish_check_field_origin') : null,
-                                        empty(trim(strip_tags((string) $publishCheckAv->transcript))) ? __('publish_check_field_transcript') : null,
-                                    ])->filter()->values();
-                                    if ($publishCheckAvFields->isNotEmpty()) {
-                                        $publishCheckAvLabel = $publishCheckAv->type === 'audio' ? __('audio') : __('video');
-                                        $publishCheckMissing->push([
-                                            'title' => $publishCheckAvLabel.' · '.$publishCheckEntry->name,
-                                            'fields' => $publishCheckAvFields->implode(', '),
-                                        ]);
+                                    if ($publishCheckMc->content_type === \App\Models\Audiovisual::class && isset($publishCheckMc->audiovisual) && ! empty($publishCheckMc->audiovisual->link)) {
+                                        $publishCheckAv = $publishCheckMc->audiovisual;
+                                        $publishCheckAvFields = collect([
+                                            empty(trim(strip_tags((string) $publishCheckAv->copyright))) ? __('publish_check_field_copyright') : null,
+                                            empty(trim(strip_tags((string) $publishCheckAv->source))) ? __('publish_check_field_origin') : null,
+                                            empty(trim(strip_tags((string) $publishCheckAv->transcript))) ? __('publish_check_field_transcript') : null,
+                                        ])->filter()->values();
+                                        if ($publishCheckAvFields->isNotEmpty()) {
+                                            $publishCheckAvLabel = $publishCheckAv->type === 'audio' ? __('audio') : __('video');
+                                            $publishCheckMissing->push([
+                                                'title' => $publishCheckAvLabel.' · '.$publishCheckEntry->name,
+                                                'fields' => $publishCheckAvFields->implode(', '),
+                                                'anchor' => '#anchor_MediaContent_'.$publishCheckMc->id,
+                                            ]);
+                                        }
                                     }
                                 }
                             }
                         }
                     }
-                }
-            @endphp
-            @if ($publishCheckMissing->isNotEmpty())
-                <div class="mb-4 rounded-md border border-warning-bg bg-warning-bg/40 px-4 py-3">
-                    <h4 class="text-body font-semibold text-warning">⚠ {{ __('publish_check_title') }}</h4>
-                    <p class="mt-1 text-caption text-ink-700">{{ __('publish_check_intro') }}</p>
-                    <ul class="mt-2 space-y-1 text-caption text-ink-700">
-                        @foreach ($publishCheckMissing as $publishCheckRow)
-                            <li>
-                                <span class="font-medium text-ink-900">{{ $publishCheckRow['title'] }}</span>
-                                — {{ $publishCheckRow['fields'] }}
-                            </li>
-                        @endforeach
-                    </ul>
-                </div>
-            @else
-                <p class="mb-4 rounded-md bg-success-bg px-3 py-2 text-caption text-success">
-                    ✓ {{ __('publish_check_all_clear') }}
-                </p>
-            @endif
-            <div id="headerComment"></div>
-            <div id="listComment"></div>
-            <form id="" action="{{route('preview')}}" method="get">
-                @csrf
-                <input name="project" type="hidden" value="{{$project->id}}">
-                <div class="form-check">
-                    <input type="color" value="#EDBA0E" class="form-check-input color-element" name="colorAccent">
-                    <label class="form-check-label">{{__('color_accent')}}</label>
-                </div>
-                <div class="form-check">
-                    <input type="color" value="#EDBA0E" class="form-check-input color-element" name="colorChapter">
-                    <label class="form-check-label" >{{__('color_chapter')}}</label>
-                </div>
-                <div class="form-check mt-4">
-                    <input type="checkbox" class="form-check-input" name="backgroundSecond">
-                    <label class="form-check-label" >{{__('background_second')}}</label>
-                </div>
-                <div class="form-check mt-4">
-                    <input type="checkbox" class="form-check-input" name="collapse">
-                    <label class="form-check-label" >{{__('collapse')}}</label>
-                </div>
-                <div class="form-check">
-                    <input type="checkbox" class="form-check-input" name="pdf">
-                    <label class="form-check-label" >{{__('pdf')}}</label>
-                </div>
-                <div class="col-xs-12">
-                    <button type="submit" class="btn btn-primary" >{{__('html')}}</button>
-                </div>
+                @endphp
+
+                <fieldset class="mb-6">
+                    <legend class="mb-2 text-caption font-semibold uppercase tracking-wider text-ink-500">
+                        {{ __('export_check_label') }}
+                    </legend>
+                    @if ($publishCheckMissing->isNotEmpty())
+                        <ul class="space-y-1 rounded-md border border-warning-bg bg-warning-bg/40 px-4 py-3 text-caption text-ink-700">
+                            @foreach ($publishCheckMissing as $publishCheckRow)
+                                <li class="flex flex-wrap items-baseline justify-between gap-2">
+                                    <span>
+                                        <span class="text-warning">⚠</span>
+                                        <span class="font-medium text-ink-900">{{ $publishCheckRow['title'] }}</span>
+                                        — {{ $publishCheckRow['fields'] }}
+                                    </span>
+                                    <a href="{{ $publishCheckRow['anchor'] }}"
+                                       data-dismiss="modal"
+                                       class="text-caption text-primary hover:underline">
+                                        {{ __('export_check_view') }}
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @else
+                        <p class="rounded-md bg-success-bg px-3 py-2 text-caption text-success">
+                            ✓ {{ __('publish_check_all_clear') }}
+                        </p>
+                    @endif
+                    <p class="mt-2 text-caption text-ink-500">{{ __('export_check_footer_hint') }}</p>
+                </fieldset>
+
+                {{-- Sprache. --}}
+                <fieldset class="mb-6">
+                    <legend class="mb-2 text-caption font-semibold uppercase tracking-wider text-ink-500">
+                        {{ __('export_language_label') }}
+                    </legend>
+                    <div class="flex flex-col gap-2">
+                        <label class="inline-flex items-center gap-2 text-body text-ink-900">
+                            <input type="radio" name="language" value="de" x-model="language" class="size-4 accent-primary"/>
+                            <span>{{ __('translate_lang_de') }}</span>
+                        </label>
+                        <label class="inline-flex items-center gap-2 text-body text-ink-900">
+                            <input type="radio" name="language" value="en" x-model="language" class="size-4 accent-primary"/>
+                            <span>{{ __('translate_lang_en') }}</span>
+                            @isset($data['percentageOfTranslation'])
+                                <span class="text-caption text-ink-500">· {{ $data['percentageOfTranslation'] }} %</span>
+                            @endisset
+                        </label>
+                    </div>
+                    <p class="mt-2 text-caption text-ink-500">{{ __('export_language_consequence') }}</p>
+                </fieldset>
+
+                {{-- Akzentfarbe: vier kuratierte Farben statt Farb-Picker. --}}
+                <fieldset class="mb-6">
+                    <legend class="mb-2 text-caption font-semibold uppercase tracking-wider text-ink-500">
+                        {{ __('export_accent_label') }}
+                    </legend>
+                    <div class="flex flex-wrap gap-2">
+                        <template x-for="c in accents" :key="c.hex">
+                            <button type="button" @click="accent = c.hex"
+                                    :aria-pressed="accent === c.hex"
+                                    class="flex items-center gap-2 rounded-md border-2 px-3 py-1.5 text-caption text-ink-900 hover:border-ink-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                                    :class="accent === c.hex ? 'border-ink-900 bg-canvas-bg' : 'border-line-200 bg-canvas-bg'">
+                                <span class="inline-block size-4 rounded-sm" :style="'background-color: ' + c.hex"></span>
+                                <span x-text="c.name"></span>
+                                <span class="text-ink-500" x-text="'· ' + c.ratio + ' ✓'"></span>
+                            </button>
+                        </template>
+                    </div>
+                    <p class="mt-2 text-caption text-ink-500">{{ __('export_accent_hint') }}</p>
+                </fieldset>
+
+                {{-- Darstellung als Toggles mit Wirkung. --}}
+                <fieldset class="mb-6">
+                    <legend class="mb-2 text-caption font-semibold uppercase tracking-wider text-ink-500">
+                        {{ __('export_display_label') }}
+                    </legend>
+                    <div class="flex flex-col gap-3">
+                        <label class="inline-flex items-start gap-3">
+                            <input type="checkbox" name="collapse" x-model="collapse" class="mt-1 size-4 accent-primary"/>
+                            <span>
+                                <span class="block text-body text-ink-900">{{ __('export_toggle_collapse_title') }}</span>
+                                <span class="block text-caption text-ink-500">{{ __('export_toggle_collapse_desc') }}</span>
+                            </span>
+                        </label>
+                        <label class="inline-flex items-start gap-3">
+                            <input type="checkbox" name="backgroundSecond" x-model="background_second" class="mt-1 size-4 accent-primary"/>
+                            <span>
+                                <span class="block text-body text-ink-900">{{ __('export_toggle_alternate_title') }}</span>
+                                <span class="block text-caption text-ink-500">{{ __('export_toggle_alternate_desc') }}</span>
+                            </span>
+                        </label>
+                    </div>
+                </fieldset>
+
+                <footer class="flex items-center justify-end gap-2 border-t border-line-200 pt-3">
+                    <button type="button" data-dismiss="modal"
+                            class="inline-flex items-center rounded-md border border-line-200 bg-canvas-bg px-3 py-2 text-body text-ink-900 hover:bg-chrome-active focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                        {{ __('cancel') }}
+                    </button>
+                    <button type="submit"
+                            class="inline-flex items-center gap-1 rounded-md bg-primary px-4 py-2 text-body font-medium text-primary-on hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                        <x-icon name="download" size="4"/>
+                        <span x-text="format === 'pdf' ? '{{ __('export_button_pdf') }}' : '{{ __('export_button_html') }}'"></span>
+                    </button>
+                </footer>
             </form>
         </div>
     </x-ui.modal>
