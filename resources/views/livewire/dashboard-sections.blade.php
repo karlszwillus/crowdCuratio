@@ -27,6 +27,7 @@ use App\Models\Entry;
 use App\Models\Gallery;
 use App\Models\Image;
 use App\Models\Project;
+use App\Models\ProjectUserPermission;
 use App\Models\Text;
 use App\Models\User;
 use App\Support\PermissionName;
@@ -82,10 +83,19 @@ new #[Lazy] class extends Component
 
     private function assignedProjects(User $user): \Illuminate\Support\Collection
     {
+        // Bug 2026-08-17: der frühere `join(project_user_permissions)` + `groupBy('projects.id')`
+        // brach auf MySQL mit `ONLY_FULL_GROUP_BY` (Staging-Default), weil `projects.*`
+        // und `owners.name` nicht in der GROUP-BY-Klausel standen. Wir entkoppeln die
+        // Duplikat-Vermeidung: eine Subquery zieht distinct Project-IDs aus dem Pivot,
+        // die Hauptquery joint dann nur noch 1:1 auf `users` als Owner.
+        $projectIds = ProjectUserPermission::query()
+            ->where('user_id', $user->id)
+            ->distinct()
+            ->pluck('project_id');
+
         return Project::query()
-            ->join('project_user_permissions as pup', 'pup.project_id', '=', 'projects.id')
             ->join('users as owners', 'owners.id', '=', 'projects.user_id')
-            ->where('pup.user_id', $user->id)
+            ->whereIn('projects.id', $projectIds)
             ->where('projects.user_id', '!=', $user->id)
             ->select(
                 'projects.*',
@@ -93,7 +103,6 @@ new #[Lazy] class extends Component
                 'owners.last_name as owner_last_name',
             )
             ->withCount('chapters')
-            ->groupBy('projects.id')
             ->orderByDesc('projects.updated_at')
             ->limit(self::SECTION_LIMIT)
             ->get()

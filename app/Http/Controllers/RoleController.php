@@ -62,10 +62,11 @@ class RoleController extends Controller
      */
     public function index()
     {
+        // 2026-08-17-Fix: Der alte `leftjoin` + `groupBy('roles.id')` brach unter
+        // MySQL `ONLY_FULL_GROUP_BY` (Staging). Wir zaehlen die Zuweisungen jetzt
+        // als korrelierte Subquery — `roles.*` bleibt eindeutig, kein GROUP BY noetig.
         $roles = DB::table('roles')
-            ->leftjoin('model_has_roles', 'model_has_roles.role_id', '=', 'roles.id')
-            ->select('roles.*', DB::raw('count(model_has_roles.role_id) as cnt'))
-            ->groupBy('roles.id')
+            ->select('roles.*', DB::raw('(select count(*) from model_has_roles where model_has_roles.role_id = roles.id) as cnt'))
             ->get();
 
         return view('roles.index', compact('roles'));
