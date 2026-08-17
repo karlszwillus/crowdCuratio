@@ -580,23 +580,40 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                     :label="__('type')"
                                                                                                     :key="'av-type-'.$item->audiovisual->id" />
 
-                                                                                                {{-- Copyright und Quelle sind
-                                                                                                     Metadaten, keine Player-Konfig
-                                                                                                     — hinter einem <details>-Toggle
-                                                                                                     kollabiert, damit die Editor-
-                                                                                                     Sicht ruhig bleibt. Nativ,
-                                                                                                     ohne JS, WCAG-freundlich. --}}
-                                                                                                <details class="mt-1 rounded-md border border-ink-300/60 bg-canvas-dim/40 px-3 py-2">
-                                                                                                    <summary class="cursor-pointer select-none text-caption text-chrome-on-dim focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-                                                                                                        {{ __('metadata') }}
-                                                                                                    </summary>
-                                                                                                    <div class="mt-2 space-y-2">
+                                                                                                {{-- 5z.9: Transkript-Feld für Audio + Video, weiche Pflicht
+                                                                                                     analog zur Bildbeschreibung in der Galerie. --}}
+                                                                                                <div class="mt-2">
+                                                                                                    <label class="mb-1 block text-caption font-medium text-ink-700">
+                                                                                                        {{ __('transcript') }}
+                                                                                                    </label>
+                                                                                                    <livewire:inline-editor
+                                                                                                        :model="$item->audiovisual"
+                                                                                                        field="transcript"
+                                                                                                        :multiline="true"
+                                                                                                        rules="nullable|string|max:20000"
+                                                                                                        :label="__('transcript')"
+                                                                                                        :key="'av-transcript-'.$item->audiovisual->id" />
+                                                                                                    <p class="mt-1 text-caption text-ink-500">{{ __('transcript_hint') }}</p>
+                                                                                                </div>
+
+                                                                                                {{-- 5z.9/§ 8: Copyright und Quelle stehen offen, kein <details>
+                                                                                                     mehr — gleiche Stelle wie beim Text- und Galerie-Block. --}}
+                                                                                                <div class="mt-2 grid grid-cols-1 gap-3 md:grid-cols-2">
+                                                                                                    <div>
+                                                                                                        <label class="mb-1 block text-caption font-medium text-ink-700">
+                                                                                                            {{ __('copyright') }} <span class="text-danger" aria-hidden="true">*</span>
+                                                                                                        </label>
                                                                                                         <livewire:inline-editor
                                                                                                             :model="$item->audiovisual"
                                                                                                             field="copyright"
                                                                                                             rules="nullable|string|max:255"
                                                                                                             :label="__('copyright')"
                                                                                                             :key="'av-copyright-'.$item->audiovisual->id" />
+                                                                                                    </div>
+                                                                                                    <div>
+                                                                                                        <label class="mb-1 block text-caption font-medium text-ink-700">
+                                                                                                            {{ __('origin') }} <span class="text-danger" aria-hidden="true">*</span>
+                                                                                                        </label>
                                                                                                         <livewire:inline-editor
                                                                                                             :model="$item->audiovisual"
                                                                                                             field="source"
@@ -604,7 +621,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                             :label="__('origin')"
                                                                                                             :key="'av-source-'.$item->audiovisual->id" />
                                                                                                     </div>
-                                                                                                </details>
+                                                                                                </div>
                                                                                             </div>
                                                                                         @else
                                                                                             <p class="metadata mt-2">
@@ -619,6 +636,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                             $avMissing = collect([
                                                                                                 empty(trim(strip_tags((string) $item->audiovisual->copyright))) ? __('copyright') : null,
                                                                                                 empty(trim(strip_tags((string) $item->audiovisual->source))) ? __('origin') : null,
+                                                                                                empty(trim(strip_tags((string) $item->audiovisual->transcript))) ? __('transcript') : null,
                                                                                             ])->filter()->values();
                                                                                         @endphp
                                                                                         <div class="mt-3 flex items-center justify-between gap-3">
@@ -1533,6 +1551,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                     $publishCheckAvFields = collect([
                                         empty(trim(strip_tags((string) $publishCheckAv->copyright))) ? __('publish_check_field_copyright') : null,
                                         empty(trim(strip_tags((string) $publishCheckAv->source))) ? __('publish_check_field_origin') : null,
+                                        empty(trim(strip_tags((string) $publishCheckAv->transcript))) ? __('publish_check_field_transcript') : null,
                                     ])->filter()->values();
                                     if ($publishCheckAvFields->isNotEmpty()) {
                                         $publishCheckAvLabel = $publishCheckAv->type === 'audio' ? __('audio') : __('video');
