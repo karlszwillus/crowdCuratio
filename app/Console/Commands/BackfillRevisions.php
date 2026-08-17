@@ -130,7 +130,14 @@ class BackfillRevisions extends Command
                     $versionSeq[$key] = ($versionSeq[$key] ?? 0) + 1;
 
                     if (! $dryRun) {
-                        Revision::create([
+                        // created_at/updated_at duerfen nicht ins fill(),
+                        // weil das Model unter shouldBeStrict() sonst
+                        // eine MassAssignmentException wirft. Wir setzen
+                        // die Timestamps nach dem fill() explizit und
+                        // schalten die automatischen Timestamps ab,
+                        // damit save() nicht drueberschreibt.
+                        $revision = new Revision;
+                        $revision->fill([
                             'subject_type' => $subjectType,
                             'subject_id' => $subjectId,
                             'actor_id' => $activity->causer_id ? (int) $activity->causer_id : null,
@@ -145,9 +152,11 @@ class BackfillRevisions extends Command
                                 ],
                             ],
                             'version' => $versionSeq[$key],
-                            'created_at' => $activity->created_at,
-                            'updated_at' => $activity->updated_at ?? $activity->created_at,
                         ]);
+                        $revision->created_at = $activity->created_at;
+                        $revision->updated_at = $activity->updated_at ?? $activity->created_at;
+                        $revision->timestamps = false;
+                        $revision->save();
                     }
                     $written++;
                 }
