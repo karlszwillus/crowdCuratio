@@ -543,6 +543,68 @@ Status links, Speicherstand mit Datum UND Uhrzeit rechts.
 Tree-Button zeigte den rohen Key. Neu angelegt als „Neues
 Kapitel" (parallel zu `new_chapter`, 5e-Substantiv-Konvention).
 
+**Phase-5aa — Nebenseiten (Einstellungen, Metadaten,
+Übersetzen, Export) auf Design v6.** Die vier
+Rand-Sichten der Projekt-Werkbank werden aus dem Bestand
+gehoben und an das Chrome und die Muster aus 5-D angeglichen.
+Einstellungen listet Rechtstexte (Impressum, Datenschutz-
+erklärung, Geschäftsbedingungen) und E-Mail-Vorlagen
+(Einladungs-Mail, Aktivierungs-Mail, Passwort-Vergessen-Mail)
+in zwei Gruppen mit Status-Chip und Auszug pro Zeile;
+jede Zeile hat einen echten „Bearbeiten"-Button, der die
+bisherigen Bestands-Modale weiterhin öffnet (Backend
+unverändert).
+
+Metadaten bekommen eine Sticky-Save-Fußzeile mit primärem
+„Speichern" und sekundärem „Änderungen verwerfen", weil ein
+Speichern-Punkt in der Rail beim Metadatenfeld weit weg vom
+Fokus liegt. Das Vorschau-Bild ist ein 120×120-Alpine-Panel
+mit „Bild wählen" und „Entfernen" statt eines nativen
+File-Pickers, der Projektname trägt einen Zeichenzähler
+(80). Rechte Spalte fasst Publish-Check-Anker, Kennzahlen
+(Kapitel, Abschnitte, Übersetzt-Prozent, letzte Änderung)
+und Verlaufs-Link zusammen; Projekt löschen steht mit
+gebührendem Abstand darunter.
+
+Impressum und AGB dürfen jetzt leer bleiben — dann greift
+der systemweite Text aus Einstellungen automatisch. Ein
+neuer `App\Support\ProjectLegalText`-Helper hält die Regel
+an einer Stelle; sowohl die Metadaten-Sicht als auch die
+HTML- und PDF-Preview ziehen ihren Wert von dort. Zusätzlich
+gibt es einen „Systemtext übernehmen"-Button pro Feld, der
+den strukturierten Systemtext einmalig ins Projektfeld
+kopiert (POST `projects.metadata.adopt_system_text`, per
+`update`-Policy geschützt).
+
+Übersetzen ist eine Zwei-Spalten-Sicht mit Sprachpaar-Selektor
+oben, „Nur unübersetzte Felder"-Filter und Sektions-Chips pro
+Kapitel/Abschnitt/Inhalt mit `⚠ n von m Feldern übersetzt`-
+Countern. Die Sticky-Fußzeile zeigt einen Fortschrittsbalken
+plus einen einzigen Sammel-Speichern-Button. Content-Blöcke
+(Text, Galerie, Audiovisuell) sind eingeschlossen — bislang
+fehlten sie in der Übersetzen-Sicht komplett. Speichern läuft
+über den neuen `translate.save`-POST-Endpoint, der Payload-
+Schlüssel im Schema `translations[Model.id.field]` entgegen-
+nimmt und pro Modell die Zugehörigkeit zum Zielprojekt
+prüft; fremde Modelle werden verworfen. Auf jedem Input hängt
+ein Auto-Save-on-Blur: das Feld schickt beim Verlassen genau
+einen Wert ans Backend, die Sektions-Counter und der
+Gesamt-Fortschritt aktualisieren live ohne Reload. Der große
+Sammel-Speichern-Button bleibt als Notfall stehen, falls
+Blur-Change verpasst wurde oder der Nutzer offline war.
+
+Der Export-Dialog bekommt eine kuratierte Formatwahl (HTML
+oder PDF als zwei Radio-Karten, primärer Button folgt der
+Auswahl) statt der freien Format-Liste; die Konsequenz jeder
+Toggle-Option steht als eigene Zeile unter dem Schalter.
+Publish-Check listet fehlende Angaben mit `Ansehen`-Deep-
+Links, die den passenden Abschnitt im Editor per Anchor
+öffnen. Vier vorkonfigurierte Akzentfarben (Rot, Anthrazit,
+Teal, Braun) mit WCAG-Kontrastwert lösen den freien
+Farbwähler ab. Sprache mit Fallback-Konsequenz macht
+transparent, was passiert, wenn ein Feld in der Zielsprache
+fehlt.
+
 ### Hinzugefügt
 
 - **`<x-icon name="…">`-Komponente auf Lucide-Basis** (Phase
