@@ -61,11 +61,18 @@ function enterDiffMode(subjectType, subjectId, fields) {
         Object.entries(fields).forEach(([field, diff]) => {
             const target = block.querySelector(`[data-history-field="${field}"]`);
             if (!target) return;
-            if (!target.dataset.originalHtml) {
-                target.dataset.originalHtml = target.innerHTML;
+            // Statt innerHTML zu ueberschreiben (das reisst Livewire-
+            // Rich-Text-Editors auseinander), blenden wir eine Overlay-
+            // <div> ein. CSS versteckt die Original-Kinder — der
+            // Livewire-Editor bleibt inkl. Alpine-State im DOM.
+            target.setAttribute('data-history-diff-active', 'on');
+            let overlay = target.querySelector(':scope > .cc-history-diff-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.className = 'cc-history-diff-overlay';
+                target.appendChild(overlay);
             }
-            target.innerHTML = diff.html;
-            target.classList.add('cc-history-diff-target');
+            overlay.innerHTML = diff.html;
         });
     });
 }
@@ -73,13 +80,13 @@ function enterDiffMode(subjectType, subjectId, fields) {
 function exitDiffMode() {
     delete document.documentElement.dataset.historyDiff;
     document.getElementById(BANNER_ID)?.remove();
-    document.querySelectorAll('.cc-history-diff-target').forEach((el) => {
-        if (el.dataset.originalHtml !== undefined) {
-            el.innerHTML = el.dataset.originalHtml;
-            delete el.dataset.originalHtml;
-        }
-        el.classList.remove('cc-history-diff-target');
-    });
+    document
+        .querySelectorAll('[data-history-field][data-history-diff-active="on"]')
+        .forEach((target) => {
+            target.removeAttribute('data-history-diff-active');
+            const overlay = target.querySelector(':scope > .cc-history-diff-overlay');
+            overlay?.remove();
+        });
     document.querySelectorAll('[data-history-lock="on"]').forEach((block) => {
         block.removeAttribute('data-history-lock');
     });

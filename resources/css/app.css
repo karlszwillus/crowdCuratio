@@ -347,3 +347,18 @@ a:has(> i:only-child[class*="bi-"]) {
     border-radius: 4px;
     border: 1px dashed var(--line-300);
 }
+
+/* Phase 5ab.4 Follow-up: Diff-Overlay statt DOM-Ersatz.
+   Ist ein Feld im Diff-Modus, verstecken wir alle Original-Kinder und
+   zeigen nur das Overlay. So bleiben Livewire-Rich-Text-Editoren
+   intakt — Alpine-State und wire:model-Bindings gehen nicht verloren. */
+[data-history-field][data-history-diff-active="on"] > :not(.cc-history-diff-overlay) {
+    display: none !important;
+}
+.cc-history-diff-overlay {
+    background: var(--canvas-bg);
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    border: 1px dashed var(--line-300);
+    line-height: 1.5;
+}

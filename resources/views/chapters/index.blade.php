@@ -285,16 +285,18 @@ If not, see <https://www.gnu.org/licenses/>. -->
                         {{-- Kapitel-Beschreibung als Rich-Text-Editor,
                              direkt unter dem Section-Header. --}}
                         @can('update', $project)
-                            <livewire:rich-text-editor
-                                :model="$chapter"
-                                field="description"
-                                rules="nullable|string"
-                                :label="__('chapter_description')"
-                                :key="'chapter-description-'.$chapter->id"
-                            />
+                            <div data-history-field="description">
+                                <livewire:rich-text-editor
+                                    :model="$chapter"
+                                    field="description"
+                                    rules="nullable|string"
+                                    :label="__('chapter_description')"
+                                    :key="'chapter-description-'.$chapter->id"
+                                />
+                            </div>
                         @else
                             @if (! empty(trim(strip_tags((string) $chapter->description))))
-                                <p class="text-body text-ink-700">{!! $chapter->description !!}</p>
+                                <p data-history-field="description" class="text-body text-ink-700">{!! $chapter->description !!}</p>
                             @endif
                         @endcan
 
