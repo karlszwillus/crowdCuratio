@@ -453,5 +453,14 @@
   "history_open_button": "Open history",
   "history_has_changes": "has changes",
   "history_diff_banner": "Read only — compare mode active",
-  "history_diff_close": "Close comparison"
+  "history_diff_close": "Close comparison",
+  "history_restore_dialog_title": "Restore revision",
+  "history_restore_body_intro": "The current revision is not lost — it is stored as a new revision in the history before the state of",
+  "history_restore_body_kept": "This action is reversible: you can always go back to the current revision later.",
+  "history_restore_body_translation_warning": "Note: translations exist. They stay, but will be marked \"original changed after translation\" and should be updated.",
+  "history_restore_confirm": "Restore revision",
+  "history_restore_busy": "Restoring",
+  "history_restore_success": "Restored as v:version",
+  "history_restore_announce": "Revision restored.",
+  "history_restore_error": "Restore failed. Please try again."
 }

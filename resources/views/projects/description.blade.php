@@ -39,6 +39,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
         <livewire:history-panel-list :projectId="$project->id" />
     </x-layout.history-panel>
 
+    {{-- Phase 5ab.5: Bestaetigungs-Dialog fuer Wiederherstellen. Hoert
+         auf `history:restore-request`, ruft revisions.restore und laedt
+         danach die Seite neu, damit der frische Zustand sichtbar wird. --}}
+    <x-layout.history-restore-dialog />
+
     {{-- Phase 5ab.3: Der alte Version-Log-Block hier (Karten-Liste mit
          Namen und Uhrzeit unter dem Editor) ist durch das Verlauf-Panel
          oben abgeloest. Die `log.detail`-Route bleibt vorerst bestehen —

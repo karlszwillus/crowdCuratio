@@ -838,6 +838,28 @@ class ProjectController extends Controller
 
             $model->setTranslation($field, 'en', (string) $value);
             $model->save();
+
+            // Phase 5ab.5 (Design v6 § 4): Sync-Marker fuer „Original
+            // nach Uebersetzung geaendert". Wir merken die aktuelle
+            // Fassung des Subjects als Referenz. Aendert der Kurator
+            // spaeter das Original, waechst die Version — und wir
+            // koennen den Warn-Chip zeigen.
+            $latestRevisionId = \App\Models\Revision::query()
+                ->where('subject_type', $model::class)
+                ->where('subject_id', $model->getKey())
+                ->latest('created_at')
+                ->value('id');
+            if ($latestRevisionId !== null) {
+                \App\Models\TranslationSourceReference::updateOrCreate(
+                    [
+                        'subject_type' => $model::class,
+                        'subject_id' => $model->getKey(),
+                        'field' => $field,
+                        'locale' => 'en',
+                    ],
+                    ['source_revision_id' => $latestRevisionId]
+                );
+            }
         }
 
         // 5aa.3-Followup: Auto-Save-on-Blur schickt AJAX — dann JSON-Antwort,

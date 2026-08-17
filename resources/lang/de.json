@@ -524,5 +524,14 @@
   "history_open_button": "Verlauf ansehen",
   "history_has_changes": "hat bereits Änderungen",
   "history_diff_banner": "Nur zum Ansehen — Vergleichsmodus aktiv",
-  "history_diff_close": "Vergleich schließen"
+  "history_diff_close": "Vergleich schließen",
+  "history_restore_dialog_title": "Fassung wiederherstellen",
+  "history_restore_body_intro": "Die aktuelle Fassung geht nicht verloren — sie wird als eigene Fassung im Verlauf abgelegt, bevor der Zustand aus",
+  "history_restore_body_kept": "Die Aktion ist umkehrbar: du kannst später jederzeit wieder zur aktuellen Fassung zurück.",
+  "history_restore_body_translation_warning": "Achtung: Es existieren Übersetzungen. Sie bleiben erhalten, werden aber als „Original nach der Übersetzung geändert\" markiert und sollten nachgezogen werden.",
+  "history_restore_confirm": "Fassung wiederherstellen",
+  "history_restore_busy": "Stelle wieder her",
+  "history_restore_success": "Wiederhergestellt als v:version",
+  "history_restore_announce": "Fassung wurde wiederhergestellt.",
+  "history_restore_error": "Fehler beim Wiederherstellen. Bitte versuche es noch einmal."
 }

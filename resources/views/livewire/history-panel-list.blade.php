@@ -152,6 +152,23 @@ new class extends Component
         // sperrt das sonst.
         $anchorSubject = RevisionSubject::resolve($this->subjectType, $this->subjectId);
         $restoreProject = $anchorSubject ? RevisionSubject::projectFor($anchorSubject) : null;
+        // § 7: bei Uebersetzung vorhanden warnt der Restore-Dialog, dass
+        // sie erhalten bleibt aber als „Original nach Uebersetzung
+        // geaendert" markiert wird. Wir prueflegen das anhand des
+        // getranslations-Zustands des Anker-Subjects.
+        $anchorHasTranslations = false;
+        if ($anchorSubject !== null && method_exists($anchorSubject, 'getTranslations')) {
+            $translatable = property_exists($anchorSubject, 'translatable') ? (array) $anchorSubject->translatable : [];
+            foreach ($translatable as $field) {
+                $translations = $anchorSubject->getTranslations($field);
+                foreach ($translations as $locale => $value) {
+                    if ($locale !== 'de' && trim((string) $value) !== '') {
+                        $anchorHasTranslations = true;
+                        break 2;
+                    }
+                }
+            }
+        }
 
         $query = Revision::query()
             ->with('actor:id,name')
@@ -215,6 +232,7 @@ new class extends Component
             'revisions' => $revisions,
             'grouped' => $grouped,
             'restoreProject' => $restoreProject,
+            'anchorHasTranslations' => $anchorHasTranslations,
         ];
     }
 }; ?>
@@ -314,7 +332,7 @@ new class extends Component
                                                 @can(App\Support\PermissionName::HISTORY_RESTORE->value, $restoreProject)
                                                     <button
                                                         type="button"
-                                                        onclick="event.stopPropagation(); window.dispatchEvent(new CustomEvent('history:restore-request', { detail: { revisionId: {{ $revision->id }}, version: {{ $revision->version }} } }))"
+                                                        onclick="event.stopPropagation(); window.dispatchEvent(new CustomEvent('history:restore-request', { detail: { revisionId: {{ $revision->id }}, version: {{ $revision->version }}, hasTranslations: {{ $anchorHasTranslations ? 'true' : 'false' }} } }))"
                                                         class="rounded-md border border-ink-300 bg-canvas-bg px-2 py-1 text-caption text-ink-900 hover:bg-chrome-active"
                                                     >
                                                         {{ __('history_restore_button') }}
