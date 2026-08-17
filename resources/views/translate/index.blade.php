@@ -109,7 +109,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                 <span class="text-ink-500">·</span>
                                 <span class="truncate text-ink-500">{{ $chapter->name }}</span>
                             </span>
-                            <span class="text-caption {{ $groupDone === $groupTotal ? 'text-success' : 'text-warning' }}">
+                            <span data-section-counter class="text-caption {{ $groupDone === $groupTotal ? 'text-success' : 'text-warning' }}">
                                 {{ $groupDone === $groupTotal ? '✓' : '⚠' }}
                                 {{ trans_choice('translate_group_count_all', $groupTotal, ['done' => $groupDone, 'total' => $groupTotal]) }}
                             </span>
@@ -146,7 +146,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                         <span class="text-ink-500">·</span>
                                         <span class="truncate text-ink-500">{{ $entry->name }}</span>
                                     </span>
-                                    <span class="text-caption {{ $entryDone === $entryTotal ? 'text-success' : 'text-warning' }}">
+                                    <span data-section-counter class="text-caption {{ $entryDone === $entryTotal ? 'text-success' : 'text-warning' }}">
                                         {{ $entryDone === $entryTotal ? '✓' : '⚠' }}
                                         {{ trans_choice('translate_group_count_all', $entryTotal, ['done' => $entryDone, 'total' => $entryTotal]) }}
                                     </span>
@@ -232,9 +232,9 @@ If not, see <https://www.gnu.org/licenses/>. -->
                 <div class="sticky bottom-0 -mx-4 mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-line-200 bg-paper-0/95 px-6 py-3 shadow-medium backdrop-blur">
                     <div class="flex min-w-0 flex-1 flex-col gap-1">
                         <div class="h-2 w-full max-w-md overflow-hidden rounded-full bg-line-100">
-                            <div class="h-full bg-brand-bar" style="width: {{ $data['percentageOfTranslation'] }}%"></div>
+                            <div data-progress-bar class="h-full bg-brand-bar" style="width: {{ $data['percentageOfTranslation'] }}%"></div>
                         </div>
-                        <p class="text-caption text-ink-500">{{ $data['percentageOfTranslation'] }}%</p>
+                        <p data-progress-label class="text-caption text-ink-500">{{ $data['percentageOfTranslation'] }}%</p>
                     </div>
                     <button type="submit"
                             class="inline-flex items-center gap-1 rounded-md bg-primary px-4 py-2 text-body font-medium text-primary-on hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">

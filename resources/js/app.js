@@ -100,3 +100,8 @@ import './tooltip-shim';
 // Löst `<audio controls>` und das nackte YouTube-iframe ab, deckt gleichzeitig
 // Zwei-Klick-Einbettung für YouTube (kein Drittanbieter-Request vor Klick).
 import './plyr-init';
+
+// Auto-Save-on-Blur für die Übersetzen-Sicht (Phase 5aa.3-Followup):
+// jedes translations[…]-Feld schreibt beim Verlassen ohne Reload; der
+// Counter pro Sektion und der Gesamt-Fortschritt aktualisieren live.
+import './translate-autosave';

@@ -839,6 +839,12 @@ class ProjectController extends Controller
             $model->save();
         }
 
+        // 5aa.3-Followup: Auto-Save-on-Blur schickt AJAX — dann JSON-Antwort,
+        // sonst wie bisher zurück zur Übersetzen-Sicht mit Success-Meldung.
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['ok' => true]);
+        }
+
         return redirect()
             ->route('translate', $project->id)
             ->with('success', __('message_edit_project_success'));
