@@ -753,9 +753,95 @@ class ProjectController extends Controller
         App::setlocale('de');
         $data = $this->allData($id);
 
+        // 5aa.3-Followup: Die neue Blade-Sicht rendert Text/Gallery/
+        // Audiovisual direkt aus der `mediaContent`-Kette. Weil
+        // `Model::shouldBeStrict()` Lazy-Loading verbietet, ziehen wir
+        // die polymorphen Ziel-Modelle hier gezielt nach; `allData`
+        // bleibt für seine eigene Prozent-Rechnung unverändert.
+        $tree = \App\Models\Project::withTranslateTree()->findOrFail($id);
+        foreach ($tree->chapters as $chapter) {
+            foreach ($chapter->entries as $entry) {
+                foreach ($entry->mediaContent as $mc) {
+                    $mc->loadMissing('text', 'gallery.images', 'audiovisual');
+                }
+            }
+        }
+        $data['data'] = $tree->chapters;
+
         // Phase 5d.4-Followup: $project fuer die einheitliche
         // Tab-Leiste (<x-projects.tabs>) mitliefern.
         return view('translate.index', compact('data', 'project'));
+    }
+
+    /**
+     * Phase 5aa.3: Bulk-Save aller englischen Übersetzungen einer
+     * Projekt-Übersetzen-Sicht in einem Rutsch.
+     *
+     * Erwartet einen `translations`-Payload der Form
+     * `{ 'Chapter.5.name': 'English name', 'Text.42.text': '...' }`.
+     * Der Key-Prefix ist das Kurzname des Modells; die Save-Kette
+     * ruft `setTranslation(field, 'en', value)` und `save()` auf.
+     *
+     * Nicht-erlaubte Modelltypen oder Modelle aus fremden Projekten
+     * werden übersprungen (Authorization pro Modell über ProjectPolicy).
+     */
+    public function saveTranslations(Request $request, int $id)
+    {
+        $project = Project::findOrFail($id);
+        $this->authorize('update', $project);
+
+        $payload = $request->input('translations', []);
+        if (! is_array($payload)) {
+            $payload = [];
+        }
+
+        $modelMap = [
+            'Chapter' => \App\Models\Chapter::class,
+            'Entry' => \App\Models\Entry::class,
+            'Text' => \App\Models\Text::class,
+            'Gallery' => \App\Models\Gallery::class,
+            'Image' => \App\Models\Image::class,
+            'Audiovisual' => \App\Models\Audiovisual::class,
+        ];
+
+        foreach ($payload as $key => $value) {
+            [$modelKey, $modelId, $field] = array_pad(explode('.', $key, 3), 3, null);
+            if (! isset($modelMap[$modelKey]) || $modelId === null || $field === null) {
+                continue;
+            }
+            /** @var \Illuminate\Database\Eloquent\Model $model */
+            $model = $modelMap[$modelKey]::find($modelId);
+            if ($model === null) {
+                continue;
+            }
+
+            // Gehört das Modell wirklich zu diesem Projekt? Die
+            // `project()`-Kette der Modelle gibt bei einigen (Chapter,
+            // Entry) eine Relation, bei anderen (Text, Audiovisual) das
+            // Model direkt zurück — beide Zweige normalisieren.
+            $modelProject = null;
+            if (method_exists($model, 'project')) {
+                $result = $model->project();
+                if ($result instanceof \Illuminate\Database\Eloquent\Relations\Relation) {
+                    $modelProject = $result->getResults();
+                } elseif ($result instanceof \App\Models\Project) {
+                    $modelProject = $result;
+                }
+            }
+            if ($modelProject === null || (int) $modelProject->id !== (int) $project->id) {
+                continue;
+            }
+            if (! in_array($field, $model->translatable ?? [], true)) {
+                continue;
+            }
+
+            $model->setTranslation($field, 'en', (string) $value);
+            $model->save();
+        }
+
+        return redirect()
+            ->route('translate', $project->id)
+            ->with('success', __('message_edit_project_success'));
     }
 
     /**

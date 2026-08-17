@@ -70,10 +70,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
             </div>
         </header>
 
-        {{-- 5aa.3: Bulk-Save-Endpoint kommt in einem Backend-Followup — bis
-             dahin behandelt der Formularrahmen die Felder rein als UI-
-             Preview. Auto-Save-on-Blur pro Feld ist die nächste Ausbaustufe. --}}
-        <form action="#" method="POST" id="translate_form">
+        {{-- 5aa.3: Alle englischen Übersetzungen wandern als benannter
+             `translations[<Model>.<id>.<field>]`-Payload an den
+             Bulk-Save-Endpoint. Auto-Save-on-Blur pro Feld ist die
+             nächste Ausbaustufe. --}}
+        <form action="{{ route('translate.save', $project->id) }}" method="POST" id="translate_form">
             @csrf
 
             @php
@@ -120,9 +121,9 @@ If not, see <https://www.gnu.org/licenses/>. -->
                         </div>
 
                         <div class="divide-y divide-line-200">
-                            @include('translate.field-partial', ['label' => __('chapter_title'), 'originalHtml' => $chapter->name, 'translationHtml' => $chapter->getTranslation('name', 'en', false), 'inputName' => "chapterTitle[$chapter->id]", 'placeholder' => __('translate_placeholder_title')])
-                            @include('translate.field-partial', ['label' => __('chapter_subtitle'), 'originalHtml' => $chapter->subtitle, 'translationHtml' => $chapter->getTranslation('subtitle', 'en', false), 'inputName' => "chapterSubtitle[$chapter->id]", 'placeholder' => __('translate_placeholder_subtitle')])
-                            @include('translate.field-partial', ['label' => __('chapter_description'), 'originalHtml' => $chapter->description, 'translationHtml' => $chapter->getTranslation('description', 'en', false), 'inputName' => "chapterDescription[$chapter->id]", 'placeholder' => __('translate_placeholder_description'), 'multiline' => true])
+                            @include('translate.field-partial', ['label' => __('chapter_title'), 'originalHtml' => $chapter->name, 'translationHtml' => $chapter->getTranslation('name', 'en', false), 'inputName' => "translations[Chapter.$chapter->id.name]", 'placeholder' => __('translate_placeholder_title')])
+                            @include('translate.field-partial', ['label' => __('chapter_subtitle'), 'originalHtml' => $chapter->subtitle, 'translationHtml' => $chapter->getTranslation('subtitle', 'en', false), 'inputName' => "translations[Chapter.$chapter->id.subtitle]", 'placeholder' => __('translate_placeholder_subtitle')])
+                            @include('translate.field-partial', ['label' => __('chapter_description'), 'originalHtml' => $chapter->description, 'translationHtml' => $chapter->getTranslation('description', 'en', false), 'inputName' => "translations[Chapter.$chapter->id.description]", 'placeholder' => __('translate_placeholder_description'), 'multiline' => true])
                         </div>
                     </section>
 
@@ -152,11 +153,76 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                 </header>
 
                                 <div class="divide-y divide-line-200">
-                                    @include('translate.field-partial', ['label' => __('entry_title'), 'originalHtml' => $entry->name, 'translationHtml' => $entry->getTranslation('name', 'en', false), 'inputName' => "entryTitle[$entry->id]", 'placeholder' => __('translate_placeholder_title')])
-                                    @include('translate.field-partial', ['label' => __('entry_subtitle'), 'originalHtml' => $entry->subtitle, 'translationHtml' => $entry->getTranslation('subtitle', 'en', false), 'inputName' => "entrySubtitle[$entry->id]", 'placeholder' => __('translate_placeholder_subtitle')])
-                                    @include('translate.field-partial', ['label' => __('entry_description'), 'originalHtml' => $entry->description, 'translationHtml' => $entry->getTranslation('description', 'en', false), 'inputName' => "entryDescription[$entry->id]", 'placeholder' => __('translate_placeholder_description'), 'multiline' => true])
+                                    @include('translate.field-partial', ['label' => __('entry_title'), 'originalHtml' => $entry->name, 'translationHtml' => $entry->getTranslation('name', 'en', false), 'inputName' => "translations[Entry.$entry->id.name]", 'placeholder' => __('translate_placeholder_title')])
+                                    @include('translate.field-partial', ['label' => __('entry_subtitle'), 'originalHtml' => $entry->subtitle, 'translationHtml' => $entry->getTranslation('subtitle', 'en', false), 'inputName' => "translations[Entry.$entry->id.subtitle]", 'placeholder' => __('translate_placeholder_subtitle')])
+                                    @include('translate.field-partial', ['label' => __('entry_description'), 'originalHtml' => $entry->description, 'translationHtml' => $entry->getTranslation('description', 'en', false), 'inputName' => "translations[Entry.$entry->id.description]", 'placeholder' => __('translate_placeholder_description'), 'multiline' => true])
                                 </div>
                             </section>
+
+                            {{-- 5aa.3-Followup: Inhalte des Eintrags — Text, Galerie und
+                                 Audio/Video mit ihren übersetzbaren Feldern. --}}
+                            @foreach($entry->mediaContent ?? [] as $mc)
+                                @php
+                                    $mcType = $mc->content_type ?? null;
+                                    $mcClass = null;
+                                    $mcTitle = null;
+                                    if ($mcType === \App\Models\Text::class && isset($mc->text)) {
+                                        $mcClass = 'Text';
+                                        $mcTitle = 'Text';
+                                    } elseif ($mcType === \App\Models\Gallery::class && isset($mc->gallery)) {
+                                        $mcClass = 'Gallery';
+                                        $mcTitle = $mc->gallery->title ?: 'Galerie';
+                                    } elseif ($mcType === \App\Models\Audiovisual::class && isset($mc->audiovisual)) {
+                                        $mcClass = 'Audiovisual';
+                                        $mcTitle = $mc->audiovisual->type === 'audio' ? 'Audio' : 'Video';
+                                    }
+                                @endphp
+                                @if ($mcClass === 'Text')
+                                    <section class="mb-8 ml-12 rounded-md border border-line-200 bg-paper-0">
+                                        <header class="flex flex-wrap items-center justify-between gap-3 border-b border-line-200 px-4 py-3">
+                                            <span class="inline-flex items-center gap-2 rounded-md bg-line-100 px-2 py-0.5 text-caption font-semibold uppercase tracking-wider text-ink-700">
+                                                <x-icon name="type" size="3"/>
+                                                <span>{{ __('translate_group_block') }} · {{ $mcTitle }}</span>
+                                            </span>
+                                        </header>
+                                        <div class="divide-y divide-line-200">
+                                            @include('translate.field-partial', ['label' => __('text'), 'originalHtml' => $mc->text->text, 'translationHtml' => $mc->text->getTranslation('text', 'en', false), 'inputName' => "translations[Text.{$mc->text->id}.text]", 'placeholder' => __('translate_placeholder_text'), 'multiline' => true])
+                                        </div>
+                                    </section>
+                                @elseif ($mcClass === 'Gallery')
+                                    <section class="mb-8 ml-12 rounded-md border border-line-200 bg-paper-0">
+                                        <header class="flex flex-wrap items-center justify-between gap-3 border-b border-line-200 px-4 py-3">
+                                            <span class="inline-flex items-center gap-2 rounded-md bg-line-100 px-2 py-0.5 text-caption font-semibold uppercase tracking-wider text-ink-700">
+                                                <x-icon name="image" size="3"/>
+                                                <span>{{ __('translate_group_block') }} · {{ __('block_type_gallery') }} „{{ $mcTitle }}"</span>
+                                            </span>
+                                        </header>
+                                        <div class="divide-y divide-line-200">
+                                            @include('translate.field-partial', ['label' => __('gallery_title'), 'originalHtml' => $mc->gallery->title, 'translationHtml' => $mc->gallery->getTranslation('title', 'en', false), 'inputName' => "translations[Gallery.{$mc->gallery->id}.title]", 'placeholder' => __('translate_placeholder_title')])
+                                            @include('translate.field-partial', ['label' => __('gallery_subtitle'), 'originalHtml' => $mc->gallery->subtitle, 'translationHtml' => $mc->gallery->getTranslation('subtitle', 'en', false), 'inputName' => "translations[Gallery.{$mc->gallery->id}.subtitle]", 'placeholder' => __('translate_placeholder_subtitle')])
+                                            @include('translate.field-partial', ['label' => __('gallery_description'), 'originalHtml' => $mc->gallery->description, 'translationHtml' => $mc->gallery->getTranslation('description', 'en', false), 'inputName' => "translations[Gallery.{$mc->gallery->id}.description]", 'placeholder' => __('translate_placeholder_description'), 'multiline' => true])
+                                            @foreach ($mc->gallery->images ?? [] as $image)
+                                                @include('translate.field-partial', ['label' => __('title').' · '.($image->alt ?: '#'.$image->id), 'originalHtml' => $image->alt, 'translationHtml' => $image->getTranslation('alt', 'en', false), 'inputName' => "translations[Image.{$image->id}.alt]", 'placeholder' => __('translate_placeholder_title')])
+                                                @include('translate.field-partial', ['label' => __('gallery_image_description').' · '.($image->alt ?: '#'.$image->id), 'originalHtml' => $image->description, 'translationHtml' => $image->getTranslation('description', 'en', false), 'inputName' => "translations[Image.{$image->id}.description]", 'placeholder' => __('translate_placeholder_description'), 'multiline' => true])
+                                            @endforeach
+                                        </div>
+                                    </section>
+                                @elseif ($mcClass === 'Audiovisual')
+                                    <section class="mb-8 ml-12 rounded-md border border-line-200 bg-paper-0">
+                                        <header class="flex flex-wrap items-center justify-between gap-3 border-b border-line-200 px-4 py-3">
+                                            <span class="inline-flex items-center gap-2 rounded-md bg-line-100 px-2 py-0.5 text-caption font-semibold uppercase tracking-wider text-ink-700">
+                                                <x-icon name="{{ $mc->audiovisual->type === 'audio' ? 'volume-2' : 'play' }}" size="3"/>
+                                                <span>{{ __('translate_group_block') }} · {{ $mcTitle }}</span>
+                                            </span>
+                                        </header>
+                                        <div class="divide-y divide-line-200">
+                                            @include('translate.field-partial', ['label' => __('transcript'), 'originalHtml' => $mc->audiovisual->transcript, 'translationHtml' => $mc->audiovisual->getTranslation('transcript', 'en', false), 'inputName' => "translations[Audiovisual.{$mc->audiovisual->id}.transcript]", 'placeholder' => __('translate_placeholder_text'), 'multiline' => true])
+                                            @include('translate.field-partial', ['label' => __('copyright'), 'originalHtml' => $mc->audiovisual->copyright, 'translationHtml' => $mc->audiovisual->getTranslation('copyright', 'en', false), 'inputName' => "translations[Audiovisual.{$mc->audiovisual->id}.copyright]", 'placeholder' => __('translate_placeholder_copyright')])
+                                            @include('translate.field-partial', ['label' => __('origin'), 'originalHtml' => $mc->audiovisual->source, 'translationHtml' => $mc->audiovisual->getTranslation('source', 'en', false), 'inputName' => "translations[Audiovisual.{$mc->audiovisual->id}.source]", 'placeholder' => __('translate_placeholder_source')])
+                                        </div>
+                                    </section>
+                                @endif
+                            @endforeach
                         @endforeach
                     @endif
                 @endforeach

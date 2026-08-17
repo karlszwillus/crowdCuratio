@@ -353,6 +353,13 @@ Route::group(
         );
 
         Route::post(
+            '/project/{id}/translate',
+            [ProjectController::class, 'saveTranslations']
+        )->name(
+            'translate.save'
+        );
+
+        Route::post(
             '/project/save-translate-text',
             [ContentController::class, 'saveTranslatedText']
         )->name(
