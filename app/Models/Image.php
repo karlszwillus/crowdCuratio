@@ -33,6 +33,7 @@ use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Translatable\HasTranslations;
+use App\Support\HasRevisions;
 
 /**
  * @property int $id
@@ -49,7 +50,7 @@ use Spatie\Translatable\HasTranslations;
  */
 class Image extends Model implements HasComments
 {
-    use HasFactory, HasTranslations, LogsActivity, SoftDeletes;
+    use HasFactory, HasRevisions, HasTranslations, LogsActivity, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.

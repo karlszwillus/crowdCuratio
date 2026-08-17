@@ -501,7 +501,12 @@
   "permission_comment_title": "Kommentieren",
   "permission_comment_desc": "Kommentare auf Kapiteln, Abschnitten und Inhalten schreiben.",
   "permission_invite_title": "Einladen",
-  "permission_invite_desc": "Weitere Mitarbeitende ins Projekt einladen und Berechtigungen setzen."
-
-
+  "permission_invite_desc": "Weitere Mitarbeitende ins Projekt einladen und Berechtigungen setzen.",
+  "revision_kind_content": "Inhalt",
+  "revision_kind_facts": "Angaben",
+  "revision_kind_reorder": "Reihenfolge",
+  "revision_kind_translation": "Übersetzung",
+  "revision_summary_created": "angelegt",
+  "revision_summary_single_field": "Feld :field geändert",
+  "revision_summary_multi_field": ":count Felder geändert"
 }

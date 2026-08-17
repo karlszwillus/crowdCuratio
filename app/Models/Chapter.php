@@ -33,6 +33,7 @@ use Illuminate\Support\Facades\Lang;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Traits\LogsActivity;
+use App\Support\HasRevisions;
 use Spatie\Translatable\HasTranslations;
 
 /**
@@ -43,7 +44,7 @@ use Spatie\Translatable\HasTranslations;
  */
 class Chapter extends Model implements HasComments
 {
-    use HasFactory, HasTranslations, LogsActivity, SoftDeletes;
+    use HasFactory, HasRevisions, HasTranslations, LogsActivity, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.

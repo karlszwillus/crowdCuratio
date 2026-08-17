@@ -430,6 +430,12 @@
   "block_type_document": "Document",
   "block_type_map": "Map",
   "is_editing": "editing",
-  "older_versions": "Older versions"
-
+  "older_versions": "Older versions",
+  "revision_kind_content": "Content",
+  "revision_kind_facts": "Facts",
+  "revision_kind_reorder": "Order",
+  "revision_kind_translation": "Translation",
+  "revision_summary_created": "created",
+  "revision_summary_single_field": "Field :field changed",
+  "revision_summary_multi_field": ":count fields changed"
 }
