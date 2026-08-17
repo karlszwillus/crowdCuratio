@@ -24,6 +24,7 @@ namespace App\Services;
 
 use App\Models\Chapter;
 use App\Models\Entry;
+use App\Models\Image;
 use App\Models\MediaContent;
 use App\Models\Project;
 
@@ -107,6 +108,28 @@ class ContentReorderService
                 MediaContent::where('id', $contentId)
                     ->update(['position' => $index + 1]);
             }
+        }
+    }
+
+    /**
+     * Phase 5y.6: Reihenfolge der Bilder innerhalb einer Galerie
+     * speichern. Wird beim Ablegen einer Ziehgriff-Aktion (Sortable.js
+     * oder Tastatur-Verschiebung) durch den ContentController
+     * aufgerufen. Position startet bei 1 wie in den anderen
+     * Reorder-Pfaden.
+     *
+     * @param  array<int|string|null>  $ids
+     */
+    public function reorderImages(int $galleryId, array $ids): void
+    {
+        foreach ($ids as $index => $imageId) {
+            if ($imageId === null) {
+                continue;
+            }
+
+            Image::where('id', $imageId)
+                ->where('gallery_id', $galleryId)
+                ->update(['position' => $index + 1]);
         }
     }
 

@@ -357,6 +357,112 @@ Alpine `$dispatch` blieb wirkungslos, wenn die Trigger-Elemente
 kein `x-data` erben — `<x-comment.trigger>` bekommt seins
 explizit.
 
+**Phase-5y — Galerie-Block-Redesign in Arbeit.** Der Galerie-
+Block folgt jetzt dem Muster aus Screen 12/12A–D. Ein
+schmaler Pill-Kopf zeigt den Blocktyp, Aktionen wandern
+in einen Kopf-Slot, und die überflüssige 250-px-Leerfläche
+im Editor-Chrome ist weg. Die Bilder liegen in einem
+Auto-Fill-Grid mit 16:9-Kacheln (`object-contain`), Titel
+unter dem Bild, eine kleine Positionsnummer plus Griff oben
+links und eine Zeile Angaben-Status darunter — grün „Angaben
+vollständig" oder gelb „Bildbeschreibung fehlt · Ergänzen".
+Eine Bildbeschreibung kommt als eigenes translatables Feld
+neu hinzu (Migration `add_description_to_images`,
+`Image::$translatable` erweitert). Die Detailzeile öffnet
+inline unter der Kachel und bündelt vier Felder (Titel,
+Beschreibung, Urheberrecht, Quelle) in einem `<x-block.row>`-
+Container. Papierkorb ist strikt einer pro Ebene: der Kopf-
+Slot löscht die Galerie, das Kachel-Overlay das Bild — die
+Bild-Karte bekommt kein zweites Trash-Icon mehr.
+
+Sortieren geht per Maus (Sortable.js am Griff, POST auf
+`gallery.images.reorder`) und per Tastatur: Fokus auf den
+Griff, Leertaste hebt das Bild an, Pfeiltasten verschieben
+in beide Achsen, zweites Leertaste-Drücken legt ab, Esc
+rollt die vor der Aufnahme snapshottete Reihenfolge zurück.
+Bewegungen werden in einer `aria-live="polite"`-Region als
+„Bild an Position X von N verschoben" angesagt. Beim Ablegen
+speichert der bestehende POST-Endpunkt die neue Reihenfolge
+über den neuen `ContentReorderService::reorderImages(…)`. Der
+Sortable-Kontext bekommt eine benannte Gruppe mit
+`pull: false, put: false`, damit sich Bilder nicht aus der
+Galerie in andere DnD-Container ziehen lassen.
+
+Der Übergang Raster ⇄ Detailzeile folgt § 6 des Briefings:
+Blockhöhe wird vor und nach dem State-Wechsel gemessen und
+über 200 ms interpoliert, damit der Kontext darunter nicht
+springt. Parallel wandert die geklickte Kachel per FLIP
+(First-Last-Invert-Play) 180 ms lang mit
+`cubic-bezier(0.2, 0.7, 0.3, 1)` auf die Vorschau-Position
+der Detailzeile — und beim Zurückweg zurück auf die Kachel-
+Position im Raster. Nach dem Enter setzt ein Timer den Fokus
+auf das erste bearbeitbare Feld. `prefers-reduced-motion`
+überspringt sowohl FLIP als auch Höhen-Interpolation und
+wechselt hart. Ein Save-Event-Listener merkt sich Änderungen
+im Detailmodus und lädt den Editor beim Zurückweg voll neu,
+sodass die aktualisierten Titel + Angaben-Status wieder auf
+der Kachel sichtbar werden.
+
+Über dem Raster sitzt der Kopf aus Briefing § 3: `BILDER`-
+Pill, Anzahl-Chip (`trans_choice` mit `count`), Sammel-
+Warnung, wenn Angaben fehlen, Hinweis „Reihenfolge =
+Ausstellungsreihenfolge" und rechts der Primary-Button
+„Bilder hinzufügen". Am Ende des Rasters liegt eine
+gestrichelte 16:9-Drop-Zone-Kachel mit demselben Modal-
+Trigger — der alte Plus-Icon-Button neben dem Papierkorb
+in der Blockkopf-Zeile entfällt. Bei leerer Galerie ersetzt
+eine schlanke, ganzflächige Drop-Zone das große
+`media-placeholder`-Streifenmuster. Positionsnummern werden
+nach jeder Sortier-Aktion (Maus wie Tastatur) im Grid neu
+gezeichnet, damit die Zahl auf der Kachel immer die aktuelle
+Reihenfolge wiedergibt.
+
+Für Leserechte wird der Galerie-Block ausgedünnt: Kein
+Add-Button im Rasterkopf, keine Drop-Zone-Kachel am Ende
+des Rasters, kein Ziehgriff (nur die Positionsnummer bleibt
+sichtbar), kein Overlay mit „Angaben bearbeiten"/Löschen.
+Über dem Raster erscheint eine ruhige Hinweiszeile in
+`bg-info-bg` mit dem Satz, dass Bilder in der Großansicht
+öffnen und Reihenfolge und Angaben nicht bearbeitbar sind.
+
+Die Drop-Zone lädt Dateien jetzt optimistisch hoch. Beim
+Ablegen (oder über den nativen Dateipicker im gleichen Feld)
+prüft der Client Format und Größe, hängt für jede gültige
+Datei eine Ghost-Kachel mit Vorschau, Fortschrittsbalken
+(`bg-info`) und „Abbrechen" ans Raster und schickt einen
+XHR-POST auf einen neuen JSON-Endpoint
+`gallery.images.drop`. Der Endpoint legt das Bild ohne
+Copyright und Quelle an — beide werden im Schema nullable
+(`make_image_sources_nullable`-Migration) und lassen sich in
+der Detailzeile nachpflegen. Der Angaben-Status-Chip auf
+der Kachel meldet die Lücken sofort. Nach dem letzten Upload
+lädt die Seite einmal neu, damit Raster, Header-Anzahl,
+Sammelwarnung und Publish-Check konsistent sind. Ein
+Teilfehler wirft die anderen Dateien nicht zurück — der
+Rejected-Banner listet Dateiname und Grund, „Hinweis
+schließen" räumt ihn ab.
+
+Der „Veröffentlichen"-Button prüft vor dem HTML-Export den
+Bestand an Bildern und listet die Lücken im Vorschau-Modal
+namentlich auf — jeder Eintrag mit Bildtitel und fehlendem
+Feld (Bildbeschreibung, Urheberrecht oder Quelle). Sind alle
+Angaben vollständig, erscheint eine grüne
+`bg-success-bg`-Zeile mit „Alle Bilder haben vollständige
+Angaben." Der HTML-Export-Button bleibt in beiden Fällen
+freigeschaltet — das Ziel ist Bewusstsein, nicht Blockade.
+
+Die Audio- und Video-Blöcke ziehen mit: Versionen, Kommentar
+und Löschen wandern aus der Fuß-Zeile in den Blockkopf-
+Aktions-Slot, damit die Anatomie gleich der Galerie ist. Die
+alte Fuß-Zeile schrumpft auf einen Angaben-Status („✓
+Angaben vollständig" oder „⚠ Urheberrecht/Quelle fehlt")
+plus Speicherdatum. Die Publish-Prüfung im Vorschau-Modal
+listet Audio-/Video-Blöcke mit fehlendem Urheberrecht oder
+fehlender Quelle jetzt namentlich neben den Bildern.
+
+Nebenbei: Tab-Label „permissions" in der Editor-Segmented-
+Control ist jetzt „Berechtigungen".
+
 ### Hinzugefügt
 
 - **`<x-icon name="…">`-Komponente auf Lucide-Basis** (Phase

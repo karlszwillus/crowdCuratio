@@ -36,6 +36,7 @@ use App\Models\Source;
 use App\Models\Text;
 use App\Services\CommentRetrieve;
 use App\Services\CommentService;
+use App\Services\ContentReorderService;
 use App\Services\GalleryService;
 use App\Services\ImageService;
 use App\Services\TextService;
@@ -58,8 +59,58 @@ class ContentController extends Controller
         private readonly TextService $texts,
         private readonly ImageService $images,
         private readonly GalleryService $galleries,
+        private readonly ContentReorderService $reorder,
     ) {
         $this->middleware('auth');
+    }
+
+    /**
+     * Phase 5y.6: Bild-Reihenfolge innerhalb einer Galerie speichern.
+     * Erwartet einen `ids`-Payload mit der neuen Reihenfolge; die
+     * Positionen werden von 1 hochgezaehlt.
+     */
+    public function reorderImages(Request $request, Gallery $gallery): JsonResponse
+    {
+        // Project-scoped Gate — die Galerie muss beschrieben werden
+        // koennen, damit die Reihenfolge geaendert werden darf.
+        $this->authorize('update', $gallery);
+
+        $ids = $request->input('ids', []);
+        if (! is_array($ids)) {
+            $ids = [];
+        }
+
+        $this->reorder->reorderImages($gallery->id, $ids);
+
+        return response()->json(['ok' => true]);
+    }
+
+    /**
+     * Phase 5y.9: Optimistischer Drop-Upload einer einzelnen Datei in
+     * eine Galerie. Nimmt genau ein File, ohne Copyright/Quelle, und
+     * gibt die neue Bild-ID plus URL als JSON zurueck. Frontend zieht
+     * daraus die Ghost-Kachel zu einer echten und laedt am Ende einmal
+     * die Seite neu, damit alle Blade-Bereiche (Angaben-Status,
+     * Publish-Check, Header-Anzahl) konsistent sind.
+     */
+    public function dropImage(Request $request, Gallery $gallery): JsonResponse
+    {
+        $this->authorize('update', $gallery);
+
+        $request->validate([
+            'file' => 'required|file|mimes:jpeg,jpg,png,gif,webp|max:4096',
+        ]);
+
+        $image = $this->images->createFromDrop($request->file('file'), $gallery->id);
+
+        return response()->json([
+            'ok' => true,
+            'image' => [
+                'id' => $image->id,
+                'position' => $image->position,
+                'url' => route('image', $image->image),
+            ],
+        ]);
     }
 
     /**

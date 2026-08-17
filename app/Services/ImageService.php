@@ -77,6 +77,31 @@ class ImageService
     }
 
     /**
+     * Phase 5y.9: Optimistischer Drop-Upload. Legt ein Bild in der
+     * Gallery an, ohne Copyright und Quelle abzufragen — der Nutzer
+     * pflegt beides nach in der Detailzeile. Copyright/Origin sind
+     * seit Migration `make_image_sources_nullable` nullable.
+     */
+    public function createFromDrop(UploadedFile $file, int $galleryId): Image
+    {
+        $name = $this->uploadImageFile($file);
+
+        $position = Image::where('gallery_id', $galleryId)
+            ->orderByDesc('position')
+            ->value('position');
+
+        return Image::create([
+            'gallery_id' => $galleryId,
+            'image' => $name,
+            'position' => ($position ?? 0) + 1,
+            'origin' => null,
+            'copyright' => null,
+            'url' => Storage::path($name),
+            'alt' => null,
+        ]);
+    }
+
+    /**
      * Aktualisiert ein bestehendes Image. Wenn ein neuer File
      * übergeben wird, wird er hochgeladen und die `image`-/`url`-
      * Felder werden überschrieben; sonst bleibt das Bild
