@@ -91,17 +91,42 @@ new class extends Component
     }
 
     /**
-     * Snapshot-Werte kommen als String, Zahl oder Array (JSON-translatable
-     * Felder). Wir wandeln alles in String — Arrays werden als deutsche
-     * Version genommen, sonst der erste Wert. `null` faellt auf ''.
+     * Snapshot-Werte fuer den Diff auf reinen Text bringen.
+     *
+     * Translatable Felder liegen intern als JSON (Spatie HasTranslations)
+     * — beim Backfill aus dem Activitylog landen sie als JSON-String im
+     * Snapshot, bei Live-Writes als PHP-Array. Beide Faelle in einen
+     * String fuer die aktuelle Locale (Fallback: die, die drinsteht).
      */
     private static function stringifyDelta(mixed $value): string
     {
         if ($value === null) {
             return '';
         }
+        if (is_string($value)) {
+            $trimmed = trim($value);
+            if ($trimmed !== '' && ($trimmed[0] === '{' || $trimmed[0] === '[')) {
+                $decoded = json_decode($trimmed, true);
+                if (is_array($decoded)) {
+                    return self::stringifyDelta($decoded);
+                }
+            }
+            // Rich-Text-Beschreibungen haben HTML — fuer den Wort-Diff
+            // reicht der reine Text ohne Tags, sonst diffen wir <p>-
+            // Marker mit.
+            return trim(strip_tags($value));
+        }
         if (is_array($value)) {
-            return (string) ($value['de'] ?? reset($value) ?? '');
+            $locale = app()->getLocale();
+            if (isset($value[$locale])) {
+                return self::stringifyDelta($value[$locale]);
+            }
+            if (isset($value['de'])) {
+                return self::stringifyDelta($value['de']);
+            }
+            $first = reset($value);
+
+            return $first === false ? '' : self::stringifyDelta($first);
         }
         if (is_scalar($value)) {
             return (string) $value;
