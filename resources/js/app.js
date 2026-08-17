@@ -95,3 +95,13 @@ import './keyboard-reorder';
 // die `document.ready`-Inits in chapters/index und roles/index brauchen
 // noch einen Aufruf, der nicht knallt. Native title-Tooltips greifen.
 import './tooltip-shim';
+
+// Plyr-Player (Phase 5z.7): eigener Chrome für Audio und YouTube-Video.
+// Löst `<audio controls>` und das nackte YouTube-iframe ab, deckt gleichzeitig
+// Zwei-Klick-Einbettung für YouTube (kein Drittanbieter-Request vor Klick).
+import './plyr-init';
+
+// Auto-Save-on-Blur für die Übersetzen-Sicht (Phase 5aa.3-Followup):
+// jedes translations[…]-Feld schreibt beim Verlassen ohne Reload; der
+// Counter pro Sektion und der Gesamt-Fortschritt aktualisieren live.
+import './translate-autosave';

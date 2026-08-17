@@ -76,11 +76,15 @@ new class extends Component
         @if (empty(trim((string) $audiovisual->link)))
             <x-ui.media-placeholder type="audio"/>
         @else
+            {{-- 5z.7: Plyr enhanced das native <audio> — kein Browser-⋮-
+                 Menue mit „Herunterladen" mehr, einheitlicher Chrome. --}}
             <audio
                 controls
-                class="embed-responsive-item w-full"
+                class="cc-plyr w-full"
                 id="audio_{{ $audiovisual->id }}"
                 src="{{ route('audio', $audiovisual->link) }}"
+                wire:key="av-audio-{{ $audiovisual->id }}-{{ md5((string) $audiovisual->link) }}"
+                wire:ignore
             ></audio>
         @endif
 
@@ -92,28 +96,49 @@ new class extends Component
             </div>
         @endcan
     @else
-        @if (empty(trim((string) $audiovisual->link)))
+        @php
+            $ytEmbedId = \App\Support\VideoLink::extractYouTubeId((string) $audiovisual->link);
+            $hasLink = ! empty(trim((string) $audiovisual->link));
+        @endphp
+        @if (! $hasLink)
             <x-ui.media-placeholder type="video"/>
+        @elseif ($ytEmbedId)
+            {{-- 5z.7 + 5z.8: Plyr-YouTube-Player, Zwei-Klick-Einbettung. --}}
+            <div
+                class="cc-plyr-video"
+                data-plyr-provider="youtube"
+                data-plyr-embed-id="{{ $ytEmbedId }}"
+                wire:key="av-video-{{ $audiovisual->id }}-{{ md5((string) $audiovisual->link) }}"
+                wire:ignore
+                aria-label="{{ __('audiovisual_player') }}"
+            ></div>
         @else
-            <iframe
-                wire:key="av-iframe-{{ $audiovisual->id }}-{{ md5((string) $audiovisual->link) }}"
-                width="100%"
-                height="315"
-                src="{!! $audiovisual->link !!}"
-                frameborder="0"
-                allowfullscreen
-                title="{{ __('audiovisual_player') }}"
-            ></iframe>
+            {{-- 5z.8 § 5 Zustand 4: Link defekt / nicht einbettbar.
+                 16:9-Fläche in danger-bg + zwei Aktionen. --}}
+            <div
+                class="flex aspect-video w-full flex-col items-center justify-center gap-3 rounded-md border border-danger-bg bg-danger-bg/30 p-4 text-center"
+                role="alert"
+            >
+                <span class="text-body font-semibold text-danger">{{ __('video_link_error_title') }}</span>
+                <code class="max-w-full truncate rounded bg-canvas-dim px-2 py-0.5 text-caption text-ink-700">{{ $audiovisual->link }}</code>
+                <p class="text-caption text-ink-700">{{ __('video_link_error_reason_invalid') }}</p>
+                <p class="text-caption text-danger">{{ __('video_link_error_footer') }}</p>
+                <div class="flex flex-wrap items-center justify-center gap-2">
+                    <a href="{{ $audiovisual->link }}"
+                       target="_blank" rel="noopener noreferrer"
+                       class="inline-flex items-center gap-1 rounded-md border border-ink-300 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-chrome-active focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                        <x-icon name="external-link" size="3"/>
+                        <span>{{ __('video_link_fallback') }}</span>
+                    </a>
+                </div>
+            </div>
         @endif
 
         @can('update', $audiovisual->project())
             <div class="mt-3">
-                <livewire:inline-editor
-                    :model="$audiovisual"
-                    field="link"
-                    rules="required|string"
-                    :label="__('link')"
-                    :key="'av-link-'.$audiovisual->id" />
+                <livewire:video-link-editor
+                    :audiovisual="$audiovisual"
+                    :key="'av-video-link-editor-'.$audiovisual->id" />
             </div>
         @endcan
     @endif

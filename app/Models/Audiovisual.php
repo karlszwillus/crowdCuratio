@@ -47,9 +47,9 @@ class Audiovisual extends Model implements HasComments
      *
      * @var list<string>
      */
-    protected $fillable = ['link', 'source', 'copyright', 'type', 'is_translated'];
+    protected $fillable = ['link', 'source', 'copyright', 'type', 'transcript', 'is_translated'];
 
-    public $translatable = ['link', 'source', 'copyright'];
+    public $translatable = ['link', 'source', 'copyright', 'transcript'];
 
     /**
      * Get all comments

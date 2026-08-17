@@ -76,10 +76,14 @@ it('rendert ein <iframe> bei type=video', function () {
         'link' => 'https://www.youtube.com/embed/dQw4w9WgXcQ',
     ]);
 
+    // 5z.7/5z.8: Der Video-Player rendert jetzt einen Plyr-Container mit
+    // `data-plyr-provider="youtube"` und der extrahierten YouTube-ID —
+    // Zwei-Klick-Einbettung, das <iframe> laedt Plyr erst nach dem ersten
+    // Play-Klick nach.
     Livewire::actingAs($owner)
         ->test('audiovisual-player', ['audiovisual' => $audiovisual])
-        ->assertSee('<iframe', false)
-        ->assertSee('https://www.youtube.com/embed/dQw4w9WgXcQ', false)
+        ->assertSee('data-plyr-provider="youtube"', false)
+        ->assertSee('data-plyr-embed-id="dQw4w9WgXcQ"', false)
         ->assertDontSee('<audio', false);
 });
 
@@ -100,10 +104,12 @@ it('lädt das Audiovisual frisch, wenn ein saved-Event für das eigene Modell ko
     // dispatchen das Event dann direkt, wie es der Editor täte.
     $audiovisual->update(['type' => 'video', 'link' => 'https://player.vimeo.com/video/42']);
 
+    // 5z.8 § 5: Vimeo-Links sind fuer den Plyr-YouTube-Provider nicht
+    // einbettbar — der Player rendert den 16:9-Fehler-Panel mit dem
+    // Link im Body. Wir pruefen nur das Rendering, nicht das iframe.
     Livewire::actingAs($owner)
         ->test('audiovisual-player', ['audiovisual' => $audiovisual->fresh()])
         ->call('refreshFromSave', field: 'type', model: 'Audiovisual', id: $audiovisual->id)
-        ->assertSee('<iframe', false)
         ->assertSee('https://player.vimeo.com/video/42', false);
 });
 

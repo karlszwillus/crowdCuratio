@@ -154,17 +154,29 @@ If not, see <https://www.gnu.org/licenses/>. -->
         </div>
         <ul class="list-group ui-sortable-chapter sortable_list_chapter connectedSortableChapter" id="groupsList" data-reorder-element="chapter" data-reorder-url="{{ route('chapter.drag') }}" data-reorder-project="{{ $project->id }}">
             @foreach($data->chapters as $key => $chapter)
-                <li class="chapter group" data-chapter="{{$chapter->id}}" data-project="{{$project->id}}" id="{{$chapter->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
-                    {{-- Kapitel = Zone, keine Karte (Handoff v4 § P1.2).
-                         Kein Background, kein Border. Titel + Untertitel
-                         + Description sitzen offen auf dem Canvas; nur
-                         Entry und Block-Cards tragen Rahmen. Ein
-                         horizontaler Trenner unter der Kapitel-
-                         Beschreibung markiert den Uebergang zu den
-                         Entries. --}}
+                @php
+                    // Design v6 § 2 (uebersetzt auf 5e-Vokabular): Kapitel als Klammer.
+                    // Alle Kapitel ruhen in line-200; nur das aktuell bearbeitete
+                    // wechselt auf brand-bar. „Aktuell" heisst hier: irgendwo im
+                    // Kapitel liegt der Tastatur-/Maus-Fokus (focus-within).
+                    $chapterEntryCount = isset($chapter->entries) ? count($chapter->entries) : 0;
+                @endphp
+                <li class="chapter group border-l-[3px] border-line-200 focus-within:border-brand-bar pl-4 transition-colors" data-chapter="{{$chapter->id}}" data-project="{{$project->id}}" id="{{$chapter->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
+                    {{-- Kapitel = Klammer (Design v6 § 2, in 5e-Vokabular).
+                         Rail links über die ganze Gruppe; Titel + Untertitel
+                         + Description sitzen offen auf dem Canvas. Der
+                         Kapitel-Chip nennt Nummer und Abschnittsanzahl,
+                         Aktionen sitzen im ⋯-Menü der Titelzeile. --}}
                     <div id="{{$chapter->id}}" class="mb-10">
                         <header class="mb-4 flex items-start justify-between gap-4">
                             <div class="min-w-0 flex-1" id="anchor_Chapter_{{$chapter->id}}">
+                                {{-- Kapitel-Chip: Mono-Caps Nummer + Abschnitts-Zaehler. --}}
+                                <div class="mb-2 inline-flex items-center gap-2 rounded-md bg-line-100 px-2 py-0.5 text-caption font-semibold uppercase tracking-wider text-ink-700">
+                                    <x-icon name="square" size="3"/>
+                                    <span>{{ __('chapter_chip_label') }} {{ $loop->iteration }}</span>
+                                    <span class="text-ink-500">·</span>
+                                    <span class="text-ink-500">{{ trans_choice('chapter_chip_entries', $chapterEntryCount, ['count' => $chapterEntryCount]) }}</span>
+                                </div>
                                 @can('update', $project)
                                     <livewire:inline-editor
                                         :model="$chapter"
@@ -183,17 +195,16 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                         :key="'chapter-subtitle-'.$chapter->id"
                                     />
                                 @else
-                                    <h2 class="text-title font-semibold text-ink-900">{!! $chapter->name !!}</h2>
-                                    <p class="mt-1 text-body text-ink-500">{!! $chapter->subtitle !!}</p>
+                                    @if (! empty(trim((string) $chapter->name)))
+                                        <h2 class="text-title font-semibold text-ink-900">{!! $chapter->name !!}</h2>
+                                    @endif
+                                    @if (! empty(trim((string) $chapter->subtitle)))
+                                        <p class="mt-1 text-body text-ink-500">{!! $chapter->subtitle !!}</p>
+                                    @endif
                                 @endcan
                             </div>
 
-                            <form action="{{ route('chapters.destroy',$chapter->id) }}" method="POST"
-                                  class="flex shrink-0 items-center gap-1 text-ink-500">
-                                @csrf
-                                <input type="hidden" name="project" value="{!! $project->id !!}"/>
-                                @method('DELETE')
-
+                            <div class="flex shrink-0 items-center gap-1 text-ink-500">
                                 <a href="{{route('projects.edit',['project'=> $project, 'log'=> $chapter->id, 'model' => 'Chapter'])}}"
                                    title="{{ __('older_versions') }}"
                                    class="inline-flex size-11 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
@@ -208,19 +219,58 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                     />
                                 @endif
 
+                                {{-- ⋯-Menue: Löschen liegt hier statt in der Titelzeile.
+                                     Duplizieren und Verschieben sind Design-Ziel aus v6,
+                                     werden aber erst gebaut, wenn Backend da ist —
+                                     aktuell disabled mit Tooltip auf Backlog. --}}
                                 @if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
-                                    <button type="submit"
-                                            onclick="return confirm('{{__('message_delete_confirm')}}')"
-                                            title="{{ __('delete_chapter') }}"
-                                            class="inline-flex size-11 items-center justify-center rounded-md hover:bg-danger-bg hover:text-danger">
-                                        <x-icon name="trash-2" size="4"/>
-                                    </button>
+                                    <div x-data="{ open: false }" class="relative">
+                                        <button type="button"
+                                                @click="open = !open"
+                                                @click.outside="open = false"
+                                                :aria-expanded="open"
+                                                aria-haspopup="menu"
+                                                title="{{ __('more_actions') }}"
+                                                class="inline-flex size-11 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                                            <x-icon name="ellipsis-vertical" size="4"/>
+                                        </button>
+                                        <div x-show="open"
+                                             x-transition
+                                             x-cloak
+                                             role="menu"
+                                             class="absolute right-0 z-30 mt-1 min-w-[14rem] rounded-md border border-line-200 bg-paper-0 py-1 shadow-popover">
+                                            <button type="button"
+                                                    disabled
+                                                    aria-disabled="true"
+                                                    title="{{ __('feature_not_yet') }}"
+                                                    class="flex w-full items-center gap-2 px-4 py-2 text-left text-body text-ink-400 opacity-60">
+                                                <x-icon name="copy" size="4"/>
+                                                <span>{{ __('chapter_menu_duplicate') }}</span>
+                                            </button>
+                                            <button type="button"
+                                                    disabled
+                                                    aria-disabled="true"
+                                                    title="{{ __('feature_not_yet') }}"
+                                                    class="flex w-full items-center gap-2 px-4 py-2 text-left text-body text-ink-400 opacity-60">
+                                                <x-icon name="move" size="4"/>
+                                                <span>{{ __('chapter_menu_move') }}</span>
+                                            </button>
+                                            <div class="my-1 border-t border-line-100"></div>
+                                            <form action="{{ route('chapters.destroy',$chapter->id) }}" method="POST">
+                                                @csrf
+                                                <input type="hidden" name="project" value="{!! $project->id !!}"/>
+                                                @method('DELETE')
+                                                <button type="submit"
+                                                        onclick="return confirm('{{__('message_delete_confirm')}}')"
+                                                        class="flex w-full items-center gap-2 px-4 py-2 text-left text-body text-danger hover:bg-danger-bg">
+                                                    <x-icon name="trash-2" size="4"/>
+                                                    <span>{{ __('delete_chapter') }}</span>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
                                 @endif
-
-                                {{-- Chevron-Toggle entfaellt seit 5-D.6b: Kapitel
-                                     ist eine offene Zone, das Auf-/Zuklappen
-                                     laeuft ueber den Sidebar-Tree. --}}
-                            </form>
+                            </div>
                         </header>
 
                         {{-- Kapitel-Beschreibung als Rich-Text-Editor,
@@ -234,7 +284,9 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                 :key="'chapter-description-'.$chapter->id"
                             />
                         @else
-                            <p class="text-body text-ink-700">{!! $chapter->description !!}</p>
+                            @if (! empty(trim(strip_tags((string) $chapter->description))))
+                                <p class="text-body text-ink-700">{!! $chapter->description !!}</p>
+                            @endif
                         @endcan
 
                         {{-- Grosser Vertikalspace zwischen Kapitel-Zone
@@ -254,8 +306,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                  explizit im Kopf, nicht ueber CSS-Einrueckung. --}}
                                             <div id="P-{{$project->id}}-C-{{$chapter->id}}-entry-{{$entry->id}}"
                                                  class="mb-6 rounded-lg border border-line-200 bg-paper-0 p-6 shadow-subtle">
-                                                <p class="mb-2 text-mono-caps font-mono uppercase tracking-widest text-ink-500">
-                                                    {{ __('entry') }} · {{ __('chapter') }} {{ $key + 1 }}
+                                                {{-- Design v6 § 3 (in 5e-Vokabular): Chip nennt eigene Nummer + Kapitelnamen,
+                                                     nicht nur die Elternnummer. Löschen wandert in ⋯-Menü unten. --}}
+                                                <p class="mb-2 inline-flex items-center gap-2 text-mono-caps font-mono uppercase tracking-widest text-ink-500">
+                                                    <span>{{ __('entry_chip_label') }} {{ $loop->iteration }}</span>
+                                                    <span>·</span>
+                                                    <span>{{ __('entry_chip_in') }} „{{ $chapter->name }}"</span>
                                                 </p>
                                                 <header class="mb-3 flex items-start justify-between gap-4">
                                                     <div class="min-w-0 flex-1" id="anchor_Entry_{{$entry->id}}">
@@ -277,18 +333,16 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                 :key="'entry-subtitle-'.$entry->id"
                                                             />
                                                         @else
-                                                            <h3 class="text-heading font-semibold text-ink-900">{!! $entry->name !!}</h3>
-                                                            <p class="mt-1 text-body text-ink-500">{!! $entry->subtitle !!}</p>
+                                                            @if (! empty(trim((string) $entry->name)))
+                                                                <h3 class="text-heading font-semibold text-ink-900">{!! $entry->name !!}</h3>
+                                                            @endif
+                                                            @if (! empty(trim((string) $entry->subtitle)))
+                                                                <p class="mt-1 text-body text-ink-500">{!! $entry->subtitle !!}</p>
+                                                            @endif
                                                         @endcan
                                                     </div>
 
-                                                    <form action="{{ route('entries.destroy',$entry->id) }}"
-                                                          method="POST"
-                                                          class="flex shrink-0 items-center gap-1 text-ink-500">
-                                                        @csrf
-                                                        <input type="hidden" name="project" value="{!! $project->id !!}"/>
-                                                        @method('DELETE')
-
+                                                    <div class="flex shrink-0 items-center gap-1 text-ink-500">
                                                         <a href="{{route('projects.edit',['project'=> $project, 'log'=> $entry->id, 'model' => 'Entry'])}}"
                                                            title="{{ __('older_versions') }}"
                                                            class="inline-flex size-11 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
@@ -304,17 +358,53 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                         @endif
 
                                                         @if(in_array('edit', $listPermissions) || Auth::user()->can('delete', $project))
-                                                            <button type="submit"
-                                                                    onclick="return confirm('{{__('message_delete_confirm')}}')"
-                                                                    title="{{ __('delete_entry') }}"
-                                                                    class="inline-flex size-11 items-center justify-center rounded-md hover:bg-danger-bg hover:text-danger">
-                                                                <x-icon name="trash-2" size="4"/>
-                                                            </button>
+                                                            <div x-data="{ open: false }" class="relative">
+                                                                <button type="button"
+                                                                        @click="open = !open"
+                                                                        @click.outside="open = false"
+                                                                        :aria-expanded="open"
+                                                                        aria-haspopup="menu"
+                                                                        title="{{ __('more_actions') }}"
+                                                                        class="inline-flex size-11 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                                                                    <x-icon name="ellipsis-vertical" size="4"/>
+                                                                </button>
+                                                                <div x-show="open"
+                                                                     x-transition
+                                                                     x-cloak
+                                                                     role="menu"
+                                                                     class="absolute right-0 z-30 mt-1 min-w-[14rem] rounded-md border border-line-200 bg-paper-0 py-1 shadow-popover">
+                                                                    <button type="button"
+                                                                            disabled
+                                                                            aria-disabled="true"
+                                                                            title="{{ __('feature_not_yet') }}"
+                                                                            class="flex w-full items-center gap-2 px-4 py-2 text-left text-body text-ink-400 opacity-60">
+                                                                        <x-icon name="copy" size="4"/>
+                                                                        <span>{{ __('entry_menu_duplicate') }}</span>
+                                                                    </button>
+                                                                    <button type="button"
+                                                                            disabled
+                                                                            aria-disabled="true"
+                                                                            title="{{ __('feature_not_yet') }}"
+                                                                            class="flex w-full items-center gap-2 px-4 py-2 text-left text-body text-ink-400 opacity-60">
+                                                                        <x-icon name="move" size="4"/>
+                                                                        <span>{{ __('entry_menu_move') }}</span>
+                                                                    </button>
+                                                                    <div class="my-1 border-t border-line-100"></div>
+                                                                    <form action="{{ route('entries.destroy',$entry->id) }}" method="POST">
+                                                                        @csrf
+                                                                        <input type="hidden" name="project" value="{!! $project->id !!}"/>
+                                                                        @method('DELETE')
+                                                                        <button type="submit"
+                                                                                onclick="return confirm('{{__('message_delete_confirm')}}')"
+                                                                                class="flex w-full items-center gap-2 px-4 py-2 text-left text-body text-danger hover:bg-danger-bg">
+                                                                            <x-icon name="trash-2" size="4"/>
+                                                                            <span>{{ __('delete_entry') }}</span>
+                                                                        </button>
+                                                                    </form>
+                                                                </div>
+                                                            </div>
                                                         @endif
-
-                                                        {{-- Chevron-Toggle entfaellt seit 5-D.6b: Auf-/
-                                                             Zuklappen laeuft ueber den Sidebar-Tree. --}}
-                                                    </form>
+                                                    </div>
                                                 </header>
 
                                                 @can('update', $project)
@@ -326,7 +416,9 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                         :key="'entry-description-'.$entry->id"
                                                     />
                                                 @else
-                                                    <p class="text-body text-ink-700">{!! $entry->description !!}</p>
+                                                    @if (! empty(trim(strip_tags((string) $entry->description))))
+                                                        <p class="text-body text-ink-700">{!! $entry->description !!}</p>
+                                                    @endif
                                                 @endcan
                                             </div>
                                                     @if(isset($entry->mediaContent) && count($entry->mediaContent) > 0)
@@ -337,6 +429,37 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                         @isset($item->text->text)
                                                                             <li class="item text content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
                                                                                 <x-ui.block-card type="text" id="anchor_MediaContent_{{$item->id}}" class="mb-4" :save-slot="'Text-'.$item->text->id">
+                                                                                    <x-slot:actions>
+                                                                                        {{-- Design v6 § 4 (in 5e-Vokabular): Text-Block-Aktionen
+                                                                                             wandern aus der Fußzeile in den Blockkopf, analog zu
+                                                                                             Galerie und Audio/Video. --}}
+                                                                                        <a href="{{route('projects.edit',['project'=> $project, 'log'=> $item->text->id, 'model' => 'Text'])}}"
+                                                                                           title="{{ __('older_versions') }}"
+                                                                                           class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900">
+                                                                                            <x-icon name="rotate-ccw" size="4"/>
+                                                                                        </a>
+                                                                                        @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
+                                                                                            <x-comment.trigger
+                                                                                                commentableType="App\Models\Text"
+                                                                                                :commentableId="$item->text->id"
+                                                                                                :count="isset($item->text->comments) ? count($item->text->comments) : 0"
+                                                                                            />
+                                                                                        @endif
+                                                                                        @if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
+                                                                                            <form action="{{ route('text.delete',$item->text->id) }}"
+                                                                                                  method="POST" class="inline-flex">
+                                                                                                @csrf
+                                                                                                <input type="hidden" name="project" value="{!! $project->id !!}"/>
+                                                                                                @method('DELETE')
+                                                                                                <button type="submit"
+                                                                                                        onclick="return confirm('{{__('message_delete_confirm')}}')"
+                                                                                                        title="{{__('delete_block')}}"
+                                                                                                        class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-danger-bg hover:text-danger">
+                                                                                                    <x-icon name="trash-2" size="4"/>
+                                                                                                </button>
+                                                                                            </form>
+                                                                                        @endif
+                                                                                    </x-slot:actions>
                                                                                     <div>
                                                                                         <div class="text-scrollbar overflow-auto">
                                                                                             @can('update', $project)
@@ -346,35 +469,16 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                     rules="nullable|string"
                                                                                                     :label="__('text_content')"
                                                                                                     :key="'text-content-'.$item->text->id" />
+                                                                                                {{-- 5z.5: Absatz-Legende beantwortet die Review-Frage
+                                                                                                     „Hier nur ein BR?" im Editor statt in der Vorschau. --}}
+                                                                                                <p class="mt-2 text-caption text-ink-500">
+                                                                                                    {{ __('text_paragraph_legend') }}
+                                                                                                </p>
                                                                                             @else
                                                                                                 <p>{!! html_entity_decode($item->text->text) !!}</p>
                                                                                             @endcan
                                                                                         </div>
                                                                                     </div>
-                                                                                    <div class="mt-3 flex items-center justify-end gap-1">
-                                                                                        <form action="{{ route('text.delete',$item->text->id) }}"
-                                                                                              method="POST" class="mb-5">
-                                                                                            @csrf
-                                                                                            <input type="hidden" name="project" value="{!! $project->id !!}"/>
-                                                                                            @method('DELETE')
-                                                                                            <a href="{{route('projects.edit',['project'=> $project, 'log'=> $item->text->id, 'model' => 'Text'])}}" title="{{ __('older_versions') }}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900"><x-icon name="rotate-ccw" size="4"/></a>
-                                                                                            @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
-                                                                                                <x-comment.trigger
-                                                                                                    commentableType="App\Models\Text"
-                                                                                                    :commentableId="$item->text->id"
-                                                                                                    :count="isset($item->text->comments) ? count($item->text->comments) : 0"
-                                                                                                />
-                                                                                            @endif
-
- 																								@if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
-                                                                                                <button type="submit" onclick="return confirm('{{__('message_delete_confirm')}}')" title="{{__('delete_text')}}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-danger-bg hover:text-danger"><x-icon name="trash-2" size="4"/></button>
-                                                                                            @endif
-
-                                                                                            {{-- Edit-Button für Text entfällt seit Phase 5c.6.c.4:
-                                                                                                 Text-Content wird per rich-text-editor-Volt-Komponente
-                                                                                                 direkt im Content-Card editiert. Add-Text-Modal
-                                                                                                 (contentModal) bleibt für „Text hinzufügen". --}}
-                                                                                        </form>
                                                                                         {{-- Copyright + Quelle sind Pflichtfelder und
                                                                                              sitzen sichtbar am Fuss der Block-Card
                                                                                              (P1.4 aus Designer-Review: eingeklappt
@@ -415,7 +519,27 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                 </div>
                                                                                             @endcan
                                                                                         </div>
-                                                                                    </div>
+
+                                                                                        {{-- 5z.10 § 8.3: Einheitliche Fußzeile — Vollständigkeit links,
+                                                                                             Speicherstand mit Datum + Uhrzeit rechts. --}}
+                                                                                        @can('update', $project)
+                                                                                            @php
+                                                                                                $textMissing = collect([
+                                                                                                    $item->text->copyrightText ? null : __('copyright'),
+                                                                                                    $item->text->originText ? null : __('origin'),
+                                                                                                ])->filter()->values();
+                                                                                            @endphp
+                                                                                            <div class="mt-3 flex items-center justify-between gap-3">
+                                                                                                @if ($textMissing->isEmpty())
+                                                                                                    <p class="text-caption text-success">✓ {{ __('gallery_status_complete') }}</p>
+                                                                                                @else
+                                                                                                    <p class="text-caption text-warning">⚠ {{ __('gallery_status_missing', ['fields' => $textMissing->implode(', ')]) }}</p>
+                                                                                                @endif
+                                                                                                <p class="text-caption text-ink-500">
+                                                                                                    {{ __('saved') }} · {{ optional($item->text->updated_at ?? $item->text->created_at)->format('d.m.Y, H:i') }}
+                                                                                                </p>
+                                                                                            </div>
+                                                                                        @endcan
                                                                                 </x-ui.block-card>
                                                                             </li>
                                                                         @endisset
@@ -464,36 +588,45 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
                                                                                         @can('update', $project)
                                                                                             <div class="mt-3 space-y-2">
-                                                                                                {{-- Link/Uploader rendert jetzt der
-                                                                                                     audiovisual-player selbst
-                                                                                                     (Phase 5c.6.c.3-Fix); der
-                                                                                                     Type-Wechsel triggert dort
-                                                                                                     den kompletten Re-Render. --}}
-                                                                                                <livewire:inline-editor
-                                                                                                    :model="$item->audiovisual"
-                                                                                                    field="type"
-                                                                                                    rules="required|in:audio,video"
-                                                                                                    :options="['audio' => __('audio'), 'video' => __('video')]"
-                                                                                                    :label="__('type')"
-                                                                                                    :key="'av-type-'.$item->audiovisual->id" />
+                                                                                                {{-- Design v6 § 8.1: Blocktyp-Select aus dem Body raus —
+                                                                                                     der Typ steht schon im Chip. Umwandeln kommt später
+                                                                                                     als eigener Menü-Eintrag im ⋯-Menü zurück; bis dahin
+                                                                                                     ist der Typ nach Anlage fest. --}}
 
-                                                                                                {{-- Copyright und Quelle sind
-                                                                                                     Metadaten, keine Player-Konfig
-                                                                                                     — hinter einem <details>-Toggle
-                                                                                                     kollabiert, damit die Editor-
-                                                                                                     Sicht ruhig bleibt. Nativ,
-                                                                                                     ohne JS, WCAG-freundlich. --}}
-                                                                                                <details class="mt-1 rounded-md border border-ink-300/60 bg-canvas-dim/40 px-3 py-2">
-                                                                                                    <summary class="cursor-pointer select-none text-caption text-chrome-on-dim focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-                                                                                                        {{ __('metadata') }}
-                                                                                                    </summary>
-                                                                                                    <div class="mt-2 space-y-2">
+                                                                                                {{-- 5z.9: Transkript-Feld für Audio + Video, weiche Pflicht
+                                                                                                     analog zur Bildbeschreibung in der Galerie. --}}
+                                                                                                <div class="mt-2">
+                                                                                                    <label class="mb-1 block text-caption font-medium text-ink-700">
+                                                                                                        {{ __('transcript') }}
+                                                                                                    </label>
+                                                                                                    <livewire:inline-editor
+                                                                                                        :model="$item->audiovisual"
+                                                                                                        field="transcript"
+                                                                                                        :multiline="true"
+                                                                                                        rules="nullable|string|max:20000"
+                                                                                                        :label="__('transcript')"
+                                                                                                        :key="'av-transcript-'.$item->audiovisual->id" />
+                                                                                                    <p class="mt-1 text-caption text-ink-500">{{ __('transcript_hint') }}</p>
+                                                                                                </div>
+
+                                                                                                {{-- 5z.9/§ 8: Copyright und Quelle stehen offen, kein <details>
+                                                                                                     mehr — gleiche Stelle wie beim Text- und Galerie-Block. --}}
+                                                                                                <div class="mt-2 grid grid-cols-1 gap-3 md:grid-cols-2">
+                                                                                                    <div>
+                                                                                                        <label class="mb-1 block text-caption font-medium text-ink-700">
+                                                                                                            {{ __('copyright') }} <span class="text-danger" aria-hidden="true">*</span>
+                                                                                                        </label>
                                                                                                         <livewire:inline-editor
                                                                                                             :model="$item->audiovisual"
                                                                                                             field="copyright"
                                                                                                             rules="nullable|string|max:255"
                                                                                                             :label="__('copyright')"
                                                                                                             :key="'av-copyright-'.$item->audiovisual->id" />
+                                                                                                    </div>
+                                                                                                    <div>
+                                                                                                        <label class="mb-1 block text-caption font-medium text-ink-700">
+                                                                                                            {{ __('origin') }} <span class="text-danger" aria-hidden="true">*</span>
+                                                                                                        </label>
                                                                                                         <livewire:inline-editor
                                                                                                             :model="$item->audiovisual"
                                                                                                             field="source"
@@ -501,7 +634,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                             :label="__('origin')"
                                                                                                             :key="'av-source-'.$item->audiovisual->id" />
                                                                                                     </div>
-                                                                                                </details>
+                                                                                                </div>
                                                                                             </div>
                                                                                         @else
                                                                                             <p class="metadata mt-2">
@@ -516,6 +649,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                             $avMissing = collect([
                                                                                                 empty(trim(strip_tags((string) $item->audiovisual->copyright))) ? __('copyright') : null,
                                                                                                 empty(trim(strip_tags((string) $item->audiovisual->source))) ? __('origin') : null,
+                                                                                                empty(trim(strip_tags((string) $item->audiovisual->transcript))) ? __('transcript') : null,
                                                                                             ])->filter()->values();
                                                                                         @endphp
                                                                                         <div class="mt-3 flex items-center justify-between gap-3">
@@ -525,7 +659,8 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                 <p class="text-caption text-warning">⚠ {{ __('gallery_status_missing', ['fields' => $avMissing->implode(', ')]) }}</p>
                                                                                             @endif
                                                                                             <p class="text-caption text-ink-500">
-                                                                                                {{ __('saved') }} · {!! date('d.m.Y', strtotime($item->audiovisual->created_at)) !!}
+                                                                                                {{-- 5z.10 § 8.3: Speicherstand mit Datum UND Uhrzeit. --}}
+                                                                                                {{ __('saved') }} · {{ optional($item->audiovisual->updated_at ?? $item->audiovisual->created_at)->format('d.m.Y, H:i') }}
                                                                                             </p>
                                                                                         </div>
                                                                                     @endcan
@@ -1277,27 +1412,48 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                     @endforeach
                                 </ul>
                             @else
-                                <ul class="list-group ui-sortable-entry sortable_list_entry connectedSortableEntry" id="{{$chapter->id}}" data-reorder-element="entry" data-reorder-url="{{ route('chapter.drag') }}">
-                                    <li>&nbsp;</li>
-                                </ul>
+                                @can('update', $project)
+                                    {{-- 5z.2 § 2 (in 5e-Vokabular): Leeres Kapitel als Zustand,
+                                         nicht als 500-px-Weiß. Info-Banner + primäre Aktion. --}}
+                                    <div class="mb-4 rounded-md border border-info-bg bg-info-bg/40 px-4 py-3 text-body text-ink-700">
+                                        {{ __('chapter_empty_banner') }}
+                                    </div>
+                                    <div class="mb-4">
+                                        <button type="button"
+                                                title="{{__('add_entry')}}"
+                                                data-chapter="{{$chapter->name}}"
+                                                data-id="{{$chapter->id}}"
+                                                data-toggle="modal"
+                                                data-target="#entryModal"
+                                                class="addEntry inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-body font-medium text-primary-on hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                                            <x-icon name="plus" size="4"/>
+                                            <span>{{ __('chapter_empty_action') }}</span>
+                                        </button>
+                                    </div>
+                                @endcan
                             @endif
                         </div>
                     </div>
                     @if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
-                        <div class="mb-4">
-                        <button type="button"
-                                title="{{__('add_entry')}}"
-                                data-chapter="{{$chapter->name}}"
-                                data-id="{{$chapter->id}}"
-                                data-toggle="modal"
-                                data-target="#entryModal"
-                                class="addEntry add_entry inline-flex w-full items-center justify-center gap-2 rounded-md
-                                       border-2 border-dashed border-line-200 bg-transparent
-                                       px-4 py-3 text-body text-ink-500
-                                       hover:border-ink-400 hover:bg-line-100/40 hover:text-ink-700">
-                            <x-icon name="plus" size="4"/> <span>{{__('new_entry')}}</span>
-                        </button>
-                        </div>
+                        @if(isset($chapter->entries) && count($chapter->entries) > 0)
+                            {{-- 5z.2: „+ Neuer Abschnitt" INNERHALB der Klammer — eingerückt,
+                                 paper-50, sekundär (Design v6 § 2 „Zwei Einfüge-Zonen unterscheiden"). --}}
+                            <div class="mb-6 ml-4">
+                                <button type="button"
+                                        title="{{__('add_entry')}}"
+                                        data-chapter="{{$chapter->name}}"
+                                        data-id="{{$chapter->id}}"
+                                        data-toggle="modal"
+                                        data-target="#entryModal"
+                                        class="addEntry add_entry inline-flex w-full items-center justify-center gap-2 rounded-md
+                                               border border-dashed border-line-200 bg-paper-50
+                                               px-4 py-2.5 text-body text-ink-500
+                                               hover:border-ink-400 hover:bg-line-100/40 hover:text-ink-700
+                                               focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                                    <x-icon name="plus" size="4"/> <span>{{__('new_entry')}}</span>
+                                </button>
+                            </div>
+                        @endif
                     @endif
                 </li>
             @endforeach
@@ -1375,100 +1531,231 @@ If not, see <https://www.gnu.org/licenses/>. -->
         </div>
     </x-ui.modal>
 
-    <x-ui.modal id="previewModal" :title="__('create_html_output')">
-        <div class="row m-2">
-            @php
-                // 5y.10: Prüft Bild-Angaben projektweit und listet fehlende Felder namentlich auf.
-                // Veröffentlichen bleibt möglich — die Lücken erscheinen im Preview, hier wird
-                // vor dem Export darauf hingewiesen.
-                $publishCheckMissing = collect();
-                if (isset($data) && isset($data->chapters)) {
-                    foreach ($data->chapters as $publishCheckChapter) {
-                        foreach ($publishCheckChapter->entries as $publishCheckEntry) {
-                            foreach ($publishCheckEntry->mediaContent as $publishCheckMc) {
-                                // MediaContent::gallery/audiovisual sind polymorph ueber content_id
-                                // aufgeloest — ohne content_type-Filter greift die Relation auch
-                                // in fremde Projekte. Bug in 5y.10, gefixt in 5y.10-Followup.
-                                if ($publishCheckMc->content_type === \App\Models\Gallery::class && isset($publishCheckMc->gallery)) {
-                                    foreach ($publishCheckMc->gallery->images as $publishCheckImage) {
-                                        $publishCheckFields = collect([
-                                            empty(trim(strip_tags((string) $publishCheckImage->description))) ? __('publish_check_field_description') : null,
-                                            $publishCheckImage->copyrightImage ? null : __('publish_check_field_copyright'),
-                                            $publishCheckImage->originImage ? null : __('publish_check_field_origin'),
-                                        ])->filter()->values();
-                                        if ($publishCheckFields->isNotEmpty()) {
-                                            $publishCheckMissing->push([
-                                                'title' => trim($publishCheckImage->alt ?? '') !== '' ? $publishCheckImage->alt : __('gallery_image_untitled'),
-                                                'fields' => $publishCheckFields->implode(', '),
-                                            ]);
+    @php
+        // 5aa.4 Design v6 § 5: Umfangszeile — projektweite Zählung von Kapitel,
+        // Eintrag und Block, damit der Modal-Titel eine Größe hat.
+        $exportChapterCount = 0;
+        $exportEntryCount = 0;
+        $exportBlockCount = 0;
+        if (isset($data) && isset($data->chapters)) {
+            $exportChapterCount = count($data->chapters);
+            foreach ($data->chapters as $exportChapter) {
+                $exportEntryCount += count($exportChapter->entries ?? []);
+                foreach ($exportChapter->entries ?? [] as $exportEntry) {
+                    $exportBlockCount += count($exportEntry->mediaContent ?? []);
+                }
+            }
+        }
+    @endphp
+    <x-ui.modal id="previewModal" :title="__('export_modal_title')" size="lg">
+        <div x-data="{
+                 format: 'html',
+                 accent: '#c23934',
+                 accents: [
+                     { hex: '#c23934', name: 'Rot', ratio: '5.4 : 1' },
+                     { hex: '#1b2330', name: 'Anthrazit', ratio: '15.6 : 1' },
+                     { hex: '#0f766e', name: 'Teal', ratio: '5.9 : 1' },
+                     { hex: '#7c2d12', name: 'Braun', ratio: '9.5 : 1' },
+                 ],
+                 language: 'de',
+                 collapse: false,
+                 background_second: false,
+             }">
+            <p class="mb-4 text-caption text-ink-500">
+                {{ __('export_scope', ['chapters' => $exportChapterCount, 'entries' => $exportEntryCount, 'blocks' => $exportBlockCount]) }}
+            </p>
+
+            <form id="exportForm" action="{{route('preview')}}" method="get">
+                @csrf
+                <input name="project" type="hidden" value="{{$project->id}}">
+                <input name="colorAccent" type="hidden" :value="accent">
+                <input name="colorChapter" type="hidden" :value="accent">
+
+                {{-- Format als zwei Radio-Karten. --}}
+                <fieldset class="mb-6">
+                    <legend class="mb-2 text-caption font-semibold uppercase tracking-wider text-ink-500">
+                        {{ __('export_format_label') }}
+                    </legend>
+                    <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                        <label
+                            :class="format === 'html' ? 'border-primary bg-primary/5' : 'border-line-200 bg-canvas-bg'"
+                            class="flex cursor-pointer flex-col gap-1 rounded-md border-2 p-3 hover:border-ink-300"
+                        >
+                            <div class="flex items-center gap-2">
+                                <input type="radio" name="format_ui" value="html" x-model="format" class="size-4 accent-primary"/>
+                                <span class="text-body font-semibold text-ink-900">{{ __('export_format_html_title') }}</span>
+                            </div>
+                            <p class="text-caption text-ink-500">{{ __('export_format_html_desc') }}</p>
+                        </label>
+                        <label
+                            :class="format === 'pdf' ? 'border-primary bg-primary/5' : 'border-line-200 bg-canvas-bg'"
+                            class="flex cursor-pointer flex-col gap-1 rounded-md border-2 p-3 hover:border-ink-300"
+                        >
+                            <div class="flex items-center gap-2">
+                                <input type="radio" name="format_ui" value="pdf" x-model="format" class="size-4 accent-primary"/>
+                                <span class="text-body font-semibold text-ink-900">{{ __('export_format_pdf_title') }}</span>
+                            </div>
+                            <p class="text-caption text-ink-500">{{ __('export_format_pdf_desc') }}</p>
+                        </label>
+                    </div>
+                    <input type="checkbox" name="pdf" value="1" x-show="false" :checked="format === 'pdf'" class="hidden"/>
+                </fieldset>
+
+                {{-- Prüfung vor dem Export: Bild-, AV- und Transkript-Lücken namentlich. --}}
+                @php
+                    // 5y.10: Prüft Bild-Angaben projektweit und listet fehlende Felder namentlich auf.
+                    // Veröffentlichen bleibt möglich — die Lücken erscheinen im Preview, hier wird
+                    // vor dem Export darauf hingewiesen.
+                    $publishCheckMissing = collect();
+                    if (isset($data) && isset($data->chapters)) {
+                        foreach ($data->chapters as $publishCheckChapter) {
+                            foreach ($publishCheckChapter->entries as $publishCheckEntry) {
+                                foreach ($publishCheckEntry->mediaContent as $publishCheckMc) {
+                                    // MediaContent::gallery/audiovisual sind polymorph ueber content_id
+                                    // aufgeloest — ohne content_type-Filter greift die Relation auch
+                                    // in fremde Projekte. Bug in 5y.10, gefixt in 5y.10-Followup.
+                                    if ($publishCheckMc->content_type === \App\Models\Gallery::class && isset($publishCheckMc->gallery)) {
+                                        foreach ($publishCheckMc->gallery->images as $publishCheckImage) {
+                                            $publishCheckFields = collect([
+                                                empty(trim(strip_tags((string) $publishCheckImage->description))) ? __('publish_check_field_description') : null,
+                                                $publishCheckImage->copyrightImage ? null : __('publish_check_field_copyright'),
+                                                $publishCheckImage->originImage ? null : __('publish_check_field_origin'),
+                                            ])->filter()->values();
+                                            if ($publishCheckFields->isNotEmpty()) {
+                                                $publishCheckMissing->push([
+                                                    'title' => trim($publishCheckImage->alt ?? '') !== '' ? $publishCheckImage->alt : __('gallery_image_untitled'),
+                                                    'fields' => $publishCheckFields->implode(', '),
+                                                    'anchor' => '#anchor_MediaContent_'.$publishCheckMc->id,
+                                                ]);
+                                            }
                                         }
                                     }
-                                }
-                                if ($publishCheckMc->content_type === \App\Models\Audiovisual::class && isset($publishCheckMc->audiovisual) && ! empty($publishCheckMc->audiovisual->link)) {
-                                    $publishCheckAv = $publishCheckMc->audiovisual;
-                                    $publishCheckAvFields = collect([
-                                        empty(trim(strip_tags((string) $publishCheckAv->copyright))) ? __('publish_check_field_copyright') : null,
-                                        empty(trim(strip_tags((string) $publishCheckAv->source))) ? __('publish_check_field_origin') : null,
-                                    ])->filter()->values();
-                                    if ($publishCheckAvFields->isNotEmpty()) {
-                                        $publishCheckAvLabel = $publishCheckAv->type === 'audio' ? __('audio') : __('video');
-                                        $publishCheckMissing->push([
-                                            'title' => $publishCheckAvLabel.' · '.$publishCheckEntry->name,
-                                            'fields' => $publishCheckAvFields->implode(', '),
-                                        ]);
+                                    if ($publishCheckMc->content_type === \App\Models\Audiovisual::class && isset($publishCheckMc->audiovisual) && ! empty($publishCheckMc->audiovisual->link)) {
+                                        $publishCheckAv = $publishCheckMc->audiovisual;
+                                        $publishCheckAvFields = collect([
+                                            empty(trim(strip_tags((string) $publishCheckAv->copyright))) ? __('publish_check_field_copyright') : null,
+                                            empty(trim(strip_tags((string) $publishCheckAv->source))) ? __('publish_check_field_origin') : null,
+                                            empty(trim(strip_tags((string) $publishCheckAv->transcript))) ? __('publish_check_field_transcript') : null,
+                                        ])->filter()->values();
+                                        if ($publishCheckAvFields->isNotEmpty()) {
+                                            $publishCheckAvLabel = $publishCheckAv->type === 'audio' ? __('audio') : __('video');
+                                            $publishCheckMissing->push([
+                                                'title' => $publishCheckAvLabel.' · '.$publishCheckEntry->name,
+                                                'fields' => $publishCheckAvFields->implode(', '),
+                                                'anchor' => '#anchor_MediaContent_'.$publishCheckMc->id,
+                                            ]);
+                                        }
                                     }
                                 }
                             }
                         }
                     }
-                }
-            @endphp
-            @if ($publishCheckMissing->isNotEmpty())
-                <div class="mb-4 rounded-md border border-warning-bg bg-warning-bg/40 px-4 py-3">
-                    <h4 class="text-body font-semibold text-warning">⚠ {{ __('publish_check_title') }}</h4>
-                    <p class="mt-1 text-caption text-ink-700">{{ __('publish_check_intro') }}</p>
-                    <ul class="mt-2 space-y-1 text-caption text-ink-700">
-                        @foreach ($publishCheckMissing as $publishCheckRow)
-                            <li>
-                                <span class="font-medium text-ink-900">{{ $publishCheckRow['title'] }}</span>
-                                — {{ $publishCheckRow['fields'] }}
-                            </li>
-                        @endforeach
-                    </ul>
-                </div>
-            @else
-                <p class="mb-4 rounded-md bg-success-bg px-3 py-2 text-caption text-success">
-                    ✓ {{ __('publish_check_all_clear') }}
-                </p>
-            @endif
-            <div id="headerComment"></div>
-            <div id="listComment"></div>
-            <form id="" action="{{route('preview')}}" method="get">
-                @csrf
-                <input name="project" type="hidden" value="{{$project->id}}">
-                <div class="form-check">
-                    <input type="color" value="#EDBA0E" class="form-check-input color-element" name="colorAccent">
-                    <label class="form-check-label">{{__('color_accent')}}</label>
-                </div>
-                <div class="form-check">
-                    <input type="color" value="#EDBA0E" class="form-check-input color-element" name="colorChapter">
-                    <label class="form-check-label" >{{__('color_chapter')}}</label>
-                </div>
-                <div class="form-check mt-4">
-                    <input type="checkbox" class="form-check-input" name="backgroundSecond">
-                    <label class="form-check-label" >{{__('background_second')}}</label>
-                </div>
-                <div class="form-check mt-4">
-                    <input type="checkbox" class="form-check-input" name="collapse">
-                    <label class="form-check-label" >{{__('collapse')}}</label>
-                </div>
-                <div class="form-check">
-                    <input type="checkbox" class="form-check-input" name="pdf">
-                    <label class="form-check-label" >{{__('pdf')}}</label>
-                </div>
-                <div class="col-xs-12">
-                    <button type="submit" class="btn btn-primary" >{{__('html')}}</button>
-                </div>
+                @endphp
+
+                <fieldset class="mb-6">
+                    <legend class="mb-2 text-caption font-semibold uppercase tracking-wider text-ink-500">
+                        {{ __('export_check_label') }}
+                    </legend>
+                    @if ($publishCheckMissing->isNotEmpty())
+                        <ul class="space-y-1 rounded-md border border-warning-bg bg-warning-bg/40 px-4 py-3 text-caption text-ink-700">
+                            @foreach ($publishCheckMissing as $publishCheckRow)
+                                <li class="flex flex-wrap items-baseline justify-between gap-2">
+                                    <span>
+                                        <span class="text-warning">⚠</span>
+                                        <span class="font-medium text-ink-900">{{ $publishCheckRow['title'] }}</span>
+                                        — {{ $publishCheckRow['fields'] }}
+                                    </span>
+                                    <a href="{{ $publishCheckRow['anchor'] }}"
+                                       data-dismiss="modal"
+                                       class="text-caption text-primary hover:underline">
+                                        {{ __('export_check_view') }}
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @else
+                        <p class="rounded-md bg-success-bg px-3 py-2 text-caption text-success">
+                            ✓ {{ __('publish_check_all_clear') }}
+                        </p>
+                    @endif
+                    <p class="mt-2 text-caption text-ink-500">{{ __('export_check_footer_hint') }}</p>
+                </fieldset>
+
+                {{-- Sprache. --}}
+                <fieldset class="mb-6">
+                    <legend class="mb-2 text-caption font-semibold uppercase tracking-wider text-ink-500">
+                        {{ __('export_language_label') }}
+                    </legend>
+                    <div class="flex flex-col gap-2">
+                        <label class="inline-flex items-center gap-2 text-body text-ink-900">
+                            <input type="radio" name="language" value="de" x-model="language" class="size-4 accent-primary"/>
+                            <span>{{ __('translate_lang_de') }}</span>
+                        </label>
+                        <label class="inline-flex items-center gap-2 text-body text-ink-900">
+                            <input type="radio" name="language" value="en" x-model="language" class="size-4 accent-primary"/>
+                            <span>{{ __('translate_lang_en') }}</span>
+                            @isset($data['percentageOfTranslation'])
+                                <span class="text-caption text-ink-500">· {{ $data['percentageOfTranslation'] }} %</span>
+                            @endisset
+                        </label>
+                    </div>
+                    <p class="mt-2 text-caption text-ink-500">{{ __('export_language_consequence') }}</p>
+                </fieldset>
+
+                {{-- Akzentfarbe: vier kuratierte Farben statt Farb-Picker. --}}
+                <fieldset class="mb-6">
+                    <legend class="mb-2 text-caption font-semibold uppercase tracking-wider text-ink-500">
+                        {{ __('export_accent_label') }}
+                    </legend>
+                    <div class="flex flex-wrap gap-2">
+                        <template x-for="c in accents" :key="c.hex">
+                            <button type="button" @click="accent = c.hex"
+                                    :aria-pressed="accent === c.hex"
+                                    class="flex items-center gap-2 rounded-md border-2 px-3 py-1.5 text-caption text-ink-900 hover:border-ink-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                                    :class="accent === c.hex ? 'border-ink-900 bg-canvas-bg' : 'border-line-200 bg-canvas-bg'">
+                                <span class="inline-block size-4 rounded-sm" :style="'background-color: ' + c.hex"></span>
+                                <span x-text="c.name"></span>
+                                <span class="text-ink-500" x-text="'· ' + c.ratio + ' ✓'"></span>
+                            </button>
+                        </template>
+                    </div>
+                    <p class="mt-2 text-caption text-ink-500">{{ __('export_accent_hint') }}</p>
+                </fieldset>
+
+                {{-- Darstellung als Toggles mit Wirkung. --}}
+                <fieldset class="mb-6">
+                    <legend class="mb-2 text-caption font-semibold uppercase tracking-wider text-ink-500">
+                        {{ __('export_display_label') }}
+                    </legend>
+                    <div class="flex flex-col gap-3">
+                        <label class="inline-flex items-start gap-3">
+                            <input type="checkbox" name="collapse" x-model="collapse" class="mt-1 size-4 accent-primary"/>
+                            <span>
+                                <span class="block text-body text-ink-900">{{ __('export_toggle_collapse_title') }}</span>
+                                <span class="block text-caption text-ink-500">{{ __('export_toggle_collapse_desc') }}</span>
+                            </span>
+                        </label>
+                        <label class="inline-flex items-start gap-3">
+                            <input type="checkbox" name="backgroundSecond" x-model="background_second" class="mt-1 size-4 accent-primary"/>
+                            <span>
+                                <span class="block text-body text-ink-900">{{ __('export_toggle_alternate_title') }}</span>
+                                <span class="block text-caption text-ink-500">{{ __('export_toggle_alternate_desc') }}</span>
+                            </span>
+                        </label>
+                    </div>
+                </fieldset>
+
+                <footer class="flex items-center justify-end gap-2 border-t border-line-200 pt-3">
+                    <button type="button" data-dismiss="modal"
+                            class="inline-flex items-center rounded-md border border-line-200 bg-canvas-bg px-3 py-2 text-body text-ink-900 hover:bg-chrome-active focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                        {{ __('cancel') }}
+                    </button>
+                    <button type="submit"
+                            class="inline-flex items-center gap-1 rounded-md bg-primary px-4 py-2 text-body font-medium text-primary-on hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                        <x-icon name="download" size="4"/>
+                        <span x-text="format === 'pdf' ? '{{ __('export_button_pdf') }}' : '{{ __('export_button_html') }}'"></span>
+                    </button>
+                </footer>
             </form>
         </div>
     </x-ui.modal>

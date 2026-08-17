@@ -463,6 +463,148 @@ fehlender Quelle jetzt namentlich neben den Bildern.
 Nebenbei: Tab-Label „permissions" in der Editor-Segmented-
 Control ist jetzt „Berechtigungen".
 
+**Phase-5z — Gerüst und Blöcke auf Design v6.** Nach der Galerie
+wandern jetzt auch Kapitel, Abschnitt, Text-, Video- und Audio-
+Block auf die neuen Screens 13A–13D — mit der Konvention aus
+5e, dass das Design-Vokabular „Eintrag/Block" auf unser Persona-
+Glossar „Abschnitt/Inhalt" übersetzt wird. Kapitel bekommt eine
+3-px-Rail-Klammer über die ganze Gruppe (leere Kapitel in
+`line-200`, gefüllte in `brand-bar`), einen Mono-Caps-Chip
+„KAPITEL n · m Abschnitte" via `trans_choice` und ein ⋯-Menü,
+in das Löschen aus der Titelzeile wandert. Duplizieren und
+Verschieben stehen als deaktivierte Platzhalter, bis das
+Backend nachzieht. Ein leeres Kapitel ist jetzt ein Zustand aus
+Info-Banner und primärer „Ersten Abschnitt anlegen"-Aktion,
+kein 500-px-Weiß mehr. Die zwei Einfüge-Zonen sind visuell
+getrennt: „+ Neuer Abschnitt" schmal und eingerückt innerhalb
+der Rail, „+ Neues Kapitel" in voller Breite mit dickerem Rahmen
+am Tree-Ende.
+
+Der Eintrag folgt derselben Anatomie: Chip „ABSCHNITT n · IN
+„<Kapitelname>"" statt bloßer Elternnummer, Aktionen in
+Reihenfolge Versionen · Kommentar · ⋯, Löschen im Menü,
+Duplizieren/Verschieben ebenfalls disabled bis das Backend
+folgt. Leere Titel, Untertitel und Beschreibungen reservieren
+in Reader-Sicht keine Höhe mehr, und der Rich-Text-Editor
+verkleinert seine Mindestbox von 6 rem auf 2 rem, damit die
+Editor-Sicht nicht mehr um 96 px pro leere Description atmet.
+Insgesamt schrumpft die Editor-Seite um über 1.500 px Leerraum.
+
+Der Text-Block heftet Versionen, Kommentar und Löschen in den
+Blockkopf-Slot, die alte Fußzeilen-Aktionsreihe entfällt.
+Darunter erscheint bei Fokus die Quill-Format-Leiste (schon
+seit 5-D.6b), plus eine Absatz-Legende „⏎ neuer Absatz · ⇧⏎
+Zeilenumbruch — Abstände erscheinen in der Ausstellung genau
+so." Der `source-picker` rendert im Ruhezustand keinen
+doppelten „Urheberrecht: M. Heinrich"-Chip mehr, sondern ein
+echtes Feld mit dem reinen Wert im Rahmen und dem Label in
+der Umgebung. Fehlt der Wert, wechselt der Rahmen auf
+`warning` mit Hinweis „⚠ Wird beim Veröffentlichen namentlich
+aufgeführt" — dasselbe Muster, das auch die Galerie und der
+Publish-Check verwenden.
+
+Video- und Audio-Blöcke bekommen einen einheitlichen Player-
+Chrome. Plyr (`^3.8.4`, MIT) ersetzt den nativen `<audio
+controls>` und das nackte YouTube-iframe; die Farb-Custom-
+Properties liegen auf unseren `ink`- und `paper`-Tokens. Das
+Plyr-Init-Modul hakt auf `DOMContentLoaded`, `livewire:init`
+und `livewire:navigated`, damit auch dynamisch re-renderte
+Blöcke (Type-Wechsel, neu angelegt) einen Player kriegen.
+Für YouTube schaltet `noCookie: true` die Zwei-Klick-
+Einbettung — vor dem ersten Play geht kein Drittanbieter-
+Request raus. Ein neuer `App\Support\VideoLink`-Helper
+extrahiert die YouTube-ID aus Watch-, `youtu.be`-, Embed- und
+Shorts-URLs und normalisiert auf die kanonische Embed-URL; die
+neue `livewire:video-link-editor`-Komponente akzeptiert die
+Adresse wie sie im Browser steht und speichert normalisiert.
+Nicht-YouTube-Quellen rendern jetzt einen 16:9-Fehler-Panel
+in `danger-bg` mit Grund, „Wird beim Veröffentlichen
+übersprungen"-Fuß und „Als Link ausgeben"-Fallback. Der
+Audio-Uploader zeigt statt des Storage-Schlüssels eine Meta-
+Zeile aus Format, Größe und Upload-Datum (`Storage::size`,
+`Storage::lastModified`), dazu explizite „Ersetzen"- und
+„Entfernen"-Aktionen — Letztere fehlte bislang.
+
+Transkript ist neu: eine translatable `transcript`-Spalte auf
+`audiovisuals` (Migration `add_transcript_to_audiovisuals`),
+gerendert als mehrzeiliger Inline-Editor über der Herkunft, mit
+Erklärungszeile „Für Screenreader, Suchmaschinen und alle, die
+nicht abspielen können." Weiche Pflicht: der Angaben-Status
+zählt ein fehlendes Transkript ein, die Publish-Prüfung nennt
+den Block namentlich neben Bildbeschreibung, Urheberrecht und
+Quelle. Der Blocktyp-`<select>` verschwindet dabei aus dem
+Body — der Typ steht im Chip, Umwandeln bleibt für einen
+späteren ⋯-Menü-Eintrag reserviert. „▸ Metadaten"-Kollaps ist
+aufgelöst, Herkunft steht offen wie bei Text und Galerie. Die
+neue Fußzeile ist für alle Blocktypen gleich: Vollständigkeits-
+Status links, Speicherstand mit Datum UND Uhrzeit rechts.
+
+`add_chapter` fehlte bislang als i18n-Schlüssel — der Sidebar-
+Tree-Button zeigte den rohen Key. Neu angelegt als „Neues
+Kapitel" (parallel zu `new_chapter`, 5e-Substantiv-Konvention).
+
+**Phase-5aa — Nebenseiten (Einstellungen, Metadaten,
+Übersetzen, Export) auf Design v6.** Die vier
+Rand-Sichten der Projekt-Werkbank werden aus dem Bestand
+gehoben und an das Chrome und die Muster aus 5-D angeglichen.
+Einstellungen listet Rechtstexte (Impressum, Datenschutz-
+erklärung, Geschäftsbedingungen) und E-Mail-Vorlagen
+(Einladungs-Mail, Aktivierungs-Mail, Passwort-Vergessen-Mail)
+in zwei Gruppen mit Status-Chip und Auszug pro Zeile;
+jede Zeile hat einen echten „Bearbeiten"-Button, der die
+bisherigen Bestands-Modale weiterhin öffnet (Backend
+unverändert).
+
+Metadaten bekommen eine Sticky-Save-Fußzeile mit primärem
+„Speichern" und sekundärem „Änderungen verwerfen", weil ein
+Speichern-Punkt in der Rail beim Metadatenfeld weit weg vom
+Fokus liegt. Das Vorschau-Bild ist ein 120×120-Alpine-Panel
+mit „Bild wählen" und „Entfernen" statt eines nativen
+File-Pickers, der Projektname trägt einen Zeichenzähler
+(80). Rechte Spalte fasst Publish-Check-Anker, Kennzahlen
+(Kapitel, Abschnitte, Übersetzt-Prozent, letzte Änderung)
+und Verlaufs-Link zusammen; Projekt löschen steht mit
+gebührendem Abstand darunter.
+
+Impressum und AGB dürfen jetzt leer bleiben — dann greift
+der systemweite Text aus Einstellungen automatisch. Ein
+neuer `App\Support\ProjectLegalText`-Helper hält die Regel
+an einer Stelle; sowohl die Metadaten-Sicht als auch die
+HTML- und PDF-Preview ziehen ihren Wert von dort. Zusätzlich
+gibt es einen „Systemtext übernehmen"-Button pro Feld, der
+den strukturierten Systemtext einmalig ins Projektfeld
+kopiert (POST `projects.metadata.adopt_system_text`, per
+`update`-Policy geschützt).
+
+Übersetzen ist eine Zwei-Spalten-Sicht mit Sprachpaar-Selektor
+oben, „Nur unübersetzte Felder"-Filter und Sektions-Chips pro
+Kapitel/Abschnitt/Inhalt mit `⚠ n von m Feldern übersetzt`-
+Countern. Die Sticky-Fußzeile zeigt einen Fortschrittsbalken
+plus einen einzigen Sammel-Speichern-Button. Content-Blöcke
+(Text, Galerie, Audiovisuell) sind eingeschlossen — bislang
+fehlten sie in der Übersetzen-Sicht komplett. Speichern läuft
+über den neuen `translate.save`-POST-Endpoint, der Payload-
+Schlüssel im Schema `translations[Model.id.field]` entgegen-
+nimmt und pro Modell die Zugehörigkeit zum Zielprojekt
+prüft; fremde Modelle werden verworfen. Auf jedem Input hängt
+ein Auto-Save-on-Blur: das Feld schickt beim Verlassen genau
+einen Wert ans Backend, die Sektions-Counter und der
+Gesamt-Fortschritt aktualisieren live ohne Reload. Der große
+Sammel-Speichern-Button bleibt als Notfall stehen, falls
+Blur-Change verpasst wurde oder der Nutzer offline war.
+
+Der Export-Dialog bekommt eine kuratierte Formatwahl (HTML
+oder PDF als zwei Radio-Karten, primärer Button folgt der
+Auswahl) statt der freien Format-Liste; die Konsequenz jeder
+Toggle-Option steht als eigene Zeile unter dem Schalter.
+Publish-Check listet fehlende Angaben mit `Ansehen`-Deep-
+Links, die den passenden Abschnitt im Editor per Anchor
+öffnen. Vier vorkonfigurierte Akzentfarben (Rot, Anthrazit,
+Teal, Braun) mit WCAG-Kontrastwert lösen den freien
+Farbwähler ab. Sprache mit Fallback-Konsequenz macht
+transparent, was passiert, wenn ein Feld in der Zielsprache
+fehlt.
+
 ### Hinzugefügt
 
 - **`<x-icon name="…">`-Komponente auf Lucide-Basis** (Phase

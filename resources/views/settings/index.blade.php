@@ -20,15 +20,71 @@ If not, see <https://www.gnu.org/licenses/>. -->
 @extends('projects.layout')
 
 @section('content')
+    @php
+        // 5aa.1: Design v6 § 2 auf 5e-Vokabular. Vier gleichgrosse Kacheln
+        // wandern in eine strukturierte Liste mit Titel, Status-Chip,
+        // Auszug und Aenderungs-Datum. Zwei Gruppen: Rechtstexte und
+        // Vorlagen.
+        $excerpt = function ($html) {
+            $plain = trim(preg_replace('/\s+/u', ' ', strip_tags((string) $html)));
+            if ($plain === '') { return null; }
+            return mb_strimwidth($plain, 0, 140, '…', 'UTF-8');
+        };
+        $imprintFilled = isset($imprint->name['firstname']) || isset($imprint->address['address']);
+        $imprintExcerpt = $imprintFilled
+            ? trim(($imprint->name['firstname'] ?? '').' '.($imprint->name['lastname'] ?? '').' · '.($imprint->address['address'] ?? ''))
+            : null;
+
+        $rows = [
+            [
+                'title' => __('settings_imprint'),
+                'excerpt' => $imprintExcerpt,
+                'filled' => $imprintFilled,
+                'updated' => optional($imprint?->updated_at)->format('d.m.Y'),
+                'target' => '#imprintModal',
+                'trigger' => null,
+                'group' => 'legal',
+            ],
+            [
+                'title' => __('settings_policy'),
+                'excerpt' => $excerpt($privacy?->privacy_policy),
+                'filled' => ! empty(trim(strip_tags((string) ($privacy?->privacy_policy ?? '')))),
+                'updated' => optional($privacy?->updated_at)->format('d.m.Y'),
+                'target' => '#privacyModal',
+                'trigger' => 'addContentPrivacy',
+                'group' => 'legal',
+            ],
+            [
+                'title' => __('settings_terms'),
+                'excerpt' => $excerpt($terms?->terms_conditions),
+                'filled' => ! empty(trim(strip_tags((string) ($terms?->terms_conditions ?? '')))),
+                'updated' => optional($terms?->updated_at)->format('d.m.Y'),
+                'target' => '#termsConditionsModal',
+                'trigger' => 'addContentTerms',
+                'group' => 'legal',
+            ],
+            [
+                'title' => __('settings_invitation'),
+                'excerpt' => $excerpt($mail?->invitation),
+                'filled' => ! empty(trim(strip_tags((string) ($mail?->invitation ?? '')))),
+                'updated' => optional($mail?->updated_at)->format('d.m.Y'),
+                'target' => '#invitationModal',
+                'trigger' => 'addContentMail',
+                'group' => 'templates',
+                'placeholders' => ['{Name}', '{Projektname}', '{Einladender}', '{Link}'],
+            ],
+        ];
+    @endphp
+
     @if ($message = Session::get('success'))
-        <div class="alert alert-success">
-            <p>{{ $message }}</p>
+        <div class="mb-4 rounded-md border border-success-bg bg-success-bg/40 px-4 py-3 text-body text-success">
+            {{ $message }}
         </div>
     @endif
     @if ($errors->any())
-        <div class="alert alert-danger">
-            <strong>{{__('whoops')}}</strong> {{__('message_problem_input')}}<br><br>
-            <ul>
+        <div class="mb-4 rounded-md border border-danger-bg bg-danger-bg/40 px-4 py-3 text-body text-danger">
+            <strong>{{__('whoops')}}</strong> {{__('message_problem_input')}}
+            <ul class="mt-2 list-disc pl-5">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
@@ -36,74 +92,81 @@ If not, see <https://www.gnu.org/licenses/>. -->
         </div>
     @endif
 
-    <div class="row">
-        <div class="col-sm-6">
-            <div class="card p-2">
-                <div class="card-body">
-                    <div class="row p-4">
-                        <span style="display: inline-block; float: left">{{__('project_terms')}}</span>
-                        <span style="display: inline-block; float: right"><a data-toggle="modal" data-target="#termsConditionsModal" id="addContentTerms"><x-icon name="pencil-fill" class="m-2" /></a></span>
-                    </div>
-                    @isset($terms->terms_conditions) <span id="contentTerms">{!! $terms->terms_conditions !!}</span> @endisset
-                </div>
-            </div>
+    <header class="mb-8 flex flex-wrap items-start justify-between gap-4">
+        <div>
+            <p class="mb-1 text-mono-caps font-mono uppercase tracking-widest text-ink-500">
+                {{ __('settings_system_label') }}
+            </p>
+            <h1 class="text-title font-semibold text-ink-900">{{ __('settings_page_title') }}</h1>
         </div>
-        <div class="col-sm-6">
-            <div class="card p-2">
-                <div class="card-body">
-                    <div class="row p-4">
-                        <span style="display: inline-block; float: left">{{__('policy')}}</span>
-                        <span style="display: inline-block; float: right"><a data-toggle="modal" data-target="#privacyModal" id="addContentPrivacy"><x-icon name="pencil-fill" class="m-2" /></a></span>
-                    </div>
-                    @isset($privacy->privacy_policy) <span id="contentPolicy">{!! $privacy->privacy_policy !!}</span> @endisset
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-sm-6">
-            <div class="card p-2">
-                <div class="card-body">
-                    <div class="row p-4">
-                        <span style="display: inline-block; float: left">{{__('project_imprint')}}</span>
-                        <span style="display: inline-block; float: right"><a data-toggle="modal" data-target="#imprintModal"><x-icon name="pencil-fill" class="m-2" /></a></span>
-                    </div>
-                    @isset($imprint->name)
-                        <p> Angaben gem:</p>
-                        <p>
-                            @isset($imprint->name['firstname']) {{ $imprint->name['firstname'] }}@endisset @isset($imprint->name['lastname']) {{ $imprint->name['lastname'] }}@endisset
-                        </p>
-                        <p>
-                            @isset($imprint->address['address']) {{ $imprint->address['address'] }}@endisset
-                        </p>
-                        <p>
-                            @isset($imprint->address['postcode']) {{ $imprint->address['postcode'] }}@endisset
-                        </p>
-                    <p class="mt-2"> Kontaktaufnahme: </p>
-                        <p>
-                            @isset($imprint->contact['phone']) {{ $imprint->contact['phone'] }}@endisset
-                        </p>
-                        <p>
-                            @isset($imprint->contact['fax']) {{ $imprint->contact['fax'] }}@endisset
-                        </p>
-                        <p>
-                            @isset($imprint->contact['email']) {{ $imprint->contact['email'] }}@endisset
-                        </p>
-                    @endisset
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6">
-            <div class="card p-2">
-                <div class="card-body">
-                    <div class="row p-4">
-                        <span style="display: inline-block; float: left">{{__('invitation')}}</span>
-                        <span style="display: inline-block; float: right"><a data-toggle="modal" data-target="#invitationModal" id="addContentMail"><x-icon name="pencil-fill" class="m-2" /></a></span>
-                    </div>
-                    @isset($mail->invitation) <span id="contentMail">{!! $mail->invitation !!}</span> @endisset
-                </div>
-            </div>
-        </div>
+        <p class="max-w-sm text-body text-ink-500">{{ __('settings_scope_hint') }}</p>
+    </header>
+
+    @foreach (['legal', 'templates'] as $groupKey)
+        @php
+            $groupRows = collect($rows)->where('group', $groupKey)->values();
+        @endphp
+        <section class="mb-10">
+            <header class="mb-3">
+                <h2 class="text-heading font-semibold text-ink-900">
+                    {{ __('settings_group_'.$groupKey) }}
+                </h2>
+                <p class="text-caption text-ink-500">
+                    {{ __('settings_group_'.$groupKey.'_desc') }}
+                </p>
+            </header>
+
+            <ul class="divide-y divide-line-200 rounded-md border border-line-200 bg-paper-0">
+                @foreach ($groupRows as $row)
+                    <li class="flex flex-wrap items-start justify-between gap-3 px-4 py-3 {{ ! $row['filled'] ? 'bg-warning-bg/30' : '' }}">
+                        <div class="min-w-0 flex-1">
+                            <div class="flex flex-wrap items-center gap-2">
+                                <span class="text-body font-semibold text-ink-900">{{ $row['title'] }}</span>
+                                @if ($row['filled'])
+                                    <span class="rounded-md bg-success-bg px-2 py-0.5 text-caption text-success">{{ __('settings_status_filled') }}</span>
+                                @else
+                                    <span class="rounded-md bg-warning-bg px-2 py-0.5 text-caption text-warning">{{ __('settings_status_empty') }}</span>
+                                @endif
+                            </div>
+                            @if ($row['excerpt'])
+                                <p class="mt-1 truncate text-body text-ink-700">{{ $row['excerpt'] }}</p>
+                            @else
+                                <p class="mt-1 text-caption text-ink-500">{{ __('settings_status_empty_consequence') }}</p>
+                            @endif
+                            @if (! empty($row['placeholders']))
+                                <p class="mt-1 font-mono text-caption text-ink-500">
+                                    {{ __('settings_placeholders_hint', ['list' => implode(' · ', $row['placeholders'])]) }}
+                                </p>
+                            @endif
+                            @if ($row['updated'])
+                                <p class="mt-1 text-caption text-ink-500">{{ __('settings_changed_on') }} {{ $row['updated'] }}</p>
+                            @endif
+                        </div>
+
+                        <button
+                            type="button"
+                            @if ($row['trigger']) id="{{ $row['trigger'] }}" @endif
+                            data-toggle="modal"
+                            data-target="{{ $row['target'] }}"
+                            class="inline-flex items-center gap-1 rounded-md {{ $row['filled'] ? 'border border-line-200 bg-canvas-bg text-ink-900 hover:bg-chrome-active' : 'bg-primary text-primary-on hover:opacity-90' }} px-3 py-1.5 text-caption font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                        >
+                            <x-icon name="{{ $row['filled'] ? 'pencil' : 'plus' }}" size="3"/>
+                            <span>{{ $row['filled'] ? __('settings_edit') : __('settings_create_text') }}</span>
+                        </button>
+                    </li>
+                @endforeach
+            </ul>
+        </section>
+    @endforeach
+
+    {{-- Alte Cards nach 5aa.1 abgeschaltet; die Quelldaten werden von den
+         Modals-JS-Hooks weiter benutzt. Wir behalten die verdeckten span-
+         Container mit den Rohtexten, damit `#addContent*`-Handler den Quill
+         mit dem aktuellen Inhalt fuellen koennen. --}}
+    <div class="sr-only">
+        @isset($terms->terms_conditions) <span id="contentTerms">{!! $terms->terms_conditions !!}</span> @endisset
+        @isset($privacy->privacy_policy) <span id="contentPolicy">{!! $privacy->privacy_policy !!}</span> @endisset
+        @isset($mail->invitation) <span id="contentMail">{!! $mail->invitation !!}</span> @endisset
     </div>
 
     <!-- Modale: Terms / Privacy / Imprint / Invitation -->

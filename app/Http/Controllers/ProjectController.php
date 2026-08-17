@@ -43,6 +43,7 @@ use App\Services\ProjectImageService;
 use App\Services\ProjectPermissionService;
 use App\Services\SourceService;
 use App\Services\UserService;
+use App\Support\ProjectLegalText;
 use App\Support\RoleName;
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -50,6 +51,8 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -753,9 +756,99 @@ class ProjectController extends Controller
         App::setlocale('de');
         $data = $this->allData($id);
 
+        // 5aa.3-Followup: Die neue Blade-Sicht rendert Text/Gallery/
+        // Audiovisual direkt aus der `mediaContent`-Kette. Weil
+        // `Model::shouldBeStrict()` Lazy-Loading verbietet, ziehen wir
+        // die polymorphen Ziel-Modelle hier gezielt nach; `allData`
+        // bleibt für seine eigene Prozent-Rechnung unverändert.
+        $tree = Project::withTranslateTree()->findOrFail($id);
+        foreach ($tree->chapters as $chapter) {
+            foreach ($chapter->entries as $entry) {
+                foreach ($entry->mediaContent as $mc) {
+                    $mc->loadMissing('text', 'gallery.images', 'audiovisual');
+                }
+            }
+        }
+        $data['data'] = $tree->chapters;
+
         // Phase 5d.4-Followup: $project fuer die einheitliche
         // Tab-Leiste (<x-projects.tabs>) mitliefern.
         return view('translate.index', compact('data', 'project'));
+    }
+
+    /**
+     * Phase 5aa.3: Bulk-Save aller englischen Übersetzungen einer
+     * Projekt-Übersetzen-Sicht in einem Rutsch.
+     *
+     * Erwartet einen `translations`-Payload der Form
+     * `{ 'Chapter.5.name': 'English name', 'Text.42.text': '...' }`.
+     * Der Key-Prefix ist das Kurzname des Modells; die Save-Kette
+     * ruft `setTranslation(field, 'en', value)` und `save()` auf.
+     *
+     * Nicht-erlaubte Modelltypen oder Modelle aus fremden Projekten
+     * werden übersprungen (Authorization pro Modell über ProjectPolicy).
+     */
+    public function saveTranslations(Request $request, int $id)
+    {
+        $project = Project::findOrFail($id);
+        $this->authorize('update', $project);
+
+        $payload = $request->input('translations', []);
+        if (! is_array($payload)) {
+            $payload = [];
+        }
+
+        $modelMap = [
+            'Chapter' => Chapter::class,
+            'Entry' => Entry::class,
+            'Text' => Text::class,
+            'Gallery' => Gallery::class,
+            'Image' => Image::class,
+            'Audiovisual' => Audiovisual::class,
+        ];
+
+        foreach ($payload as $key => $value) {
+            [$modelKey, $modelId, $field] = array_pad(explode('.', $key, 3), 3, null);
+            if (! isset($modelMap[$modelKey]) || $modelId === null || $field === null) {
+                continue;
+            }
+            /** @var Chapter|Entry|Text|Gallery|Image|Audiovisual|null $model */
+            $model = $modelMap[$modelKey]::find($modelId);
+            if ($model === null) {
+                continue;
+            }
+
+            // Gehört das Modell wirklich zu diesem Projekt? Die
+            // `project()`-Kette der Modelle gibt bei einigen (Chapter,
+            // Entry) eine Relation, bei anderen (Text, Audiovisual) das
+            // Model direkt zurück — beide Zweige normalisieren.
+            $modelProject = null;
+            $result = $model->project();
+            if ($result instanceof Relation) {
+                $modelProject = $result->getResults();
+            } elseif ($result instanceof Project) {
+                $modelProject = $result;
+            }
+            if ($modelProject === null || (int) $modelProject->id !== (int) $project->id) {
+                continue;
+            }
+            if (! in_array($field, $model->translatable ?? [], true)) {
+                continue;
+            }
+
+            $model->setTranslation($field, 'en', (string) $value);
+            $model->save();
+        }
+
+        // 5aa.3-Followup: Auto-Save-on-Blur schickt AJAX — dann JSON-Antwort,
+        // sonst wie bisher zurück zur Übersetzen-Sicht mit Success-Meldung.
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['ok' => true]);
+        }
+
+        return redirect()
+            ->route('translate', $project->id)
+            ->with('success', __('message_edit_project_success'));
     }
 
     /**
@@ -1060,6 +1153,35 @@ class ProjectController extends Controller
 
     }
 
+    /**
+     * Phase 5aa.2/Design v6 § 3: „Systemtext übernehmen".
+     *
+     * Kopiert einmalig den aktuellen Systemtext (Impressum oder AGB aus
+     * /settings) ins Projekt-Feld. Danach ist das Projekt entkoppelt —
+     * spätere Änderungen am Systemtext greifen nicht mehr. Der leere
+     * Fallback bleibt davon unberührt: bleibt das Projekt-Feld später
+     * wieder leer, greift der Systemtext beim Publish automatisch
+     * (siehe `ProjectLegalText::imprintFor/termsFor`).
+     */
+    public function adoptSystemLegalText(Request $request, Project $project)
+    {
+        $this->authorize('update', $project);
+
+        $field = $request->input('field');
+        if (! in_array($field, ['imprint', 'terms'], true)) {
+            abort(422, 'Unknown field.');
+        }
+
+        $systemText = $field === 'imprint'
+            ? ProjectLegalText::systemImprint()
+            : ProjectLegalText::systemTerms();
+
+        $project->{$field} = $systemText;
+        $project->save();
+
+        return redirect()->back()->with('success', __('message_edit_project_success'));
+    }
+
     public function projectMetadata(Request $request)
     {
 
@@ -1074,10 +1196,11 @@ class ProjectController extends Controller
             $this->authorize('view', $project);
 
             if ($request->type == 'copyright') {
-                $content = $project->terms;
+                // 5aa.2 Design v6 § 3: leeres Projekt-Feld → Systemtext greift.
+                $content = ProjectLegalText::termsFor($project);
                 $type = 'copyright';
             } else {
-                $content = $project->imprint;
+                $content = ProjectLegalText::imprintFor($project);
                 $type = 'policy';
             }
         }

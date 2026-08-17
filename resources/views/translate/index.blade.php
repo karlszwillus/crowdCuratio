@@ -1,6 +1,6 @@
 <!--
 crowdCuratio - Curating together virtually
-Copyright (C)2022 - berlinHistory e.V.
+Copyright (C)2026 - berlinHistory e.V.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -18,14 +18,12 @@ along with this program in the file LICENSE.
 If not, see <https://www.gnu.org/licenses/>. -->
 
 @extends('projects.layout')
-@section('log')
-    <a href="{{ route('projects.edit', $data['projectId']) }}" class="btn btn-secondary btn-lg btn-block text-left mt-1 mb-2">Zurück</a>
-@endsection
 
 @section('content')
 
-    {{-- Phase 5d.4-Followup: einheitlicher Projekt-Tab-Balken auf
-         allen vier Screens. --}}
+    {{-- 5aa.3 § 4 in 5e-Vokabular: Struktur-Baum bleibt (im Layout-Sidebar),
+         Kopfleiste mit Sprachpaar-Wähler und Filter, Zwei-Spalten-Tabelle
+         mit Chips wie 13A, Fortschritts-Balken im Fuss. --}}
     <div class="mb-6 flex flex-wrap items-center justify-between gap-4
                 border-b border-line-200 pb-3">
         <div class="min-w-0 flex-1">
@@ -35,429 +33,217 @@ If not, see <https://www.gnu.org/licenses/>. -->
     </div>
 
     @if ($message = Session::get('success'))
-        <div class="alert alert-success">
-            <p>{{ $message }}</p>
+        <div class="mb-4 rounded-md border border-success-bg bg-success-bg/40 px-4 py-3 text-body text-success">
+            {{ $message }}
         </div>
     @endif
-    @isset($data['data'])
-        @foreach($data['data'] as $chapter)
-            <form action="{{route('chapters.store')}}" method="POST">
-                @csrf
-                <div class="form-group row">
-                    <div class="col-sm-6">
-                        <p>{{__('chapter_title')}}</p>
-                        <p>{!! $chapter->name !!}</p>
-                    </div>
-                    <div class="col-sm-6">
-                        <input type="hidden" name="translationChapter">
-                            <input type="hidden" name="chapterId" value="{!! $chapter->id !!}">
-                        <input type="text" class="form-control" name="chapterTitle" placeholder="Name" value="{{$chapter->getTranslation('name', 'en', false)}}">
-                    </div>
-                </div>
-                <div class="form-group row">
-                    <div class="col-sm-6">
-                        <p>{{__('chapter_subtitle')}}</p>
-                        <p>{!! $chapter->subtitle !!}</p>
-                    </div>
-                    <div class="col-sm-6">
-                        <input type="text" class="form-control" name="chapterSubtitle" placeholder="Subtitle" value="{{$chapter->getTranslation('subtitle', 'en', false)}}">
-                    </div>
-                </div>
-                <div class="form-group row">
-                    <div class="col-sm-6">
-                        <p>{{__('chapter_description')}}</p>
-                        <p>{!! $chapter->description !!}</p>
-                    </div>
-                    <div class="col-sm-6">
-                        <div id="chapterDescription_{{$chapter->id}}"></div>
-                        <div id="chapter_{{$chapter->id}}">{!! $chapter->getTranslation('description', 'en', false) !!}</div><a href="#chapter_{{$chapter->id}}" class="add-chapter-description" data-id="{{$chapter->id}}" > <x-icon name="square-pen" id="edit_chapter_{{$chapter->id}}" class="text-editor" /></a>
-                        <div class="form-check mt-2">
-                            <input type="checkbox" class="form-check-input" name="isTranslated" @if($chapter->is_translated) value="{!! $chapter->is_translated !!}"  @endif @if($chapter->is_translated > 0) checked @endif>
-                            <label class="form-check-label" for="translationComplete">{{__('translation_is_complete')}}</label>
-                        </div>
-                        <button type="submit" data-chapter="{{$chapter->id}}" class="btn btn-primary float-right mt-2 save-chapter">{{__('save')}}</button>
-                    </div>
-                </div>
-                <hr class="mt-2 mb-3"/>
-            </form>
-            @if(isset($chapter->entries) && count($chapter->entries) > 0)
-                @foreach($chapter->entries as $entry)
-                    <form action="{{route('entries.store')}}" method="POST">
-                        @csrf
-                        <input type="hidden" name="entryId" value="{!! $entry->id !!}" />
-                        <input type="hidden" name="translationEntry" />
-                    <div class="form-group row">
-                        <div class="col-sm-6">
-                            <p>{{__('entry_title')}}</p>
-                            <p>{!! $entry->name !!}</p>
-                        </div>
-                        <div class="col-sm-6">
-                            <input type="text" class="form-control" name="entryTitle" placeholder="Entry title" value="{{$entry->getTranslation('name', 'en', false)}}">
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <div class="col-sm-6">
-                            <p>{{__('entry_subtitle')}}</p>
-                            <p>{!! $entry->subtitle !!}</p>
-                        </div>
-                        <div class="col-sm-6">
-                            <input type="text" class="form-control" name="entrySubtitle" placeholder="Entry subtitle" value="{{$entry->getTranslation('subtitle', 'en', false)}}">
-                        </div>
-                    </div>
-                    <div class="form-group row">
-                        <div class="col-sm-6">
-                            <p>{{__('entry_description')}}</p>
-                            <p>{!! $entry->description !!}</p>
-                        </div>
-                        <div class="col-sm-6">
-                            <div id="entryDescription_{{$entry->id}}"></div>
-                            <div id="entry_{{$entry->id}}">{!! $entry->getTranslation('description', 'en', false) !!}</div><a href="#entry_{{$entry->id}}" class="add-entry-description" data-id="{{$entry->id}}" > <x-icon name="square-pen" id="edit_entry_{{$entry->id}}" class="text-editor" /></a>
-                            <div class="form-check mt-2">
-                                <input type="checkbox" class="form-check-input" name="isTranslated" @if($entry->is_translated) value="{!! $entry->is_translated !!}"  @endif @if($entry->is_translated > 0) checked @endif>
-                                <label class="form-check-label" for="translationComplete">{{__('translation_is_complete')}}</label>
-                            </div>
-                            <button type="submit" data-entry="{{$entry->id}}" class="btn btn-primary float-right mt-2 save-entry">{{__('save')}}</button>
-                        </div>
-                    </div>
-                    </form>
-                    <hr class="mt-2 mb-3"/>
-                    @if(count($entry->media) > 0)
-                        @foreach($entry->media as $item)
-                            @if(isset($item) && get_class($item) == 'App\Models\Text')
 
-                                <div>
-                                    <form action="{{route('text.store')}}" method="POST">
-                                        @csrf
-                                        <input type="hidden" name="translationMode">
-                                        <input type="hidden" name="textId" value="{{$item->id}}"/>
-                                        <input type="hidden" name="copyrightId" value="{{$item->copyrightText->id}}"/>
-                                        <input type="hidden" name="originId" value="{{$item->originText->id}}"/>
-                                        <div class="form-group row">
-                                            <div class="col-sm-6">
-                                                <p>{{__('text')}}</p>
-                                                <p>{!! $item->text !!}</p>
-                                            </div>
-                                        <div class="col-sm-6">
-                                            <div id="textContent_{{$item->id}}"></div>
-                                            <div id="text_{{$item->id}}">{!! $item->getTranslation('text', 'en', false) !!}</div><a href="#text_{{$item->id}}" class="add-text-content" data-id="{{$item->id}}" ><x-icon name="pencil-square" class="text-editor" /></a>
-                                        </div>
-                                    </div>
-                                    @if($item->origin)
-                                            <div class="form-group row">
-                                                <div class="col-sm-6">
-                                                    <p>{{__('origin')}}</p>
-                                                    <p>{!! $item->originText->name !!}</p>
-                                                </div>
-                                                <div class="col-sm-6">
-                                                    <input type="text" class="form-control" name="originField" placeholder="Text copyright" value="{{$item->originText->getTranslation('name', 'en', false)}}">
-                                                </div>
-                                            </div>
-                                    @endif
-                                    @if($item->copyright)
-                                            <div class="form-group row">
-                                                <div class="col-sm-6">
-                                                    <p>{{__('copyright')}}</p>
-                                                    <p>{!! $item->copyrightText->name !!}</p>
-                                                </div>
-                                                <div class="col-sm-6">
-                                                    <input type="text" class="form-control" name="copyrightField" placeholder="Text copyright" value="{{$item->copyrightText->getTranslation('name', 'en', false)}}">
-                                                    <div class="form-check mt-2">
-                                                        <input type="checkbox" class="form-check-input" name="isTranslatedText" @if($item->is_translated) value="{!! $item->is_translated !!}"  @endif @if($item->is_translated > 0) checked @endif>
-                                                        <label class="form-check-label" for="translationComplete">{{__('translation_is_complete')}}</label>
-                                                    </div>
-                                                    <button type="submit" data-entry="{{$entry->id}}" class="btn btn-primary float-right mt-2 save-text">{{__('save')}}</button>
-                                                </div>
-                                            </div>
-                                    @endif
-                                    </form>
+    <div x-data="{ onlyUntranslated: false }">
+        {{-- Kopfzeile: Titel + Sprachpaar-Wähler + Filter + Speicherhinweis. --}}
+        <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
+            <div>
+                <p class="mb-1 text-mono-caps font-mono uppercase tracking-widest text-ink-500">
+                    {{ __('translate_language_pair_label') }}
+                </p>
+                <h1 class="text-title font-semibold text-ink-900">
+                    <label class="cursor-pointer">
+                        {{ __('translate_page_title') }}
+                    </label>
+                </h1>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-4">
+                <div class="flex items-center gap-2">
+                    <select class="rounded-md border border-line-200 bg-canvas-bg px-3 py-2 text-body text-ink-900 focus:border-primary focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-primary" disabled>
+                        <option>{{ __('translate_lang_de') }}</option>
+                    </select>
+                    <span class="text-body text-ink-500">→</span>
+                    <select class="rounded-md border border-line-200 bg-canvas-bg px-3 py-2 text-body text-ink-900 focus:border-primary focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-primary">
+                        <option value="en">{{ __('translate_lang_en') }}</option>
+                    </select>
+                </div>
+                <label class="inline-flex items-center gap-2 text-body text-ink-700">
+                    <input type="checkbox" x-model="onlyUntranslated" class="size-4 rounded border-line-200 text-primary focus:ring-primary"/>
+                    <span>{{ __('translate_filter_only_untranslated') }}</span>
+                </label>
+                <p class="text-caption text-ink-500">{{ __('translate_save_hint') }}</p>
+            </div>
+        </header>
+
+        {{-- 5aa.3: Alle englischen Übersetzungen wandern als benannter
+             `translations[<Model>.<id>.<field>]`-Payload an den
+             Bulk-Save-Endpoint. Auto-Save-on-Blur pro Feld ist die
+             nächste Ausbaustufe. --}}
+        <form action="{{ route('translate.save', $project->id) }}" method="POST" id="translate_form">
+            @csrf
+
+            @php
+                // 5aa.3: Kleiner Helper — zwei Spalten mit Original links + Uebersetzungs-Input rechts.
+                // Der `data-translated` Attribute wird von der Alpine-Filter-Logik gelesen, um
+                // uebersetzte Felder auszublenden wenn „Nur unuebersetzte" aktiv ist.
+                $renderField = function ($label, $originalHtml, $translationHtml, $inputName, $placeholder, $isTranslated) {
+                    return view('translate.field-partial', compact(
+                        'label', 'originalHtml', 'translationHtml', 'inputName', 'placeholder', 'isTranslated'
+                    ));
+                };
+            @endphp
+
+            @isset($data['data'])
+                @foreach($data['data'] as $chapterIndex => $chapter)
+                    @php
+                        // Zaehlt Original- und uebersetzte Felder in dieser Kapitel-Gruppe.
+                        $groupFields = [
+                            ['label' => __('chapter_title'), 'original' => $chapter->name, 'translation' => $chapter->getTranslation('name', 'en', false)],
+                            ['label' => __('chapter_subtitle'), 'original' => $chapter->subtitle, 'translation' => $chapter->getTranslation('subtitle', 'en', false)],
+                            ['label' => __('chapter_description'), 'original' => $chapter->description, 'translation' => $chapter->getTranslation('description', 'en', false)],
+                        ];
+                        $groupTotal = count($groupFields);
+                        $groupDone = collect($groupFields)->filter(fn ($f) => ! empty(trim(strip_tags((string) $f['translation']))))->count();
+                    @endphp
+
+                    <section class="mb-8 rounded-md border border-line-200 bg-paper-0">
+                        <header class="flex flex-wrap items-center justify-between gap-3 border-b border-line-200 px-4 py-3">
+                            <span class="inline-flex items-center gap-2 rounded-md bg-line-100 px-2 py-0.5 text-caption font-semibold uppercase tracking-wider text-ink-700">
+                                <x-icon name="square" size="3"/>
+                                <span>{{ __('translate_group_chapter') }} {{ $chapterIndex + 1 }}</span>
+                                <span class="text-ink-500">·</span>
+                                <span class="truncate text-ink-500">{{ $chapter->name }}</span>
+                            </span>
+                            <span data-section-counter class="text-caption {{ $groupDone === $groupTotal ? 'text-success' : 'text-warning' }}">
+                                {{ $groupDone === $groupTotal ? '✓' : '⚠' }}
+                                {{ trans_choice('translate_group_count_all', $groupTotal, ['done' => $groupDone, 'total' => $groupTotal]) }}
+                            </span>
+                        </header>
+
+                        <div class="hidden bg-line-100 px-4 py-2 text-caption font-mono uppercase tracking-wider text-ink-500 md:grid md:grid-cols-2 md:gap-4">
+                            <span>{{ __('translate_lang_de') }} · {{ __('translate_column_original') }}</span>
+                            <span>{{ __('translate_lang_en') }} · {{ __('translate_column_translation') }}</span>
+                        </div>
+
+                        <div class="divide-y divide-line-200">
+                            @include('translate.field-partial', ['label' => __('chapter_title'), 'originalHtml' => $chapter->name, 'translationHtml' => $chapter->getTranslation('name', 'en', false), 'inputName' => "translations[Chapter.$chapter->id.name]", 'placeholder' => __('translate_placeholder_title')])
+                            @include('translate.field-partial', ['label' => __('chapter_subtitle'), 'originalHtml' => $chapter->subtitle, 'translationHtml' => $chapter->getTranslation('subtitle', 'en', false), 'inputName' => "translations[Chapter.$chapter->id.subtitle]", 'placeholder' => __('translate_placeholder_subtitle')])
+                            @include('translate.field-partial', ['label' => __('chapter_description'), 'originalHtml' => $chapter->description, 'translationHtml' => $chapter->getTranslation('description', 'en', false), 'inputName' => "translations[Chapter.$chapter->id.description]", 'placeholder' => __('translate_placeholder_description'), 'multiline' => true])
+                        </div>
+                    </section>
+
+                    @if(isset($chapter->entries) && count($chapter->entries) > 0)
+                        @foreach($chapter->entries as $entryIndex => $entry)
+                            @php
+                                $entryFields = [
+                                    $entry->getTranslation('name', 'en', false),
+                                    $entry->getTranslation('subtitle', 'en', false),
+                                    $entry->getTranslation('description', 'en', false),
+                                ];
+                                $entryTotal = count($entryFields);
+                                $entryDone = collect($entryFields)->filter(fn ($v) => ! empty(trim(strip_tags((string) $v))))->count();
+                            @endphp
+                            <section class="mb-8 ml-6 rounded-md border border-line-200 bg-paper-0">
+                                <header class="flex flex-wrap items-center justify-between gap-3 border-b border-line-200 px-4 py-3">
+                                    <span class="inline-flex items-center gap-2 rounded-md bg-line-100 px-2 py-0.5 text-caption font-semibold uppercase tracking-wider text-ink-700">
+                                        <x-icon name="pilcrow" size="3"/>
+                                        <span>{{ __('translate_group_entry') }} {{ $entryIndex + 1 }}</span>
+                                        <span class="text-ink-500">·</span>
+                                        <span class="truncate text-ink-500">{{ $entry->name }}</span>
+                                    </span>
+                                    <span data-section-counter class="text-caption {{ $entryDone === $entryTotal ? 'text-success' : 'text-warning' }}">
+                                        {{ $entryDone === $entryTotal ? '✓' : '⚠' }}
+                                        {{ trans_choice('translate_group_count_all', $entryTotal, ['done' => $entryDone, 'total' => $entryTotal]) }}
+                                    </span>
+                                </header>
+
+                                <div class="divide-y divide-line-200">
+                                    @include('translate.field-partial', ['label' => __('entry_title'), 'originalHtml' => $entry->name, 'translationHtml' => $entry->getTranslation('name', 'en', false), 'inputName' => "translations[Entry.$entry->id.name]", 'placeholder' => __('translate_placeholder_title')])
+                                    @include('translate.field-partial', ['label' => __('entry_subtitle'), 'originalHtml' => $entry->subtitle, 'translationHtml' => $entry->getTranslation('subtitle', 'en', false), 'inputName' => "translations[Entry.$entry->id.subtitle]", 'placeholder' => __('translate_placeholder_subtitle')])
+                                    @include('translate.field-partial', ['label' => __('entry_description'), 'originalHtml' => $entry->description, 'translationHtml' => $entry->getTranslation('description', 'en', false), 'inputName' => "translations[Entry.$entry->id.description]", 'placeholder' => __('translate_placeholder_description'), 'multiline' => true])
                                 </div>
-                                <hr class="mt-2 mb-3"/>
-                            @endif
-                            @if(isset($item) && get_class($item) == 'App\Models\Gallery')
-                                <form action="{{route('save.gallery')}}" method="POST">
-                                    @csrf
-                                    <input type="hidden" name="galleryId" value="{!! $item->id !!}" />
-                                    <input type="hidden" name="translationGallery" />
-                                    <div class="form-group row">
-                                        <div class="col-sm-6">
-                                            <p>{{__('gallery_title')}}</p>
-                                            <p>{!! $item->title !!}</p>
-                                        </div>
-                                        <div class="col-sm-6">
-                                            <input type="text" class="form-control" name="galleryTitle" placeholder="Gallery title" value="{{$item->getTranslation('title', 'en', false)}}">
-                                        </div>
-                                    </div>
-                                    <div class="form-group row">
-                                        <div class="col-sm-6">
-                                            <p>{{__('gallery_subtitle')}}</p>
-                                            <p>{!! $item->subtitle !!}</p>
-                                        </div>
-                                        <div class="col-sm-6">
-                                            <input type="text" class="form-control" name="gallerySubtitle" placeholder="Gallery subtitle" value="{{$item->getTranslation('subtitle', 'en', false)}}">
-                                        </div>
-                                    </div>
-                                    <div class="form-group row">
-                                        <div class="col-sm-6">
-                                            <p>{{__('gallery_description')}}</p>
-                                            <p>{!! $item->description !!}</p>
-                                        </div>
-                                        <div class="col-sm-6">
-                                            <input type="text" class="form-control" name="galleryDescription" placeholder="Gallery subtitle" value="{{$item->getTranslation('description', 'en', false)}}">
-                                            <div class="form-check mt-2">
-                                                <input type="checkbox" class="form-check-input" name="isTranslated" @if($entry->is_translated) value="{!! $item->is_translated !!}"  @endif @if($item->is_translated > 0) checked @endif>
-                                                <label class="form-check-label" for="translationComplete">{{__('translation_is_complete')}}</label>
-                                            </div>
-                                            <button type="submit" class="btn btn-primary float-right mt-2">{{__('save')}}</button>
-                                        </div>
-                                    </div>
-                                </form>
-                                @if(isset($item->image_list) && count($item->image_list) > 0)
-                                    @foreach($item->image_list as $image)
-                                        <form action="{{route('image.store')}}" method="POST">
-                                            @csrf
-                                            <input type="hidden" name="translationMode" value="1"/>
-                                            <input type="hidden" name="imageId" value="{{$image->id}}"/>
-                                            <input type="hidden" name="originId" value="{{$image->originImage->id}}"/>
-                                            <input type="hidden" name="copyrightId" value="{{$image->copyrightImage->id}}"/>
-                                            <div>
-                                                <img class="img-thumbnail mb-2" src="{{route('image', $image->image)}}" alt="{{$image->alt}}"
-                                                     style="width: 25%">
-                                                    <div class="form-group row">
-                                                        <div class="col-sm-6">
-                                                            <p>{{__('alt')}}</p>
-                                                            <p>{!! $image->alt !!}</p>
-                                                        </div>
-                                                        <div class="col-sm-6">
-                                                            <input type="text" class="form-control" name="altField" placeholder="Image Alt" value="{{$image->getTranslation('alt', 'en', false)}}">
+                            </section>
 
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group row">
-                                                        <div class="col-sm-6">
-                                                            <p>{{__('origin')}}</p>
-                                                            <p>{!! $image->originImage->name !!}</p>
-                                                        </div>
-                                                        <div class="col-sm-6">
-                                                            <input type="text" class="form-control" name="originField" placeholder="Image origin" value="{{$image->originImage->getTranslation('name', 'en', false)}}">
-
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group row">
-                                                        <div class="col-sm-6">
-                                                            <p>{{__('copyright')}}</p>
-                                                            <p>{!! $image->copyrightImage->name !!}</p>
-                                                        </div>
-                                                        <div class="col-sm-6">
-                                                            <input type="text" class="form-control" name="copyrightField" placeholder="Image copyright" value="{{$image->copyrightImage->getTranslation('name', 'en', false)}}">
-                                                            <div class="form-check mt-4">
-                                                                <input type="checkbox" class="form-check-input" name="isTranslated[]" value="{!! $image->copyrightImage->is_translated !!}" @if($image->copyrightImage->is_translated) checked="checked" @endif>
-                                                                <label class="form-check-label" for="translationComplete">{{__('translation_is_complete')}}</label>
-                                                            </div>
-                                                            <button type="submit" class="btn btn-primary float-right mt-2">{{__('save')}}</button>
-                                                        </div>
-                                                    </div>
-                                            </div>
-                                            <hr class="mt-2 mb-3"/>
-                                        </form>
-                                    @endforeach
+                            {{-- 5aa.3-Followup: Inhalte des Eintrags — Text, Galerie und
+                                 Audio/Video mit ihren übersetzbaren Feldern. --}}
+                            @foreach($entry->mediaContent ?? [] as $mc)
+                                @php
+                                    $mcType = $mc->content_type ?? null;
+                                    $mcClass = null;
+                                    $mcTitle = null;
+                                    if ($mcType === \App\Models\Text::class && isset($mc->text)) {
+                                        $mcClass = 'Text';
+                                        $mcTitle = 'Text';
+                                    } elseif ($mcType === \App\Models\Gallery::class && isset($mc->gallery)) {
+                                        $mcClass = 'Gallery';
+                                        $mcTitle = $mc->gallery->title ?: 'Galerie';
+                                    } elseif ($mcType === \App\Models\Audiovisual::class && isset($mc->audiovisual)) {
+                                        $mcClass = 'Audiovisual';
+                                        $mcTitle = $mc->audiovisual->type === 'audio' ? 'Audio' : 'Video';
+                                    }
+                                @endphp
+                                @if ($mcClass === 'Text')
+                                    <section class="mb-8 ml-12 rounded-md border border-line-200 bg-paper-0">
+                                        <header class="flex flex-wrap items-center justify-between gap-3 border-b border-line-200 px-4 py-3">
+                                            <span class="inline-flex items-center gap-2 rounded-md bg-line-100 px-2 py-0.5 text-caption font-semibold uppercase tracking-wider text-ink-700">
+                                                <x-icon name="type" size="3"/>
+                                                <span>{{ __('translate_group_block') }} · {{ $mcTitle }}</span>
+                                            </span>
+                                        </header>
+                                        <div class="divide-y divide-line-200">
+                                            @include('translate.field-partial', ['label' => __('text'), 'originalHtml' => $mc->text->text, 'translationHtml' => $mc->text->getTranslation('text', 'en', false), 'inputName' => "translations[Text.{$mc->text->id}.text]", 'placeholder' => __('translate_placeholder_text'), 'multiline' => true])
+                                        </div>
+                                    </section>
+                                @elseif ($mcClass === 'Gallery')
+                                    <section class="mb-8 ml-12 rounded-md border border-line-200 bg-paper-0">
+                                        <header class="flex flex-wrap items-center justify-between gap-3 border-b border-line-200 px-4 py-3">
+                                            <span class="inline-flex items-center gap-2 rounded-md bg-line-100 px-2 py-0.5 text-caption font-semibold uppercase tracking-wider text-ink-700">
+                                                <x-icon name="image" size="3"/>
+                                                <span>{{ __('translate_group_block') }} · {{ __('block_type_gallery') }} „{{ $mcTitle }}"</span>
+                                            </span>
+                                        </header>
+                                        <div class="divide-y divide-line-200">
+                                            @include('translate.field-partial', ['label' => __('gallery_title'), 'originalHtml' => $mc->gallery->title, 'translationHtml' => $mc->gallery->getTranslation('title', 'en', false), 'inputName' => "translations[Gallery.{$mc->gallery->id}.title]", 'placeholder' => __('translate_placeholder_title')])
+                                            @include('translate.field-partial', ['label' => __('gallery_subtitle'), 'originalHtml' => $mc->gallery->subtitle, 'translationHtml' => $mc->gallery->getTranslation('subtitle', 'en', false), 'inputName' => "translations[Gallery.{$mc->gallery->id}.subtitle]", 'placeholder' => __('translate_placeholder_subtitle')])
+                                            @include('translate.field-partial', ['label' => __('gallery_description'), 'originalHtml' => $mc->gallery->description, 'translationHtml' => $mc->gallery->getTranslation('description', 'en', false), 'inputName' => "translations[Gallery.{$mc->gallery->id}.description]", 'placeholder' => __('translate_placeholder_description'), 'multiline' => true])
+                                            @foreach ($mc->gallery->images ?? [] as $image)
+                                                @include('translate.field-partial', ['label' => __('title').' · '.($image->alt ?: '#'.$image->id), 'originalHtml' => $image->alt, 'translationHtml' => $image->getTranslation('alt', 'en', false), 'inputName' => "translations[Image.{$image->id}.alt]", 'placeholder' => __('translate_placeholder_title')])
+                                                @include('translate.field-partial', ['label' => __('gallery_image_description').' · '.($image->alt ?: '#'.$image->id), 'originalHtml' => $image->description, 'translationHtml' => $image->getTranslation('description', 'en', false), 'inputName' => "translations[Image.{$image->id}.description]", 'placeholder' => __('translate_placeholder_description'), 'multiline' => true])
+                                            @endforeach
+                                        </div>
+                                    </section>
+                                @elseif ($mcClass === 'Audiovisual')
+                                    <section class="mb-8 ml-12 rounded-md border border-line-200 bg-paper-0">
+                                        <header class="flex flex-wrap items-center justify-between gap-3 border-b border-line-200 px-4 py-3">
+                                            <span class="inline-flex items-center gap-2 rounded-md bg-line-100 px-2 py-0.5 text-caption font-semibold uppercase tracking-wider text-ink-700">
+                                                <x-icon name="{{ $mc->audiovisual->type === 'audio' ? 'volume-2' : 'play' }}" size="3"/>
+                                                <span>{{ __('translate_group_block') }} · {{ $mcTitle }}</span>
+                                            </span>
+                                        </header>
+                                        <div class="divide-y divide-line-200">
+                                            @include('translate.field-partial', ['label' => __('transcript'), 'originalHtml' => $mc->audiovisual->transcript, 'translationHtml' => $mc->audiovisual->getTranslation('transcript', 'en', false), 'inputName' => "translations[Audiovisual.{$mc->audiovisual->id}.transcript]", 'placeholder' => __('translate_placeholder_text'), 'multiline' => true])
+                                            @include('translate.field-partial', ['label' => __('copyright'), 'originalHtml' => $mc->audiovisual->copyright, 'translationHtml' => $mc->audiovisual->getTranslation('copyright', 'en', false), 'inputName' => "translations[Audiovisual.{$mc->audiovisual->id}.copyright]", 'placeholder' => __('translate_placeholder_copyright')])
+                                            @include('translate.field-partial', ['label' => __('origin'), 'originalHtml' => $mc->audiovisual->source, 'translationHtml' => $mc->audiovisual->getTranslation('source', 'en', false), 'inputName' => "translations[Audiovisual.{$mc->audiovisual->id}.source]", 'placeholder' => __('translate_placeholder_source')])
+                                        </div>
+                                    </section>
                                 @endif
-                            @endif
-                            @if(isset($item) && get_class($item) == 'App\Models\Audiovisual')
-                                <form action="{{route('save.audiovisual')}}" method="POST" enctype="multipart/form-data">
-                                    @csrf
-                                    <input type="hidden" name="audiovisualId" value="{{$item->id}}"/>
-                                    <input type="hidden" name="translationMode" value="1"/>
-                                    <div>
-                                        @if($item->type == 'audio')
-                                            <div class="form-group row">
-                                                <div class="col-sm-6">
-                                                    <audio controls class="embed-responsive-item" id="audio" src="{{route('audio',$item->link)}}"  ></audio>
-                                                </div>
-                                                <div class="col-sm-6">
-                                                    @if($item->getTranslation('link', 'en', false))
-                                                        <audio controls class="embed-responsive-item" id="audio" src="{{route('audio',$item->getTranslation('link', 'en', false))}}"  ></audio>
-                                                    @endif
-                                                    <div class="form-group" id="">
-                                                        <label>{{__('upload_file')}} </label>
-                                                        <input id="audio_{{$item->id}}" name="audio" type="file" class="form-control" multiple="">
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        @else
-                                            <div class="form-group row">
-                                                <div class="col-sm-6">
-                                                    <iframe width="100%" height="315" src="{!! $item->link !!}" frameborder="0" allowfullscreen>
-                                                    </iframe>
-                                                </div>
-                                                <div class="col-sm-6">
-                                                    <iframe width="100%" height="315" src="{!! $item->getTranslation('link', 'en', false) !!}" frameborder="0" allowfullscreen>
-                                                    </iframe>
-
-                                                    <input name="link" id="link" type="text" class="form-control mb-3"
-                                                           placeholder="{{__('audiovisual_link')}}" value="{!! $item->getTranslation('link', 'en', false) !!}">
-                                                </div>
-                                            </div>
-                                        @endif
-
-                                            <div class="form-group row">
-                                                <div class="col-sm-6">
-                                                    <p>{{__('source')}}</p>
-                                                    <p>{!! $item->source !!}</p>
-                                                </div>
-                                                <div class="col-sm-6">
-                                                    <input type="text" class="form-control" name="source" placeholder="{{__('source')}}" value="{{$item->getTranslation('source', 'en', false)}}">
-
-                                                </div>
-                                            </div>
-
-                                            <div class="form-group row">
-                                                <div class="col-sm-6">
-                                                    <p>{{__('copyright')}}</p>
-                                                    <p>{!! $item->copyright !!}</p>
-                                                </div>
-                                                <div class="col-sm-6">
-                                                    <input type="text" class="form-control" name="copyright" placeholder="{{__('copyright')}}" value="{{$item->getTranslation('copyright', 'en', false)}}">
-                                                    <div class="form-check mt-4">
-                                                        <input type="checkbox" class="form-check-input" name="isTranslated[]" value="{!! $item->is_translated !!}" @if($item->is_translated) checked="checked" @endif>
-                                                        <label class="form-check-label" for="translationComplete">{{__('translation_is_complete')}}</label>
-                                                    </div>
-                                                    <button type="submit" class="btn btn-primary float-right mt-2">{{__('save')}}</button>
-                                                </div>
-                                            </div>
-                                    </div>
-                                    <hr class="mt-2 mb-3"/>
-                                </form>
-                            @endif
+                            @endforeach
                         @endforeach
                     @endif
                 @endforeach
-            @endif
-        @endforeach
-        @isset($data['percentageOfTranslation'])
-            <p>{{$data['percentageOfTranslation']}}% {{__('complete')}}</p>
-            <div class="progress mb-4">
-                <div class="progress-bar" role="progressbar" style="width: {{$data['percentageOfTranslation']}}%;" aria-valuenow="{{$data['percentageOfTranslation']}}" aria-valuemin="0" aria-valuemax="100"></div>
-            </div>
-        @endisset
-    @endisset
+            @endisset
+
+            @isset($data['percentageOfTranslation'])
+                <div class="sticky bottom-0 -mx-4 mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-line-200 bg-paper-0/95 px-6 py-3 shadow-medium backdrop-blur">
+                    <div class="flex min-w-0 flex-1 flex-col gap-1">
+                        <div class="h-2 w-full max-w-md overflow-hidden rounded-full bg-line-100">
+                            <div data-progress-bar class="h-full bg-brand-bar" style="width: {{ $data['percentageOfTranslation'] }}%"></div>
+                        </div>
+                        <p data-progress-label class="text-caption text-ink-500">{{ $data['percentageOfTranslation'] }}%</p>
+                    </div>
+                    <button type="submit"
+                            class="inline-flex items-center gap-1 rounded-md bg-primary px-4 py-2 text-body font-medium text-primary-on hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                        <x-icon name="save" size="4"/>
+                        <span>{{ __('translate_save_all') }}</span>
+                    </button>
+                </div>
+            @endisset
+        </form>
+    </div>
+
 @endsection
-@push('scripts')
-    <script>
-        let Font = Quill.import('formats/font');
-        Font.whitelist = ['times-new-roman', 'arial', 'Sans Serif'];
-        Quill.register(Font, true);
-
-        let toolbarOptions = [
-            [{
-                'header': [1, 2, 3, 4, 5, 6, false]
-            }],
-            ['bold', 'italic', 'underline', 'strike'], // toggled buttons
-            //['blockquote', 'code-block'],
-
-            /*[{
-                'header': 1
-            }, {
-                'header': 2
-            }], // custom button values
-            */[{
-                'list': 'ordered'
-            }, {
-                'list': 'bullet'
-            }],
-            /*[{
-                'script': 'sub'
-            }, {
-                'script': 'super'
-            }], // superscript/subscript
-            */[{
-                'indent': '-1'
-            }, {
-                'indent': '+1'
-            }], // outdent/indent
-            [{
-                'direction': 'rtl'
-            }], // text direction
-
-            [{
-                'size': ['small', false, 'large', 'huge']
-            }], // custom dropdown
-
-            [{
-                'color': []
-            }, {
-                'background': []
-            }], // dropdown with defaults from theme
-            [{
-                'font': ['', 'times-new-roman', 'arial']
-            }],
-            [{align: ''}, {align: 'center'}, {align: 'right'}, {align: 'justify'}],
-            ['link'],
-            ['clean'] // remove formatting button
-        ];
-
-        $(document).ready(function (){
-
-            $('.add-chapter-description').click(function (){
-
-                let chapterId = $(this).attr('data-id');
-                let quillChapter = new Quill('#chapterDescription_'+chapterId, {
-                    modules: {
-                        toolbar: toolbarOptions,
-                    },
-                    theme: 'snow'
-                });
-                quillChapter.container.firstChild.innerHTML = $('#chapter_'+chapterId).text();
-                $('#chapter_'+chapterId).toggle();
-                $('.text-editor').toggle();
-
-            })
-
-            $('.add-entry-description').click(function (){
-
-                let entryId = $(this).attr('data-id');
-                let quillEntry = new Quill('#entryDescription_'+entryId, {
-                    modules: {
-                        toolbar: toolbarOptions,
-                    },
-                    theme: 'snow'
-                });
-                quillEntry.container.firstChild.innerHTML = $('#entry_'+entryId).text();
-                $('#entry_'+entryId).toggle();
-                $('.text-editor').toggle();
-
-            })
-
-            $('.add-text-content').click(function (){
-
-                let textId = $(this).attr('data-id');
-                let quillText = new Quill('#textContent_'+textId, {
-                    modules: {
-                        toolbar: toolbarOptions,
-                    },
-                    theme: 'snow'
-                });
-                quillText.container.firstChild.innerHTML = $('#text_'+textId).text();
-                $('#text_'+textId).toggle();
-                $('.text-editor').toggle();
-
-            })
-
-        });
-
-        $('.save-chapter').click(function () {
-            let chapterDescription = $('.ql-editor').html();
-            $(this).append("<textarea name='chapterDescription' style='display:none'>" + chapterDescription + "</textarea>");
-        });
-
-        $('.save-entry').click(function () {
-            let entryDescription = $('.ql-editor').html();
-            $(this).append("<textarea name='entryDescription' style='display:none'>" + entryDescription + "</textarea>");
-        });
-
-        $('.save-text').click(function () {
-            let textContent = $('.ql-editor').html();
-            $(this).append("<textarea name='text' style='display:none'>" + textContent + "</textarea>");
-        });
-
-    </script>
-@endpush
