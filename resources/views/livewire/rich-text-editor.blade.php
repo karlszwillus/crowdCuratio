@@ -143,7 +143,11 @@ new class extends Component
          gehen. Die Toolbar (`.ql-toolbar`) wird per CSS nur dann
          sichtbar, wenn `is-focused` am Root sitzt (P1.3 Review-
          Punkt: Toolbar nur am aktiven Block). --}}
-    <div x-ref="editor" class="min-h-[6rem] bg-transparent text-ink-900"></div>
+    {{-- 5z.4: Kein 6-rem-Mindestbereich mehr — leere Beschreibungen
+         sollen keinen Höhen-Loch von 96 px reservieren. Klickfläche
+         bleibt über die kleine 2-rem-Mindestbox erhalten; Quill wächst
+         mit dem Inhalt. --}}
+    <div x-ref="editor" class="min-h-[2rem] bg-transparent text-ink-900"></div>
 
     @error('value')
         <p class="mt-1 text-sm text-primary">

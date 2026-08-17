@@ -195,8 +195,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                         :key="'chapter-subtitle-'.$chapter->id"
                                     />
                                 @else
-                                    <h2 class="text-title font-semibold text-ink-900">{!! $chapter->name !!}</h2>
-                                    <p class="mt-1 text-body text-ink-500">{!! $chapter->subtitle !!}</p>
+                                    @if (! empty(trim((string) $chapter->name)))
+                                        <h2 class="text-title font-semibold text-ink-900">{!! $chapter->name !!}</h2>
+                                    @endif
+                                    @if (! empty(trim((string) $chapter->subtitle)))
+                                        <p class="mt-1 text-body text-ink-500">{!! $chapter->subtitle !!}</p>
+                                    @endif
                                 @endcan
                             </div>
 
@@ -280,7 +284,9 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                 :key="'chapter-description-'.$chapter->id"
                             />
                         @else
-                            <p class="text-body text-ink-700">{!! $chapter->description !!}</p>
+                            @if (! empty(trim(strip_tags((string) $chapter->description))))
+                                <p class="text-body text-ink-700">{!! $chapter->description !!}</p>
+                            @endif
                         @endcan
 
                         {{-- Grosser Vertikalspace zwischen Kapitel-Zone
@@ -327,8 +333,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                 :key="'entry-subtitle-'.$entry->id"
                                                             />
                                                         @else
-                                                            <h3 class="text-heading font-semibold text-ink-900">{!! $entry->name !!}</h3>
-                                                            <p class="mt-1 text-body text-ink-500">{!! $entry->subtitle !!}</p>
+                                                            @if (! empty(trim((string) $entry->name)))
+                                                                <h3 class="text-heading font-semibold text-ink-900">{!! $entry->name !!}</h3>
+                                                            @endif
+                                                            @if (! empty(trim((string) $entry->subtitle)))
+                                                                <p class="mt-1 text-body text-ink-500">{!! $entry->subtitle !!}</p>
+                                                            @endif
                                                         @endcan
                                                     </div>
 
@@ -406,7 +416,9 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                         :key="'entry-description-'.$entry->id"
                                                     />
                                                 @else
-                                                    <p class="text-body text-ink-700">{!! $entry->description !!}</p>
+                                                    @if (! empty(trim(strip_tags((string) $entry->description))))
+                                                        <p class="text-body text-ink-700">{!! $entry->description !!}</p>
+                                                    @endif
                                                 @endcan
                                             </div>
                                                     @if(isset($entry->mediaContent) && count($entry->mediaContent) > 0)
