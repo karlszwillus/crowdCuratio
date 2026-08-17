@@ -32,7 +32,8 @@ use Spatie\Activitylog\Models\Activity;
 class BackfillRevisions extends Command
 {
     protected $signature = 'revisions:backfill
-        {--dry-run : Zeige an, was geschrieben wuerde, ohne DB-Writes}';
+        {--dry-run : Zeige an, was geschrieben wuerde, ohne DB-Writes}
+        {--fresh : Vor dem Schreiben alle backfilled_from=activity_log-Zeilen loeschen}';
 
     protected $description = 'Backfill der revisions-Tabelle aus dem Activitylog';
 
@@ -55,8 +56,15 @@ class BackfillRevisions extends Command
     public function handle(): int
     {
         $dryRun = (bool) $this->option('dry-run');
+        $fresh = (bool) $this->option('fresh');
         if ($dryRun) {
             $this->warn('Dry-Run — kein DB-Write.');
+        }
+        if ($fresh && ! $dryRun) {
+            $deleted = Revision::query()
+                ->whereJsonContains('snapshot->meta->backfilled_from', 'activity_log')
+                ->delete();
+            $this->warn("Fresh-Modus: {$deleted} bestehende Backfill-Zeilen entfernt.");
         }
 
         $total = 0;
@@ -112,8 +120,17 @@ class BackfillRevisions extends Command
                         if (in_array($field, ['updated_at', 'created_at'], true)) {
                             continue;
                         }
+                        $oldValue = $old[$field] ?? null;
+                        // No-op-Filter: Activitylog schreibt gelegentlich
+                        // Zeilen, in denen ein Feld nur von null auf
+                        // Leerstring wandert (Formular reicht das leere
+                        // Feld mit). Fuer den Verlauf ist das Rauschen —
+                        // wir werfen es raus.
+                        if (self::isEffectivelyEqual($oldValue, $value)) {
+                            continue;
+                        }
                         $changes[$field] = [
-                            'old' => $old[$field] ?? null,
+                            'old' => $oldValue,
                             'new' => $value,
                         ];
                     }
@@ -210,6 +227,31 @@ class BackfillRevisions extends Command
         }
 
         return RevisionKind::FACTS->value;
+    }
+
+    /**
+     * Zwei Werte semantisch vergleichen: null, ""  und leere Arrays
+     * gelten als gleich, weil das der haeufigste No-op-Fall im Log ist.
+     * Strings mit Whitespace-Only werden getrimmed verglichen. Alles
+     * andere per Strict-Equality.
+     */
+    private static function isEffectivelyEqual(mixed $a, mixed $b): bool
+    {
+        $norm = static function (mixed $v): mixed {
+            if ($v === null) {
+                return '';
+            }
+            if (is_string($v)) {
+                return trim($v);
+            }
+            if (is_array($v) && $v === []) {
+                return '';
+            }
+
+            return $v;
+        };
+
+        return $norm($a) === $norm($b);
     }
 
     /**
