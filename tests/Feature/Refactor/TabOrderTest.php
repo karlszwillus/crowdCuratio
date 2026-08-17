@@ -140,10 +140,12 @@ it('Editor-View für Owner: Chapter-Item hat tabindex=0 (Tastatur-Reorder aktiv)
         ->get(route('projects.edit', $project));
 
     $response->assertOk();
-    $response->assertSee('class="chapter group"', false);
+    // 5z: Rail-Klammer hat weitere Utility-Klassen ergaenzt, `chapter group`
+    // steht am Anfang der Klassenliste. Match ist deshalb Praefix-basiert.
+    $response->assertSee('class="chapter group', false);
     // Der Owner darf editieren — `@can('update', $project)` greift, also
     // ist tabindex="0" am `<li class="chapter">` gesetzt.
-    expect($response->getContent())->toMatch('/<li class="chapter group"[^>]+tabindex="0"/');
+    expect($response->getContent())->toMatch('/<li class="chapter group[^"]*"[^>]+tabindex="0"/');
 });
 
 it('Editor-View für Reader: Chapter-Item hat KEIN tabindex (Tastatur-Reorder gesperrt)', function () {

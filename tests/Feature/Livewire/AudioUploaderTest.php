@@ -53,7 +53,7 @@ beforeEach(function () {
     Storage::fake('public');
 });
 
-it('rendert den aktuellen Dateinamen und ein file-Input', function () {
+it('rendert die Meta-Zeile fuer die aktuelle Audiodatei und ein file-Input', function () {
     /** @var TestCase $this */
     /** @var User $owner */
     $owner = User::factory()->create();
@@ -65,9 +65,13 @@ it('rendert den aktuellen Dateinamen und ein file-Input', function () {
         'link' => 'aktuell.mp3',
     ]));
 
+    // 5z.7: Der Uploader zeigt nicht mehr den Storage-Key, sondern eine
+    // Meta-Zeile aus Format (Extension in Caps), Groesse und Upload-Datum.
+    // Im Test ist die Datei nicht im Fake-Storage — Format ist trotzdem
+    // aus dem Dateinamen ableitbar, also faellt "MP3" ins Markup.
     Livewire::actingAs($owner)
         ->test('audio-uploader', ['audiovisual' => $audiovisual])
-        ->assertSee('aktuell.mp3', false)
+        ->assertSee('MP3', false)
         ->assertSee('type="file"', false)
         ->assertSee('wire:model="file"', false);
 });
