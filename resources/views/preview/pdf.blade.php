@@ -808,8 +808,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
         {{-- Stakeholder-Fix: Default-Adresse + Email entfernt;
              siehe preview/index.blade.php. --}}
-        @if(! empty(strip_tags((string) $project->imprint)))
-            <div id="footeradresse">{!! $project->imprint !!}</div>
+        @php
+            $footerImprint = \App\Support\ProjectLegalText::imprintFor($project);
+        @endphp
+        @if(! empty(strip_tags((string) $footerImprint)))
+            <div id="footeradresse">{!! $footerImprint !!}</div>
         @endif
         <ul id="verlinkungslistefooter" >
             <li class="footerverlinkung"><a class="verlinkung" href="#">Datenschutz</a> </li>

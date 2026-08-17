@@ -95,6 +95,9 @@ Route::group(
         // Modal-Kaskade aus projects/create ab.
         Route::get('/projects/{project}/permissions', [ProjectController::class, 'permissions'])
             ->name('projects.permissions');
+        Route::post('/projects/{project}/metadata/adopt-system-text',
+            [ProjectController::class, 'adoptSystemLegalText'])
+            ->name('projects.metadata.adopt_system_text');
         Route::resource('/roles', RoleController::class);
         Route::resource('/chapters', ChapterController::class);
         Route::resource('/entries', EntryController::class);

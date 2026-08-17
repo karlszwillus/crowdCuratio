@@ -1060,6 +1060,35 @@ class ProjectController extends Controller
 
     }
 
+    /**
+     * Phase 5aa.2/Design v6 § 3: „Systemtext übernehmen".
+     *
+     * Kopiert einmalig den aktuellen Systemtext (Impressum oder AGB aus
+     * /settings) ins Projekt-Feld. Danach ist das Projekt entkoppelt —
+     * spätere Änderungen am Systemtext greifen nicht mehr. Der leere
+     * Fallback bleibt davon unberührt: bleibt das Projekt-Feld später
+     * wieder leer, greift der Systemtext beim Publish automatisch
+     * (siehe `ProjectLegalText::imprintFor/termsFor`).
+     */
+    public function adoptSystemLegalText(Request $request, Project $project)
+    {
+        $this->authorize('update', $project);
+
+        $field = $request->input('field');
+        if (! in_array($field, ['imprint', 'terms'], true)) {
+            abort(422, 'Unknown field.');
+        }
+
+        $systemText = $field === 'imprint'
+            ? \App\Support\ProjectLegalText::systemImprint()
+            : \App\Support\ProjectLegalText::systemTerms();
+
+        $project->{$field} = $systemText;
+        $project->save();
+
+        return redirect()->back()->with('success', __('message_edit_project_success'));
+    }
+
     public function projectMetadata(Request $request)
     {
 
@@ -1074,10 +1103,11 @@ class ProjectController extends Controller
             $this->authorize('view', $project);
 
             if ($request->type == 'copyright') {
-                $content = $project->terms;
+                // 5aa.2 Design v6 § 3: leeres Projekt-Feld → Systemtext greift.
+                $content = \App\Support\ProjectLegalText::termsFor($project);
                 $type = 'copyright';
             } else {
-                $content = $project->imprint;
+                $content = \App\Support\ProjectLegalText::imprintFor($project);
                 $type = 'policy';
             }
         }

@@ -156,9 +156,10 @@ If not, see <https://www.gnu.org/licenses/>. -->
             <div id="descriptionId" class="rounded-md border border-line-200 bg-canvas-bg"></div>
         </div>
 
-        {{-- Impressum — Systemtext-Übernahme prominent. --}}
-        <div class="mb-4 rounded-md border border-line-200 bg-paper-0 p-5"
-             x-data="{ syncFromSystem() { alert('{{ __('metadata_use_system_text') }}: {{ __('feature_not_yet') }}'); } }">
+        {{-- Impressum — Systemtext-Übernahme kopiert den aktuellen /settings-Text
+             ins Projekt-Feld. Danach entkoppelt. Bleibt das Feld später wieder
+             leer, greift der Systemtext beim Publish automatisch. --}}
+        <div class="mb-4 rounded-md border border-line-200 bg-paper-0 p-5">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <label class="mb-1 block text-caption font-semibold text-ink-700">
@@ -166,18 +167,20 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     </label>
                     <p class="mb-3 text-caption text-ink-500">{{ __('metadata_imprint_intro') }}</p>
                 </div>
-                <button type="button" @click="syncFromSystem()"
-                        class="inline-flex items-center gap-1 rounded-md border border-line-200 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-chrome-active focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-                    <x-icon name="corner-down-left" size="3"/>
-                    <span>{{ __('metadata_use_system_text') }}</span>
-                </button>
+                @isset($project->id)
+                    <button type="submit"
+                            form="adoptImprintForm"
+                            class="inline-flex items-center gap-1 rounded-md border border-line-200 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-chrome-active focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                        <x-icon name="corner-down-left" size="3"/>
+                        <span>{{ __('metadata_use_system_text') }}</span>
+                    </button>
+                @endisset
             </div>
             <div id="imprintId" class="rounded-md border border-line-200 bg-canvas-bg"></div>
         </div>
 
         {{-- Geschäftsbedingungen — analog zum Impressum. --}}
-        <div class="mb-4 rounded-md border border-line-200 bg-paper-0 p-5"
-             x-data="{ syncFromSystem() { alert('{{ __('metadata_use_system_text') }}: {{ __('feature_not_yet') }}'); } }">
+        <div class="mb-4 rounded-md border border-line-200 bg-paper-0 p-5">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
                     <label class="mb-1 block text-caption font-semibold text-ink-700">
@@ -186,11 +189,14 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     </label>
                     <p class="mb-3 text-caption text-ink-500">{{ __('metadata_terms_intro') }}</p>
                 </div>
-                <button type="button" @click="syncFromSystem()"
-                        class="inline-flex items-center gap-1 rounded-md border border-line-200 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-chrome-active focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-                    <x-icon name="corner-down-left" size="3"/>
-                    <span>{{ __('metadata_use_system_text') }}</span>
-                </button>
+                @isset($project->id)
+                    <button type="submit"
+                            form="adoptTermsForm"
+                            class="inline-flex items-center gap-1 rounded-md border border-line-200 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-chrome-active focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                        <x-icon name="corner-down-left" size="3"/>
+                        <span>{{ __('metadata_use_system_text') }}</span>
+                    </button>
+                @endisset
             </div>
             <div id="termsId" class="rounded-md border border-line-200 bg-canvas-bg"></div>
         </div>
@@ -221,6 +227,23 @@ If not, see <https://www.gnu.org/licenses/>. -->
             </div>
         </div>
     </form>
+
+    @isset($project->id)
+        {{-- 5aa.2 Design v6 § 3: „Systemtext übernehmen" — einmaliges Copy
+             aus /settings ins Projekt-Feld. Danach entkoppelt. --}}
+        <form id="adoptImprintForm"
+              action="{{ route('projects.metadata.adopt_system_text', $project) }}"
+              method="POST" class="hidden">
+            @csrf
+            <input type="hidden" name="field" value="imprint">
+        </form>
+        <form id="adoptTermsForm"
+              action="{{ route('projects.metadata.adopt_system_text', $project) }}"
+              method="POST" class="hidden">
+            @csrf
+            <input type="hidden" name="field" value="terms">
+        </form>
+    @endisset
 @endsection
 @section('action')
     <div class="col-sm-9">

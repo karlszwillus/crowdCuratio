@@ -210,8 +210,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
              Anschrift-Zeile enthalten — wird hier ohne
              HTML-Escape gerendert, weil der Translatable-Wert
              vom Owner gepflegt wird. --}}
-        @if(! empty(strip_tags((string) $project->imprint)))
-            <div id="footeradresse">{!! $project->imprint !!}</div>
+        @php
+            // 5aa.2 Design v6 § 3: leeres Projekt-Impressum → Systemtext fällt durch.
+            $footerImprint = \App\Support\ProjectLegalText::imprintFor($project);
+        @endphp
+        @if(! empty(strip_tags((string) $footerImprint)))
+            <div id="footeradresse">{!! $footerImprint !!}</div>
         @endif
         <ul id="verlinkungslistefooter" >
             <li class="footerverlinkung"><a class="verlinkung" href="{{route('preview.metadata', ['type' => 'copyright','parameters' => $parameters])}}">{{__('copyright')}}</a> </li>
