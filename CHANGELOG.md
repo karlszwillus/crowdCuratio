@@ -463,6 +463,86 @@ fehlender Quelle jetzt namentlich neben den Bildern.
 Nebenbei: Tab-Label „permissions" in der Editor-Segmented-
 Control ist jetzt „Berechtigungen".
 
+**Phase-5z — Gerüst und Blöcke auf Design v6.** Nach der Galerie
+wandern jetzt auch Kapitel, Abschnitt, Text-, Video- und Audio-
+Block auf die neuen Screens 13A–13D — mit der Konvention aus
+5e, dass das Design-Vokabular „Eintrag/Block" auf unser Persona-
+Glossar „Abschnitt/Inhalt" übersetzt wird. Kapitel bekommt eine
+3-px-Rail-Klammer über die ganze Gruppe (leere Kapitel in
+`line-200`, gefüllte in `brand-bar`), einen Mono-Caps-Chip
+„KAPITEL n · m Abschnitte" via `trans_choice` und ein ⋯-Menü,
+in das Löschen aus der Titelzeile wandert. Duplizieren und
+Verschieben stehen als deaktivierte Platzhalter, bis das
+Backend nachzieht. Ein leeres Kapitel ist jetzt ein Zustand aus
+Info-Banner und primärer „Ersten Abschnitt anlegen"-Aktion,
+kein 500-px-Weiß mehr. Die zwei Einfüge-Zonen sind visuell
+getrennt: „+ Neuer Abschnitt" schmal und eingerückt innerhalb
+der Rail, „+ Neues Kapitel" in voller Breite mit dickerem Rahmen
+am Tree-Ende.
+
+Der Eintrag folgt derselben Anatomie: Chip „ABSCHNITT n · IN
+„<Kapitelname>"" statt bloßer Elternnummer, Aktionen in
+Reihenfolge Versionen · Kommentar · ⋯, Löschen im Menü,
+Duplizieren/Verschieben ebenfalls disabled bis das Backend
+folgt. Leere Titel, Untertitel und Beschreibungen reservieren
+in Reader-Sicht keine Höhe mehr, und der Rich-Text-Editor
+verkleinert seine Mindestbox von 6 rem auf 2 rem, damit die
+Editor-Sicht nicht mehr um 96 px pro leere Description atmet.
+Insgesamt schrumpft die Editor-Seite um über 1.500 px Leerraum.
+
+Der Text-Block heftet Versionen, Kommentar und Löschen in den
+Blockkopf-Slot, die alte Fußzeilen-Aktionsreihe entfällt.
+Darunter erscheint bei Fokus die Quill-Format-Leiste (schon
+seit 5-D.6b), plus eine Absatz-Legende „⏎ neuer Absatz · ⇧⏎
+Zeilenumbruch — Abstände erscheinen in der Ausstellung genau
+so." Der `source-picker` rendert im Ruhezustand keinen
+doppelten „Urheberrecht: M. Heinrich"-Chip mehr, sondern ein
+echtes Feld mit dem reinen Wert im Rahmen und dem Label in
+der Umgebung. Fehlt der Wert, wechselt der Rahmen auf
+`warning` mit Hinweis „⚠ Wird beim Veröffentlichen namentlich
+aufgeführt" — dasselbe Muster, das auch die Galerie und der
+Publish-Check verwenden.
+
+Video- und Audio-Blöcke bekommen einen einheitlichen Player-
+Chrome. Plyr (`^3.8.4`, MIT) ersetzt den nativen `<audio
+controls>` und das nackte YouTube-iframe; die Farb-Custom-
+Properties liegen auf unseren `ink`- und `paper`-Tokens. Das
+Plyr-Init-Modul hakt auf `DOMContentLoaded`, `livewire:init`
+und `livewire:navigated`, damit auch dynamisch re-renderte
+Blöcke (Type-Wechsel, neu angelegt) einen Player kriegen.
+Für YouTube schaltet `noCookie: true` die Zwei-Klick-
+Einbettung — vor dem ersten Play geht kein Drittanbieter-
+Request raus. Ein neuer `App\Support\VideoLink`-Helper
+extrahiert die YouTube-ID aus Watch-, `youtu.be`-, Embed- und
+Shorts-URLs und normalisiert auf die kanonische Embed-URL; die
+neue `livewire:video-link-editor`-Komponente akzeptiert die
+Adresse wie sie im Browser steht und speichert normalisiert.
+Nicht-YouTube-Quellen rendern jetzt einen 16:9-Fehler-Panel
+in `danger-bg` mit Grund, „Wird beim Veröffentlichen
+übersprungen"-Fuß und „Als Link ausgeben"-Fallback. Der
+Audio-Uploader zeigt statt des Storage-Schlüssels eine Meta-
+Zeile aus Format, Größe und Upload-Datum (`Storage::size`,
+`Storage::lastModified`), dazu explizite „Ersetzen"- und
+„Entfernen"-Aktionen — Letztere fehlte bislang.
+
+Transkript ist neu: eine translatable `transcript`-Spalte auf
+`audiovisuals` (Migration `add_transcript_to_audiovisuals`),
+gerendert als mehrzeiliger Inline-Editor über der Herkunft, mit
+Erklärungszeile „Für Screenreader, Suchmaschinen und alle, die
+nicht abspielen können." Weiche Pflicht: der Angaben-Status
+zählt ein fehlendes Transkript ein, die Publish-Prüfung nennt
+den Block namentlich neben Bildbeschreibung, Urheberrecht und
+Quelle. Der Blocktyp-`<select>` verschwindet dabei aus dem
+Body — der Typ steht im Chip, Umwandeln bleibt für einen
+späteren ⋯-Menü-Eintrag reserviert. „▸ Metadaten"-Kollaps ist
+aufgelöst, Herkunft steht offen wie bei Text und Galerie. Die
+neue Fußzeile ist für alle Blocktypen gleich: Vollständigkeits-
+Status links, Speicherstand mit Datum UND Uhrzeit rechts.
+
+`add_chapter` fehlte bislang als i18n-Schlüssel — der Sidebar-
+Tree-Button zeigte den rohen Key. Neu angelegt als „Neues
+Kapitel" (parallel zu `new_chapter`, 5e-Substantiv-Konvention).
+
 ### Hinzugefügt
 
 - **`<x-icon name="…">`-Komponente auf Lucide-Basis** (Phase
