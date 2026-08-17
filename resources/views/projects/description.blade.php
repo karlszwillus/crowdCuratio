@@ -39,28 +39,9 @@ If not, see <https://www.gnu.org/licenses/>. -->
         <livewire:history-panel-list :projectId="$project->id" />
     </x-layout.history-panel>
 
-    {{-- Version-Log bleibt bewusst ausserhalb des Panels — er ist keine
-         Kommentar-UI, sondern ein separates Historien-Widget. Wird im
-         5-D.5-Editor-Chrome-Refactor voraussichtlich zum History-Drawer. --}}
-    <div class="card p-4 mb-4 mt-4">
-        <div class="row versions">
-           {{-- <span class="ml-3">{{__('version')}}</span> --}}
-            @isset($textLog)
-
-                @foreach($textLog as $log => $v)
-                    <div class="mt-4">
-                        <p class="ml-4 mb-4">{{date('d.m.Y',strtotime( $v['created_at']))}}</p>
-                        <div class="col-sm-8 mb-4">
-                            <a href="{{route('log.detail',[$project->id,$v['id']])}}">{{$v['userName']}}</a>
-                        </div>
-                        <div class="col-sm-4 text-right mb-4">
-                            {{date('G:i',strtotime( $v['created_at']))}}
-                        </div>
-
-                    </div>
-                @endforeach
-            @endisset
-
-        </div>
-    </div>
+    {{-- Phase 5ab.3: Der alte Version-Log-Block hier (Karten-Liste mit
+         Namen und Uhrzeit unter dem Editor) ist durch das Verlauf-Panel
+         oben abgeloest. Die `log.detail`-Route bleibt vorerst bestehen —
+         eine tiefere Aufraeumung folgt in 5ab.6, sobald wir sicher sind,
+         dass keine externe Verlinkung sie mehr braucht. --}}
 @endsection
