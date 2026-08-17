@@ -823,13 +823,11 @@ class ProjectController extends Controller
             // Entry) eine Relation, bei anderen (Text, Audiovisual) das
             // Model direkt zurück — beide Zweige normalisieren.
             $modelProject = null;
-            if (method_exists($model, 'project')) {
-                $result = $model->project();
-                if ($result instanceof Relation) {
-                    $modelProject = $result->getResults();
-                } elseif ($result instanceof Project) {
-                    $modelProject = $result;
-                }
+            $result = $model->project();
+            if ($result instanceof Relation) {
+                $modelProject = $result->getResults();
+            } elseif ($result instanceof Project) {
+                $modelProject = $result;
             }
             if ($modelProject === null || (int) $modelProject->id !== (int) $project->id) {
                 continue;
