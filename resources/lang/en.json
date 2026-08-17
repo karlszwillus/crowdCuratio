@@ -438,5 +438,17 @@
   "revision_summary_created": "created",
   "revision_summary_single_field": "Field :field changed",
   "revision_summary_multi_field": ":count fields changed",
-  "revision_summary_restored_from": "restored from v:version"
+  "revision_summary_restored_from": "restored from v:version",
+  "history_panel_title": "History",
+  "history_panel_empty_hint": "Pick a block, chapter or entry to see its history.",
+  "history_scope_label": "Scope",
+  "history_scope_block": "This block",
+  "history_scope_entry": "Entry",
+  "history_scope_project": "Project",
+  "history_no_revisions": "This block has not been changed since it was created.",
+  "history_group_today": "Today · :date",
+  "history_actor_system": "System",
+  "history_current": "Current",
+  "history_restore_button": "Restore",
+  "history_open_button": "Open history"
 }

@@ -509,5 +509,17 @@
   "revision_summary_created": "angelegt",
   "revision_summary_single_field": "Feld :field geändert",
   "revision_summary_multi_field": ":count Felder geändert",
-  "revision_summary_restored_from": "wiederhergestellt aus v:version"
+  "revision_summary_restored_from": "wiederhergestellt aus v:version",
+  "history_panel_title": "Verlauf",
+  "history_panel_empty_hint": "Wähle einen Block, ein Kapitel oder einen Abschnitt, um dessen Verlauf zu sehen.",
+  "history_scope_label": "Umfang",
+  "history_scope_block": "Dieser Block",
+  "history_scope_entry": "Abschnitt",
+  "history_scope_project": "Projekt",
+  "history_no_revisions": "Dieser Block wurde seit dem Anlegen nicht geändert.",
+  "history_group_today": "Heute · :date",
+  "history_actor_system": "System",
+  "history_current": "Aktuell",
+  "history_restore_button": "Wiederherstellen",
+  "history_open_button": "Verlauf ansehen"
 }

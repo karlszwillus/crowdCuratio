@@ -32,6 +32,13 @@ If not, see <https://www.gnu.org/licenses/>. -->
         <livewire:comment-panel-list :projectId="$project->id" />
     </x-layout.comment-panel>
 
+    {{-- Phase 5ab.3: Verlauf-Panel neben dem Kommentar-Panel. Beide sind
+         permanent im DOM und schliessen sich per `panel:open`-Namens-
+         Guard gegenseitig aus (§ 6). --}}
+    <x-layout.history-panel>
+        <livewire:history-panel-list :projectId="$project->id" />
+    </x-layout.history-panel>
+
     {{-- Version-Log bleibt bewusst ausserhalb des Panels — er ist keine
          Kommentar-UI, sondern ein separates Historien-Widget. Wird im
          5-D.5-Editor-Chrome-Refactor voraussichtlich zum History-Drawer. --}}
