@@ -282,7 +282,7 @@ new class extends Component
                                     $isSelected = $revision->id === $selectedRevisionId;
                                     $isCurrent = $loop->parent->first && $index === 0;
                                 @endphp
-                                <li>
+                                <li wire:key="revision-{{ $revision->id }}">
                                     <button
                                         type="button"
                                         wire:click="select({{ $revision->id }})"
