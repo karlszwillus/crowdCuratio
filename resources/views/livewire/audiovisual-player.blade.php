@@ -96,51 +96,49 @@ new class extends Component
             </div>
         @endcan
     @else
-        @if (empty(trim((string) $audiovisual->link)))
+        @php
+            $ytEmbedId = \App\Support\VideoLink::extractYouTubeId((string) $audiovisual->link);
+            $hasLink = ! empty(trim((string) $audiovisual->link));
+        @endphp
+        @if (! $hasLink)
             <x-ui.media-placeholder type="video"/>
+        @elseif ($ytEmbedId)
+            {{-- 5z.7 + 5z.8: Plyr-YouTube-Player, Zwei-Klick-Einbettung. --}}
+            <div
+                class="cc-plyr-video"
+                data-plyr-provider="youtube"
+                data-plyr-embed-id="{{ $ytEmbedId }}"
+                wire:key="av-video-{{ $audiovisual->id }}-{{ md5((string) $audiovisual->link) }}"
+                wire:ignore
+                aria-label="{{ __('audiovisual_player') }}"
+            ></div>
         @else
-            @php
-                // 5z.7: YouTube-Embed-ID aus der bestehenden Embed-URL ziehen.
-                // Plyr rendert dann seinen eigenen Player-Chrome mit
-                // Zwei-Klick-Einbettung; noCookie ist im Plyr-Init aktiv,
-                // damit vor dem Play kein Drittanbieter-Request rausgeht.
-                $ytEmbedId = null;
-                if (preg_match('#(?:youtube\.com/embed/|youtu\.be/|youtube\.com/watch\?v=)([A-Za-z0-9_-]{6,})#', (string) $audiovisual->link, $m)) {
-                    $ytEmbedId = $m[1];
-                }
-            @endphp
-            @if ($ytEmbedId)
-                <div
-                    class="cc-plyr-video"
-                    data-plyr-provider="youtube"
-                    data-plyr-embed-id="{{ $ytEmbedId }}"
-                    wire:key="av-video-{{ $audiovisual->id }}-{{ md5((string) $audiovisual->link) }}"
-                    wire:ignore
-                    aria-label="{{ __('audiovisual_player') }}"
-                ></div>
-            @else
-                {{-- Nicht-YouTube-Fallback: rohes iframe rendern (bleibt
-                     bis 5z.8, das andere Quellen sauber abfängt). --}}
-                <iframe
-                    wire:key="av-iframe-{{ $audiovisual->id }}-{{ md5((string) $audiovisual->link) }}"
-                    width="100%"
-                    height="315"
-                    src="{!! $audiovisual->link !!}"
-                    frameborder="0"
-                    allowfullscreen
-                    title="{{ __('audiovisual_player') }}"
-                ></iframe>
-            @endif
+            {{-- 5z.8 § 5 Zustand 4: Link defekt / nicht einbettbar.
+                 16:9-Fläche in danger-bg + zwei Aktionen. --}}
+            <div
+                class="flex aspect-video w-full flex-col items-center justify-center gap-3 rounded-md border border-danger-bg bg-danger-bg/30 p-4 text-center"
+                role="alert"
+            >
+                <span class="text-body font-semibold text-danger">{{ __('video_link_error_title') }}</span>
+                <code class="max-w-full truncate rounded bg-canvas-dim px-2 py-0.5 text-caption text-ink-700">{{ $audiovisual->link }}</code>
+                <p class="text-caption text-ink-700">{{ __('video_link_error_reason_invalid') }}</p>
+                <p class="text-caption text-danger">{{ __('video_link_error_footer') }}</p>
+                <div class="flex flex-wrap items-center justify-center gap-2">
+                    <a href="{{ $audiovisual->link }}"
+                       target="_blank" rel="noopener noreferrer"
+                       class="inline-flex items-center gap-1 rounded-md border border-ink-300 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-chrome-active focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                        <x-icon name="external-link" size="3"/>
+                        <span>{{ __('video_link_fallback') }}</span>
+                    </a>
+                </div>
+            </div>
         @endif
 
         @can('update', $audiovisual->project())
             <div class="mt-3">
-                <livewire:inline-editor
-                    :model="$audiovisual"
-                    field="link"
-                    rules="required|string"
-                    :label="__('link')"
-                    :key="'av-link-'.$audiovisual->id" />
+                <livewire:video-link-editor
+                    :audiovisual="$audiovisual"
+                    :key="'av-video-link-editor-'.$audiovisual->id" />
             </div>
         @endcan
     @endif
