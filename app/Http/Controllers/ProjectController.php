@@ -43,6 +43,7 @@ use App\Services\ProjectImageService;
 use App\Services\ProjectPermissionService;
 use App\Services\SourceService;
 use App\Services\UserService;
+use App\Support\ProjectLegalText;
 use App\Support\RoleName;
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -50,6 +51,8 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -758,7 +761,7 @@ class ProjectController extends Controller
         // `Model::shouldBeStrict()` Lazy-Loading verbietet, ziehen wir
         // die polymorphen Ziel-Modelle hier gezielt nach; `allData`
         // bleibt für seine eigene Prozent-Rechnung unverändert.
-        $tree = \App\Models\Project::withTranslateTree()->findOrFail($id);
+        $tree = Project::withTranslateTree()->findOrFail($id);
         foreach ($tree->chapters as $chapter) {
             foreach ($chapter->entries as $entry) {
                 foreach ($entry->mediaContent as $mc) {
@@ -796,12 +799,12 @@ class ProjectController extends Controller
         }
 
         $modelMap = [
-            'Chapter' => \App\Models\Chapter::class,
-            'Entry' => \App\Models\Entry::class,
-            'Text' => \App\Models\Text::class,
-            'Gallery' => \App\Models\Gallery::class,
-            'Image' => \App\Models\Image::class,
-            'Audiovisual' => \App\Models\Audiovisual::class,
+            'Chapter' => Chapter::class,
+            'Entry' => Entry::class,
+            'Text' => Text::class,
+            'Gallery' => Gallery::class,
+            'Image' => Image::class,
+            'Audiovisual' => Audiovisual::class,
         ];
 
         foreach ($payload as $key => $value) {
@@ -809,7 +812,7 @@ class ProjectController extends Controller
             if (! isset($modelMap[$modelKey]) || $modelId === null || $field === null) {
                 continue;
             }
-            /** @var \Illuminate\Database\Eloquent\Model $model */
+            /** @var Chapter|Entry|Text|Gallery|Image|Audiovisual|null $model */
             $model = $modelMap[$modelKey]::find($modelId);
             if ($model === null) {
                 continue;
@@ -822,9 +825,9 @@ class ProjectController extends Controller
             $modelProject = null;
             if (method_exists($model, 'project')) {
                 $result = $model->project();
-                if ($result instanceof \Illuminate\Database\Eloquent\Relations\Relation) {
+                if ($result instanceof Relation) {
                     $modelProject = $result->getResults();
-                } elseif ($result instanceof \App\Models\Project) {
+                } elseif ($result instanceof Project) {
                     $modelProject = $result;
                 }
             }
@@ -1172,8 +1175,8 @@ class ProjectController extends Controller
         }
 
         $systemText = $field === 'imprint'
-            ? \App\Support\ProjectLegalText::systemImprint()
-            : \App\Support\ProjectLegalText::systemTerms();
+            ? ProjectLegalText::systemImprint()
+            : ProjectLegalText::systemTerms();
 
         $project->{$field} = $systemText;
         $project->save();
@@ -1196,10 +1199,10 @@ class ProjectController extends Controller
 
             if ($request->type == 'copyright') {
                 // 5aa.2 Design v6 § 3: leeres Projekt-Feld → Systemtext greift.
-                $content = \App\Support\ProjectLegalText::termsFor($project);
+                $content = ProjectLegalText::termsFor($project);
                 $type = 'copyright';
             } else {
-                $content = \App\Support\ProjectLegalText::imprintFor($project);
+                $content = ProjectLegalText::imprintFor($project);
                 $type = 'policy';
             }
         }

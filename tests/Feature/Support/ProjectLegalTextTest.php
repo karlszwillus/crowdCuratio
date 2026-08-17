@@ -12,7 +12,6 @@
  */
 
 use App\Models\Imprint;
-use App\Models\Project;
 use App\Models\TermsConditions;
 use App\Models\User;
 use App\Support\ProjectLegalText;
@@ -30,6 +29,7 @@ beforeEach(function () {
 });
 
 it('gibt bei leerem Projekt-Impressum den zusammengesetzten Systemtext zurueck', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $project = makeProject($owner, ['imprint' => '']);
 
@@ -41,6 +41,7 @@ it('gibt bei leerem Projekt-Impressum den zusammengesetzten Systemtext zurueck',
 });
 
 it('behaelt bei gefuelltem Projekt-Impressum den Projekt-Wert', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $project = makeProject($owner, ['imprint' => 'Angepasstes Projekt-Impressum']);
 
@@ -48,6 +49,7 @@ it('behaelt bei gefuelltem Projekt-Impressum den Projekt-Wert', function () {
 });
 
 it('gibt bei leerem Projekt-AGB den System-AGB zurueck', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $project = makeProject($owner, ['terms' => '']);
 
@@ -55,6 +57,7 @@ it('gibt bei leerem Projekt-AGB den System-AGB zurueck', function () {
 });
 
 it('behaelt bei gefuelltem Projekt-AGB den Projekt-Wert', function () {
+    /** @var User $owner */
     $owner = User::factory()->create();
     $project = makeProject($owner, ['terms' => '<p>Projekt-AGB</p>']);
 
