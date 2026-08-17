@@ -49,10 +49,12 @@ trait HasRevisions
     public static function bootHasRevisions(): void
     {
         static::created(function (Model $model): void {
+            /** @var Model&self $model */
             $model->recordRevision([], created: true);
         });
 
         static::updated(function (Model $model): void {
+            /** @var Model&self $model */
             $changes = [];
             /** @var array<string, mixed> $original */
             $original = $model->getOriginal();
@@ -179,10 +181,12 @@ trait HasRevisions
             return RevisionKind::REORDER->value;
         }
 
+        // Alle sechs Modelle mit dem Trait tragen HasTranslations und
+        // definieren `$translatable` — der property_exists-Check waere
+        // damit tautologisch. Sollte spaeter ein Trait-User ohne Spatie
+        // dazukommen, faellt der Zugriff hier auf.
         /** @var array<int, string> $translatable */
-        $translatable = property_exists($this, 'translatable')
-            ? (array) $this->translatable
-            : [];
+        $translatable = (array) $this->translatable;
 
         // Wenn ausschliesslich translatable Felder betroffen sind, aber
         // die Aenderung nicht ueber den Translation-Marker kam, ist es
