@@ -429,6 +429,37 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                         @isset($item->text->text)
                                                                             <li class="item text content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
                                                                                 <x-ui.block-card type="text" id="anchor_MediaContent_{{$item->id}}" class="mb-4" :save-slot="'Text-'.$item->text->id">
+                                                                                    <x-slot:actions>
+                                                                                        {{-- Design v6 § 4 (in 5e-Vokabular): Text-Block-Aktionen
+                                                                                             wandern aus der Fußzeile in den Blockkopf, analog zu
+                                                                                             Galerie und Audio/Video. --}}
+                                                                                        <a href="{{route('projects.edit',['project'=> $project, 'log'=> $item->text->id, 'model' => 'Text'])}}"
+                                                                                           title="{{ __('older_versions') }}"
+                                                                                           class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900">
+                                                                                            <x-icon name="rotate-ccw" size="4"/>
+                                                                                        </a>
+                                                                                        @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
+                                                                                            <x-comment.trigger
+                                                                                                commentableType="App\Models\Text"
+                                                                                                :commentableId="$item->text->id"
+                                                                                                :count="isset($item->text->comments) ? count($item->text->comments) : 0"
+                                                                                            />
+                                                                                        @endif
+                                                                                        @if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
+                                                                                            <form action="{{ route('text.delete',$item->text->id) }}"
+                                                                                                  method="POST" class="inline-flex">
+                                                                                                @csrf
+                                                                                                <input type="hidden" name="project" value="{!! $project->id !!}"/>
+                                                                                                @method('DELETE')
+                                                                                                <button type="submit"
+                                                                                                        onclick="return confirm('{{__('message_delete_confirm')}}')"
+                                                                                                        title="{{__('delete_block')}}"
+                                                                                                        class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-danger-bg hover:text-danger">
+                                                                                                    <x-icon name="trash-2" size="4"/>
+                                                                                                </button>
+                                                                                            </form>
+                                                                                        @endif
+                                                                                    </x-slot:actions>
                                                                                     <div>
                                                                                         <div class="text-scrollbar overflow-auto">
                                                                                             @can('update', $project)
@@ -438,35 +469,16 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                     rules="nullable|string"
                                                                                                     :label="__('text_content')"
                                                                                                     :key="'text-content-'.$item->text->id" />
+                                                                                                {{-- 5z.5: Absatz-Legende beantwortet die Review-Frage
+                                                                                                     „Hier nur ein BR?" im Editor statt in der Vorschau. --}}
+                                                                                                <p class="mt-2 text-caption text-ink-500">
+                                                                                                    {{ __('text_paragraph_legend') }}
+                                                                                                </p>
                                                                                             @else
                                                                                                 <p>{!! html_entity_decode($item->text->text) !!}</p>
                                                                                             @endcan
                                                                                         </div>
                                                                                     </div>
-                                                                                    <div class="mt-3 flex items-center justify-end gap-1">
-                                                                                        <form action="{{ route('text.delete',$item->text->id) }}"
-                                                                                              method="POST" class="mb-5">
-                                                                                            @csrf
-                                                                                            <input type="hidden" name="project" value="{!! $project->id !!}"/>
-                                                                                            @method('DELETE')
-                                                                                            <a href="{{route('projects.edit',['project'=> $project, 'log'=> $item->text->id, 'model' => 'Text'])}}" title="{{ __('older_versions') }}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900"><x-icon name="rotate-ccw" size="4"/></a>
-                                                                                            @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
-                                                                                                <x-comment.trigger
-                                                                                                    commentableType="App\Models\Text"
-                                                                                                    :commentableId="$item->text->id"
-                                                                                                    :count="isset($item->text->comments) ? count($item->text->comments) : 0"
-                                                                                                />
-                                                                                            @endif
-
- 																								@if(in_array('delete', $listPermissions) || Auth::user()->can('delete', $project))
-                                                                                                <button type="submit" onclick="return confirm('{{__('message_delete_confirm')}}')" title="{{__('delete_text')}}" class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-danger-bg hover:text-danger"><x-icon name="trash-2" size="4"/></button>
-                                                                                            @endif
-
-                                                                                            {{-- Edit-Button für Text entfällt seit Phase 5c.6.c.4:
-                                                                                                 Text-Content wird per rich-text-editor-Volt-Komponente
-                                                                                                 direkt im Content-Card editiert. Add-Text-Modal
-                                                                                                 (contentModal) bleibt für „Text hinzufügen". --}}
-                                                                                        </form>
                                                                                         {{-- Copyright + Quelle sind Pflichtfelder und
                                                                                              sitzen sichtbar am Fuss der Block-Card
                                                                                              (P1.4 aus Designer-Review: eingeklappt

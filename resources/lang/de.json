@@ -46,6 +46,7 @@
   "entry_chip_in": "IN",
   "entry_menu_duplicate": "Abschnitt duplizieren",
   "entry_menu_move": "Abschnitt verschieben",
+  "text_paragraph_legend": "⏎ neuer Absatz · ⇧⏎ Zeilenumbruch — Abstände erscheinen in der Ausstellung genau so.",
   "cancel": "Abbrechen",
   "add": "Hinzufügen",
   "log_out": "Ausloggen",
