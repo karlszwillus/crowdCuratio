@@ -328,16 +328,29 @@ new class extends Component
                                             </span>
                                         </div>
                                         @if ($isSelected)
+                                            @php
+                                                // TEMP-DEBUG 5ab.5: der @can-Guard griff bei Karl
+                                                // nicht — wir loggen hier den Rueckgabewert und
+                                                // rendern den Button unabhaengig davon, bis wir
+                                                // die Ursache haben. Ruecknahme in 5ab.6.
+                                                $debugCan = auth()->check() && $restoreProject
+                                                    ? auth()->user()->can(App\Support\PermissionName::HISTORY_RESTORE->value, $restoreProject)
+                                                    : null;
+                                                $debugRole = auth()->user()?->hasRole('Admin') ?? false;
+                                            @endphp
                                             <div class="mt-3 flex flex-wrap gap-2 border-t border-line-200 pt-2">
-                                                @can(App\Support\PermissionName::HISTORY_RESTORE->value, $restoreProject)
-                                                    <button
-                                                        type="button"
-                                                        onclick="event.stopPropagation(); window.dispatchEvent(new CustomEvent('history:restore-request', { detail: { revisionId: {{ $revision->id }}, version: {{ $revision->version }}, hasTranslations: {{ $anchorHasTranslations ? 'true' : 'false' }} } }))"
-                                                        class="rounded-md border border-ink-300 bg-canvas-bg px-2 py-1 text-caption text-ink-900 hover:bg-chrome-active"
-                                                    >
-                                                        {{ __('history_restore_button') }}
-                                                    </button>
-                                                @endcan
+                                                <button
+                                                    type="button"
+                                                    onclick="event.stopPropagation(); window.dispatchEvent(new CustomEvent('history:restore-request', { detail: { revisionId: {{ $revision->id }}, version: {{ $revision->version }}, hasTranslations: {{ $anchorHasTranslations ? 'true' : 'false' }} } }))"
+                                                    class="rounded-md border border-ink-300 bg-canvas-bg px-2 py-1 text-caption text-ink-900 hover:bg-chrome-active"
+                                                >
+                                                    {{ __('history_restore_button') }}
+                                                </button>
+                                                <span class="text-caption text-ink-500">
+                                                    can={{ $debugCan === null ? 'null' : ($debugCan ? 'true' : 'false') }}
+                                                    · admin={{ $debugRole ? 'yes' : 'no' }}
+                                                    · project={{ $restoreProject?->id ?? 'null' }}
+                                                </span>
                                             </div>
                                         @endif
                                     </button>
