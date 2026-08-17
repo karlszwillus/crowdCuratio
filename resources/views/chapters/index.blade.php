@@ -519,6 +519,27 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                 </div>
                                                                                             @endcan
                                                                                         </div>
+
+                                                                                        {{-- 5z.10 § 8.3: Einheitliche Fußzeile — Vollständigkeit links,
+                                                                                             Speicherstand mit Datum + Uhrzeit rechts. --}}
+                                                                                        @can('update', $project)
+                                                                                            @php
+                                                                                                $textMissing = collect([
+                                                                                                    $item->text->copyrightText ? null : __('copyright'),
+                                                                                                    $item->text->originText ? null : __('origin'),
+                                                                                                ])->filter()->values();
+                                                                                            @endphp
+                                                                                            <div class="mt-3 flex items-center justify-between gap-3">
+                                                                                                @if ($textMissing->isEmpty())
+                                                                                                    <p class="text-caption text-success">✓ {{ __('gallery_status_complete') }}</p>
+                                                                                                @else
+                                                                                                    <p class="text-caption text-warning">⚠ {{ __('gallery_status_missing', ['fields' => $textMissing->implode(', ')]) }}</p>
+                                                                                                @endif
+                                                                                                <p class="text-caption text-ink-500">
+                                                                                                    {{ __('saved') }} · {{ optional($item->text->updated_at ?? $item->text->created_at)->format('d.m.Y, H:i') }}
+                                                                                                </p>
+                                                                                            </div>
+                                                                                        @endcan
                                                                                 </x-ui.block-card>
                                                                             </li>
                                                                         @endisset
@@ -567,18 +588,10 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
                                                                                         @can('update', $project)
                                                                                             <div class="mt-3 space-y-2">
-                                                                                                {{-- Link/Uploader rendert jetzt der
-                                                                                                     audiovisual-player selbst
-                                                                                                     (Phase 5c.6.c.3-Fix); der
-                                                                                                     Type-Wechsel triggert dort
-                                                                                                     den kompletten Re-Render. --}}
-                                                                                                <livewire:inline-editor
-                                                                                                    :model="$item->audiovisual"
-                                                                                                    field="type"
-                                                                                                    rules="required|in:audio,video"
-                                                                                                    :options="['audio' => __('audio'), 'video' => __('video')]"
-                                                                                                    :label="__('type')"
-                                                                                                    :key="'av-type-'.$item->audiovisual->id" />
+                                                                                                {{-- Design v6 § 8.1: Blocktyp-Select aus dem Body raus —
+                                                                                                     der Typ steht schon im Chip. Umwandeln kommt später
+                                                                                                     als eigener Menü-Eintrag im ⋯-Menü zurück; bis dahin
+                                                                                                     ist der Typ nach Anlage fest. --}}
 
                                                                                                 {{-- 5z.9: Transkript-Feld für Audio + Video, weiche Pflicht
                                                                                                      analog zur Bildbeschreibung in der Galerie. --}}
@@ -646,7 +659,8 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                                 <p class="text-caption text-warning">⚠ {{ __('gallery_status_missing', ['fields' => $avMissing->implode(', ')]) }}</p>
                                                                                             @endif
                                                                                             <p class="text-caption text-ink-500">
-                                                                                                {{ __('saved') }} · {!! date('d.m.Y', strtotime($item->audiovisual->created_at)) !!}
+                                                                                                {{-- 5z.10 § 8.3: Speicherstand mit Datum UND Uhrzeit. --}}
+                                                                                                {{ __('saved') }} · {{ optional($item->audiovisual->updated_at ?? $item->audiovisual->created_at)->format('d.m.Y, H:i') }}
                                                                                             </p>
                                                                                         </div>
                                                                                     @endcan
