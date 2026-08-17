@@ -300,8 +300,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                  explizit im Kopf, nicht ueber CSS-Einrueckung. --}}
                                             <div id="P-{{$project->id}}-C-{{$chapter->id}}-entry-{{$entry->id}}"
                                                  class="mb-6 rounded-lg border border-line-200 bg-paper-0 p-6 shadow-subtle">
-                                                <p class="mb-2 text-mono-caps font-mono uppercase tracking-widest text-ink-500">
-                                                    {{ __('entry') }} · {{ __('chapter') }} {{ $key + 1 }}
+                                                {{-- Design v6 § 3 (in 5e-Vokabular): Chip nennt eigene Nummer + Kapitelnamen,
+                                                     nicht nur die Elternnummer. Löschen wandert in ⋯-Menü unten. --}}
+                                                <p class="mb-2 inline-flex items-center gap-2 text-mono-caps font-mono uppercase tracking-widest text-ink-500">
+                                                    <span>{{ __('entry_chip_label') }} {{ $loop->iteration }}</span>
+                                                    <span>·</span>
+                                                    <span>{{ __('entry_chip_in') }} „{{ $chapter->name }}"</span>
                                                 </p>
                                                 <header class="mb-3 flex items-start justify-between gap-4">
                                                     <div class="min-w-0 flex-1" id="anchor_Entry_{{$entry->id}}">
@@ -328,13 +332,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                         @endcan
                                                     </div>
 
-                                                    <form action="{{ route('entries.destroy',$entry->id) }}"
-                                                          method="POST"
-                                                          class="flex shrink-0 items-center gap-1 text-ink-500">
-                                                        @csrf
-                                                        <input type="hidden" name="project" value="{!! $project->id !!}"/>
-                                                        @method('DELETE')
-
+                                                    <div class="flex shrink-0 items-center gap-1 text-ink-500">
                                                         <a href="{{route('projects.edit',['project'=> $project, 'log'=> $entry->id, 'model' => 'Entry'])}}"
                                                            title="{{ __('older_versions') }}"
                                                            class="inline-flex size-11 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
@@ -350,17 +348,53 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                         @endif
 
                                                         @if(in_array('edit', $listPermissions) || Auth::user()->can('delete', $project))
-                                                            <button type="submit"
-                                                                    onclick="return confirm('{{__('message_delete_confirm')}}')"
-                                                                    title="{{ __('delete_entry') }}"
-                                                                    class="inline-flex size-11 items-center justify-center rounded-md hover:bg-danger-bg hover:text-danger">
-                                                                <x-icon name="trash-2" size="4"/>
-                                                            </button>
+                                                            <div x-data="{ open: false }" class="relative">
+                                                                <button type="button"
+                                                                        @click="open = !open"
+                                                                        @click.outside="open = false"
+                                                                        :aria-expanded="open"
+                                                                        aria-haspopup="menu"
+                                                                        title="{{ __('more_actions') }}"
+                                                                        class="inline-flex size-11 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                                                                    <x-icon name="ellipsis-vertical" size="4"/>
+                                                                </button>
+                                                                <div x-show="open"
+                                                                     x-transition
+                                                                     x-cloak
+                                                                     role="menu"
+                                                                     class="absolute right-0 z-30 mt-1 min-w-[14rem] rounded-md border border-line-200 bg-paper-0 py-1 shadow-popover">
+                                                                    <button type="button"
+                                                                            disabled
+                                                                            aria-disabled="true"
+                                                                            title="{{ __('feature_not_yet') }}"
+                                                                            class="flex w-full items-center gap-2 px-4 py-2 text-left text-body text-ink-400 opacity-60">
+                                                                        <x-icon name="copy" size="4"/>
+                                                                        <span>{{ __('entry_menu_duplicate') }}</span>
+                                                                    </button>
+                                                                    <button type="button"
+                                                                            disabled
+                                                                            aria-disabled="true"
+                                                                            title="{{ __('feature_not_yet') }}"
+                                                                            class="flex w-full items-center gap-2 px-4 py-2 text-left text-body text-ink-400 opacity-60">
+                                                                        <x-icon name="move" size="4"/>
+                                                                        <span>{{ __('entry_menu_move') }}</span>
+                                                                    </button>
+                                                                    <div class="my-1 border-t border-line-100"></div>
+                                                                    <form action="{{ route('entries.destroy',$entry->id) }}" method="POST">
+                                                                        @csrf
+                                                                        <input type="hidden" name="project" value="{!! $project->id !!}"/>
+                                                                        @method('DELETE')
+                                                                        <button type="submit"
+                                                                                onclick="return confirm('{{__('message_delete_confirm')}}')"
+                                                                                class="flex w-full items-center gap-2 px-4 py-2 text-left text-body text-danger hover:bg-danger-bg">
+                                                                            <x-icon name="trash-2" size="4"/>
+                                                                            <span>{{ __('delete_entry') }}</span>
+                                                                        </button>
+                                                                    </form>
+                                                                </div>
+                                                            </div>
                                                         @endif
-
-                                                        {{-- Chevron-Toggle entfaellt seit 5-D.6b: Auf-/
-                                                             Zuklappen laeuft ueber den Sidebar-Tree. --}}
-                                                    </form>
+                                                    </div>
                                                 </header>
 
                                                 @can('update', $project)
