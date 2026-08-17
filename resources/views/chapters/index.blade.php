@@ -178,28 +178,36 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                     <span class="text-ink-500">{{ trans_choice('chapter_chip_entries', $chapterEntryCount, ['count' => $chapterEntryCount]) }}</span>
                                 </div>
                                 @can('update', $project)
-                                    <livewire:inline-editor
-                                        :model="$chapter"
-                                        field="name"
-                                        rules="nullable|string|max:255"
-                                        :label="__('chapter_title')"
-                                        :variant="'title'"
-                                        :key="'chapter-name-'.$chapter->id"
-                                    />
-                                    <livewire:inline-editor
-                                        :model="$chapter"
-                                        field="subtitle"
-                                        rules="nullable|string|max:255"
-                                        :label="__('chapter_subtitle')"
-                                        :variant="'subtitle'"
-                                        :key="'chapter-subtitle-'.$chapter->id"
-                                    />
+                                    {{-- Phase 5ab.4: data-history-field-Wrapper, damit der
+                                         Diff-Modus die Diff-HTML pro Feld einhaengen kann.
+                                         Wrapper liegen um die Inline-Editors, weil die
+                                         eigentliche Feld-DOM ins Livewire-Snapshot laeuft. --}}
+                                    <div data-history-field="name">
+                                        <livewire:inline-editor
+                                            :model="$chapter"
+                                            field="name"
+                                            rules="nullable|string|max:255"
+                                            :label="__('chapter_title')"
+                                            :variant="'title'"
+                                            :key="'chapter-name-'.$chapter->id"
+                                        />
+                                    </div>
+                                    <div data-history-field="subtitle">
+                                        <livewire:inline-editor
+                                            :model="$chapter"
+                                            field="subtitle"
+                                            rules="nullable|string|max:255"
+                                            :label="__('chapter_subtitle')"
+                                            :variant="'subtitle'"
+                                            :key="'chapter-subtitle-'.$chapter->id"
+                                        />
+                                    </div>
                                 @else
                                     @if (! empty(trim((string) $chapter->name)))
-                                        <h2 class="text-title font-semibold text-ink-900">{!! $chapter->name !!}</h2>
+                                        <h2 data-history-field="name" class="text-title font-semibold text-ink-900">{!! $chapter->name !!}</h2>
                                     @endif
                                     @if (! empty(trim((string) $chapter->subtitle)))
-                                        <p class="mt-1 text-body text-ink-500">{!! $chapter->subtitle !!}</p>
+                                        <p data-history-field="subtitle" class="mt-1 text-body text-ink-500">{!! $chapter->subtitle !!}</p>
                                     @endif
                                 @endcan
                             </div>
