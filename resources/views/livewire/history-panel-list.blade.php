@@ -327,20 +327,24 @@ new class extends Component
                                                 {{ $revision->summary }}
                                             </span>
                                         </div>
-                                        @if ($isSelected)
-                                            <div class="mt-3 flex flex-wrap gap-2 border-t border-line-200 pt-2">
-                                                @can(App\Support\PermissionName::HISTORY_RESTORE->value, $restoreProject)
-                                                    <button
-                                                        type="button"
-                                                        onclick="event.stopPropagation(); window.dispatchEvent(new CustomEvent('history:restore-request', { detail: { revisionId: {{ $revision->id }}, version: {{ $revision->version }}, hasTranslations: {{ $anchorHasTranslations ? 'true' : 'false' }} } }))"
-                                                        class="rounded-md border border-ink-300 bg-canvas-bg px-2 py-1 text-caption text-ink-900 hover:bg-chrome-active"
-                                                    >
-                                                        {{ __('history_restore_button') }}
-                                                    </button>
-                                                @endcan
-                                            </div>
-                                        @endif
                                     </button>
+                                    {{-- Aktions-Zeile fuer die ausgewaehlte Karte MUSS AUSSERHALB
+                                         des Karten-Buttons stehen — HTML verbietet verschachtelte
+                                         <button>-Elemente, Livewire's morphdom crasht sonst mit
+                                         „Cannot read properties of null (reading 'before')". --}}
+                                    @if ($isSelected)
+                                        <div class="mt-2 flex flex-wrap gap-2 rounded-b-md border border-t-0 border-ink-300 bg-paper-50 px-3 py-2 -mt-2">
+                                            @can(App\Support\PermissionName::HISTORY_RESTORE->value, $restoreProject)
+                                                <button
+                                                    type="button"
+                                                    onclick="window.dispatchEvent(new CustomEvent('history:restore-request', { detail: { revisionId: {{ $revision->id }}, version: {{ $revision->version }}, hasTranslations: {{ $anchorHasTranslations ? 'true' : 'false' }} } }))"
+                                                    class="rounded-md border border-ink-300 bg-canvas-bg px-2 py-1 text-caption text-ink-900 hover:bg-chrome-active"
+                                                >
+                                                    {{ __('history_restore_button') }}
+                                                </button>
+                                            @endcan
+                                        </div>
+                                    @endif
                                 </li>
                             @endforeach
                         </ul>
