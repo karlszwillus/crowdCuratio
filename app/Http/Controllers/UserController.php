@@ -170,17 +170,11 @@ class UserController extends Controller
 
         // Phase 5ac.2: Avatar-Upload. remove_avatar=1 wins gegen ein
         // hochgeladenes File — der Nutzer will dann sein Bild los.
-        \Illuminate\Support\Facades\Log::debug('profile.avatar.request', [
-            'has_file' => $request->hasFile('avatar'),
-            'remove_avatar' => $validated['remove_avatar'] ?? null,
-            'input_keys' => array_keys($request->all()),
-        ]);
         if (! empty($validated['remove_avatar'])) {
             app(\App\Services\AvatarService::class)->remove($user->avatar_path);
             $user->avatar_path = null;
         } elseif ($request->hasFile('avatar')) {
             $newFile = app(\App\Services\AvatarService::class)->store($request->file('avatar'));
-            \Illuminate\Support\Facades\Log::debug('profile.avatar.stored', ['filename' => $newFile]);
             if ($newFile !== null) {
                 app(\App\Services\AvatarService::class)->remove($user->avatar_path);
                 $user->avatar_path = $newFile;
