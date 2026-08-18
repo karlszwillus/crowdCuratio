@@ -563,7 +563,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                     @endif
                                                                     @if($item->content_type == 'App\Models\Audiovisual')
                                                                         @isset($item->audiovisual->link)
-                                                                            <li class="item audiovisual content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
+                                                                            <li class="item audiovisual content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" data-history-subject="Audiovisual:{{$item->audiovisual->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
                                                                                 <x-ui.block-card :type="$item->audiovisual->type === 'audio' ? 'audio' : 'video'" id="anchor_MediaContent_{{$item->id}}" class="mb-4" :save-slot="'Audiovisual-'.$item->audiovisual->id">
                                                                                     <x-slot:actions>
                                                                                         <x-ui.history-trigger
@@ -611,7 +611,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
                                                                                                 {{-- 5z.9: Transkript-Feld für Audio + Video, weiche Pflicht
                                                                                                      analog zur Bildbeschreibung in der Galerie. --}}
-                                                                                                <div class="mt-2">
+                                                                                                <div class="mt-2" data-history-field="transcript">
                                                                                                     <label class="mb-1 block text-caption font-medium text-ink-700">
                                                                                                         {{ __('transcript') }}
                                                                                                     </label>
