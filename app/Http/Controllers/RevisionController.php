@@ -9,12 +9,20 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\Audiovisual;
 use App\Models\Chapter;
 use App\Models\Entry;
+use App\Models\Gallery;
+use App\Models\Image;
+use App\Models\MediaContent;
 use App\Models\Project;
 use App\Models\Revision;
+use App\Models\Text;
 use App\Support\PermissionName;
 use App\Support\RevisionSubject;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -133,7 +141,7 @@ class RevisionController extends Controller
         // sechs Content-Modelle, die alle HasTranslations tragen — der
         // Union-Type hilft PHPStan, setTranslation()/setTranslations()
         // aufzuloesen.
-        /** @var \App\Models\Chapter|\App\Models\Entry|\App\Models\Text|\App\Models\Gallery|\App\Models\Image|\App\Models\Audiovisual $subject */
+        /** @var Chapter|Entry|Text|Gallery|Image|Audiovisual $subject */
         /** @var array<int, string> $translatable */
         $translatable = property_exists($subject, 'translatable') ? (array) $subject->translatable : [];
         foreach ($changes as $field => $delta) {
@@ -210,7 +218,7 @@ class RevisionController extends Controller
      *
      * @return array<int, array{type: class-string, ids: array<int, int>}>|null
      */
-    private function buildEntryScope(\Illuminate\Database\Eloquent\Model $subject): ?array
+    private function buildEntryScope(Model $subject): ?array
     {
         // Wenn das Subject direkt eine Entry ist, ist der Umfang alle
         // Blocks unter dem Entry plus die Entry selbst.
@@ -218,7 +226,7 @@ class RevisionController extends Controller
             $entry = $subject;
         } elseif (method_exists($subject, 'entry')) {
             $entryResult = $subject->entry();
-            $entry = $entryResult instanceof \Illuminate\Database\Eloquent\Relations\Relation
+            $entry = $entryResult instanceof Relation
                 ? $entryResult->getResults()
                 : $entryResult;
             if (! $entry instanceof Entry) {
@@ -235,9 +243,9 @@ class RevisionController extends Controller
 
         return [
             ['type' => Entry::class, 'ids' => [$entry->id]],
-            ['type' => \App\Models\Text::class, 'ids' => $this->contentIdsForEntry($entry, 'App\\Models\\Text')],
-            ['type' => \App\Models\Gallery::class, 'ids' => $this->contentIdsForEntry($entry, 'App\\Models\\Gallery')],
-            ['type' => \App\Models\Audiovisual::class, 'ids' => $this->contentIdsForEntry($entry, 'App\\Models\\Audiovisual')],
+            ['type' => Text::class, 'ids' => $this->contentIdsForEntry($entry, 'App\\Models\\Text')],
+            ['type' => Gallery::class, 'ids' => $this->contentIdsForEntry($entry, 'App\\Models\\Gallery')],
+            ['type' => Audiovisual::class, 'ids' => $this->contentIdsForEntry($entry, 'App\\Models\\Audiovisual')],
         ];
     }
 
@@ -254,16 +262,16 @@ class RevisionController extends Controller
         return [
             ['type' => Chapter::class, 'ids' => $chapterIds],
             ['type' => Entry::class, 'ids' => $entryIds],
-            ['type' => \App\Models\Text::class, 'ids' => $this->contentIdsForEntries($entryIds, 'App\\Models\\Text')],
-            ['type' => \App\Models\Gallery::class, 'ids' => $this->contentIdsForEntries($entryIds, 'App\\Models\\Gallery')],
-            ['type' => \App\Models\Audiovisual::class, 'ids' => $this->contentIdsForEntries($entryIds, 'App\\Models\\Audiovisual')],
+            ['type' => Text::class, 'ids' => $this->contentIdsForEntries($entryIds, 'App\\Models\\Text')],
+            ['type' => Gallery::class, 'ids' => $this->contentIdsForEntries($entryIds, 'App\\Models\\Gallery')],
+            ['type' => Audiovisual::class, 'ids' => $this->contentIdsForEntries($entryIds, 'App\\Models\\Audiovisual')],
         ];
     }
 
     /**
      * @param  array<int, array{type: class-string, ids: array<int, int>}>  $scope
      */
-    private function applySubjectListFilter(\Illuminate\Database\Eloquent\Builder $query, array $scope): void
+    private function applySubjectListFilter(Builder $query, array $scope): void
     {
         $query->where(function ($outer) use ($scope): void {
             foreach ($scope as $entry) {
@@ -300,7 +308,7 @@ class RevisionController extends Controller
             return [];
         }
 
-        return \App\Models\MediaContent::query()
+        return MediaContent::query()
             ->whereIn('parent_id', $entryIds)
             ->where('parent_type', Entry::class)
             ->where('content_type', $mediaType)

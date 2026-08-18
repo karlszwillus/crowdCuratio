@@ -9,9 +9,16 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Models\Audiovisual;
+use App\Models\Chapter;
+use App\Models\Entry;
+use App\Models\Gallery;
+use App\Models\Image;
 use App\Models\Revision;
+use App\Models\Text;
 use App\Support\RevisionKind;
 use Illuminate\Console\Command;
+use Illuminate\Support\Carbon;
 use Spatie\Activitylog\Models\Activity;
 
 /**
@@ -45,12 +52,12 @@ class BackfillRevisions extends Command
      * @var array<int, string>
      */
     private const SUBJECT_TYPES = [
-        \App\Models\Chapter::class,
-        \App\Models\Entry::class,
-        \App\Models\Text::class,
-        \App\Models\Gallery::class,
-        \App\Models\Image::class,
-        \App\Models\Audiovisual::class,
+        Chapter::class,
+        Entry::class,
+        Text::class,
+        Gallery::class,
+        Image::class,
+        Audiovisual::class,
     ];
 
     public function handle(): int
@@ -180,8 +187,8 @@ class BackfillRevisions extends Command
 
                             continue;
                         }
-                        $revision->created_at = \Illuminate\Support\Carbon::instance($activity->created_at);
-                        $revision->updated_at = \Illuminate\Support\Carbon::instance($activity->updated_at ?? $activity->created_at);
+                        $revision->created_at = Carbon::instance($activity->created_at);
+                        $revision->updated_at = Carbon::instance($activity->updated_at ?? $activity->created_at);
                         $revision->timestamps = false;
                         $revision->save();
                     }

@@ -33,8 +33,10 @@ use App\Models\Gallery;
 use App\Models\Image;
 use App\Models\Permission;
 use App\Models\Project;
+use App\Models\Revision;
 use App\Models\Source;
 use App\Models\Text;
+use App\Models\TranslationSourceReference;
 use App\Models\User;
 use App\Services\CommentRetrieve;
 use App\Services\CommentService;
@@ -44,6 +46,7 @@ use App\Services\ProjectPermissionService;
 use App\Services\SourceService;
 use App\Services\UserService;
 use App\Support\ProjectLegalText;
+use App\Support\RevisionSubject;
 use App\Support\RoleName;
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -799,12 +802,12 @@ class ProjectController extends Controller
         /** @var array<string, array<int, int>> $subjects */
         $subjects = [];
         foreach ($tree->chapters as $chapter) {
-            $subjects[\App\Models\Chapter::class][] = $chapter->id;
+            $subjects[Chapter::class][] = $chapter->id;
             foreach ($chapter->entries as $entry) {
-                $subjects[\App\Models\Entry::class][] = $entry->id;
+                $subjects[Entry::class][] = $entry->id;
                 foreach ($entry->mediaContent as $mc) {
                     foreach (['text', 'gallery', 'audiovisual'] as $rel) {
-                        /** @var \Illuminate\Database\Eloquent\Model|null $obj */
+                        /** @var Model|null $obj */
                         $obj = $mc->{$rel} ?? null;
                         if ($obj) {
                             $subjects[$obj::class][] = (int) $obj->getKey();
@@ -821,7 +824,7 @@ class ProjectController extends Controller
                 continue;
             }
             $refs = $refs->concat(
-                \App\Models\TranslationSourceReference::query()
+                TranslationSourceReference::query()
                     ->where('subject_type', $type)
                     ->whereIn('subject_id', $ids)
                     ->get(['subject_type', 'subject_id', 'field', 'source_revision_id'])
@@ -838,7 +841,7 @@ class ProjectController extends Controller
             if ($ids === []) {
                 continue;
             }
-            \App\Models\Revision::query()
+            Revision::query()
                 ->where('subject_type', $type)
                 ->whereIn('subject_id', $ids)
                 ->selectRaw('subject_id, MAX(id) as latest_id')
@@ -855,7 +858,7 @@ class ProjectController extends Controller
         $map = [];
         foreach ($refs as $ref) {
             $latest = $latestByKey[$ref->subject_type.'|'.$ref->subject_id] ?? null;
-            $short = \App\Support\RevisionSubject::shortName($ref->subject_type);
+            $short = RevisionSubject::shortName($ref->subject_type);
             if ($short === null || $latest === null) {
                 continue;
             }
@@ -934,13 +937,13 @@ class ProjectController extends Controller
             // Fassung des Subjects als Referenz. Aendert der Kurator
             // spaeter das Original, waechst die Version — und wir
             // koennen den Warn-Chip zeigen.
-            $latestRevisionId = \App\Models\Revision::query()
+            $latestRevisionId = Revision::query()
                 ->where('subject_type', $model::class)
                 ->where('subject_id', $model->getKey())
                 ->latest('created_at')
                 ->value('id');
             if ($latestRevisionId !== null) {
-                \App\Models\TranslationSourceReference::updateOrCreate(
+                TranslationSourceReference::updateOrCreate(
                     [
                         'subject_type' => $model::class,
                         'subject_id' => $model->getKey(),

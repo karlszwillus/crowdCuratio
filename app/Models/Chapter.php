@@ -23,6 +23,7 @@ If not, see <https://www.gnu.org/licenses/>.
 namespace App\Models;
 
 use App\Contracts\HasComments;
+use App\Support\HasRevisions;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -33,7 +34,6 @@ use Illuminate\Support\Facades\Lang;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Traits\LogsActivity;
-use App\Support\HasRevisions;
 use Spatie\Translatable\HasTranslations;
 
 /**

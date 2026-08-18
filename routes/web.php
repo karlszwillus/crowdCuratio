@@ -29,6 +29,7 @@ use App\Http\Controllers\EntryController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\PublicController;
+use App\Http\Controllers\RevisionController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\UserController;
@@ -362,12 +363,12 @@ Route::group(
         // Phase 5ab.2: Verlauf-Panel-Feed und Wiederherstellen.
         Route::get(
             '/revisions/{subjectType}/{subjectId}',
-            [\App\Http\Controllers\RevisionController::class, 'index']
+            [RevisionController::class, 'index']
         )->whereNumber('subjectId')->name('revisions.index');
 
         Route::post(
             '/revisions/{revision}/restore',
-            [\App\Http\Controllers\RevisionController::class, 'restore']
+            [RevisionController::class, 'restore']
         )->name('revisions.restore');
 
         Route::post(
