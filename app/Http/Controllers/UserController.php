@@ -250,7 +250,7 @@ class UserController extends Controller
             abort(401);
         }
         $theme = (string) $request->input('theme');
-        if (! in_array($theme, ['default', 'aktives-museum'], true)) {
+        if (! in_array($theme, ['crowdCuratio', 'aktivesMuseum'], true)) {
             abort(422, 'Unknown theme.');
         }
         $user->theme = $theme;

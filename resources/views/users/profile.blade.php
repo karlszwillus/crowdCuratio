@@ -58,6 +58,11 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
             hasStoredAvatar: !! init.hasStoredAvatar,
             removedAvatar: false,
             previewAvatarUrl: null,
+            get showAvatarImage() {
+                if (this.previewAvatarUrl) return true;
+                if (this.removedAvatar) return false;
+                return this.hasStoredAvatar;
+            },
             get displayInitials() {
                 if (this.initials && this.initials.trim() !== '') return this.initials.trim().toUpperCase();
                 const a = (this.firstName || '').trim().charAt(0);
@@ -102,7 +107,12 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
             async switchTheme(t) {
                 if (this.theme === t) return;
                 this.theme = t;
-                document.documentElement.dataset.theme = t;
+                // Der globale Alpine-Store aus resources/js/theme.js
+                // hat die Fallunterscheidung (data-theme-Attribut + LS
+                // persistieren) — Doppelarbeit hier vermeiden.
+                try { window.Alpine.store('theme').set(t); } catch (e) {
+                    document.documentElement.setAttribute('data-theme', t === 'crowdCuratio' ? '' : t);
+                }
                 await this._persist(init.themeUrl, { theme: t });
             },
             async _persist(url, body) {
@@ -136,7 +146,12 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
     $currentInitials = $user->initials ?? $defaultInitials;
     $currentColor = $user->initials_color ?? App\Support\ProfilePalette::defaultFor((string) $user->name, (string) $user->last_name);
     $currentLocale = $user->locale ?: app()->getLocale();
-    $currentTheme = $user->theme ?: 'default';
+    // Theme-Namen matchen die Werte aus resources/js/theme.js
+    // (`crowdCuratio` / `aktivesMuseum`). Alte 'default'-Werte in der
+    // DB fallen auf die Standard-Wahl zurueck.
+    $currentTheme = in_array($user->theme, ['crowdCuratio', 'aktivesMuseum'], true)
+        ? $user->theme
+        : 'crowdCuratio';
     $languages = (array) config('languages');
 @endphp
 
@@ -219,8 +234,11 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                              haengt an einem hidden-Feld, damit der Save-Endpoint
                              beide Faelle sauber trennt (Upload vs. Loeschen). --}}
                         <div class="flex flex-col items-start gap-2">
+                            {{-- Hintergrundfarbe nur, wenn kein Bild
+                                 aktiv ist — sonst faerbt sie die Kanten
+                                 hinter dem Foto. --}}
                             <div class="relative flex size-24 items-center justify-center overflow-hidden rounded-md text-heading font-semibold text-paper-0"
-                                 :style="`background-color: var(--color-${currentColor})`">
+                                 :style="showAvatarImage ? '' : `background-color: var(--color-${currentColor})`">
                                 @if ($user->avatar_path)
                                     <img x-show="!removedAvatar && !previewAvatarUrl"
                                          src="{{ Storage::disk('public')->url('uploads/avatars/'.$user->avatar_path) }}"
@@ -345,10 +363,7 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                                     </p>
                                 </div>
                                 <div>
-                                    <p class="mb-1 flex items-center gap-2 text-caption font-medium text-ink-700">
-                                        <span>{{ __('profile_language') }}</span>
-                                        <span class="rounded bg-canvas-dim px-1.5 py-0.5 text-caption font-mono uppercase tracking-widest text-ink-500">{{ __('profile_instant') }}</span>
-                                    </p>
+                                    <p class="mb-1 text-caption font-medium text-ink-700">{{ __('profile_language') }}</p>
                                     <div class="flex gap-1 rounded-md bg-line-100 p-0.5" role="tablist" aria-label="{{ __('profile_language') }}">
                                         @foreach ($languages as $code => $label)
                                             <button type="button" role="tab"
@@ -361,22 +376,19 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                                         @endforeach
                                     </div>
 
-                                    <p class="mt-3 mb-1 flex items-center gap-2 text-caption font-medium text-ink-700">
-                                        <span>{{ __('profile_theme') }}</span>
-                                        <span class="rounded bg-canvas-dim px-1.5 py-0.5 text-caption font-mono uppercase tracking-widest text-ink-500">{{ __('profile_instant') }}</span>
-                                    </p>
+                                    <p class="mt-3 mb-1 text-caption font-medium text-ink-700">{{ __('profile_theme') }}</p>
                                     <div class="flex gap-1 rounded-md bg-line-100 p-0.5" role="tablist" aria-label="{{ __('profile_theme') }}">
                                         <button type="button" role="tab"
-                                                @click="switchTheme('default')"
-                                                :aria-selected="theme === 'default' ? 'true' : 'false'"
-                                                :class="theme === 'default' ? 'bg-paper-0 text-ink-900 shadow-subtle' : 'text-ink-600'"
+                                                @click="switchTheme('crowdCuratio')"
+                                                :aria-selected="theme === 'crowdCuratio' ? 'true' : 'false'"
+                                                :class="theme === 'crowdCuratio' ? 'bg-paper-0 text-ink-900 shadow-subtle' : 'text-ink-600'"
                                                 class="flex-1 rounded-md px-3 py-1 text-caption font-medium">
                                             {{ __('profile_theme_default') }}
                                         </button>
                                         <button type="button" role="tab"
-                                                @click="switchTheme('aktives-museum')"
-                                                :aria-selected="theme === 'aktives-museum' ? 'true' : 'false'"
-                                                :class="theme === 'aktives-museum' ? 'bg-paper-0 text-ink-900 shadow-subtle' : 'text-ink-600'"
+                                                @click="switchTheme('aktivesMuseum')"
+                                                :aria-selected="theme === 'aktivesMuseum' ? 'true' : 'false'"
+                                                :class="theme === 'aktivesMuseum' ? 'bg-paper-0 text-ink-900 shadow-subtle' : 'text-ink-600'"
                                                 class="flex-1 rounded-md px-3 py-1 text-caption font-medium">
                                             {{ __('profile_theme_am') }}
                                         </button>
@@ -484,7 +496,6 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                 <section class="rounded-lg border border-line-200 bg-paper-0 p-6 shadow-subtle">
                     <header class="mb-4">
                         <h2 class="text-heading font-semibold text-ink-900">{{ __('profile_password_title') }}</h2>
-                        <p class="mt-1 text-body text-ink-500">{{ __('profile_password_desc') }}</p>
                     </header>
 
                     <div class="grid gap-4 md:grid-cols-3">
