@@ -241,7 +241,7 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                                  :style="showAvatarImage ? '' : `background-color: var(--color-${currentColor})`">
                                 @if ($user->avatar_path)
                                     <img x-show="!removedAvatar && !previewAvatarUrl"
-                                         src="{{ Storage::disk('public')->url('uploads/avatars/'.$user->avatar_path) }}"
+                                         src="{{ asset('storage/uploads/avatars/'.$user->avatar_path) }}"
                                          alt="" class="absolute inset-0 size-full object-cover"/>
                                 @endif
                                 <img x-show="previewAvatarUrl" :src="previewAvatarUrl" alt="" class="absolute inset-0 size-full object-cover"/>
