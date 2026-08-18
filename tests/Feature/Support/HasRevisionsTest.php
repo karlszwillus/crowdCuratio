@@ -77,10 +77,14 @@ it('legt eine Update-Revision mit old/new-Delta an', function () {
         ->latest()
         ->first();
 
+    // Chapter.name ist translatable — HasTranslations schreibt die Werte
+    // als JSON in die DB, getOriginal()/getChanges() liefern das cast-
+    // Array zurueck. Der Trait speichert genau das, damit der Restore
+    // die Locale-Struktur ueber setTranslations() wiederherstellen kann.
     expect($updates->kind)->toBe(RevisionKind::CONTENT->value)
         ->and($updates->version)->toBe(2)
-        ->and($updates->snapshot['changes']['name']['old'])->toBe('Original')
-        ->and($updates->snapshot['changes']['name']['new'])->toBe('Neuer Titel');
+        ->and($updates->snapshot['changes']['name']['old'])->toBe(['de' => 'Original'])
+        ->and($updates->snapshot['changes']['name']['new'])->toBe(['de' => 'Neuer Titel']);
 });
 
 it('merged Aenderungen innerhalb 5 Minuten in die bestehende Revision', function () {
@@ -108,10 +112,11 @@ it('merged Aenderungen innerhalb 5 Minuten in die bestehende Revision', function
         ->where('version', 2)
         ->get();
 
-    // Genau EINE Update-Revision mit dem finalen Wert und Ur-Old.
+    // Genau EINE Update-Revision mit dem finalen Wert und Ur-Old
+    // — Werte als translatable Locale-Arrays (siehe Kommentar oben).
     expect($updates)->toHaveCount(1)
-        ->and($updates->first()->snapshot['changes']['name']['old'])->toBe('Original')
-        ->and($updates->first()->snapshot['changes']['name']['new'])->toBe('Endgueltig');
+        ->and($updates->first()->snapshot['changes']['name']['old'])->toBe(['de' => 'Original'])
+        ->and($updates->first()->snapshot['changes']['name']['new'])->toBe(['de' => 'Endgueltig']);
 });
 
 it('markiert reine position-Aenderungen als REORDER', function () {
