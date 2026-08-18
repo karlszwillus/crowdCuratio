@@ -771,9 +771,95 @@ class ProjectController extends Controller
         }
         $data['data'] = $tree->chapters;
 
+        // Phase 5ab.5 (Design v6 § 4): Sync-Warnung „Original nach
+        // Uebersetzung geaendert". Wir sammeln pro Feld die
+        // source_revision_id, auf der die Uebersetzung basiert, und
+        // vergleichen sie mit der aktuellen (neuesten) Revision des
+        // Subjects. Das Blade liest daraus $outdatedFields[$key]
+        // und rendert den Warn-Chip.
+        $outdatedFields = $this->buildOutdatedTranslationMap($tree);
+
         // Phase 5d.4-Followup: $project fuer die einheitliche
         // Tab-Leiste (<x-projects.tabs>) mitliefern.
-        return view('translate.index', compact('data', 'project'));
+        return view('translate.index', compact('data', 'project', 'outdatedFields'));
+    }
+
+    /**
+     * Phase 5ab.5: Map aller uebersetzten Felder auf einen Boolean, ob
+     * das Original nach der Uebersetzung geaendert wurde.
+     *
+     * Key-Schema: „Model.id.field" (dieselben Payload-Keys wie in
+     * saveTranslations()). Wert: true = veraltet, false = frisch.
+     *
+     * @return array<string, bool>
+     */
+    private function buildOutdatedTranslationMap(Project $tree): array
+    {
+        // Alle Subjects sammeln, die im Tree vorkommen.
+        /** @var array<string, array<int, int>> $subjects */
+        $subjects = [];
+        foreach ($tree->chapters as $chapter) {
+            $subjects[\App\Models\Chapter::class][] = $chapter->id;
+            foreach ($chapter->entries as $entry) {
+                $subjects[\App\Models\Entry::class][] = $entry->id;
+                foreach ($entry->mediaContent as $mc) {
+                    foreach (['text', 'gallery', 'audiovisual'] as $rel) {
+                        $obj = $mc->{$rel} ?? null;
+                        if ($obj) {
+                            $subjects[$obj::class][] = $obj->id;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Bulk-Query: Referenzen fuer die gesammelten Subjects.
+        $refs = collect();
+        foreach ($subjects as $type => $ids) {
+            if ($ids === []) {
+                continue;
+            }
+            $refs = $refs->concat(
+                \App\Models\TranslationSourceReference::query()
+                    ->where('subject_type', $type)
+                    ->whereIn('subject_id', $ids)
+                    ->get(['subject_type', 'subject_id', 'field', 'source_revision_id'])
+            );
+        }
+        if ($refs->isEmpty()) {
+            return [];
+        }
+
+        // Aktuelle Revisions-ID je Subject einmal auflösen — verglichen
+        // wird die höchste ID pro (type, id).
+        $latestByKey = [];
+        foreach ($subjects as $type => $ids) {
+            if ($ids === []) {
+                continue;
+            }
+            \App\Models\Revision::query()
+                ->where('subject_type', $type)
+                ->whereIn('subject_id', $ids)
+                ->selectRaw('subject_id, MAX(id) as latest_id')
+                ->groupBy('subject_id')
+                ->get()
+                ->each(function ($row) use (&$latestByKey, $type): void {
+                    $latestByKey[$type.'|'.$row->subject_id] = (int) $row->latest_id;
+                });
+        }
+
+        $map = [];
+        foreach ($refs as $ref) {
+            $latest = $latestByKey[$ref->subject_type.'|'.$ref->subject_id] ?? null;
+            $short = \App\Support\RevisionSubject::shortName($ref->subject_type);
+            if ($short === null || $latest === null) {
+                continue;
+            }
+            $key = $short.'.'.$ref->subject_id.'.'.$ref->field;
+            $map[$key] = $latest > $ref->source_revision_id;
+        }
+
+        return $map;
     }
 
     /**

@@ -462,5 +462,7 @@
   "history_restore_busy": "Restoring",
   "history_restore_success": "Restored as v:version",
   "history_restore_announce": "Revision restored.",
-  "history_restore_error": "Restore failed. Please try again."
+  "history_restore_error": "Restore failed. Please try again.",
+  "translate_source_outdated": "Source changed after translation",
+  "translate_source_outdated_hint": "The German source was edited after this translation was saved. Please review."
 }
