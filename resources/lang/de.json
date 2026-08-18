@@ -574,5 +574,19 @@
   "profile_project_role_admin": "Admin",
   "profile_project_role_reader": "Leser:in",
   "profile_project_context_chapters": "{0} keine Kapitel|{1} 1 Kapitel|[2,*] :count Kapitel",
-  "profile_project_open": "öffnen"
+  "profile_project_open": "öffnen",
+  "profile_password_title": "Passwort ändern",
+  "profile_password_desc": "Eigene Karte, eigenes Speichern — ein Passwortwechsel soll nicht am Vornamen hängen.",
+  "profile_password_old": "Aktuelles Passwort",
+  "profile_password_new": "Neues Passwort",
+  "profile_password_confirm": "Wiederholen",
+  "profile_password_rule_hint": "Mindestens 10 Zeichen. Keine Ziffern-Pflicht — Länge zählt mehr.",
+  "profile_password_session_hint": "Nach dem Wechsel bleiben andere Sitzungen angemeldet.",
+  "profile_password_save": "Passwort speichern",
+  "profile_password_updated": "Passwort geändert.",
+  "profile_pw_strength_0": "",
+  "profile_pw_strength_1": "schwach",
+  "profile_pw_strength_2": "ok",
+  "profile_pw_strength_3": "kräftig",
+  "profile_pw_strength_4": "stark"
 }

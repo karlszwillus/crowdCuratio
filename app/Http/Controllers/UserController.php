@@ -214,6 +214,22 @@ class UserController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    /**
+     * Phase 5ac.4: Eigener Endpoint fuer den Passwort-Wechsel — die
+     * Karte hat ihren eigenen Save-Button, damit ein Passwort-Wechsel
+     * nicht am Vornamen haengt. Bestehende UpdateOwnProfileRequest-
+     * Logik bleibt fuer Rueckwaertskompat.
+     */
+    public function updatePassword(\App\Http\Requests\UpdateOwnPasswordRequest $request): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $user->password = Hash::make($request->validated()['new_password']);
+        $user->save();
+
+        return redirect()->route('profile')->with('success', __('profile_password_updated'));
+    }
+
     public function updateTheme(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse
     {
         $user = $request->user();

@@ -503,5 +503,19 @@
   "profile_project_role_admin": "Admin",
   "profile_project_role_reader": "Reader",
   "profile_project_context_chapters": "{0} no chapters|{1} 1 chapter|[2,*] :count chapters",
-  "profile_project_open": "open"
+  "profile_project_open": "open",
+  "profile_password_title": "Change password",
+  "profile_password_desc": "Its own card and its own save — changing your password shouldn’t hang off your first name.",
+  "profile_password_old": "Current password",
+  "profile_password_new": "New password",
+  "profile_password_confirm": "Confirm",
+  "profile_password_rule_hint": "At least 10 characters. No digits required — length matters more.",
+  "profile_password_session_hint": "Other sessions stay signed in after the change.",
+  "profile_password_save": "Save password",
+  "profile_password_updated": "Password updated.",
+  "profile_pw_strength_0": "",
+  "profile_pw_strength_1": "weak",
+  "profile_pw_strength_2": "ok",
+  "profile_pw_strength_3": "strong",
+  "profile_pw_strength_4": "excellent"
 }

@@ -311,10 +311,67 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                     </div>
                 </div>
 
-                <div class="h-16"></div> {{-- Fusszeilen-Abstandhalter --}}
-
                 <input type="hidden" x-init="locale = @js($currentLocale); theme = @js($currentTheme)"/>
             </form>
+
+            {{-- Karte 3 · Passwort ändern — eigener Save, eigenes Formular (§ 4). --}}
+            <form method="POST" action="{{ route('profile.password') }}"
+                  class="mt-6"
+                  x-data="ccPasswordCard()">
+                @csrf
+                @method('PATCH')
+                <section class="rounded-lg border border-line-200 bg-paper-0 p-6 shadow-subtle">
+                    <header class="mb-4">
+                        <h2 class="text-heading font-semibold text-ink-900">{{ __('profile_password_title') }}</h2>
+                        <p class="mt-1 text-body text-ink-500">{{ __('profile_password_desc') }}</p>
+                    </header>
+
+                    <div class="grid gap-4 md:grid-cols-3">
+                        <div>
+                            <label class="mb-1 block text-caption font-medium text-ink-700" for="pw-old">{{ __('profile_password_old') }}</label>
+                            <input id="pw-old" name="old_password" type="password" autocomplete="current-password"
+                                   class="w-full rounded-md border border-line-200 bg-canvas-bg px-3 py-2 text-body text-ink-900 focus:border-primary focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-primary"/>
+                            @error('old_password') <p class="mt-1 text-caption text-danger">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-caption font-medium text-ink-700" for="pw-new">{{ __('profile_password_new') }}</label>
+                            <input id="pw-new" name="new_password" type="password" autocomplete="new-password"
+                                   x-model="pw" minlength="10" required
+                                   class="w-full rounded-md border border-line-200 bg-canvas-bg px-3 py-2 text-body text-ink-900 focus:border-primary focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-primary"/>
+                            @error('new_password') <p class="mt-1 text-caption text-danger">{{ $message }}</p> @enderror
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-caption font-medium text-ink-700" for="pw-confirm">{{ __('profile_password_confirm') }}</label>
+                            <input id="pw-confirm" name="confirm_password" type="password" autocomplete="new-password"
+                                   x-model="confirm" required
+                                   class="w-full rounded-md border border-line-200 bg-canvas-bg px-3 py-2 text-body text-ink-900 focus:border-primary focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-primary"/>
+                            @error('confirm_password') <p class="mt-1 text-caption text-danger">{{ $message }}</p> @enderror
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <div class="flex h-2 gap-1">
+                            <template x-for="i in 4" :key="i">
+                                <div class="h-full flex-1 rounded" :class="strength >= i ? 'bg-success' : 'bg-line-200'"></div>
+                            </template>
+                        </div>
+                        <p class="mt-1 flex justify-between text-caption text-ink-500">
+                            <span x-text="strengthLabel"></span>
+                            <span>{{ __('profile_password_rule_hint') }}</span>
+                        </p>
+                    </div>
+
+                    <div class="mt-4 flex flex-wrap items-center justify-between gap-2">
+                        <p class="text-caption text-ink-500">{{ __('profile_password_session_hint') }}</p>
+                        <button type="submit"
+                                class="rounded-md border border-ink-300 bg-canvas-bg px-4 py-1.5 text-caption font-semibold text-ink-900 hover:bg-chrome-active">
+                            {{ __('profile_password_save') }}
+                        </button>
+                    </div>
+                </section>
+            </form>
+
+            <div class="h-16"></div>{{-- Fusszeilen-Abstandhalter --}}
         </div>
     </x-slot:content>
 </x-layout>
@@ -323,6 +380,27 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
 <script>
     // Phase 5ac.1: Alpine-Data fuer die Person-Karte plus Sofort-Wirkung
     // fuer Sprache und Theme (kein Save-Kandidat).
+    // Phase 5ac.4: Alpine-Data fuer die Passwort-Karte.
+    window.ccPasswordCard = function () {
+        return {
+            pw: '', confirm: '',
+            get strength() {
+                const s = this.pw || '';
+                if (s.length === 0) return 0;
+                let score = 0;
+                if (s.length >= 10) score++;
+                if (s.length >= 14) score++;
+                if (/[A-Z]/.test(s) && /[a-z]/.test(s)) score++;
+                if (/[^A-Za-z0-9]/.test(s)) score++;
+                return Math.min(score, 4);
+            },
+            get strengthLabel() {
+                const labels = [@js(__('profile_pw_strength_0')), @js(__('profile_pw_strength_1')), @js(__('profile_pw_strength_2')), @js(__('profile_pw_strength_3')), @js(__('profile_pw_strength_4'))];
+                return labels[this.strength] || '';
+            }
+        };
+    };
+
     window.ccProfileCard = function (init) {
         return {
             firstName: init.origFirst || '',
