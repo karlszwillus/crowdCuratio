@@ -291,6 +291,45 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                     </section>
                 @endif
 
+                {{-- Karte 4 · Benachrichtigungen (§ 5) --}}
+                <section class="mt-6 rounded-lg border border-line-200 bg-paper-0 p-6 shadow-subtle">
+                    <header class="mb-4">
+                        <h2 class="text-heading font-semibold text-ink-900">{{ __('profile_notify_title') }}</h2>
+                        <p class="mt-1 text-body text-ink-500">{{ __('profile_notify_desc') }}</p>
+                    </header>
+                    <ul class="divide-y divide-line-100">
+                        @foreach ([
+                            ['field' => 'notify_comments', 'title' => 'profile_notify_comments_title', 'desc' => 'profile_notify_comments_desc', 'value' => (bool) $prefs->notify_comments, 'enabled' => true],
+                            ['field' => 'notify_invites', 'title' => 'profile_notify_invites_title', 'desc' => 'profile_notify_invites_desc', 'value' => true, 'enabled' => false],
+                            ['field' => 'notify_publish', 'title' => 'profile_notify_publish_title', 'desc' => 'profile_notify_publish_desc', 'value' => (bool) $prefs->notify_publish, 'enabled' => true],
+                            ['field' => 'notify_weekly_digest', 'title' => 'profile_notify_digest_title', 'desc' => 'profile_notify_digest_desc', 'value' => (bool) $prefs->notify_weekly_digest, 'enabled' => true],
+                        ] as $toggle)
+                            <li class="flex items-center justify-between gap-4 py-3">
+                                <div class="min-w-0">
+                                    <p class="text-body font-medium text-ink-900">{{ __($toggle['title']) }}</p>
+                                    <p class="text-caption text-ink-500">{{ __($toggle['desc']) }}</p>
+                                </div>
+                                @if ($toggle['enabled'])
+                                    <label class="inline-flex cursor-pointer items-center">
+                                        <input type="checkbox" name="{{ $toggle['field'] }}" value="1"
+                                               @checked($toggle['value'])
+                                               @change="dirty()"
+                                               class="peer sr-only"/>
+                                        <span class="relative h-6 w-11 rounded-full bg-line-200 transition-colors peer-checked:bg-primary">
+                                            <span class="absolute left-0.5 top-0.5 size-5 rounded-full bg-paper-0 transition-transform peer-checked:translate-x-5 shadow-subtle"></span>
+                                        </span>
+                                    </label>
+                                @else
+                                    <span class="inline-flex items-center gap-2 rounded-full bg-line-100 px-3 py-1 text-caption text-ink-500">
+                                        <span class="size-2 rounded-full bg-success"></span>
+                                        {{ __('profile_notify_locked') }}
+                                    </span>
+                                @endif
+                            </li>
+                        @endforeach
+                    </ul>
+                </section>
+
                 {{-- Sticky-Fusszeile mit Sammel-Speichern. Nennt beim Klick
                      was offen ist, damit der Nutzer nicht raetselt. --}}
                 <div class="fixed inset-x-0 bottom-0 z-20 border-t border-line-200 bg-paper-0/95 shadow-medium backdrop-blur">

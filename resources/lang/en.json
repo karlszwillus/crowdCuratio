@@ -517,5 +517,16 @@
   "profile_pw_strength_1": "weak",
   "profile_pw_strength_2": "ok",
   "profile_pw_strength_3": "strong",
-  "profile_pw_strength_4": "excellent"
+  "profile_pw_strength_4": "excellent",
+  "profile_notify_title": "Notifications",
+  "profile_notify_desc": "Channel is email. The bell in the header shows everything anyway — here you choose what also goes to your inbox.",
+  "profile_notify_comments_title": "Comments on my content",
+  "profile_notify_comments_desc": "Immediately, bundled per entry.",
+  "profile_notify_invites_title": "Project invitations",
+  "profile_notify_invites_desc": "Can’t be fully off — you need the access link.",
+  "profile_notify_publish_title": "Approval or publishing of my contributions",
+  "profile_notify_publish_desc": "When a chapter with your text goes live.",
+  "profile_notify_digest_title": "Weekly digest",
+  "profile_notify_digest_desc": "Mondays: what has moved in your projects.",
+  "profile_notify_locked": "always on"
 }

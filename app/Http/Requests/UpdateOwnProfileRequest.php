@@ -72,6 +72,12 @@ class UpdateOwnProfileRequest extends FormRequest
             // Phase 5ac.2: Avatar-Upload. Whitelist JPG/PNG/WebP, max 2 MB.
             'avatar' => 'sometimes|nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
             'remove_avatar' => 'sometimes|nullable|boolean',
+            // Phase 5ac.5: drei Benachrichtigungs-Toggles. Einladungen
+            // sind nicht abschaltbar und werden vom FormRequest nicht
+            // akzeptiert.
+            'notify_comments' => 'sometimes|nullable|boolean',
+            'notify_publish' => 'sometimes|nullable|boolean',
+            'notify_weekly_digest' => 'sometimes|nullable|boolean',
             'old_password' => 'sometimes|nullable|string',
             'new_password' => 'sometimes|nullable|string|min:8',
             'confirm_password' => 'sometimes|nullable|string|same:new_password',

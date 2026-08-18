@@ -187,6 +187,19 @@ class UserController extends Controller
 
         $user->save();
 
+        // Phase 5ac.5: Benachrichtigungs-Praeferenzen als eigene Zeile
+        // (updateOrCreate, damit auch neue User keine leere DB-Zeile
+        // vorher brauchen). Toggles sind Checkboxen — nicht gesendet
+        // heisst false.
+        \App\Models\NotificationPreference::updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'notify_comments' => (bool) ($validated['notify_comments'] ?? false),
+                'notify_publish' => (bool) ($validated['notify_publish'] ?? false),
+                'notify_weekly_digest' => (bool) ($validated['notify_weekly_digest'] ?? false),
+            ]
+        );
+
         return redirect()->back()->with('success', __('message_edit_profile_success'));
     }
 
@@ -306,7 +319,17 @@ class UserController extends Controller
             ];
         })->values();
 
-        return view('users.profile', compact('roles', 'profileProjects'));
+        // Phase 5ac.5: bestehende Benachrichtigungs-Praeferenzen — oder
+        // ein frisches Objekt mit den Defaults, damit das Blade in beiden
+        // Faellen dieselben Zugriffe hat.
+        $prefs = \App\Models\NotificationPreference::firstOrNew(['user_id' => $me->id]);
+        if (! $prefs->exists) {
+            $prefs->notify_comments = true;
+            $prefs->notify_publish = true;
+            $prefs->notify_weekly_digest = false;
+        }
+
+        return view('users.profile', compact('roles', 'profileProjects', 'prefs'));
     }
 
     /**
