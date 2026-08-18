@@ -117,16 +117,18 @@ class RevisionController extends Controller
             abort(403);
         }
 
-        // Snapshot enthaelt {field: {old, new}} — wir wollen den old-
-        // Zustand wiederherstellen (das ist die Fassung vor der
-        // damaligen Aenderung). Bei backfill-Zeilen ohne old fallen
-        // wir auf new, weil old dann null ist.
+        // „Wiederherstellen von v13" heisst fuer den Nutzer: den Zustand
+        // aktivieren, den v13 REPRAESENTIERT. Das ist der `new`-Wert der
+        // Fassung, nicht der `old`-Wert (der waere der Zustand VOR v13).
+        // Fallback auf old, wenn new leer ist (bei alten Backfill-Zeilen,
+        // die nur die Aenderung protokolliert haben, ohne den Ziel-Wert
+        // sauber zu speichern).
         /** @var array<string, array{old: mixed, new: mixed}> $changes */
         $changes = $revision->snapshot['changes'] ?? [];
         /** @var array<int, string> $translatable */
         $translatable = property_exists($subject, 'translatable') ? (array) $subject->translatable : [];
         foreach ($changes as $field => $delta) {
-            $target = $delta['old'] ?? $delta['new'] ?? null;
+            $target = $delta['new'] ?? $delta['old'] ?? null;
             if ($target === null) {
                 continue;
             }
