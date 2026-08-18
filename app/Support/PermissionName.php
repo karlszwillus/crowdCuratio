@@ -49,6 +49,7 @@ enum PermissionName: string
     case PUBLISH = 'publish';
     case COMMENT = 'comment';
     case INVITE = 'invite';
+    case HISTORY_RESTORE = 'history-restore';
 
     /**
      * Alle Permissions als String-Array — kompatibel zur alten

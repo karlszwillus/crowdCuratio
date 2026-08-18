@@ -32,28 +32,21 @@ If not, see <https://www.gnu.org/licenses/>. -->
         <livewire:comment-panel-list :projectId="$project->id" />
     </x-layout.comment-panel>
 
-    {{-- Version-Log bleibt bewusst ausserhalb des Panels — er ist keine
-         Kommentar-UI, sondern ein separates Historien-Widget. Wird im
-         5-D.5-Editor-Chrome-Refactor voraussichtlich zum History-Drawer. --}}
-    <div class="card p-4 mb-4 mt-4">
-        <div class="row versions">
-           {{-- <span class="ml-3">{{__('version')}}</span> --}}
-            @isset($textLog)
+    {{-- Phase 5ab.3: Verlauf-Panel neben dem Kommentar-Panel. Beide sind
+         permanent im DOM und schliessen sich per `panel:open`-Namens-
+         Guard gegenseitig aus (§ 6). --}}
+    <x-layout.history-panel>
+        <livewire:history-panel-list :projectId="$project->id" />
+    </x-layout.history-panel>
 
-                @foreach($textLog as $log => $v)
-                    <div class="mt-4">
-                        <p class="ml-4 mb-4">{{date('d.m.Y',strtotime( $v['created_at']))}}</p>
-                        <div class="col-sm-8 mb-4">
-                            <a href="{{route('log.detail',[$project->id,$v['id']])}}">{{$v['userName']}}</a>
-                        </div>
-                        <div class="col-sm-4 text-right mb-4">
-                            {{date('G:i',strtotime( $v['created_at']))}}
-                        </div>
+    {{-- Phase 5ab.5: Bestaetigungs-Dialog fuer Wiederherstellen. Hoert
+         auf `history:restore-request`, ruft revisions.restore und laedt
+         danach die Seite neu, damit der frische Zustand sichtbar wird. --}}
+    <x-layout.history-restore-dialog />
 
-                    </div>
-                @endforeach
-            @endisset
-
-        </div>
-    </div>
+    {{-- Phase 5ab.3: Der alte Version-Log-Block hier (Karten-Liste mit
+         Namen und Uhrzeit unter dem Editor) ist durch das Verlauf-Panel
+         oben abgeloest. Die `log.detail`-Route bleibt vorerst bestehen —
+         eine tiefere Aufraeumung folgt in 5ab.6, sobald wir sicher sind,
+         dass keine externe Verlinkung sie mehr braucht. --}}
 @endsection

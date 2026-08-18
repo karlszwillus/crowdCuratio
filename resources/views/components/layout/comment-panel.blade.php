@@ -69,7 +69,14 @@ Props:
         },
     }"
     @keydown.escape.window="if (open) closePanel()"
-    @panel:open.window="openPanel()"
+    {{-- Phase 5ab.3: `panel:open` traegt jetzt einen `name`, damit
+         Verlauf und Kommentare sich gegenseitig ausschliessen. Ein Event
+         ohne Name (Legacy-Aufrufer aus 5x.1) oeffnet nach wie vor die
+         Kommentare — Rueckwaertskompat. --}}
+    @panel:open.window="
+        if (! $event.detail || ! $event.detail.name || $event.detail.name === 'comments') openPanel();
+        else if (open && $event.detail.name !== 'comments') closePanel();
+    "
     @panel:close.window="closePanel()"
     {{-- Phase 5x.9: die Kommentar-Icons feuern `panel:load-and-open`
          mit `{commentableType, commentableId}`. Wir reichen es weiter an

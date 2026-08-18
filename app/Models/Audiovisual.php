@@ -23,6 +23,7 @@ If not, see <https://www.gnu.org/licenses/>.
 namespace App\Models;
 
 use App\Contracts\HasComments;
+use App\Support\HasRevisions;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -40,7 +41,7 @@ use Spatie\Translatable\HasTranslations;
  */
 class Audiovisual extends Model implements HasComments
 {
-    use HasFactory, HasTranslations, LogsActivity, SoftDeletes;
+    use HasFactory, HasRevisions, HasTranslations, LogsActivity, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.

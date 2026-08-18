@@ -320,3 +320,45 @@ a:has(> i:only-child[class*="bi-"]) {
 [data-locked="1"]:focus-visible {
     pointer-events: auto;
 }
+
+/* Phase 5ab.4: Diff-Modus im Editor.
+   Wenn <html data-history-diff="on"> gesetzt ist, dimmen wir die
+   Bearbeiten-Aktionen aller Bloecke und sperren Eingaben in dem Block,
+   der gerade den Diff traegt. Info-Banner sitzt oben zentriert. */
+:root[data-history-diff="on"] [data-history-lock="on"] {
+    position: relative;
+    background: var(--paper-50);
+}
+:root[data-history-diff="on"] [data-history-lock="on"] input,
+:root[data-history-diff="on"] [data-history-lock="on"] textarea,
+:root[data-history-diff="on"] [data-history-lock="on"] [contenteditable="true"] {
+    pointer-events: none;
+    user-select: text;
+    opacity: 0.9;
+}
+:root[data-history-diff="on"] [data-history-lock="on"] button,
+:root[data-history-diff="on"] [data-history-lock="on"] a[data-block-action] {
+    opacity: 0.4;
+    pointer-events: none;
+}
+.cc-history-diff-target {
+    background: var(--canvas-bg);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    border: 1px dashed var(--line-300);
+}
+
+/* Phase 5ab.4 Follow-up: Diff-Overlay statt DOM-Ersatz.
+   Ist ein Feld im Diff-Modus, verstecken wir alle Original-Kinder und
+   zeigen nur das Overlay. So bleiben Livewire-Rich-Text-Editoren
+   intakt — Alpine-State und wire:model-Bindings gehen nicht verloren. */
+[data-history-field][data-history-diff-active="on"] > :not(.cc-history-diff-overlay) {
+    display: none !important;
+}
+.cc-history-diff-overlay {
+    background: var(--canvas-bg);
+    padding: 0.5rem 0.75rem;
+    border-radius: 4px;
+    border: 1px dashed var(--line-300);
+    line-height: 1.5;
+}

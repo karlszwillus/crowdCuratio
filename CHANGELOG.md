@@ -605,6 +605,85 @@ Farbwähler ab. Sprache mit Fallback-Konsequenz macht
 transparent, was passiert, wenn ein Feld in der Zielsprache
 fehlt.
 
+**Phase-5ab — Verlauf als Panel, Wort-Diff im Block,
+Wiederherstellen mit Übersetzungs-Warnung.** Der Verlauf
+wird aus einer eigenen Editor-Seite in ein Slide-out-Panel
+rechts gehoben, das sich das Muster mit dem Kommentar-Panel
+aus 5x.1 teilt (§ 6 des Briefings: derselbe Behälter, anderer
+Inhalt). Beide Panels schließen sich per Namens-Guard auf
+`panel:open` gegenseitig aus. Fassungs-Karten sind gruppiert
+nach Tag, tragen Actor, Zeit, `v`-Chip und einen farbigen
+Kind-Chip (Inhalt · Angaben · Reihenfolge · Übersetzung),
+darunter eine einzeilige Kurzfassung. Ein Segmented Control
+oben schaltet zwischen Umfang Block, Abschnitt und Projekt.
+
+Datenmodell: neue Tabelle `revisions` mit polymorphem
+Subject, `actor_id`, `kind`, JSON-`snapshot` und
+`version`-Zähler; `HasRevisions`-Trait auf allen sechs
+Content-Modellen schreibt bei `created`/`updated` eine
+Revision und mergt Änderungen derselben Person am selben
+Feld innerhalb eines 5-Min-Fensters in die letzte Revision
+(§ 8.2 des Briefings) — sonst würde Auto-Save-on-Blur aus
+5aa den Verlauf zuschütten. Ein Artisan-Command
+`revisions:backfill` zieht die vorhandenen `activity_log`-
+Zeilen für Chapter, Abschnitt, Text, Galerie, Bild und
+Audio/Video in `revisions` nach, überspringt No-op-Deltas
+(null↔"") und hat `--dry-run` und `--fresh`-Flags. Der
+Deploy-Runbook-Schritt 5 dokumentiert den einmaligen
+Backfill vor dem Cut-over.
+
+Diff-Anzeige im Block, nicht in einem Viewer (§ 6). Ein
+Klick auf eine Fassungs-Karte legt pro geändertem Feld ein
+Wort-Level-Diff-Overlay auf die betroffene Stelle im
+Editor: hinzugefügte Wörter in `success-bg`, entfernte in
+`danger-bg` mit `line-through`, benachbarte
+delete+insert werden zu einem `replace` verschmolzen
+(„Zeit" → „Zeiten" liest sich als eine Änderung, nicht
+zwei). Das Overlay ist ein eigenes Kind-Element des
+`[data-history-field]`-Wrappers — der Livewire-Rich-Text-
+Editor darunter bleibt komplett im DOM, Alpine-State und
+`wire:model`-Bindings gehen nicht verloren, weil wir sein
+Markup nie anfassen. Ein Info-Banner „Nur zum Ansehen"
+oben zeigt den aktiven Vergleichsmodus, `data-history-lock`
+setzt die Aktionen im Block auf `pointer-events: none` und
+die Eingaben auf read-only. `Esc` oder der Banner-Button
+schließt und stellt den Original-DOM wieder her.
+
+Wiederherstellen ist bewusst nicht destruktiv (§ 7).
+Ein Bestätigungs-Dialog sagt zuerst, was **nicht** passiert:
+die aktuelle Fassung geht nicht verloren, sondern wird als
+eigene Fassung im Verlauf abgelegt. Bei vorhandenen
+Übersetzungen zeigt der Dialog eine Warnung, dass sie
+erhalten bleiben, aber als „Original nach der Übersetzung
+geändert" markiert werden. Primärer Button ist `ink-900`,
+nicht `danger` — die Aktion ist umkehrbar. Der Restore
+schreibt den `new`-Wert der gewählten Fassung zurück
+(nicht den `old`-Wert davor — „Wiederherstellen von v13"
+aktiviert den Zustand, den v13 darstellt) und geht bei
+translatable Feldern über `setTranslations()`, damit alle
+Locales erhalten bleiben. Serverseitig ist der Endpoint
+über die neue `history-restore`-Permission project-scoped;
+Admin greift wie üblich über `before()`.
+
+„Original nach der Übersetzung geändert" (§ 4). Eine neue
+Tabelle `translation_source_references` merkt sich pro
+(Subject, Feld, Locale), auf welcher Revision des Originals
+die Übersetzung basiert. `saveTranslations` schreibt/aktua-
+lisiert die Zeile bei jedem EN-Save. Die Übersetzen-Sicht
+prüft in einem Bulk-Query, ob die aktuelle Original-Fassung
+neuer ist als die Referenz — und rendert einen Warn-Chip
+neben dem Feldlabel. Für Bestand-Übersetzungen gibt es
+absichtlich keinen Backfill; der Marker greift erst ab
+Cut-over.
+
+Aufräumung: der alte Version-Log-Kartenblock unter dem
+Editor entfällt, das Panel ersetzt ihn. Alle
+`rotate-ccw`-Trigger auf Kapitel, Abschnitt, Text-, Video-
+und Audio-Block sowie Galerie wandern auf den neuen
+`<x-ui.history-trigger>` — kein Full-Page-Reload auf
+`?log={id}` mehr. Ein kleiner Punkt-Indikator am
+Verlauf-Icon zeigt, wo bereits Historie liegt.
+
 ### Hinzugefügt
 
 - **`<x-icon name="…">`-Komponente auf Lucide-Basis** (Phase

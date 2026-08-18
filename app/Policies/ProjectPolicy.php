@@ -170,6 +170,19 @@ class ProjectPolicy
     }
 
     /**
+     * Phase 5ab.5 (Design v6 § 7): Fassung wiederherstellen aus dem
+     * Verlauf-Panel. Owner oder Eingeladener mit history.restore-
+     * Permission auf dem Pivot. Admin via before().
+     *
+     * Die Ability heisst „history.restore" (mit Punkt); Laravel
+     * mapped den Namen intern auf `historyRestore` als Policy-Methode.
+     */
+    public function historyRestore(User $user, Project $project): bool
+    {
+        return $this->permissions->userHasPermissionOnProject($user, $project, PermissionName::HISTORY_RESTORE);
+    }
+
+    /**
      * Block D PR 2 / D.6: project-scoped. Owner ODER Eingeladener
      * mit `comment`-Permission auf dem konkreten Project. Admin
      * via `before()`. Vor PR 2 war das global (`can(COMMENT)`),

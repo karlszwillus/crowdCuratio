@@ -51,6 +51,7 @@ class PermissionTableSeeder extends Seeder
             PermissionName::PUBLISH->value => ['de' => '<strong>Publizieren</strong>, Rollen mit diesem Recht benötigen "Lese" und "Bearbeiten"-Rechte & dürfen Inhalte des zugewiesenen Projekts veröffentlichen.', 'en' => '<strong>publish</strong>, Roles with this right need "view", "add" and "edit" rights & are allowed to publish content of assigned project.'],
             PermissionName::COMMENT->value => ['de' => '<strong>Kommentieren</strong>, Rollen mit diesem Recht benötigen "Lese"-Rechte & dürfen den Inhalt des zugewiesenen Projekts sehen und kommentieren.', 'en' => '<strong>comment</strong>, Roles with this right need "view" rights & are allowed to see and comment the content of assigned project.'],
             PermissionName::INVITE->value => ['de' => '<strong>Nutzer einladen</strong>, Rollen mit diesem Recht dürfen neue Benutzer zu ihren Projekten einladen.', 'en' => '<strong>invite user</strong>, Roles with this right will be allowed to invite new user to their projects.'],
+            PermissionName::HISTORY_RESTORE->value => ['de' => '<strong>Fassung wiederherstellen</strong>, Rollen mit diesem Recht dürfen im Verlauf-Panel eine alte Fassung wieder als aktuelle Fassung setzen.', 'en' => '<strong>restore revision</strong>, Roles with this right may restore an earlier revision as the current one via the history panel.'],
         ];
 
         foreach (PermissionName::all() as $position => $name) {

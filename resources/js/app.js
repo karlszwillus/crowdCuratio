@@ -105,3 +105,9 @@ import './plyr-init';
 // jedes translations[…]-Feld schreibt beim Verlassen ohne Reload; der
 // Counter pro Sektion und der Gesamt-Fortschritt aktualisieren live.
 import './translate-autosave';
+
+// Diff-Modus im Editor (Phase 5ab.4): hoert auf `revision-selected`
+// aus dem Verlauf-Panel und rendert den Wort-Level-Diff in die
+// betroffenen Block-Felder. Info-Banner oben, Block-Aktionen gedimmt
+// via data-history-lock, ESC oder Button „Vergleich schließen" reset.
+import './history-diff';

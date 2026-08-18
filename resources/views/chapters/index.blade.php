@@ -161,7 +161,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     // Kapitel liegt der Tastatur-/Maus-Fokus (focus-within).
                     $chapterEntryCount = isset($chapter->entries) ? count($chapter->entries) : 0;
                 @endphp
-                <li class="chapter group border-l-[3px] border-line-200 focus-within:border-brand-bar pl-4 transition-colors" data-chapter="{{$chapter->id}}" data-project="{{$project->id}}" id="{{$chapter->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
+                <li class="chapter group border-l-[3px] border-line-200 focus-within:border-brand-bar pl-4 transition-colors" data-chapter="{{$chapter->id}}" data-project="{{$project->id}}" data-history-subject="Chapter:{{$chapter->id}}" id="{{$chapter->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
                     {{-- Kapitel = Klammer (Design v6 § 2, in 5e-Vokabular).
                          Rail links über die ganze Gruppe; Titel + Untertitel
                          + Description sitzen offen auf dem Canvas. Der
@@ -178,38 +178,47 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                     <span class="text-ink-500">{{ trans_choice('chapter_chip_entries', $chapterEntryCount, ['count' => $chapterEntryCount]) }}</span>
                                 </div>
                                 @can('update', $project)
-                                    <livewire:inline-editor
-                                        :model="$chapter"
-                                        field="name"
-                                        rules="nullable|string|max:255"
-                                        :label="__('chapter_title')"
-                                        :variant="'title'"
-                                        :key="'chapter-name-'.$chapter->id"
-                                    />
-                                    <livewire:inline-editor
-                                        :model="$chapter"
-                                        field="subtitle"
-                                        rules="nullable|string|max:255"
-                                        :label="__('chapter_subtitle')"
-                                        :variant="'subtitle'"
-                                        :key="'chapter-subtitle-'.$chapter->id"
-                                    />
+                                    {{-- Phase 5ab.4: data-history-field-Wrapper, damit der
+                                         Diff-Modus die Diff-HTML pro Feld einhaengen kann.
+                                         Wrapper liegen um die Inline-Editors, weil die
+                                         eigentliche Feld-DOM ins Livewire-Snapshot laeuft. --}}
+                                    <div data-history-field="name">
+                                        <livewire:inline-editor
+                                            :model="$chapter"
+                                            field="name"
+                                            rules="nullable|string|max:255"
+                                            :label="__('chapter_title')"
+                                            :variant="'title'"
+                                            :key="'chapter-name-'.$chapter->id"
+                                        />
+                                    </div>
+                                    <div data-history-field="subtitle">
+                                        <livewire:inline-editor
+                                            :model="$chapter"
+                                            field="subtitle"
+                                            rules="nullable|string|max:255"
+                                            :label="__('chapter_subtitle')"
+                                            :variant="'subtitle'"
+                                            :key="'chapter-subtitle-'.$chapter->id"
+                                        />
+                                    </div>
                                 @else
                                     @if (! empty(trim((string) $chapter->name)))
-                                        <h2 class="text-title font-semibold text-ink-900">{!! $chapter->name !!}</h2>
+                                        <h2 data-history-field="name" class="text-title font-semibold text-ink-900">{!! $chapter->name !!}</h2>
                                     @endif
                                     @if (! empty(trim((string) $chapter->subtitle)))
-                                        <p class="mt-1 text-body text-ink-500">{!! $chapter->subtitle !!}</p>
+                                        <p data-history-field="subtitle" class="mt-1 text-body text-ink-500">{!! $chapter->subtitle !!}</p>
                                     @endif
                                 @endcan
                             </div>
 
                             <div class="flex shrink-0 items-center gap-1 text-ink-500">
-                                <a href="{{route('projects.edit',['project'=> $project, 'log'=> $chapter->id, 'model' => 'Chapter'])}}"
-                                   title="{{ __('older_versions') }}"
-                                   class="inline-flex size-11 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
-                                    <x-icon name="rotate-ccw" size="4"/>
-                                </a>
+                                {{-- Phase 5ab.3: Verlauf-Trigger — oeffnet das Panel
+                                     rechts statt Full-Page-Reload auf ?log=. --}}
+                                <x-ui.history-trigger
+                                    subjectType="Chapter"
+                                    :subjectId="$chapter->id"
+                                />
 
                                 @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                     <x-comment.trigger
@@ -276,16 +285,18 @@ If not, see <https://www.gnu.org/licenses/>. -->
                         {{-- Kapitel-Beschreibung als Rich-Text-Editor,
                              direkt unter dem Section-Header. --}}
                         @can('update', $project)
-                            <livewire:rich-text-editor
-                                :model="$chapter"
-                                field="description"
-                                rules="nullable|string"
-                                :label="__('chapter_description')"
-                                :key="'chapter-description-'.$chapter->id"
-                            />
+                            <div data-history-field="description">
+                                <livewire:rich-text-editor
+                                    :model="$chapter"
+                                    field="description"
+                                    rules="nullable|string"
+                                    :label="__('chapter_description')"
+                                    :key="'chapter-description-'.$chapter->id"
+                                />
+                            </div>
                         @else
                             @if (! empty(trim(strip_tags((string) $chapter->description))))
-                                <p class="text-body text-ink-700">{!! $chapter->description !!}</p>
+                                <p data-history-field="description" class="text-body text-ink-700">{!! $chapter->description !!}</p>
                             @endif
                         @endcan
 
@@ -299,7 +310,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                             @if(isset($chapter->entries) && count($chapter->entries) >0)
                                 <ul class="list-group ui-sortable-entry sortable_list_entry connectedSortableEntry" id="{{$chapter->id}}" data-reorder-element="entry" data-reorder-url="{{ route('chapter.drag') }}">
                                     @foreach($chapter->entries as $entry)
-                                        <li class="entry group" data-chapter="{{$chapter->id}}" data-entry="{{$entry->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
+                                        <li class="entry group" data-chapter="{{$chapter->id}}" data-entry="{{$entry->id}}" data-history-subject="Entry:{{$entry->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
                                             {{-- Entry als Karte mit Mono-Caps-Label
                                                  (Handoff v4 Screen 02: „EINTRAG · KAPITEL 2").
                                                  Bezug zum umschließenden Kapitel steht
@@ -316,38 +327,41 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                 <header class="mb-3 flex items-start justify-between gap-4">
                                                     <div class="min-w-0 flex-1" id="anchor_Entry_{{$entry->id}}">
                                                         @can('update', $project)
-                                                            <livewire:inline-editor
-                                                                :model="$entry"
-                                                                field="name"
-                                                                rules="nullable|string|max:255"
-                                                                :label="__('entry_title')"
-                                                                :variant="'heading'"
-                                                                :key="'entry-name-'.$entry->id"
-                                                            />
-                                                            <livewire:inline-editor
-                                                                :model="$entry"
-                                                                field="subtitle"
-                                                                rules="nullable|string|max:255"
-                                                                :label="__('entry_subtitle')"
-                                                                :variant="'subtitle'"
-                                                                :key="'entry-subtitle-'.$entry->id"
-                                                            />
+                                                            <div data-history-field="name">
+                                                                <livewire:inline-editor
+                                                                    :model="$entry"
+                                                                    field="name"
+                                                                    rules="nullable|string|max:255"
+                                                                    :label="__('entry_title')"
+                                                                    :variant="'heading'"
+                                                                    :key="'entry-name-'.$entry->id"
+                                                                />
+                                                            </div>
+                                                            <div data-history-field="subtitle">
+                                                                <livewire:inline-editor
+                                                                    :model="$entry"
+                                                                    field="subtitle"
+                                                                    rules="nullable|string|max:255"
+                                                                    :label="__('entry_subtitle')"
+                                                                    :variant="'subtitle'"
+                                                                    :key="'entry-subtitle-'.$entry->id"
+                                                                />
+                                                            </div>
                                                         @else
                                                             @if (! empty(trim((string) $entry->name)))
-                                                                <h3 class="text-heading font-semibold text-ink-900">{!! $entry->name !!}</h3>
+                                                                <h3 data-history-field="name" class="text-heading font-semibold text-ink-900">{!! $entry->name !!}</h3>
                                                             @endif
                                                             @if (! empty(trim((string) $entry->subtitle)))
-                                                                <p class="mt-1 text-body text-ink-500">{!! $entry->subtitle !!}</p>
+                                                                <p data-history-field="subtitle" class="mt-1 text-body text-ink-500">{!! $entry->subtitle !!}</p>
                                                             @endif
                                                         @endcan
                                                     </div>
 
                                                     <div class="flex shrink-0 items-center gap-1 text-ink-500">
-                                                        <a href="{{route('projects.edit',['project'=> $project, 'log'=> $entry->id, 'model' => 'Entry'])}}"
-                                                           title="{{ __('older_versions') }}"
-                                                           class="inline-flex size-11 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900">
-                                                            <x-icon name="rotate-ccw" size="4"/>
-                                                        </a>
+                                                        <x-ui.history-trigger
+                                                            subjectType="Entry"
+                                                            :subjectId="$entry->id"
+                                                        />
 
                                                         @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                             <x-comment.trigger
@@ -408,16 +422,18 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                 </header>
 
                                                 @can('update', $project)
-                                                    <livewire:rich-text-editor
-                                                        :model="$entry"
-                                                        field="description"
-                                                        rules="nullable|string"
-                                                        :label="__('entry_description')"
-                                                        :key="'entry-description-'.$entry->id"
-                                                    />
+                                                    <div data-history-field="description">
+                                                        <livewire:rich-text-editor
+                                                            :model="$entry"
+                                                            field="description"
+                                                            rules="nullable|string"
+                                                            :label="__('entry_description')"
+                                                            :key="'entry-description-'.$entry->id"
+                                                        />
+                                                    </div>
                                                 @else
                                                     @if (! empty(trim(strip_tags((string) $entry->description))))
-                                                        <p class="text-body text-ink-700">{!! $entry->description !!}</p>
+                                                        <p data-history-field="description" class="text-body text-ink-700">{!! $entry->description !!}</p>
                                                     @endif
                                                 @endcan
                                             </div>
@@ -427,17 +443,16 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                 @foreach($entry->mediaContent as $item)
                                                                     @if($item->content_type == 'App\Models\Text')
                                                                         @isset($item->text->text)
-                                                                            <li class="item text content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
+                                                                            <li class="item text content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" data-history-subject="Text:{{$item->text->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
                                                                                 <x-ui.block-card type="text" id="anchor_MediaContent_{{$item->id}}" class="mb-4" :save-slot="'Text-'.$item->text->id">
                                                                                     <x-slot:actions>
                                                                                         {{-- Design v6 § 4 (in 5e-Vokabular): Text-Block-Aktionen
                                                                                              wandern aus der Fußzeile in den Blockkopf, analog zu
                                                                                              Galerie und Audio/Video. --}}
-                                                                                        <a href="{{route('projects.edit',['project'=> $project, 'log'=> $item->text->id, 'model' => 'Text'])}}"
-                                                                                           title="{{ __('older_versions') }}"
-                                                                                           class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900">
-                                                                                            <x-icon name="rotate-ccw" size="4"/>
-                                                                                        </a>
+                                                                                        <x-ui.history-trigger
+                                                                                            subjectType="Text"
+                                                                                            :subjectId="$item->text->id"
+                                                                                        />
                                                                                         @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                                                             <x-comment.trigger
                                                                                                 commentableType="App\Models\Text"
@@ -463,19 +478,21 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                     <div>
                                                                                         <div class="text-scrollbar overflow-auto">
                                                                                             @can('update', $project)
-                                                                                                <livewire:rich-text-editor
-                                                                                                    :model="$item->text"
-                                                                                                    field="text"
-                                                                                                    rules="nullable|string"
-                                                                                                    :label="__('text_content')"
-                                                                                                    :key="'text-content-'.$item->text->id" />
+                                                                                                <div data-history-field="text">
+                                                                                                    <livewire:rich-text-editor
+                                                                                                        :model="$item->text"
+                                                                                                        field="text"
+                                                                                                        rules="nullable|string"
+                                                                                                        :label="__('text_content')"
+                                                                                                        :key="'text-content-'.$item->text->id" />
+                                                                                                </div>
                                                                                                 {{-- 5z.5: Absatz-Legende beantwortet die Review-Frage
                                                                                                      „Hier nur ein BR?" im Editor statt in der Vorschau. --}}
                                                                                                 <p class="mt-2 text-caption text-ink-500">
                                                                                                     {{ __('text_paragraph_legend') }}
                                                                                                 </p>
                                                                                             @else
-                                                                                                <p>{!! html_entity_decode($item->text->text) !!}</p>
+                                                                                                <p data-history-field="text">{!! html_entity_decode($item->text->text) !!}</p>
                                                                                             @endcan
                                                                                         </div>
                                                                                     </div>
@@ -546,14 +563,13 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                     @endif
                                                                     @if($item->content_type == 'App\Models\Audiovisual')
                                                                         @isset($item->audiovisual->link)
-                                                                            <li class="item audiovisual content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
+                                                                            <li class="item audiovisual content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" data-history-subject="Audiovisual:{{$item->audiovisual->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
                                                                                 <x-ui.block-card :type="$item->audiovisual->type === 'audio' ? 'audio' : 'video'" id="anchor_MediaContent_{{$item->id}}" class="mb-4" :save-slot="'Audiovisual-'.$item->audiovisual->id">
                                                                                     <x-slot:actions>
-                                                                                        <a href="{{route('projects.edit',['project'=> $project, 'log'=> $item->audiovisual->id, 'model' => 'Audiovisual'])}}"
-                                                                                           title="{{ __('older_versions') }}"
-                                                                                           class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900">
-                                                                                            <x-icon name="rotate-ccw" size="4"/>
-                                                                                        </a>
+                                                                                        <x-ui.history-trigger
+                                                                                            subjectType="Audiovisual"
+                                                                                            :subjectId="$item->audiovisual->id"
+                                                                                        />
                                                                                         @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                                                             <x-comment.trigger
                                                                                                 commentableType="App\Models\Audiovisual"
@@ -595,7 +611,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
                                                                                                 {{-- 5z.9: Transkript-Feld für Audio + Video, weiche Pflicht
                                                                                                      analog zur Bildbeschreibung in der Galerie. --}}
-                                                                                                <div class="mt-2">
+                                                                                                <div class="mt-2" data-history-field="transcript">
                                                                                                     <label class="mb-1 block text-caption font-medium text-ink-700">
                                                                                                         {{ __('transcript') }}
                                                                                                     </label>
@@ -682,11 +698,10 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                                          daraus entstand die 250-px-Leerflaeche zwischen
                                                                                          Beschreibung und Bild-Raster (Briefing § 2). --}}
                                                                                     <x-slot:actions>
-                                                                                        <a href="{{route('projects.edit',['project'=> $project, 'log'=> $item->gallery->id, 'model' => 'Gallery'])}}"
-                                                                                           title="{{ __('older_versions') }}"
-                                                                                           class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900">
-                                                                                            <x-icon name="rotate-ccw" size="4"/>
-                                                                                        </a>
+                                                                                        <x-ui.history-trigger
+                                                                                            subjectType="Gallery"
+                                                                                            :subjectId="$item->gallery->id"
+                                                                                        />
 
                                                                                         @if(in_array('comment', $listPermissions) || Auth::user()->can('update', $project))
                                                                                             <x-comment.trigger
