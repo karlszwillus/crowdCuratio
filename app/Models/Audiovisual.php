@@ -24,6 +24,7 @@ namespace App\Models;
 
 use App\Contracts\HasComments;
 use App\Support\HasRevisions;
+use App\Support\TouchesEntryViaMediaContent;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -41,7 +42,7 @@ use Spatie\Translatable\HasTranslations;
  */
 class Audiovisual extends Model implements HasComments
 {
-    use HasFactory, HasRevisions, HasTranslations, LogsActivity, SoftDeletes;
+    use HasFactory, HasRevisions, HasTranslations, LogsActivity, SoftDeletes, TouchesEntryViaMediaContent;
 
     /**
      * The attributes that are mass assignable.

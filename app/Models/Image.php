@@ -52,6 +52,12 @@ class Image extends Model implements HasComments
 {
     use HasFactory, HasRevisions, HasTranslations, LogsActivity, SoftDeletes;
 
+    // Phase 5ac.1-Followup: Bild-Aenderungen touchen die Galerie —
+    // die wiederum den Eintrag ueber TouchesEntryViaMediaContent,
+    // der wiederum Chapter und Projekt. „Zuletzt bearbeitet" bewegt
+    // sich auch beim Editieren eines einzelnen Bildes im Editor.
+    protected $touches = ['gallery'];
+
     /**
      * The attributes that are mass assignable.
      *
