@@ -158,6 +158,16 @@ class UserController extends Controller
         $user->name = $validated['firstName'];
         $user->last_name = $validated['lastName'];
 
+        // Phase 5ac.1: Kuerzel + Farbe (optional).
+        if (array_key_exists('initials', $validated)) {
+            $trimmed = trim((string) $validated['initials']);
+            $user->initials = $trimmed === '' ? null : mb_strtoupper($trimmed);
+        }
+        if (array_key_exists('initials_color', $validated)) {
+            $color = (string) $validated['initials_color'];
+            $user->initials_color = in_array($color, \App\Support\ProfilePalette::TOKENS, true) ? $color : null;
+        }
+
         if (filled($validated['new_password'] ?? null)) {
             $user->password = Hash::make($validated['new_password']);
         }
@@ -165,6 +175,46 @@ class UserController extends Controller
         $user->save();
 
         return redirect()->back()->with('success', __('message_edit_profile_success'));
+    }
+
+    /**
+     * Phase 5ac.1: Sofort-Wirkung fuer Sprache und Theme — kein
+     * Save-Kandidat, aendert sich mit dem Klick. Beide Endpoints
+     * nehmen einen JSON-Payload und antworten mit 204, damit der
+     * Client nur reloaden muss.
+     */
+    public function updateLocale(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse
+    {
+        $user = $request->user();
+        if ($user === null) {
+            abort(401);
+        }
+        $locale = (string) $request->input('locale');
+        $allowed = array_keys((array) \Illuminate\Support\Facades\Config::get('languages'));
+        if (! in_array($locale, $allowed, true)) {
+            abort(422, 'Unknown locale.');
+        }
+        $user->locale = $locale;
+        $user->save();
+        \Illuminate\Support\Facades\Session::put('applocale', $locale);
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function updateTheme(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse
+    {
+        $user = $request->user();
+        if ($user === null) {
+            abort(401);
+        }
+        $theme = (string) $request->input('theme');
+        if (! in_array($theme, ['default', 'aktives-museum'], true)) {
+            abort(422, 'Unknown theme.');
+        }
+        $user->theme = $theme;
+        $user->save();
+
+        return response()->json(['ok' => true]);
     }
 
     /**

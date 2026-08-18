@@ -54,6 +54,12 @@ class UpdateOwnProfileRequest extends FormRequest
         $rules = [
             'firstName' => 'required|string|max:255',
             'lastName' => 'required|string|max:255',
+            // Phase 5ac.1: Kuerzel-Fallback + Farbe. Beide optional —
+            // leere Werte fallen im Frontend auf den abgeleiteten
+            // Default zurueck (Kuerzel = Initialen von Vor+Nachname,
+            // Farbe = primary).
+            'initials' => 'sometimes|nullable|string|min:1|max:3',
+            'initials_color' => 'sometimes|nullable|string|max:24',
             'old_password' => 'sometimes|nullable|string',
             'new_password' => 'sometimes|nullable|string|min:8',
             'confirm_password' => 'sometimes|nullable|string|same:new_password',

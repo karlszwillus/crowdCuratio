@@ -162,6 +162,9 @@ Route::group(
         Route::patch('/profile', [UserController::class, 'updateProfile'])->name(
             'profile.update'
         );
+        // Phase 5ac.1: Sofort-Wirkung fuer Sprache und Theme.
+        Route::post('/profile/locale', [UserController::class, 'updateLocale'])->name('profile.locale');
+        Route::post('/profile/theme', [UserController::class, 'updateTheme'])->name('profile.theme');
         Route::get('/permission/user/{id}/', [ProjectController::class, 'givePermissionToUser'])->name(
             'permission.project'
         );
