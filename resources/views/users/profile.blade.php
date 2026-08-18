@@ -64,6 +64,7 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
             @endif
 
             <form method="POST" action="{{ route('profile.update') }}"
+                  enctype="multipart/form-data"
                   x-data="ccProfileCard(@js([
                       'defaultInitials' => $defaultInitials,
                       'currentInitials' => $currentInitials,
@@ -85,18 +86,37 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                     </header>
 
                     <div class="grid gap-6 md:grid-cols-[auto_1fr]">
-                        {{-- Avatar-Vorschau: 96 px, Buchstaben-Fallback,
-                             Upload und Entfernen folgen in 5ac.2. --}}
+                        {{-- Phase 5ac.2: Avatar-Upload. Original bleibt sichtbar,
+                             Live-Preview per FileReader nach Auswahl. Entfernen
+                             haengt an einem hidden-Feld, damit der Save-Endpoint
+                             beide Faelle sauber trennt (Upload vs. Loeschen). --}}
                         <div class="flex flex-col items-start gap-2">
-                            <div class="flex size-24 items-center justify-center rounded-md text-heading font-semibold text-paper-0"
-                                 :style="`background-color: var(--${currentColor})`"
-                                 x-text="displayInitials"></div>
-                            <button type="button" disabled
-                                    title="{{ __('profile_avatar_upload_soon') }}"
-                                    class="rounded-md border border-ink-300 bg-canvas-bg px-3 py-1 text-caption text-ink-500 opacity-60">
-                                {{ __('profile_avatar_replace') }}
-                            </button>
-                            <p class="text-caption text-ink-500">{{ __('profile_avatar_hint') }}</p>
+                            <div class="relative flex size-24 items-center justify-center overflow-hidden rounded-md text-heading font-semibold text-paper-0"
+                                 :style="`background-color: var(--${currentColor})`">
+                                @if ($user->avatar_path)
+                                    <img x-show="!removedAvatar && !previewAvatarUrl"
+                                         src="{{ Storage::disk('public')->url('uploads/avatars/'.$user->avatar_path) }}"
+                                         alt="" class="absolute inset-0 size-full object-cover"/>
+                                @endif
+                                <img x-show="previewAvatarUrl" :src="previewAvatarUrl" alt="" class="absolute inset-0 size-full object-cover"/>
+                                <span x-show="(removedAvatar || !previewAvatarUrl) && !hasStoredAvatar" x-text="displayInitials"></span>
+                            </div>
+                            <div class="flex gap-2">
+                                <label class="cursor-pointer rounded-md border border-ink-300 bg-canvas-bg px-3 py-1 text-caption text-ink-900 hover:bg-chrome-active">
+                                    <input type="file" name="avatar" accept="image/jpeg,image/png,image/webp"
+                                           class="sr-only"
+                                           @change="onAvatarPicked($event); dirty()"/>
+                                    <span>{{ __('profile_avatar_replace') }}</span>
+                                </label>
+                                @if ($user->avatar_path)
+                                    <button type="button" @click="removeAvatar(); dirty()"
+                                            class="rounded-md border border-danger bg-paper-0 px-3 py-1 text-caption text-danger hover:bg-danger-bg">
+                                        {{ __('profile_avatar_remove') }}
+                                    </button>
+                                @endif
+                            </div>
+                            <input type="hidden" name="remove_avatar" :value="removedAvatar ? '1' : '0'"/>
+                            <p class="text-caption text-ink-500">{!! __('profile_avatar_hint_v2') !!}</p>
                         </div>
 
                         <div class="grid gap-4">
@@ -141,7 +161,28 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                                         <input id="profile-initials" name="initials" type="text"
                                                maxlength="3" size="4"
                                                x-model="initials" @input="normalizeInitials(); dirty()"
-                                               class="w-20 rounded-md border border-line-200 bg-paper-0 px-3 py-2 text-center font-mono uppercase text-ink-900"/>
+                                               @class([
+                                                   'w-20 rounded-md border bg-paper-0 px-3 py-2 text-center font-mono uppercase text-ink-900',
+                                                   'border-danger' => $errors->has('initials'),
+                                                   'border-line-200' => ! $errors->has('initials'),
+                                               ])/>
+                                        @error('initials')
+                                            <p class="mt-1 text-caption text-danger">{{ $message }}</p>
+                                            @php
+                                                $suggestions = App\Support\InitialsBlocklist::suggestFor(old('firstName', $user->name), old('lastName', $user->last_name));
+                                            @endphp
+                                            @if (! empty($suggestions))
+                                                <div class="mt-2 flex flex-wrap items-center gap-2">
+                                                    <span class="text-caption text-ink-500">{{ __('profile_initials_suggestions') }}</span>
+                                                    @foreach ($suggestions as $suggestion)
+                                                        <button type="button" @click="initials = @js($suggestion); dirty()"
+                                                                class="rounded-md border border-line-200 bg-canvas-bg px-2 py-0.5 font-mono text-caption text-ink-900 hover:bg-chrome-active">
+                                                            {{ $suggestion }}
+                                                        </button>
+                                                    @endforeach
+                                                </div>
+                                            @endif
+                                        @enderror
                                     </div>
                                     <div>
                                         <label class="mb-1 block text-caption font-medium text-ink-700">
@@ -261,6 +302,10 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
             locale: '{{ $currentLocale }}',
             theme: '{{ $currentTheme }}',
             _dirty: false,
+            // Phase 5ac.2: Avatar-Client-State.
+            hasStoredAvatar: {{ $user->avatar_path ? 'true' : 'false' }},
+            removedAvatar: false,
+            previewAvatarUrl: null,
             get displayInitials() {
                 if (this.initials && this.initials.trim() !== '') return this.initials.trim().toUpperCase();
                 const a = (this.firstName || '').trim().charAt(0);
@@ -277,6 +322,19 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                 this.initials = (this.initials || '').toUpperCase().replace(/[^A-ZÄÖÜ0-9]/g, '').slice(0, 3);
             },
             pickColor(t) { this.currentColor = t; this._dirty = true; },
+            onAvatarPicked(event) {
+                const file = event.target.files?.[0];
+                if (!file) return;
+                this.removedAvatar = false;
+                const reader = new FileReader();
+                reader.onload = (e) => { this.previewAvatarUrl = e.target?.result; };
+                reader.readAsDataURL(file);
+            },
+            removeAvatar() {
+                this.removedAvatar = true;
+                this.previewAvatarUrl = null;
+                this.hasStoredAvatar = false;
+            },
             reset() {
                 this.firstName = init.origFirst || '';
                 this.lastName = init.origLast || '';

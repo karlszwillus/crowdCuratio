@@ -491,5 +491,9 @@
   "profile_discard": "Discard",
   "profile_no_pending": "No pending changes",
   "profile_pending_label": "Changes pending — remember to save.",
-  "profile_save_failed": "Save failed — please try again."
+  "profile_save_failed": "Save failed — please try again.",
+  "profile_avatar_remove": "Remove",
+  "profile_avatar_hint_v2": "JPG, PNG or WebP · max 2 MB · cropped to 120 × 120.",
+  "profile_initials_blocked": "These initials are not allowed.",
+  "profile_initials_suggestions": "Suggestions:"
 }

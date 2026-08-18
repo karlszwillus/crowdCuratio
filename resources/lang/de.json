@@ -562,5 +562,9 @@
   "profile_discard": "Verwerfen",
   "profile_no_pending": "Keine offenen Änderungen",
   "profile_pending_label": "Änderungen offen — Speichern nicht vergessen.",
-  "profile_save_failed": "Speichern fehlgeschlagen — bitte nochmal versuchen."
+  "profile_save_failed": "Speichern fehlgeschlagen — bitte nochmal versuchen.",
+  "profile_avatar_remove": "Entfernen",
+  "profile_avatar_hint_v2": "JPG, PNG oder WebP · max. 2 MB · wird auf 120 × 120 zugeschnitten.",
+  "profile_initials_blocked": "Dieses Kürzel darf so nicht verwendet werden.",
+  "profile_initials_suggestions": "Vorschläge:"
 }

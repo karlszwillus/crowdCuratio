@@ -168,6 +168,19 @@ class UserController extends Controller
             $user->initials_color = in_array($color, \App\Support\ProfilePalette::TOKENS, true) ? $color : null;
         }
 
+        // Phase 5ac.2: Avatar-Upload. remove_avatar=1 wins gegen ein
+        // hochgeladenes File — der Nutzer will dann sein Bild los.
+        if (! empty($validated['remove_avatar'])) {
+            app(\App\Services\AvatarService::class)->remove($user->avatar_path);
+            $user->avatar_path = null;
+        } elseif ($request->hasFile('avatar')) {
+            $newFile = app(\App\Services\AvatarService::class)->store($request->file('avatar'));
+            if ($newFile !== null) {
+                app(\App\Services\AvatarService::class)->remove($user->avatar_path);
+                $user->avatar_path = $newFile;
+            }
+        }
+
         if (filled($validated['new_password'] ?? null)) {
             $user->password = Hash::make($validated['new_password']);
         }

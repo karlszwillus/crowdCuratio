@@ -58,8 +58,20 @@ class UpdateOwnProfileRequest extends FormRequest
             // leere Werte fallen im Frontend auf den abgeleiteten
             // Default zurueck (Kuerzel = Initialen von Vor+Nachname,
             // Farbe = primary).
-            'initials' => 'sometimes|nullable|string|min:1|max:3',
+            // Phase 5ac.2: Kuerzel + Sperrlisten-Rule. Case-insensitive,
+            // Umlaute normalisiert (siehe InitialsBlocklist).
+            'initials' => [
+                'sometimes', 'nullable', 'string', 'min:1', 'max:3',
+                function ($attribute, $value, $fail) {
+                    if (\App\Support\InitialsBlocklist::isBlocked($value)) {
+                        $fail(__('profile_initials_blocked'));
+                    }
+                },
+            ],
             'initials_color' => 'sometimes|nullable|string|max:24',
+            // Phase 5ac.2: Avatar-Upload. Whitelist JPG/PNG/WebP, max 2 MB.
+            'avatar' => 'sometimes|nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'remove_avatar' => 'sometimes|nullable|boolean',
             'old_password' => 'sometimes|nullable|string',
             'new_password' => 'sometimes|nullable|string|min:8',
             'confirm_password' => 'sometimes|nullable|string|same:new_password',
