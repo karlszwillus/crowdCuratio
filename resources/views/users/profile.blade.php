@@ -24,7 +24,9 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
 
 <x-layout>
     <x-slot:content>
-        <div class="mx-auto max-w-4xl px-6 py-6">
+        {{-- Kein mx-auto: der x-layout content-Slot rechnet nicht mit
+             sidebar, die Rail links versetzt sonst die optische Mitte. --}}
+        <div class="max-w-4xl px-6 py-6">
             {{-- Kopf: KONTO · Mein Profil · Anmelde-Info rechts --}}
             <div class="mb-6 flex flex-wrap items-start justify-between gap-4">
                 <div>
@@ -85,14 +87,14 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                         <p class="mt-1 text-body text-ink-500">{{ __('profile_card_person_desc') }}</p>
                     </header>
 
-                    <div class="grid gap-6 md:grid-cols-[auto_1fr]">
+                    <div class="grid items-start gap-6 md:grid-cols-[auto_1fr]">
                         {{-- Phase 5ac.2: Avatar-Upload. Original bleibt sichtbar,
                              Live-Preview per FileReader nach Auswahl. Entfernen
                              haengt an einem hidden-Feld, damit der Save-Endpoint
                              beide Faelle sauber trennt (Upload vs. Loeschen). --}}
                         <div class="flex flex-col items-start gap-2">
                             <div class="relative flex size-24 items-center justify-center overflow-hidden rounded-md text-heading font-semibold text-paper-0"
-                                 :style="`background-color: var(--${currentColor})`">
+                                 :style="`background-color: var(--color-${currentColor})`">
                                 @if ($user->avatar_path)
                                     <img x-show="!removedAvatar && !previewAvatarUrl"
                                          src="{{ Storage::disk('public')->url('uploads/avatars/'.$user->avatar_path) }}"
@@ -146,7 +148,7 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                             <div class="rounded-md border border-line-200 bg-canvas-bg p-3">
                                 <div class="mb-2 flex items-center gap-3">
                                     <div class="flex size-9 items-center justify-center rounded text-caption font-semibold text-paper-0"
-                                         :style="`background-color: var(--${currentColor})`"
+                                         :style="`background-color: var(--color-${currentColor})`"
                                          x-text="displayInitials"></div>
                                     <div class="min-w-0">
                                         <p class="text-body font-medium text-ink-900">{{ __('profile_initials_title') }}</p>
@@ -193,7 +195,7 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                                                 <button type="button" @click="pickColor(@js($token))"
                                                         :aria-pressed="currentColor === @js($token) ? 'true' : 'false'"
                                                         :class="currentColor === @js($token) ? 'ring-2 ring-ink-900 ring-offset-2 ring-offset-canvas-bg' : ''"
-                                                        style="background-color: var(--{{ $token }})"
+                                                        style="background-color: var(--color-{{ $token }})"
                                                         class="size-8 rounded-full border border-line-200"
                                                         aria-label="{{ $token }}"></button>
                                             @endforeach
@@ -209,9 +211,8 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                                     <label class="mb-1 block text-caption font-medium text-ink-700">
                                         {{ __('profile_email') }}
                                     </label>
-                                    <div class="flex items-center justify-between gap-3 rounded-md border border-dashed border-line-300 bg-canvas-bg px-3 py-2">
-                                        <span class="min-w-0 truncate text-body text-ink-900">{{ $user->email }}</span>
-                                        <span class="text-caption font-mono uppercase tracking-widest text-ink-500">{{ __('profile_view_only') }}</span>
+                                    <div class="rounded-md border border-dashed border-line-300 bg-canvas-bg px-3 py-2">
+                                        <span class="block truncate text-body text-ink-900">{{ $user->email }}</span>
                                     </div>
                                     <p class="mt-1 text-caption text-ink-500">
                                         {!! __('profile_email_change_hint') !!}
@@ -263,14 +264,9 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                 {{-- Karte 2 · Meine Projekte & Rollen (Lese-Karte) --}}
                 @if (isset($profileProjects) && $profileProjects->isNotEmpty())
                     <section class="mt-6 rounded-lg border border-line-200 bg-paper-0 p-6 shadow-subtle">
-                        <header class="mb-4 flex flex-wrap items-baseline justify-between gap-2">
-                            <div>
-                                <h2 class="text-heading font-semibold text-ink-900">{{ __('profile_projects_title') }}</h2>
-                                <p class="mt-1 text-body text-ink-500">{{ __('profile_projects_desc') }}</p>
-                            </div>
-                            <span class="rounded bg-canvas-dim px-1.5 py-0.5 text-caption font-mono uppercase tracking-widest text-ink-500">
-                                {{ __('profile_view_only') }}
-                            </span>
+                        <header class="mb-4">
+                            <h2 class="text-heading font-semibold text-ink-900">{{ __('profile_projects_title') }}</h2>
+                            <p class="mt-1 text-body text-ink-500">{{ __('profile_projects_desc') }}</p>
                         </header>
 
                         <ul class="divide-y divide-line-100">
