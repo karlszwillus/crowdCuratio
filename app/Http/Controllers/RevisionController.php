@@ -123,14 +123,43 @@ class RevisionController extends Controller
         // wir auf new, weil old dann null ist.
         /** @var array<string, array{old: mixed, new: mixed}> $changes */
         $changes = $revision->snapshot['changes'] ?? [];
+        /** @var array<int, string> $translatable */
+        $translatable = property_exists($subject, 'translatable') ? (array) $subject->translatable : [];
         foreach ($changes as $field => $delta) {
             $target = $delta['old'] ?? $delta['new'] ?? null;
             if ($target === null) {
                 continue;
             }
-            // JSON-Felder aus HasTranslations kommen als Array in den
-            // Snapshot — Eloquent verarbeitet sie ueber den Cast, also
-            // reichen wir sie durch.
+            // Translatable Felder (Chapter->name, Entry->description, ...)
+            // liegen als JSON in der DB. Old-Werte im Snapshot koennen als
+            // Array (Live-Trait) oder JSON-String (Activitylog-Backfill)
+            // ankommen — beide auf setTranslations() umlenken, damit die
+            // Locale-Struktur nicht in einen einzelnen String verkocht wird.
+            if (in_array($field, $translatable, true) && method_exists($subject, 'setTranslations')) {
+                $translations = null;
+                if (is_array($target)) {
+                    $translations = $target;
+                } elseif (is_string($target)) {
+                    $trimmed = trim($target);
+                    if ($trimmed !== '' && ($trimmed[0] === '{' || $trimmed[0] === '[')) {
+                        $decoded = json_decode($trimmed, true);
+                        if (is_array($decoded)) {
+                            $translations = $decoded;
+                        }
+                    }
+                }
+                if ($translations !== null) {
+                    $subject->setTranslations($field, $translations);
+
+                    continue;
+                }
+                // Fallback: nur Deutsch, wenn der Snapshot einen reinen
+                // Text-String enthaelt (alte Backfill-Zeilen aus der
+                // Zeit vor der translatable-Migration).
+                $subject->setTranslation($field, 'de', (string) $target);
+
+                continue;
+            }
             $subject->{$field} = $target;
         }
         $subject->save();

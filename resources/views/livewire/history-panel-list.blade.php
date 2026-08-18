@@ -332,7 +332,10 @@ new class extends Component
                                          des Karten-Buttons stehen — HTML verbietet verschachtelte
                                          <button>-Elemente, Livewire's morphdom crasht sonst mit
                                          „Cannot read properties of null (reading 'before')". --}}
-                                    @if ($isSelected)
+                                    {{-- Restore-Aktion nur, wenn die Karte selected UND nicht die
+                                         aktuelle Fassung ist. Die aktuelle wiederherzustellen ergibt
+                                         keinen Zustand. --}}
+                                    @if ($isSelected && ! $isCurrent)
                                         <div class="mt-2 flex flex-wrap gap-2 rounded-b-md border border-t-0 border-ink-300 bg-paper-50 px-3 py-2 -mt-2">
                                             @can(App\Support\PermissionName::HISTORY_RESTORE->value, $restoreProject)
                                                 <button
