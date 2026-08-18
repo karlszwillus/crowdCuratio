@@ -31,7 +31,11 @@ class AvatarService
             return null;
         }
         $filename = 'avatar-'.date('Ymd').'-'.uniqid().'.'.$file->extension();
-        $folder = '/uploads/avatars/';
+        // Kein fuehrender Slash — sonst legt storeAs unter doppelt-
+        // verschachtelten Pfaden ab und die Storage-URL im Blade
+        // (`Storage::disk('public')->url('uploads/avatars/...')`)
+        // trifft die Datei nicht.
+        $folder = 'uploads/avatars';
         $this->uploadOne($file, $folder, 'public', $filename);
 
         return $filename;
