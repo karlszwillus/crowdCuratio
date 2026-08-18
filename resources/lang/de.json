@@ -566,5 +566,13 @@
   "profile_avatar_remove": "Entfernen",
   "profile_avatar_hint_v2": "JPG, PNG oder WebP · max. 2 MB · wird auf 120 × 120 zugeschnitten.",
   "profile_initials_blocked": "Dieses Kürzel darf so nicht verwendet werden.",
-  "profile_initials_suggestions": "Vorschläge:"
+  "profile_initials_suggestions": "Vorschläge:",
+  "profile_projects_title": "Meine Projekte & Rollen",
+  "profile_projects_desc": "Rollen werden pro Projekt vergeben, nicht am Konto. Änderungen macht die Person, die das Projekt besitzt.",
+  "profile_project_role_owner": "Owner",
+  "profile_project_role_member": "Mitarbeit",
+  "profile_project_role_admin": "Admin",
+  "profile_project_role_reader": "Leser:in",
+  "profile_project_context_chapters": "{0} keine Kapitel|{1} 1 Kapitel|[2,*] :count Kapitel",
+  "profile_project_open": "öffnen"
 }

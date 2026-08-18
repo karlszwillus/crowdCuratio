@@ -495,5 +495,13 @@
   "profile_avatar_remove": "Remove",
   "profile_avatar_hint_v2": "JPG, PNG or WebP · max 2 MB · cropped to 120 × 120.",
   "profile_initials_blocked": "These initials are not allowed.",
-  "profile_initials_suggestions": "Suggestions:"
+  "profile_initials_suggestions": "Suggestions:",
+  "profile_projects_title": "My projects & roles",
+  "profile_projects_desc": "Roles are assigned per project, not per account. Changes are made by the project owner.",
+  "profile_project_role_owner": "Owner",
+  "profile_project_role_member": "Member",
+  "profile_project_role_admin": "Admin",
+  "profile_project_role_reader": "Reader",
+  "profile_project_context_chapters": "{0} no chapters|{1} 1 chapter|[2,*] :count chapters",
+  "profile_project_open": "open"
 }

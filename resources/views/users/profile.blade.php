@@ -260,6 +260,37 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                     </div>
                 </section>
 
+                {{-- Karte 2 · Meine Projekte & Rollen (Lese-Karte) --}}
+                @if (isset($profileProjects) && $profileProjects->isNotEmpty())
+                    <section class="mt-6 rounded-lg border border-line-200 bg-paper-0 p-6 shadow-subtle">
+                        <header class="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+                            <div>
+                                <h2 class="text-heading font-semibold text-ink-900">{{ __('profile_projects_title') }}</h2>
+                                <p class="mt-1 text-body text-ink-500">{{ __('profile_projects_desc') }}</p>
+                            </div>
+                            <span class="rounded bg-canvas-dim px-1.5 py-0.5 text-caption font-mono uppercase tracking-widest text-ink-500">
+                                {{ __('profile_view_only') }}
+                            </span>
+                        </header>
+
+                        <ul class="divide-y divide-line-100">
+                            @foreach ($profileProjects as $p)
+                                <li class="flex flex-wrap items-center justify-between gap-3 py-3">
+                                    <div class="min-w-0 flex-1">
+                                        <p class="truncate text-body font-medium text-ink-900">{{ $p['name'] }}</p>
+                                    </div>
+                                    <span class="rounded-full bg-canvas-bg px-2 py-0.5 text-caption text-ink-700">{{ $p['role'] }}</span>
+                                    <span class="text-caption text-ink-500">{{ $p['context'] }}</span>
+                                    <a href="{{ route('projects.edit', $p['id']) }}"
+                                       class="text-caption text-primary underline hover:no-underline">
+                                        {{ __('profile_project_open') }}
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </section>
+                @endif
+
                 {{-- Sticky-Fusszeile mit Sammel-Speichern. Nennt beim Klick
                      was offen ist, damit der Nutzer nicht raetselt. --}}
                 <div class="fixed inset-x-0 bottom-0 z-20 border-t border-line-200 bg-paper-0/95 shadow-medium backdrop-blur">

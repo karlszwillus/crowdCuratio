@@ -252,7 +252,45 @@ class UserController extends Controller
     {
         $roles = Role::pluck('name', 'name')->all();
 
-        return view('users.profile', compact('roles'));
+        // Phase 5ac.3: Projekte + Rolle pro Projekt fuer die Lese-
+        // Karte „Meine Projekte & Rollen". Aggregation ueber den
+        // bestehenden ProjectPermissionService, damit die Sicht mit
+        // der Projektliste konsistent bleibt.
+        /** @var \App\Models\User $me */
+        $me = auth()->user();
+        $service = app(\App\Services\ProjectPermissionService::class);
+        $projectsRaw = $service->listProjectsForUser($me);
+        $ownRoleNames = $me->roles->pluck('name')->all();
+
+        $profileProjects = $projectsRaw->map(function ($project) use ($me, $ownRoleNames) {
+            $isOwner = (int) $project->user_id === (int) $me->id;
+            $roleLabel = $isOwner
+                ? __('profile_project_role_owner')
+                : (\App\Models\ProjectUserPermission::query()
+                    ->where('project_id', $project->id)
+                    ->where('user_id', $me->id)
+                    ->exists()
+                    ? __('profile_project_role_member')
+                    : (in_array(\App\Support\RoleName::ADMIN->value, $ownRoleNames, true)
+                        ? __('profile_project_role_admin')
+                        : __('profile_project_role_reader')));
+
+            // Kontext-Zahl: fuer Runde 1 einheitlich „N Kapitel". Die
+            // rollenabhaengige Formulierung (Eintraege / offene
+            // Kommentare / eigene Beitraege) folgt in 5ac.3-Followup.
+            $chapterCount = (int) ($project->chapters_count ?? 0);
+            $contextText = trans_choice('profile_project_context_chapters', $chapterCount, ['count' => $chapterCount]);
+
+            return [
+                'id' => $project->id,
+                'name' => (string) $project->name,
+                'role' => $roleLabel,
+                'context' => $contextText,
+                'is_owner' => $isOwner,
+            ];
+        })->values();
+
+        return view('users.profile', compact('roles', 'profileProjects'));
     }
 
     /**
