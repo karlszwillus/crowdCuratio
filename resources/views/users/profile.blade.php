@@ -13,6 +13,18 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
      mit undefined aus und Vorname/Nachname bleiben leer, Toggles tot.
      `@push('scripts')` rendert erst nach @livewireScripts — dort ist
      Alpine schon zu spaet. Deshalb inline direkt VOR der Sicht. --}}
+@php
+    // Blade-Directive-Parser stolpert ueber @json(...) mit einem
+    // Array-Literal, das mehrere Funktionsaufrufe enthaelt. Deshalb
+    // vorher als Variable zuweisen und dann @json($var) rendern.
+    $pwStrengthLabels = [
+        __('profile_pw_strength_0'),
+        __('profile_pw_strength_1'),
+        __('profile_pw_strength_2'),
+        __('profile_pw_strength_3'),
+        __('profile_pw_strength_4'),
+    ];
+@endphp
 <script>
     window.ccPasswordCard = function () {
         return {
@@ -28,7 +40,7 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                 return Math.min(score, 4);
             },
             get strengthLabel() {
-                const labels = @json([__('profile_pw_strength_0'), __('profile_pw_strength_1'), __('profile_pw_strength_2'), __('profile_pw_strength_3'), __('profile_pw_strength_4')]);
+                const labels = @json($pwStrengthLabels);
                 return labels[this.strength] || '';
             }
         };
