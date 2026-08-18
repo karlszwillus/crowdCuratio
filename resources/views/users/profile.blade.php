@@ -8,6 +8,112 @@ Kuerzel-Sperrliste, Projekte-Karte, Passwort-Karte, Benachrichtigungen
 und Konto-Loeschen folgen in 5ac.2–5ad.
 --}}
 
+{{-- Phase 5ac.1 Fix: die Alpine-Data muss VOR dem alpine:init-Event
+     verfügbar sein, sonst wertet Alpine `x-data="ccProfileCard(...)"`
+     mit undefined aus und Vorname/Nachname bleiben leer, Toggles tot.
+     `@push('scripts')` rendert erst nach @livewireScripts — dort ist
+     Alpine schon zu spaet. Deshalb inline direkt VOR der Sicht. --}}
+<script>
+    window.ccPasswordCard = function () {
+        return {
+            pw: '', confirm: '',
+            get strength() {
+                const s = this.pw || '';
+                if (s.length === 0) return 0;
+                let score = 0;
+                if (s.length >= 10) score++;
+                if (s.length >= 14) score++;
+                if (/[A-Z]/.test(s) && /[a-z]/.test(s)) score++;
+                if (/[^A-Za-z0-9]/.test(s)) score++;
+                return Math.min(score, 4);
+            },
+            get strengthLabel() {
+                const labels = @json([__('profile_pw_strength_0'), __('profile_pw_strength_1'), __('profile_pw_strength_2'), __('profile_pw_strength_3'), __('profile_pw_strength_4')]);
+                return labels[this.strength] || '';
+            }
+        };
+    };
+    window.ccProfileCard = function (init) {
+        return {
+            firstName: init.origFirst || '',
+            lastName: init.origLast || '',
+            initials: init.origInitials || '',
+            currentColor: init.currentColor || init.palette[0],
+            palette: init.palette,
+            locale: init.locale,
+            theme: init.theme,
+            _dirty: false,
+            hasStoredAvatar: !! init.hasStoredAvatar,
+            removedAvatar: false,
+            previewAvatarUrl: null,
+            get displayInitials() {
+                if (this.initials && this.initials.trim() !== '') return this.initials.trim().toUpperCase();
+                const a = (this.firstName || '').trim().charAt(0);
+                const b = (this.lastName || '').trim().charAt(0);
+                return (a + b).toUpperCase() || '?';
+            },
+            get isDirty() { return this._dirty; },
+            get pendingLabel() {
+                return this._dirty ? init.pendingLabel : init.noPendingLabel;
+            },
+            dirty() { this._dirty = true; },
+            normalizeInitials() {
+                this.initials = (this.initials || '').toUpperCase().replace(/[^A-ZÄÖÜ0-9]/g, '').slice(0, 3);
+            },
+            pickColor(t) { this.currentColor = t; this._dirty = true; },
+            onAvatarPicked(event) {
+                const file = event.target.files?.[0];
+                if (!file) return;
+                this.removedAvatar = false;
+                const reader = new FileReader();
+                reader.onload = (e) => { this.previewAvatarUrl = e.target?.result; };
+                reader.readAsDataURL(file);
+            },
+            removeAvatar() {
+                this.removedAvatar = true;
+                this.previewAvatarUrl = null;
+                this.hasStoredAvatar = false;
+            },
+            reset() {
+                this.firstName = init.origFirst || '';
+                this.lastName = init.origLast || '';
+                this.initials = init.origInitials || '';
+                this.currentColor = init.currentColor || init.palette[0];
+                this._dirty = false;
+            },
+            async switchLocale(code) {
+                if (this.locale === code) return;
+                this.locale = code;
+                await this._persist(init.localeUrl, { locale: code });
+                window.location.reload();
+            },
+            async switchTheme(t) {
+                if (this.theme === t) return;
+                this.theme = t;
+                document.documentElement.dataset.theme = t;
+                await this._persist(init.themeUrl, { theme: t });
+            },
+            async _persist(url, body) {
+                const token = document.querySelector('meta[name=csrf-token]')?.content;
+                try {
+                    await fetch(url, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': token || '',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        body: JSON.stringify(body),
+                    });
+                } catch (e) {
+                    window.ccToast?.(init.saveFailedLabel, 'error');
+                }
+            },
+        };
+    };
+</script>
+
 @php
     $user = auth()->user();
     $palette = App\Support\ProfilePalette::TOKENS;
@@ -76,6 +182,14 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                       'origLast' => $user->last_name,
                       'origInitials' => $user->initials,
                       'origColor' => $user->initials_color,
+                      'locale' => $currentLocale,
+                      'theme' => $currentTheme,
+                      'hasStoredAvatar' => (bool) $user->avatar_path,
+                      'localeUrl' => route('profile.locale'),
+                      'themeUrl' => route('profile.theme'),
+                      'pendingLabel' => __('profile_pending_label'),
+                      'noPendingLabel' => __('profile_no_pending'),
+                      'saveFailedLabel' => __('profile_save_failed'),
                   ]))">
                 @csrf
                 @method('PATCH')
@@ -411,111 +525,3 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
     </x-slot:content>
 </x-layout>
 
-@push('scripts')
-<script>
-    // Phase 5ac.1: Alpine-Data fuer die Person-Karte plus Sofort-Wirkung
-    // fuer Sprache und Theme (kein Save-Kandidat).
-    // Phase 5ac.4: Alpine-Data fuer die Passwort-Karte.
-    window.ccPasswordCard = function () {
-        return {
-            pw: '', confirm: '',
-            get strength() {
-                const s = this.pw || '';
-                if (s.length === 0) return 0;
-                let score = 0;
-                if (s.length >= 10) score++;
-                if (s.length >= 14) score++;
-                if (/[A-Z]/.test(s) && /[a-z]/.test(s)) score++;
-                if (/[^A-Za-z0-9]/.test(s)) score++;
-                return Math.min(score, 4);
-            },
-            get strengthLabel() {
-                const labels = [@js(__('profile_pw_strength_0')), @js(__('profile_pw_strength_1')), @js(__('profile_pw_strength_2')), @js(__('profile_pw_strength_3')), @js(__('profile_pw_strength_4'))];
-                return labels[this.strength] || '';
-            }
-        };
-    };
-
-    window.ccProfileCard = function (init) {
-        return {
-            firstName: init.origFirst || '',
-            lastName: init.origLast || '',
-            initials: init.origInitials || '',
-            currentColor: init.currentColor || init.palette[0],
-            palette: init.palette,
-            locale: '{{ $currentLocale }}',
-            theme: '{{ $currentTheme }}',
-            _dirty: false,
-            // Phase 5ac.2: Avatar-Client-State.
-            hasStoredAvatar: {{ $user->avatar_path ? 'true' : 'false' }},
-            removedAvatar: false,
-            previewAvatarUrl: null,
-            get displayInitials() {
-                if (this.initials && this.initials.trim() !== '') return this.initials.trim().toUpperCase();
-                const a = (this.firstName || '').trim().charAt(0);
-                const b = (this.lastName || '').trim().charAt(0);
-                return (a + b).toUpperCase() || '?';
-            },
-            get isDirty() { return this._dirty; },
-            get pendingLabel() {
-                if (! this._dirty) return @js(__('profile_no_pending'));
-                return @js(__('profile_pending_label'));
-            },
-            dirty() { this._dirty = true; },
-            normalizeInitials() {
-                this.initials = (this.initials || '').toUpperCase().replace(/[^A-ZÄÖÜ0-9]/g, '').slice(0, 3);
-            },
-            pickColor(t) { this.currentColor = t; this._dirty = true; },
-            onAvatarPicked(event) {
-                const file = event.target.files?.[0];
-                if (!file) return;
-                this.removedAvatar = false;
-                const reader = new FileReader();
-                reader.onload = (e) => { this.previewAvatarUrl = e.target?.result; };
-                reader.readAsDataURL(file);
-            },
-            removeAvatar() {
-                this.removedAvatar = true;
-                this.previewAvatarUrl = null;
-                this.hasStoredAvatar = false;
-            },
-            reset() {
-                this.firstName = init.origFirst || '';
-                this.lastName = init.origLast || '';
-                this.initials = init.origInitials || '';
-                this.currentColor = init.currentColor || init.palette[0];
-                this._dirty = false;
-            },
-            async switchLocale(code) {
-                if (this.locale === code) return;
-                this.locale = code;
-                await this._persist(@js(route('profile.locale')), { locale: code });
-                window.location.reload();
-            },
-            async switchTheme(t) {
-                if (this.theme === t) return;
-                this.theme = t;
-                document.documentElement.dataset.theme = t;
-                await this._persist(@js(route('profile.theme')), { theme: t });
-            },
-            async _persist(url, body) {
-                const token = document.querySelector('meta[name=csrf-token]')?.content;
-                try {
-                    await fetch(url, {
-                        method: 'POST',
-                        headers: {
-                            'Accept': 'application/json',
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': token || '',
-                            'X-Requested-With': 'XMLHttpRequest',
-                        },
-                        body: JSON.stringify(body),
-                    });
-                } catch (e) {
-                    window.ccToast?.(@js(__('profile_save_failed')), 'error');
-                }
-            },
-        };
-    };
-</script>
-@endpush
