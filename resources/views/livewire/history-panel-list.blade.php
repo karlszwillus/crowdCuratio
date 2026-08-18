@@ -295,6 +295,9 @@ new class extends Component
                                     >
                                         <div class="flex items-baseline justify-between gap-2">
                                             <div class="flex items-center gap-2">
+                                                @if ($revision->actor)
+                                                    <x-ui.user-avatar :user="$revision->actor" size="6" text="text-caption font-semibold" class="translate-y-1"/>
+                                                @endif
                                                 <span class="text-body font-medium text-ink-900">
                                                     {{ $revision->actor?->name ?? __('history_actor_system') }}
                                                 </span>

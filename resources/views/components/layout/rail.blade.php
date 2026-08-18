@@ -244,13 +244,12 @@ Nutzung: `<x-layout.rail :active="'projects'" />` im äußeren
                     aria-haspopup="true"
                     :aria-expanded="open"
                     class="flex h-11 w-11 items-center justify-center rounded-full
-                           bg-primary text-primary-on
                            focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
                            focus-visible:outline-brand-bar"
                     :aria-label="'{{ Auth::user()->name ?? '' }} {{ Auth::user()->last_name ?? '' }}'"
                     title="{{ Auth::user()->name ?? '' }} {{ Auth::user()->last_name ?? '' }}"
                 >
-                    <span class="text-caption font-semibold">{{ $initials }}</span>
+                    <x-ui.user-avatar size="11"/>
                 </button>
                 <div
                     x-show="open"

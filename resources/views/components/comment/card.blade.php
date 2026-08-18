@@ -52,7 +52,10 @@
     ])
 >
     <header class="flex items-baseline justify-between gap-3 mb-2">
-        <div class="flex items-baseline gap-2 min-w-0">
+        <div class="flex items-center gap-2 min-w-0">
+            @if ($comment->user)
+                <x-ui.user-avatar :user="$comment->user" size="7" text="text-caption font-semibold"/>
+            @endif
             <span class="text-sm font-medium text-ink-900 truncate">{{ $author }}</span>
             <time class="text-xs text-ink-500" datetime="{{ $comment->created_at?->toIso8601String() }}">
                 {{ optional($comment->created_at)->format('d.m.Y H:i') }}
