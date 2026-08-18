@@ -146,7 +146,9 @@ class RevisionController extends Controller
             // Array (Live-Trait) oder JSON-String (Activitylog-Backfill)
             // ankommen — beide auf setTranslations() umlenken, damit die
             // Locale-Struktur nicht in einen einzelnen String verkocht wird.
-            if (in_array($field, $translatable, true) && method_exists($subject, 'setTranslations')) {
+            // Alle sechs Subjects im Union oben tragen HasTranslations —
+            // method_exists() waere tautologisch. Reine translatable-Weiche.
+            if (in_array($field, $translatable, true)) {
                 $translations = null;
                 if (is_array($target)) {
                     $translations = $target;
