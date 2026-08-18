@@ -39,6 +39,7 @@ beforeEach(function () {
 
 it('index liefert JSON mit Revisions fuer ein Subject', function () {
     /** @var TestCase $this */
+    /** @var User $owner */
     $owner = User::factory()->create();
     $owner->assignRole('Admin');
     $project = makeProject($owner);
@@ -57,6 +58,7 @@ it('index liefert JSON mit Revisions fuer ein Subject', function () {
 
 it('restore schreibt den new-Wert zurueck und ist idempotent gegen Rollback', function () {
     /** @var TestCase $this */
+    /** @var User $owner */
     $owner = User::factory()->create();
     $owner->assignRole('Admin');
     $this->actingAs($owner);
@@ -85,6 +87,7 @@ it('restore schreibt den new-Wert zurueck und ist idempotent gegen Rollback', fu
 
 it('restore verweigert User ohne history-restore-Permission', function () {
     /** @var TestCase $this */
+    /** @var User $owner */
     $owner = User::factory()->create();
     $owner->assignRole('Admin');
     $this->actingAs($owner);
@@ -93,6 +96,7 @@ it('restore verweigert User ohne history-restore-Permission', function () {
     $target = Revision::query()->where('subject_id', $chapter->id)->first();
 
     // Reader-Rolle hat nur view — kein history-restore.
+    /** @var User $reader */
     $reader = User::factory()->create();
     $reader->assignRole('Reader');
     $this->actingAs($reader);
@@ -102,6 +106,7 @@ it('restore verweigert User ohne history-restore-Permission', function () {
 
 it('restore behaelt beide Sprachen bei einem translatable Feld', function () {
     /** @var TestCase $this */
+    /** @var User $owner */
     $owner = User::factory()->create();
     $owner->assignRole('Admin');
     $this->actingAs($owner);

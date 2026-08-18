@@ -804,9 +804,10 @@ class ProjectController extends Controller
                 $subjects[\App\Models\Entry::class][] = $entry->id;
                 foreach ($entry->mediaContent as $mc) {
                     foreach (['text', 'gallery', 'audiovisual'] as $rel) {
+                        /** @var \Illuminate\Database\Eloquent\Model|null $obj */
                         $obj = $mc->{$rel} ?? null;
                         if ($obj) {
-                            $subjects[$obj::class][] = $obj->id;
+                            $subjects[$obj::class][] = (int) $obj->getKey();
                         }
                     }
                 }
@@ -844,7 +845,10 @@ class ProjectController extends Controller
                 ->groupBy('subject_id')
                 ->get()
                 ->each(function ($row) use (&$latestByKey, $type): void {
-                    $latestByKey[$type.'|'.$row->subject_id] = (int) $row->latest_id;
+                    // selectRaw fuegt latest_id/subject_id an, ohne dass die
+                    // Model-Klasse sie kennt — Attribute-Getter statt Property.
+                    $subjectId = (int) $row->getAttribute('subject_id');
+                    $latestByKey[$type.'|'.$subjectId] = (int) $row->getAttribute('latest_id');
                 });
         }
 

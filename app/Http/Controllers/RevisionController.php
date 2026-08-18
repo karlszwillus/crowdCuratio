@@ -83,17 +83,21 @@ class RevisionController extends Controller
                 'type' => RevisionSubject::shortName($subject::class),
                 'id' => $subject->getKey(),
             ],
-            'revisions' => $revisions->map(fn (Revision $r) => [
-                'id' => $r->id,
-                'version' => $r->version,
-                'kind' => $r->kind,
-                'kindLabel' => $r->kind_label,
-                'summary' => $r->summary,
-                'actor' => $r->actor?->name,
-                'createdAt' => $r->created_at?->toIso8601String(),
-                'subjectType' => RevisionSubject::shortName($r->subject_type),
-                'subjectId' => $r->subject_id,
-            ])->all(),
+            'revisions' => $revisions->map(function (Revision $r): array {
+                // kind_label ist ein Attribute-Accessor (Attribute::get), PHPStan
+                // sieht es nicht als deklarierte Property — Zugriff ueber getAttribute.
+                return [
+                    'id' => $r->id,
+                    'version' => $r->version,
+                    'kind' => $r->kind,
+                    'kindLabel' => (string) $r->getAttribute('kindLabel'),
+                    'summary' => $r->summary,
+                    'actor' => $r->actor?->name,
+                    'createdAt' => $r->created_at->toIso8601String(),
+                    'subjectType' => RevisionSubject::shortName($r->subject_type),
+                    'subjectId' => $r->subject_id,
+                ];
+            })->all(),
         ]);
     }
 
@@ -125,6 +129,11 @@ class RevisionController extends Controller
         // sauber zu speichern).
         /** @var array<string, array{old: mixed, new: mixed}> $changes */
         $changes = $revision->snapshot['changes'] ?? [];
+        // Whitelist in RevisionSubject::TYPES beschraenkt $subject auf die
+        // sechs Content-Modelle, die alle HasTranslations tragen — der
+        // Union-Type hilft PHPStan, setTranslation()/setTranslations()
+        // aufzuloesen.
+        /** @var \App\Models\Chapter|\App\Models\Entry|\App\Models\Text|\App\Models\Gallery|\App\Models\Image|\App\Models\Audiovisual $subject */
         /** @var array<int, string> $translatable */
         $translatable = property_exists($subject, 'translatable') ? (array) $subject->translatable : [];
         foreach ($changes as $field => $delta) {

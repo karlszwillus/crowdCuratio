@@ -37,6 +37,7 @@ beforeEach(function () {
 
 it('legt eine Revision an, wenn ein Chapter erstellt wird', function () {
     /** @var TestCase $this */
+    /** @var User $owner */
     $owner = User::factory()->create();
     $owner->assignRole('Admin');
     $this->actingAs($owner);
@@ -58,6 +59,7 @@ it('legt eine Revision an, wenn ein Chapter erstellt wird', function () {
 
 it('legt eine Update-Revision mit old/new-Delta an', function () {
     /** @var TestCase $this */
+    /** @var User $owner */
     $owner = User::factory()->create();
     $owner->assignRole('Admin');
     $this->actingAs($owner);
@@ -91,6 +93,7 @@ it('legt eine Update-Revision mit old/new-Delta an', function () {
 
 it('merged Aenderungen innerhalb 5 Minuten in die bestehende Revision', function () {
     /** @var TestCase $this */
+    /** @var User $owner */
     $owner = User::factory()->create();
     $owner->assignRole('Admin');
     $this->actingAs($owner);
@@ -123,6 +126,7 @@ it('merged Aenderungen innerhalb 5 Minuten in die bestehende Revision', function
 
 it('markiert reine position-Aenderungen als REORDER', function () {
     /** @var TestCase $this */
+    /** @var User $owner */
     $owner = User::factory()->create();
     $owner->assignRole('Admin');
     $this->actingAs($owner);

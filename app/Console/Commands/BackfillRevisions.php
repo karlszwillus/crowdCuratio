@@ -170,8 +170,18 @@ class BackfillRevisions extends Command
                             ],
                             'version' => $versionSeq[$key],
                         ]);
-                        $revision->created_at = $activity->created_at;
-                        $revision->updated_at = $activity->updated_at ?? $activity->created_at;
+                        // Activity kann in Grenzfaellen (verwaiste Alt-Zeilen)
+                        // keinen Timestamp haben — wir ueberspringen die, weil
+                        // ein Verlauf ohne Zeit nutzlos ist. PHPStan-Grund:
+                        // Activity::$created_at ist Carbon|null, Revision::
+                        // $created_at ist non-null.
+                        if ($activity->created_at === null) {
+                            $skipped++;
+
+                            continue;
+                        }
+                        $revision->created_at = \Illuminate\Support\Carbon::instance($activity->created_at);
+                        $revision->updated_at = \Illuminate\Support\Carbon::instance($activity->updated_at ?? $activity->created_at);
                         $revision->timestamps = false;
                         $revision->save();
                     }
