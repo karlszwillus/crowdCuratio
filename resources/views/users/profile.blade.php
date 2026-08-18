@@ -489,7 +489,8 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
 
             {{-- Karte 3 · Passwort ändern — eigener Save, eigenes Formular (§ 4). --}}
             <form method="POST" action="{{ route('profile.password') }}"
-                  class="mt-6"
+                  id="password"
+                  class="mt-6 scroll-mt-6"
                   x-data="ccPasswordCard()">
                 @csrf
                 @method('PATCH')

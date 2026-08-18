@@ -67,6 +67,11 @@ class Chapter extends Model implements HasComments
 
     protected $dates = ['deleted_at'];
 
+    // Phase 5ac.1-Followup: Kapitel-Aenderungen aktualisieren das
+    // Projekt-updated_at, damit „zuletzt bearbeitet" im Dashboard
+    // wirklich das juengste Editieren nennt.
+    protected $touches = ['project'];
+
     public $translatable = ['name', 'subtitle', 'description'];
 
     /**
