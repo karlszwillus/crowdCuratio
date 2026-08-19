@@ -89,9 +89,13 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                 $oldSelection = old('roles.0');
                                 $isDefault = $oldSelection === null && $role === \App\Support\RoleName::READER->value;
                                 $isSelected = $oldSelection === $role;
+                                // Legacy-Sweep 2026-08-19: Option-Label uebersetzen
+                                // (role_reader/role_editor/role_reviewer). Value bleibt
+                                // Rohwert der Spatie-Rolle, damit Backend unveraendert.
+                                $roleLabel = __('role_' . strtolower($role));
                             @endphp
                             <option value="{{ $key }}" {{ ($isSelected || $isDefault) ? 'selected' : '' }}>
-                                {{ $role }}
+                                {{ $roleLabel }}
                             </option>
                         @endforeach
                     </select>
