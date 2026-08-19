@@ -58,6 +58,13 @@ import './save-status';
 // window.ccToast(). Save-Failed-Bridge hängt automatisch.
 import './toast';
 
+// Quill-A11y-Labels (Q3-Härtung F4, 2026-08-19): Screenreader-
+// unbenannte Formatier-Buttons in der Quill-Toolbar bekommen ein
+// aria-label. MutationObserver-basiert — greift für beide Quill-
+// Init-Stellen (Volt-rich-text-editor.js und Inline-Script im
+// chapters/index.blade.php).
+import './quill-a11y';
+
 // Rich-Text-Inline-Editor (Phase 5c.6.c.4): Alpine-Data-Factory
 // `richTextEditor(initialHtml)` mit Quill-Bridge, verwendet von
 // <livewire:rich-text-editor>. Quill selbst kommt über den
