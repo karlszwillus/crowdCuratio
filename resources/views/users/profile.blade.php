@@ -139,19 +139,37 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
 @php
     $user = auth()->user();
     $palette = App\Support\ProfilePalette::TOKENS;
+    // shouldBeStrict() sperrt Direkt-Zugriff auf Attribute, die weder im
+    // attributes-Array noch als Cast/Mutator existieren. Bei einem User,
+    // der via Factory frisch angelegt und nicht neu geladen wurde,
+    // fehlen die 5ac.1-Felder (locale/theme/initials/…) — der Direkt-
+    // Zugriff crasht. Defensiv-Getter mit try/catch fuellt sie aus DB
+    // via getAttribute() oder fällt auf den Default zurück.
+    $safeGet = static function ($model, string $key, $default = null) {
+        try {
+            $value = $model?->getAttribute($key);
+            return $value ?? $default;
+        } catch (\Throwable $e) {
+            return $default;
+        }
+    };
+    $userName = (string) $safeGet($user, 'name', '');
+    $userLastName = (string) $safeGet($user, 'last_name', '');
     $defaultInitials = mb_strtoupper(
-        (mb_substr(trim((string) $user->name), 0, 1) ?: '?')
-        .(mb_substr(trim((string) $user->last_name), 0, 1) ?: '')
+        (mb_substr(trim($userName), 0, 1) ?: '?')
+        .(mb_substr(trim($userLastName), 0, 1) ?: '')
     );
-    $currentInitials = $user->initials ?? $defaultInitials;
-    $currentColor = $user->initials_color ?? App\Support\ProfilePalette::defaultFor((string) $user->name, (string) $user->last_name);
-    $currentLocale = $user->locale ?: app()->getLocale();
+    $currentInitials = $safeGet($user, 'initials') ?: $defaultInitials;
+    $currentColor = $safeGet($user, 'initials_color') ?: App\Support\ProfilePalette::defaultFor($userName, $userLastName);
+    $currentLocale = $safeGet($user, 'locale') ?: app()->getLocale();
     // Theme-Namen matchen die Werte aus resources/js/theme.js
     // (`crowdCuratio` / `aktivesMuseum`). Alte 'default'-Werte in der
     // DB fallen auf die Standard-Wahl zurueck.
-    $currentTheme = in_array($user->theme, ['crowdCuratio', 'aktivesMuseum'], true)
-        ? $user->theme
+    $userTheme = $safeGet($user, 'theme');
+    $currentTheme = in_array($userTheme, ['crowdCuratio', 'aktivesMuseum'], true)
+        ? $userTheme
         : 'crowdCuratio';
+    $userAvatarPath = $safeGet($user, 'avatar_path');
     $languages = (array) config('languages');
 @endphp
 
@@ -205,13 +223,13 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                       'currentInitials' => $currentInitials,
                       'currentColor' => $currentColor,
                       'palette' => $palette,
-                      'origFirst' => $user->name,
-                      'origLast' => $user->last_name,
-                      'origInitials' => $user->initials,
-                      'origColor' => $user->initials_color,
+                      'origFirst' => $userName,
+                      'origLast' => $userLastName,
+                      'origInitials' => $safeGet($user, 'initials'),
+                      'origColor' => $safeGet($user, 'initials_color'),
                       'locale' => $currentLocale,
                       'theme' => $currentTheme,
-                      'hasStoredAvatar' => (bool) $user->avatar_path,
+                      'hasStoredAvatar' => (bool) $userAvatarPath,
                       'localeUrl' => route('profile.locale'),
                       'themeUrl' => route('profile.theme'),
                       'pendingLabel' => __('profile_pending_label'),
@@ -239,9 +257,9 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                                  hinter dem Foto. --}}
                             <div class="relative flex size-24 items-center justify-center overflow-hidden rounded-md text-heading font-semibold text-paper-0"
                                  :style="showAvatarImage ? '' : `background-color: var(--color-${currentColor})`">
-                                @if ($user->avatar_path)
+                                @if ($userAvatarPath)
                                     <img x-show="!removedAvatar && !previewAvatarUrl"
-                                         src="{{ asset('storage/uploads/avatars/'.$user->avatar_path) }}"
+                                         src="{{ asset('storage/uploads/avatars/'.$userAvatarPath) }}"
                                          alt="" class="absolute inset-0 size-full object-cover"/>
                                 @endif
                                 <img x-show="previewAvatarUrl" :src="previewAvatarUrl" alt="" class="absolute inset-0 size-full object-cover"/>
@@ -254,7 +272,7 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                                            @change="onAvatarPicked($event); dirty()"/>
                                     <span>{{ __('profile_avatar_replace') }}</span>
                                 </label>
-                                @if ($user->avatar_path)
+                                @if ($userAvatarPath)
                                     <button type="button" @click="removeAvatar(); dirty()"
                                             class="rounded-md border border-danger bg-paper-0 px-3 py-1 text-caption text-danger hover:bg-danger-bg">
                                         {{ __('profile_avatar_remove') }}
@@ -315,7 +333,7 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                                         @error('initials')
                                             <p class="mt-1 text-caption text-danger">{{ $message }}</p>
                                             @php
-                                                $suggestions = App\Support\InitialsBlocklist::suggestFor(old('firstName', $user->name), old('lastName', $user->last_name));
+                                                $suggestions = App\Support\InitialsBlocklist::suggestFor(old('firstName', $userName), old('lastName', $userLastName));
                                             @endphp
                                             @if (! empty($suggestions))
                                                 <div class="mt-2 flex flex-wrap items-center gap-2">
