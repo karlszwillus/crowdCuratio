@@ -1263,6 +1263,14 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Geändert
 
+- **Register-Rollen-Select übersetzt** (Q3-Härtung 2026-08-19 /
+  Legacy FIND-12). `<option>`-Labels zeigten die Spatie-Rohwerte
+  „Reader" / „Editor" / „Reviewer" — der 5e-Vokabular-Sweep hatte
+  diese Blade nicht erwischt. Value bleibt Rohwert (kompatibel mit
+  `\App\Support\RoleName::READER->value`), Label über
+  `__('role_'.strtolower($role))` → „Leser:in" / „Editor:in" /
+  „Reviewer:in".
+
 - **Dashboard-Landing (Screen 09)** (Phase 5e.1). Vier
   Sektionen: **Wiederaufnahme-Zeile** mit zuletzt
   bearbeitetem Projekt-Anker (entfällt bei leerem Zustand);
@@ -1788,6 +1796,20 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Entfernt
 
+- **Verwaiste Blade-View `resources/views/contents/comment.blade.php`**
+  (Q3-Härtung 2026-08-19 / Legacy FIND-01). Kein `view()`-Aufruf mehr
+  im Bestand — nur ein Kommentar-Verweis in `resources/js/datatable.js`.
+
+- **Verwaiste Blade-View `resources/views/projects/metadata.blade.php`**
+  (Q3-Härtung 2026-08-19 / Legacy FIND-02). Der aktive Metadaten-Tab
+  läuft über `ProjectController::editMetaData` → `projects.create`;
+  die alte `projects.metadata`-Blade hatte 0 Referenzen.
+
+- **Verwaister Sprach-Key `message_confrim_password`** (Q3-Härtung
+  2026-08-19 / Legacy FIND-10). Der Tippfehler-Key existierte parallel
+  zum aktiven `message_confirm_password` in `resources/lang/de.json`
+  und `en.json` und wurde nirgends referenziert. Dedupliziert.
+
 - **Bootstrap-Icons als Icon-Set und CDN-Include** (Phase 5-D.2).
   Die `bootstrap-icons`-Dependency ist raus, 84 `bi-*`-Klassen in
   13 Views auf `<x-icon>` gehoben, das CDN-`<link>` aus dem
@@ -1893,6 +1915,35 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
   in der ehemaligen `CommentTrait::commentAsUser`.
 
 ### Behoben
+
+- **Fokus-Ring auf Formular-Feldern wieder sichtbar** (Q3-Härtung
+  2026-08-19 / LIVE-01, WCAG 2.4.7). Der Tailwind-Reset hatte
+  `outline: none` an `input`/`textarea`/`select` gesetzt — der
+  Tastatur-Fokus war nur am Border-Farb-Wechsel erkennbar, unter
+  AA nicht ausreichend. Neuer Regel-Block in `app.css` mit
+  `focus-visible: outline 2px solid var(--color-primary)` +
+  `outline-offset: 2px` — Maus-Klicks bleiben rahmenfrei.
+
+- **Metadaten-Save-Footer verdeckt Quill-Toolbar nicht mehr**
+  (Q3-Härtung 2026-08-19 / LIVE-UX-03). Auf Viewports < 800 px
+  überlappte der Sticky-Save-Footer die Formatier-Leiste des
+  Beschreibungs-Editors. `z-20` am Footer + `mt-16` schaffen den
+  Puffer.
+
+- **Quill-Toolbar-Buttons erhalten `aria-label`** (Q3-Härtung
+  2026-08-19 / LIVE-02, WCAG 4.1.2). ~85 Formatier-Buttons in
+  `.ql-toolbar` (`ql-bold`, `ql-italic`, `ql-list[value=ordered]`, …)
+  waren für Screenreader unbenannt. Neuer `resources/js/quill-a11y.js`
+  labelt via `MutationObserver` und CSS-Klassen-Mapping — greift für
+  beide Quill-Init-Stellen (Volt `rich-text-editor.js` + Inline-
+  Script in `chapters/index.blade.php`) ohne die Stellen selbst
+  anzufassen. Zusätzlich Fallback-Label für Select-Picker
+  (Font/Size/Header).
+
+- **`resendInvitation`-Test auf POST-Route umgestellt** (Q3-Härtung
+  2026-08-19, Follow-up zu SEC-02). `UserControllerTest` rief die
+  alte GET-URL — schlug nach dem Route-Umbau mit 404 fehl. Umgestellt
+  auf `route('resend.invitation', $invitee->id)` per POST.
 
 - **Chapter/Entry-Rahmen aus Bootstrap-Legacy-CSS** (Phase 5-D.6b).
   Der visuell wahrgenommene „Kapitel-Kasten" um Titel + Untertitel
@@ -2135,6 +2186,31 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
   nachdem die alten Spalten aus dem Schema gefallen sind.
 
 ### Sicherheit
+
+- **Stored-XSS in Preview- und Log-Views geschlossen** (Q3-Härtung
+  2026-08-19 / SEC-01). 33 Fundstellen mit `{!! !!}` in `preview/pdf`,
+  `preview/copyright`, `preview/index`, `logs/log` und `roles/create|edit`
+  liefen unescaped auf Content-Feldern, die jede Edit-Rolle beschreiben
+  kann (`Chapter.name`, `Text.text`, `Image.alt`, Rich-Text-Descriptions,
+  Aktivitäts-Log-Diff-Werte). Plaintext-Felder auf `{{ }}` gehoben,
+  Rich-Text-Felder auf eine neue `@rich`-Blade-Directive, die
+  `App\Support\RichTextSanitizer::sanitize()` nutzt (Tag-Whitelist
+  p/br/strong/em/u/s/ul/ol/li/a/blockquote/h2-h4, entfernt
+  `on*`-Handler und `javascript:`/`data:`/`vbscript:`/`file:`-URIs
+  sowie `style`-Attribute). ADR-0029 sieht mittelfristig HTML-Purifier
+  vor — dann tauscht die Sanitize-Implementierung, die Directive und
+  Feld-Typ-Klassifikation bleiben. Zusätzlich `roles/index.blade.php`
+  JS-Datenübergabe von `{!! !!}` auf `@json` umgestellt.
+
+- **`resendInvitation` gegen fremd-getriggerten Mail-Versand
+  abgesichert** (Q3-Härtung 2026-08-19 / SEC-02). Vorher lief die Route
+  als `GET /user/{id}/invitation` ohne Authorization — jeder eingeloggte
+  User konnte für beliebige User-IDs eine Welcome-Mail auslösen und
+  `welcome_valid_until` um drei Tage verlängern; RFC-9110-widrig (GET
+  mit Nebenwirkung) und CSRF-frei. Neu:
+  `POST /users/{id}/actions/resend-invitation` mit `throttle:6,1`,
+  CSRF-Schutz aus dem Blade-Form und `hasRole('Admin')`-Guard im
+  Controller. Blade-Trigger auf `<form method="POST">` umgestellt.
 
 - **500-Fehlerseite: kein Exception-Leak mehr** (Phase 5e.5).
   Die alte `resources/views/errors/500.blade.php` zeigte im
