@@ -170,13 +170,23 @@ class UserController extends Controller
 
         // Phase 5ac.2: Avatar-Upload. remove_avatar=1 wins gegen ein
         // hochgeladenes File — der Nutzer will dann sein Bild los.
+        // getAttribute() umgeht die MissingAttributeException, falls
+        // der Factory-User die 5ac.1-Spalten noch nicht in seinem
+        // attributes-Array hat (kommt im Test-Pfad ohne Reload vor).
+        $existingAvatar = null;
+        try {
+            $existingAvatar = $user->getAttribute('avatar_path');
+        } catch (\Throwable $e) {
+            // Feld fehlt im Attribute-Set — Alt-Datei existiert nicht.
+        }
+
         if (! empty($validated['remove_avatar'])) {
-            app(\App\Services\AvatarService::class)->remove($user->avatar_path);
+            app(\App\Services\AvatarService::class)->remove($existingAvatar);
             $user->avatar_path = null;
         } elseif ($request->hasFile('avatar')) {
             $newFile = app(\App\Services\AvatarService::class)->store($request->file('avatar'));
             if ($newFile !== null) {
-                app(\App\Services\AvatarService::class)->remove($user->avatar_path);
+                app(\App\Services\AvatarService::class)->remove($existingAvatar);
                 $user->avatar_path = $newFile;
             }
         }
