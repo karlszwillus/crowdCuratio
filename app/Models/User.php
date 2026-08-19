@@ -59,6 +59,12 @@ class User extends Authenticatable
         'last_name',
         'email',
         'password',
+        // Phase 5ac.1 (Profil-Redesign): Konto-Praeferenzen.
+        'avatar_path',
+        'initials',
+        'initials_color',
+        'locale',
+        'theme',
     ];
 
     /**

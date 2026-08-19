@@ -139,11 +139,15 @@ If not, see <https://www.gnu.org/licenses/>.
                                 'danger'  => 'bg-danger-bg text-danger',
                             ][$meta['variant']] ?? 'bg-info-bg text-info';
 
-                            $initials = collect(explode(' ', trim((string) $project->user_name)))
-                                ->filter()
-                                ->take(2)
-                                ->map(fn ($p) => mb_strtoupper(mb_substr($p, 0, 1)))
-                                ->implode('');
+                            // Owner-Fingerprint fuer <x-ui.user-avatar>. Kommt aus dem
+                            // Join in ProjectPermissionService.
+                            $ownerFingerprint = [
+                                'first_name' => (string) ($project->user_name ?? ''),
+                                'last_name' => (string) ($project->user_last_name ?? ''),
+                                'avatar_path' => $project->user_avatar_path ?? null,
+                                'initials' => $project->user_initials ?? null,
+                                'initials_color' => $project->user_initials_color ?? null,
+                            ];
 
                             // Match für Filter (data-status = alle | published | draft | review).
                             $dataStatus = match ($project->status) {
@@ -197,9 +201,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
                             {{-- Autor:in --}}
                             <div class="flex items-center gap-2 text-body text-ink-700">
-                                <span class="flex size-6 shrink-0 items-center justify-center rounded-full bg-line-200 text-caption font-semibold text-ink-700">
-                                    {{ $initials }}
-                                </span>
+                                <x-ui.user-avatar :user="$ownerFingerprint" size="6" text="text-caption font-semibold"/>
                                 <span class="truncate">{{ $project->user_name }}</span>
                             </div>
 

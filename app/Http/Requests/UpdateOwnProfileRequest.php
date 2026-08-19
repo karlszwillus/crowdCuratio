@@ -22,6 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Http\Requests;
 
+use App\Support\InitialsBlocklist;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Hash;
 
@@ -54,6 +55,30 @@ class UpdateOwnProfileRequest extends FormRequest
         $rules = [
             'firstName' => 'required|string|max:255',
             'lastName' => 'required|string|max:255',
+            // Phase 5ac.1: Kuerzel-Fallback + Farbe. Beide optional —
+            // leere Werte fallen im Frontend auf den abgeleiteten
+            // Default zurueck (Kuerzel = Initialen von Vor+Nachname,
+            // Farbe = primary).
+            // Phase 5ac.2: Kuerzel + Sperrlisten-Rule. Case-insensitive,
+            // Umlaute normalisiert (siehe InitialsBlocklist).
+            'initials' => [
+                'sometimes', 'nullable', 'string', 'min:1', 'max:3',
+                function ($attribute, $value, $fail) {
+                    if (InitialsBlocklist::isBlocked($value)) {
+                        $fail(__('profile_initials_blocked'));
+                    }
+                },
+            ],
+            'initials_color' => 'sometimes|nullable|string|max:24',
+            // Phase 5ac.2: Avatar-Upload. Whitelist JPG/PNG/WebP, max 2 MB.
+            'avatar' => 'sometimes|nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'remove_avatar' => 'sometimes|nullable|boolean',
+            // Phase 5ac.5: drei Benachrichtigungs-Toggles. Einladungen
+            // sind nicht abschaltbar und werden vom FormRequest nicht
+            // akzeptiert.
+            'notify_comments' => 'sometimes|nullable|boolean',
+            'notify_publish' => 'sometimes|nullable|boolean',
+            'notify_weekly_digest' => 'sometimes|nullable|boolean',
             'old_password' => 'sometimes|nullable|string',
             'new_password' => 'sometimes|nullable|string|min:8',
             'confirm_password' => 'sometimes|nullable|string|same:new_password',

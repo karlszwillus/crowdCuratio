@@ -31,9 +31,18 @@ class Language
 {
     public function handle($request, Closure $next)
     {
-        if (Session::has('applocale') and array_key_exists(Session::get('applocale'), Config::get('languages'))) {
+        $languages = Config::get('languages');
+
+        // Phase 5ac.1: Konto-Praeferenz hat Vorrang vor der Session,
+        // damit die Sprachwahl im Profil sofort und geraeteuebergreifend
+        // greift. Session bleibt als Fallback fuer nicht eingeloggte
+        // Nutzer und als Uebergang, bis das Feld ueberall gepflegt ist.
+        $user = $request->user();
+        if ($user && ! empty($user->locale) && array_key_exists($user->locale, $languages)) {
+            App::setLocale($user->locale);
+        } elseif (Session::has('applocale') and array_key_exists(Session::get('applocale'), $languages)) {
             App::setLocale(Session::get('applocale'));
-        } else { // This is optional as Laravel will automatically set the fallback language if there is none specified
+        } else {
             App::setLocale(Config::get('app.fallback_locale'));
         }
 

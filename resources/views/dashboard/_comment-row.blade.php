@@ -9,11 +9,6 @@
      */
     $author = $comment->user;
     $authorName = trim(($author->name ?? '').' '.($author->last_name ?? ''));
-    $initials = collect(explode(' ', $authorName))
-        ->filter()
-        ->take(2)
-        ->map(fn ($p) => mb_strtoupper(mb_substr($p, 0, 1)))
-        ->implode('') ?: '?';
 
     // Projekt aus commentable aufloesen + Panel-Query fuer Deep-Link.
     // Phase 5x.9-Follow-up: der Link uebergibt jetzt `model` und
@@ -67,11 +62,7 @@
           hover:bg-paper-50
           focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-bar">
 
-    <span class="mt-0.5 flex size-[30px] shrink-0 items-center justify-center rounded-full bg-line-200
-                 text-caption font-semibold text-ink-700"
-          aria-hidden="true">
-        {{ $initials }}
-    </span>
+    <x-ui.user-avatar :user="$author" size="8" text="text-caption font-semibold" class="mt-0.5"/>
 
     <div class="min-w-0 flex-1">
         <div class="flex items-baseline justify-between gap-3">

@@ -1,0 +1,44 @@
+<?php
+
+/**
+ * crowdCuratio - Curating together virtually
+ * Copyright (C) 2026 - berlinHistory e.V.
+ *
+ * Pest-Tests fuer Phase 5ac.2 — Kuerzel-Sperrliste + Vorschlaege.
+ *
+ * Prueft die Normalisierung (Umlaute, Case, Punkte) und dass die
+ * Vorschlags-Funktion keine gesperrten Werte ausspuckt.
+ */
+
+use App\Support\InitialsBlocklist;
+
+it('blockt case-insensitive und mit Punkten', function () {
+    expect(InitialsBlocklist::isBlocked('SS'))->toBeTrue()
+        ->and(InitialsBlocklist::isBlocked('ss'))->toBeTrue()
+        ->and(InitialsBlocklist::isBlocked('S.S.'))->toBeTrue()
+        ->and(InitialsBlocklist::isBlocked('S S'))->toBeTrue();
+});
+
+it('normalisiert Umlaute in der Blocklist', function () {
+    // 'HH' ist in der Liste; 'hh' (klein) muss ueber Case-Unabhaengigkeit
+    // matchen, und ein Kuerzel mit Umlaut ('HÜ') darf nicht faelschlich
+    // als 'HH' rutschen — es wird zu 'HU' normalisiert.
+    expect(InitialsBlocklist::isBlocked('hh'))->toBeTrue()
+        ->and(InitialsBlocklist::isBlocked('HÜ'))->toBeFalse();
+});
+
+it('laesst unverfaengliche Kuerzel durch', function () {
+    expect(InitialsBlocklist::isBlocked('AB'))->toBeFalse()
+        ->and(InitialsBlocklist::isBlocked('KMS'))->toBeFalse()
+        ->and(InitialsBlocklist::isBlocked(null))->toBeFalse()
+        ->and(InitialsBlocklist::isBlocked(''))->toBeFalse();
+});
+
+it('liefert Vorschlaege ohne gesperrte Kuerzel', function () {
+    // „Karl Szwillus" — Standard-Vorschlag waere KAR/KA/K.S.
+    $suggestions = InitialsBlocklist::suggestFor('Karl', 'Szwillus');
+    expect($suggestions)->not->toBeEmpty();
+    foreach ($suggestions as $s) {
+        expect(InitialsBlocklist::isBlocked($s))->toBeFalse();
+    }
+});

@@ -70,6 +70,10 @@ class Entry extends Model implements HasComments
 
     protected $dates = ['deleted_at'];
 
+    // Phase 5ac.1-Followup: Abschnitts-Aenderungen touchen Kapitel,
+    // das wiederum touched Projekt (Kaskade fuer „zuletzt bearbeitet").
+    protected $touches = ['chapter'];
+
     public $translatable = ['name', 'subtitle', 'description'];
 
     /**

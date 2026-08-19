@@ -159,11 +159,6 @@ If not, see <https://www.gnu.org/licenses/>. -->
                             ][$meta['variant']] ?? 'bg-info-bg text-info';
 
                             $fullName = trim(($user->name ?? '').' '.($user->last_name ?? ''));
-                            $initials = collect(explode(' ', $fullName))
-                                ->filter()
-                                ->take(2)
-                                ->map(fn ($p) => mb_strtoupper(mb_substr($p, 0, 1)))
-                                ->implode('');
 
                             $dataRole = $roleFilterKey[$roleValue] ?? 'other';
                             $isPending = ! is_null($user->welcome_valid_until);
@@ -183,11 +178,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                             <a href="{{ route('users.edit', $user->id) }}"
                                class="flex items-center gap-3 text-ink-900 rounded-md
                                       focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-bar">
-                                <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-line-200
-                                             text-caption font-semibold text-ink-700"
-                                      aria-hidden="true">
-                                    {{ $initials ?: '?' }}
-                                </span>
+                                <x-ui.user-avatar :user="$user" size="8" text="text-caption font-semibold"/>
                                 <span class="min-w-0 truncate text-body font-medium text-ink-900">
                                     {{ $fullName }}
                                 </span>

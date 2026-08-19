@@ -38,7 +38,10 @@ in der Volt-Component.
             };
         @endphp
 
-        <div class="mx-auto max-w-6xl px-6 py-6">
+        {{-- 5ac.1-Followup: Rand-Angleichung an das Profil und die anderen
+             Editor-Sichten — kein mx-auto mehr, sonst wirkt es zentriert
+             obwohl links die Rail steht. --}}
+        <div class="max-w-6xl px-6 py-6">
 
             {{-- Topbar: Begruessung + Suche + Sprache + CTA. --}}
             <header class="mb-8 flex flex-wrap items-center justify-between gap-4">
