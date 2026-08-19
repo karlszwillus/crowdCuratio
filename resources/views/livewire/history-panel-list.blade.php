@@ -171,7 +171,7 @@ new class extends Component
         }
 
         $query = Revision::query()
-            ->with('actor:id,name')
+            ->with('actor:id,name,last_name,avatar_path,initials,initials_color')
             ->orderByDesc('created_at')
             ->limit(50);
 

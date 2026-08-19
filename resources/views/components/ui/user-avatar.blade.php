@@ -24,17 +24,36 @@ Props:
 @php
     $u = $user ?? auth()->user();
 
-    // Kürzel-Fallback: übernommener Wert vor abgeleiteter Vor+Nach-
-    // Kombination. Farbe kommt aus der ProfilePalette-Whitelist mit
-    // stabilem Default aus dem Namen, wenn nichts gesetzt ist.
-    $firstName = $u?->name ?? '';
-    $lastName = $u?->last_name ?? '';
-    $initials = $u?->initials ?: mb_strtoupper(
-        (mb_substr(trim((string) $firstName), 0, 1) ?: '?')
-        .(mb_substr(trim((string) $lastName), 0, 1) ?: '')
-    );
-    $color = $u?->initials_color ?: App\Support\ProfilePalette::defaultFor($firstName, $lastName);
-    $avatarPath = $u?->avatar_path;
+    // Defensive Getter: mit shouldBeStrict() wirft direkter Property-
+    // Zugriff auf ein nicht-eager-geladenes Feld (z. B. wenn ein User
+    // nur mit id+name geladen wurde) MissingAttributeException. Ueber
+    // getAttribute() bleibt es null — die Komponente muss ueberall
+    // rendern, auch wenn der Aufrufer die Avatar-Felder vergessen hat.
+    $getAttr = static function ($model, string $key) {
+        if ($model === null) {
+            return null;
+        }
+        try {
+            return $model->getAttribute($key);
+        } catch (\Throwable $e) {
+            return null;
+        }
+    };
+
+    $firstName = (string) ($getAttr($u, 'name') ?? '');
+    $lastName = (string) ($getAttr($u, 'last_name') ?? '');
+    $storedInitials = (string) ($getAttr($u, 'initials') ?? '');
+    $initials = $storedInitials !== ''
+        ? mb_strtoupper($storedInitials)
+        : mb_strtoupper(
+            (mb_substr(trim($firstName), 0, 1) ?: '?')
+            .(mb_substr(trim($lastName), 0, 1) ?: '')
+        );
+    $storedColor = (string) ($getAttr($u, 'initials_color') ?? '');
+    $color = $storedColor !== ''
+        ? $storedColor
+        : App\Support\ProfilePalette::defaultFor($firstName, $lastName);
+    $avatarPath = $getAttr($u, 'avatar_path');
     $fullName = trim("{$firstName} {$lastName}");
 @endphp
 

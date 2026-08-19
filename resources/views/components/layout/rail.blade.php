@@ -260,6 +260,17 @@ Nutzung: `<x-layout.rail :active="'projects'" />` im äußeren
                     class="absolute bottom-0 left-full ml-2 min-w-[14rem]
                            rounded-md border border-ink-300 bg-paper-0 py-1 shadow-popover"
                 >
+                    {{-- Phase 5ac.2-Followup: Header-Zeile im User-Menue
+                         zeigt Avatar/Kuerzel + Namen. Sitzt oberhalb der
+                         drei Menuepunkte. --}}
+                    <div class="flex items-center gap-2 px-4 pb-2 pt-3">
+                        <x-ui.user-avatar size="8" text="text-caption font-semibold"/>
+                        <div class="min-w-0 flex-1">
+                            <p class="truncate text-body font-medium text-ink-900">{{ trim((Auth::user()->name ?? '').' '.(Auth::user()->last_name ?? '')) }}</p>
+                            <p class="truncate text-caption text-ink-500">{{ Auth::user()->email ?? '' }}</p>
+                        </div>
+                    </div>
+                    <div class="my-1 border-t border-line-200" role="separator"></div>
                     {{-- Phase 5d.6: drei Menuepunkte (Profil, Passwort
                          aendern, Abmelden). Passwort-Aendern nutzt die
                          gleiche Profile-Route mit #password-Anker —
