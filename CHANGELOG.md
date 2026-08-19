@@ -684,6 +684,53 @@ und Audio-Block sowie Galerie wandern auf den neuen
 `?log={id}` mehr. Ein kleiner Punkt-Indikator am
 Verlauf-Icon zeigt, wo bereits Historie liegt.
 
+**Phase-5ac — Profil-Seite auf Design v7 (Screen 17A) plus
+Kürzel-Fallback und Avatar-Komponente.** Die alte
+`/profile`-Sicht mit ihren fünf Feldern und einem Speichern-
+Button war das letzte alte Chrome im Editor-Bereich. Sie
+wird durch vier klar abgegrenzte Karten ersetzt: „Person &
+Darstellung" oben mit Vor-/Nachname, Kürzel-Fallback,
+Farbwahl aus sechs Token-Werten, Sprach- und Theme-
+Umschalter (Sofort-Wirkung ohne Save), „Meine Projekte &
+Rollen" als Lese-Karte mit Rolle-Chip pro Projekt,
+„Passwort ändern" als eigene Karte mit eigenem Save-Button
+und Stärke-Meter, und „Benachrichtigungen" mit vier
+Toggles (Einladungen bewusst nicht abschaltbar — der
+Zugangslink läuft dort). Sticky-Fußzeile nennt, was offen
+ist („Zwei Änderungen offen: Kürzel, Benachrichtigungen").
+
+Datenmodell: `users` bekommt `avatar_path`, `initials`,
+`initials_color`, `locale`, `theme`; neue Tabelle
+`notification_preferences` mit drei Boolean-Spalten (eine
+Zeile pro Nutzer via `updateOrCreate`). Kürzel-Sperrliste
+liegt in `config/kuerzel_blocklist.php`, der `InitialsBlocklist`-
+Helper normalisiert case/Umlaute/Punkte und liefert drei
+Vorschläge, wenn ein Kürzel abgelehnt wird — greift auch
+für die aus dem Namen automatisch abgeleitete Vorbelegung.
+
+Avatar-Upload läuft über einen schmalen `AvatarService`
+(JPG/PNG/WebP, max. 2 MB), Live-Preview per FileReader
+ohne Server-Roundtrip, `remove_avatar` löscht die Datei
+zusammen mit dem DB-Feld. Der Language-Middleware liest
+jetzt zuerst `$user->locale`, dann die Session — die
+Sprachwahl greift sofort und geräteübergreifend.
+
+Kaskaden für „zuletzt bearbeitet" im Dashboard: Chapter
+touched Project, Entry touched Chapter, ein neuer Trait
+`TouchesEntryViaMediaContent` sitzt auf Text, Galerie und
+Audiovisuell und toucht den Entry über den MediaContent-
+Pivot; Image touched über `$touches = ['gallery']`. Damit
+bewegt sich das Projekt-Timestamp auch beim Editieren
+einzelner Content-Blöcke, statt statisch an der letzten
+Metadaten-Änderung zu hängen.
+
+Wiederverwendbare Blade-Component `<x-ui.user-avatar>`:
+rendert das hochgeladene Bild oder das gewählte Kürzel
+mit Farbe, akzeptiert einen `size`-Prop. Rail-User-Chip,
+Verlauf-Panel-Fassungskarten und Kommentar-Karten nutzen
+sie — überall dort erscheint das Profilbild oder das
+gewählte Kürzel statt eines uniformen Erstbuchstabens.
+
 ### Hinzugefügt
 
 - **`<x-icon name="…">`-Komponente auf Lucide-Basis** (Phase
