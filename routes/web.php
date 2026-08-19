@@ -110,10 +110,15 @@ Route::group(
         );
         Route::post('/check/email', [ProjectController::class, 'checkEmail'])->name('check.email');
         Route::get('/user/{id}/project/{projectId}/info', [ProjectController::class, 'inviteUserForProject'])->name('user.info');
-        Route::get(
-            '/user/{id}/invitation',
+        // Q3-Härtung F2 (2026-08-19) / SEC-02: vorher GET ohne Auth-Guard,
+        // jeder eingeloggte User konnte fuer beliebige User-IDs eine
+        // Welcome-Mail ausloesen und welcome_valid_until verlaengern
+        // (CSRF-frei durch GET). Jetzt POST + throttle + Admin-Guard im
+        // Controller.
+        Route::post(
+            '/users/{id}/actions/resend-invitation',
             [UserController::class, 'resendInvitation']
-        )->name(
+        )->middleware('throttle:6,1')->name(
             'resend.invitation'
         );
         Route::post('/image/store', [ContentController::class, 'saveImage'])->name('image.store');

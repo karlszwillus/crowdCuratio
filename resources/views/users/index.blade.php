@@ -220,13 +220,24 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                 </a>
 
                                 @if ($isPending)
-                                    <a href="{{ route('resend.invitation', $user->id) }}"
-                                       title="{{ __('resend_invitation') }}"
-                                       class="inline-flex size-11 items-center justify-center rounded-md text-ink-500
-                                              hover:bg-line-100/40 hover:text-ink-700
-                                              focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-bar">
-                                        <x-icon name="mail" size="4"/>
-                                    </a>
+                                    {{-- Q3-Haertung F2 (2026-08-19) / SEC-02: Trigger
+                                         war <a href> und triggerte damit einen GET
+                                         mit Nebenwirkung (Mail-Versand +
+                                         welcome_valid_until-Verlaengerung). Jetzt
+                                         POST-Form mit CSRF; Route ist zusaetzlich
+                                         auf throttle:6,1 und Admin-only. --}}
+                                    <form action="{{ route('resend.invitation', $user->id) }}" method="POST"
+                                          class="inline-flex">
+                                        @csrf
+                                        <button type="submit"
+                                                title="{{ __('resend_invitation') }}"
+                                                aria-label="{{ __('resend_invitation') }}"
+                                                class="inline-flex size-11 items-center justify-center rounded-md text-ink-500
+                                                       hover:bg-line-100/40 hover:text-ink-700
+                                                       focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-bar">
+                                            <x-icon name="mail" size="4"/>
+                                        </button>
+                                    </form>
                                 @endif
 
                                 @if (! $isSelf)
