@@ -24,23 +24,31 @@ Props:
 @php
     $u = $user ?? auth()->user();
 
-    // Defensive Getter: mit shouldBeStrict() wirft direkter Property-
-    // Zugriff auf ein nicht-eager-geladenes Feld (z. B. wenn ein User
-    // nur mit id+name geladen wurde) MissingAttributeException. Ueber
-    // getAttribute() bleibt es null — die Komponente muss ueberall
-    // rendern, auch wenn der Aufrufer die Avatar-Felder vergessen hat.
-    $getAttr = static function ($model, string $key) {
-        if ($model === null) {
+    // Defensive Getter: der Prop akzeptiert Model UND Array (z. B. das
+    // Fingerprint-Array aus livewire/project-permissions). Bei Models
+    // laeuft der Zugriff via getAttribute() im try/catch, damit
+    // MissingAttribute unter shouldBeStrict() nicht crasht. Bei Arrays
+    // fallen wir auf 'first_name'/'last_name' zurueck, weil dort keine
+    // Model-Konvention gilt.
+    $getAttr = static function ($src, string $key) {
+        if ($src === null) {
             return null;
         }
+        if (is_array($src)) {
+            if ($key === 'name' && ! array_key_exists('name', $src)) {
+                return $src['first_name'] ?? null;
+            }
+
+            return $src[$key] ?? null;
+        }
         try {
-            return $model->getAttribute($key);
+            return $src->getAttribute($key);
         } catch (\Throwable $e) {
             return null;
         }
     };
 
-    $firstName = (string) ($getAttr($u, 'name') ?? '');
+    $firstName = (string) ($getAttr($u, 'first_name') ?? $getAttr($u, 'name') ?? '');
     $lastName = (string) ($getAttr($u, 'last_name') ?? '');
     $storedInitials = (string) ($getAttr($u, 'initials') ?? '');
     $initials = $storedInitials !== ''

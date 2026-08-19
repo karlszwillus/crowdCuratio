@@ -139,6 +139,11 @@ new class extends Component
             $result->push([
                 'id' => $ownerId,
                 'name' => trim(($project->user->name ?? '').' '.($project->user->last_name ?? '')),
+                'first_name' => (string) ($project->user->name ?? ''),
+                'last_name' => (string) ($project->user->last_name ?? ''),
+                'avatar_path' => $project->user->avatar_path ?? null,
+                'initials' => $project->user->initials ?? null,
+                'initials_color' => $project->user->initials_color ?? null,
                 'email' => $project->user->email,
                 'role' => __('role_owner'),
                 'is_owner' => true,
@@ -160,6 +165,11 @@ new class extends Component
             $result->push([
                 'id' => (int) $userId,
                 'name' => $userData['name'] ?? trim(($user->name ?? '').' '.($user->last_name ?? '')),
+                'first_name' => (string) ($user->name ?? ''),
+                'last_name' => (string) ($user->last_name ?? ''),
+                'avatar_path' => $user->avatar_path,
+                'initials' => $user->initials,
+                'initials_color' => $user->initials_color,
                 'email' => $user->email,
                 'role' => $user->getRoleNames()->first() ?? RoleName::READER->value,
                 'is_owner' => false,
@@ -393,11 +403,6 @@ new class extends Component
             @foreach ($this->users as $user)
                 @php
                     $isActive = $user['id'] === $selectedUserId;
-                    $initials = collect(explode(' ', $user['name']))
-                        ->filter()
-                        ->take(2)
-                        ->map(fn ($p) => mb_strtoupper(mb_substr($p, 0, 1)))
-                        ->implode('');
                 @endphp
                 <li>
                     <button
@@ -410,11 +415,7 @@ new class extends Component
                                    : 'text-ink-900 hover:bg-line-100/40' }}
                                focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-bar"
                     >
-                        <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-line-200
-                                     text-caption font-semibold text-ink-700"
-                              aria-hidden="true">
-                            {{ $initials ?: '?' }}
-                        </span>
+                        <x-ui.user-avatar :user="$user" size="8" text="text-caption font-semibold"/>
                         <span class="min-w-0 flex-1 truncate">
                             <span class="block text-body font-medium">{{ $user['name'] }}</span>
                             <span class="block text-caption text-ink-500">{{ $user['role'] }}</span>
@@ -438,20 +439,11 @@ new class extends Component
             </div>
         @else
             @php
-                $initials = collect(explode(' ', $active['name']))
-                    ->filter()
-                    ->take(2)
-                    ->map(fn ($p) => mb_strtoupper(mb_substr($p, 0, 1)))
-                    ->implode('');
                 $isOwner = (bool) ($active['is_owner'] ?? false);
             @endphp
 
             <div class="flex items-center gap-4">
-                <span class="flex size-14 shrink-0 items-center justify-center rounded-full bg-line-200
-                             text-title font-semibold text-ink-700"
-                      aria-hidden="true">
-                    {{ $initials ?: '?' }}
-                </span>
+                <x-ui.user-avatar :user="$active" size="14" text="text-title font-semibold"/>
                 <div class="min-w-0">
                     <div class="text-title font-semibold text-ink-900">{{ $active['name'] }}</div>
                     <div class="truncate text-body text-ink-500">{{ $active['email'] }}</div>
