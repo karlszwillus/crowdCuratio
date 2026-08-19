@@ -22,18 +22,29 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UpdateOwnPasswordRequest;
 use App\Http\Requests\UpdateOwnProfileRequest;
 use App\Http\Requests\UpdateUserAsAdminRequest;
 use App\Models\MailSetting;
+use App\Models\NotificationPreference;
+use App\Models\Project;
+use App\Models\ProjectUserPermission;
 use App\Models\User;
+use App\Services\AvatarService;
+use App\Services\ProjectPermissionService;
+use App\Support\ProfilePalette;
+use App\Support\RoleName;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Session;
 use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
@@ -165,7 +176,7 @@ class UserController extends Controller
         }
         if (array_key_exists('initials_color', $validated)) {
             $color = (string) $validated['initials_color'];
-            $user->initials_color = in_array($color, \App\Support\ProfilePalette::TOKENS, true) ? $color : null;
+            $user->initials_color = in_array($color, ProfilePalette::TOKENS, true) ? $color : null;
         }
 
         // Phase 5ac.2: Avatar-Upload. remove_avatar=1 wins gegen ein
@@ -181,12 +192,12 @@ class UserController extends Controller
         }
 
         if (! empty($validated['remove_avatar'])) {
-            app(\App\Services\AvatarService::class)->remove($existingAvatar);
+            app(AvatarService::class)->remove($existingAvatar);
             $user->avatar_path = null;
         } elseif ($request->hasFile('avatar')) {
-            $newFile = app(\App\Services\AvatarService::class)->store($request->file('avatar'));
+            $newFile = app(AvatarService::class)->store($request->file('avatar'));
             if ($newFile !== null) {
-                app(\App\Services\AvatarService::class)->remove($existingAvatar);
+                app(AvatarService::class)->remove($existingAvatar);
                 $user->avatar_path = $newFile;
             }
         }
@@ -201,7 +212,7 @@ class UserController extends Controller
         // (updateOrCreate, damit auch neue User keine leere DB-Zeile
         // vorher brauchen). Toggles sind Checkboxen — nicht gesendet
         // heisst false.
-        \App\Models\NotificationPreference::updateOrCreate(
+        NotificationPreference::updateOrCreate(
             ['user_id' => $user->id],
             [
                 'notify_comments' => (bool) ($validated['notify_comments'] ?? false),
@@ -219,20 +230,20 @@ class UserController extends Controller
      * nehmen einen JSON-Payload und antworten mit 204, damit der
      * Client nur reloaden muss.
      */
-    public function updateLocale(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse
+    public function updateLocale(Request $request): JsonResponse
     {
         $user = $request->user();
         if ($user === null) {
             abort(401);
         }
         $locale = (string) $request->input('locale');
-        $allowed = array_keys((array) \Illuminate\Support\Facades\Config::get('languages'));
+        $allowed = array_keys((array) Config::get('languages'));
         if (! in_array($locale, $allowed, true)) {
             abort(422, 'Unknown locale.');
         }
         $user->locale = $locale;
         $user->save();
-        \Illuminate\Support\Facades\Session::put('applocale', $locale);
+        Session::put('applocale', $locale);
 
         return response()->json(['ok' => true]);
     }
@@ -243,7 +254,7 @@ class UserController extends Controller
      * nicht am Vornamen haengt. Bestehende UpdateOwnProfileRequest-
      * Logik bleibt fuer Rueckwaertskompat.
      */
-    public function updatePassword(\App\Http\Requests\UpdateOwnPasswordRequest $request): RedirectResponse
+    public function updatePassword(UpdateOwnPasswordRequest $request): RedirectResponse
     {
         /** @var User $user */
         $user = $request->user();
@@ -253,7 +264,7 @@ class UserController extends Controller
         return redirect()->route('profile')->with('success', __('profile_password_updated'));
     }
 
-    public function updateTheme(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse
+    public function updateTheme(Request $request): JsonResponse
     {
         $user = $request->user();
         if ($user === null) {
@@ -295,26 +306,26 @@ class UserController extends Controller
         // Karte „Meine Projekte & Rollen". Aggregation ueber den
         // bestehenden ProjectPermissionService, damit die Sicht mit
         // der Projektliste konsistent bleibt.
-        /** @var \App\Models\User $me */
+        /** @var User $me */
         $me = auth()->user();
         // shouldBeStrict() sperrt Lazy-Loading — Rollen explizit
         // eager-laden, damit die Rollen-Iteration unten nicht crasht.
         $me->loadMissing('roles');
-        $service = app(\App\Services\ProjectPermissionService::class);
+        $service = app(ProjectPermissionService::class);
         $projectsRaw = $service->listProjectsForUser($me);
         $ownRoleNames = $me->roles->pluck('name')->all();
 
         $profileProjects = $projectsRaw->map(function ($project) use ($me, $ownRoleNames): array {
-            /** @var \App\Models\Project $project */
+            /** @var Project $project */
             $isOwner = (int) $project->user_id === (int) $me->id;
             $roleLabel = $isOwner
                 ? __('profile_project_role_owner')
-                : (\App\Models\ProjectUserPermission::query()
+                : (ProjectUserPermission::query()
                     ->where('project_id', $project->id)
                     ->where('user_id', $me->id)
                     ->exists()
                     ? __('profile_project_role_member')
-                    : (in_array(\App\Support\RoleName::ADMIN->value, $ownRoleNames, true)
+                    : (in_array(RoleName::ADMIN->value, $ownRoleNames, true)
                         ? __('profile_project_role_admin')
                         : __('profile_project_role_reader')));
 
@@ -336,7 +347,7 @@ class UserController extends Controller
         // Phase 5ac.5: bestehende Benachrichtigungs-Praeferenzen — oder
         // ein frisches Objekt mit den Defaults, damit das Blade in beiden
         // Faellen dieselben Zugriffe hat.
-        $prefs = \App\Models\NotificationPreference::firstOrNew(['user_id' => $me->id]);
+        $prefs = NotificationPreference::firstOrNew(['user_id' => $me->id]);
         if (! $prefs->exists) {
             $prefs->notify_comments = true;
             $prefs->notify_publish = true;

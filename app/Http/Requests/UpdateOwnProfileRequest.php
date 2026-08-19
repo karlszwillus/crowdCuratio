@@ -22,6 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Http\Requests;
 
+use App\Support\InitialsBlocklist;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Hash;
 
@@ -63,7 +64,7 @@ class UpdateOwnProfileRequest extends FormRequest
             'initials' => [
                 'sometimes', 'nullable', 'string', 'min:1', 'max:3',
                 function ($attribute, $value, $fail) {
-                    if (\App\Support\InitialsBlocklist::isBlocked($value)) {
+                    if (InitialsBlocklist::isBlocked($value)) {
                         $fail(__('profile_initials_blocked'));
                     }
                 },

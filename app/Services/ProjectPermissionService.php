@@ -247,13 +247,13 @@ class ProjectPermissionService
             return Project::query()
                 ->join('users', 'users.id', '=', 'projects.user_id')
                 ->select(
-                'projects.*',
-                'users.name as user_name',
-                'users.last_name as user_last_name',
-                'users.avatar_path as user_avatar_path',
-                'users.initials as user_initials',
-                'users.initials_color as user_initials_color'
-            )
+                    'projects.*',
+                    'users.name as user_name',
+                    'users.last_name as user_last_name',
+                    'users.avatar_path as user_avatar_path',
+                    'users.initials as user_initials',
+                    'users.initials_color as user_initials_color'
+                )
                 ->withCount('chapters')
                 ->whereNull('projects.deleted_at')
                 ->whereNull('users.deleted_at')
