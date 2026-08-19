@@ -146,7 +146,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
             $('#deletedRole').val('');
             $('#roleAlternative').empty();
             let id = $(this).attr('data-id');
-            let roleList = {!! $roles !!};
+            let roleList = @json($roles);
             let options = '<option>Rolle auswählen</option>';
 
             $.each(roleList, function (i, value) {

@@ -672,7 +672,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
             <div>
                 <a href="#" ><img class="logo" src="@if(isset($project->logo)){{public_path().'/uploads/images/'.$project->logo}}@endif" alt="" ></a>
             </div>
-            <p id="untertitel">{!! $project->description !!}</p>
+            <p id="untertitel">@rich($project->description )</p>
             <p id="titel">
                 <a href="index.html"></a>@isset($project->name){{$project->name}}@endisset
             </p>
@@ -704,7 +704,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
         <div class="">
             <div class="zweispaltig">
                 @if(isset($project->description))
-                    <p>{!! $project->description !!}</p>
+                    <p>@rich($project->description )</p>
                 @endif
             </div>
         </div>
@@ -725,9 +725,9 @@ If not, see <https://www.gnu.org/licenses/>. -->
                 <div class="hintergrundweiss">
                     <div class="">
                         <div class="zweispaltig" id="text">
-                            @isset($chapter->title)<h2>{!! $chapter->title !!}</h2>@endisset
+                            @isset($chapter->title)<h2>@rich($chapter->title )</h2>@endisset
                             @isset($chapter->subtitle)<h3>{{$chapter->subtitle}}</h3>@endisset
-                            @isset($chapter->description)<p>{!! $chapter->description !!}</p>@endisset
+                            @isset($chapter->description)<p>@rich($chapter->description )</p>@endisset
                         </div>
 
                     </div>
@@ -741,7 +741,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                 <div class="zweispaltig">
                                     @isset($entry->name)<h2>{{$entry->name}}</h2>@endisset
                                     @isset($entry->subtitle)<p class="subtitle">{{$entry->subtitle}}</p>@endisset
-                                    @isset($entry->description)<p>{!! $entry->description !!}</p>@endisset
+                                    @isset($entry->description)<p>@rich($entry->description )</p>@endisset
                                 </div>
 
                                 {{-- Phase 4 / E.7b 4a (ADR-0022): media_contentable_type → content_type.
@@ -752,14 +752,14 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                         @if(isset($media->content_type))
                                             @if($media->content_type == 'App\Models\Text' && isset($media->text->text))
                                                 <div class="einspaltig">
-                                                    <p>{!! $media->text->text !!}</p>
+                                                    <p>@rich($media->text->text )</p>
                                                 </div>
                                             @endif
                                             @if($media->content_type == 'App\Models\Gallery')
                                 <div class="einspaltig">
-                                    @isset($media->gallery->title)<h2>{!! $media->gallery->title !!}</h2>@endisset
-                                    @isset($media->gallery->subtitle)<p class="subtitle">{!! $media->gallery->subtitle !!}</p>@endisset
-                                    @isset($media->gallery->description)<p>{!! $media->gallery->description !!}</p>@endisset
+                                    @isset($media->gallery->title)<h2>@rich($media->gallery->title )</h2>@endisset
+                                    @isset($media->gallery->subtitle)<p class="subtitle">@rich($media->gallery->subtitle )</p>@endisset
+                                    @isset($media->gallery->description)<p>@rich($media->gallery->description )</p>@endisset
                                 </div>
 								                <div class="">
                                                 @if(isset($media->gallery->images))
@@ -768,7 +768,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
                                                             <div class="inhaltbildergalerie">
                                                               <img alt="{{$image->alt}}" class="#" src="{{public_path().'/uploads/images/'.$image->image}}">
-																<p class="caption">{!! $image->alt !!}</p>
+																<p class="caption">@rich($image->alt )</p>
                                                            </div>
                                                     @endforeach
 												@endif
@@ -781,7 +781,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                 @if($media->audiovisual->type == 'video')
                                                     <div class="variable-width">
                                                         <div class="inhaltbildergalerie">
-                                                            <iframe width="960px" height="400px" src="{!! $media->audiovisual->link !!}" frameborder="0" allowfullscreen>
+                                                            <iframe width="960px" height="400px" src="@rich($media->audiovisual->link )" frameborder="0" allowfullscreen>
                                                             </iframe>
                                                         </div>
                                                     </div>
@@ -812,7 +812,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
             $footerImprint = \App\Support\ProjectLegalText::imprintFor($project);
         @endphp
         @if(! empty(strip_tags((string) $footerImprint)))
-            <div id="footeradresse">{!! $footerImprint !!}</div>
+            <div id="footeradresse">@rich($footerImprint )</div>
         @endif
         <ul id="verlinkungslistefooter" >
             <li class="footerverlinkung"><a class="verlinkung" href="#">Datenschutz</a> </li>
