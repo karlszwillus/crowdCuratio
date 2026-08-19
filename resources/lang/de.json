@@ -195,7 +195,6 @@
   "email_password_reset": "Link zum Zurücksetzen des Passworts per E-Mail versenden",
   "message_forgot_password": "Passwort vergessen? Kein Problem. Teilen Sie uns einfach Ihre E-Mail-Adresse mit und wir senden Ihnen per E-Mail einen Link zum Zurücksetzen des Passworts, über den Sie eine neue auswählen können.",
   "confirm": "Bestätigen",
-  "message_confrim_password": "Dies ist ein sicherer Bereich der Anwendung. Bitte bestätigen Sie Ihr Passwort, bevor Sie fortfahren.",
   "email_address": "E-Mail Addresse",
   "password": "Passwort",
   "confirm_password": "Passwort bestätigen",
