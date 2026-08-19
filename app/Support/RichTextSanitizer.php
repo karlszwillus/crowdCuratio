@@ -82,7 +82,7 @@ class RichTextSanitizer
                 $quote = $m[2];
                 $value = trim($m[3]);
                 if (preg_match('/^(javascript|data|vbscript|file):/i', $value)) {
-                    return $attr . '=' . $quote . '#' . $quote;
+                    return $attr.'='.$quote.'#'.$quote;
                 }
 
                 return $m[0];

@@ -373,7 +373,7 @@ class UserController extends Controller
     {
         // Nur Administrator:innen duerfen fremde Einladungen erneut
         // verschicken. Selbst-Einladung ist konzeptuell kein Feature.
-        abort_unless(auth()->user()?->hasRole(\App\Support\RoleName::ADMIN->value), 403);
+        abort_unless(auth()->user()?->hasRole(RoleName::ADMIN->value), 403);
 
         $mail = ! empty(MailSetting::first()) ? MailSetting::first() : null;
 
