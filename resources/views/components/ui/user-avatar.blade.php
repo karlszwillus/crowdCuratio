@@ -41,11 +41,16 @@ Props:
 
             return $src[$key] ?? null;
         }
-        try {
-            return $src->getAttribute($key);
-        } catch (\Throwable $e) {
-            return null;
+        // Eloquent-Model: getAttribute() im try/catch (shouldBeStrict).
+        if (method_exists($src, 'getAttribute')) {
+            try {
+                return $src->getAttribute($key);
+            } catch (\Throwable $e) {
+                return null;
+            }
         }
+        // stdClass (z. B. DB::table()->get()): direkter Property-Zugriff.
+        return $src->{$key} ?? null;
     };
 
     $firstName = (string) ($getAttr($u, 'first_name') ?? $getAttr($u, 'name') ?? '');
