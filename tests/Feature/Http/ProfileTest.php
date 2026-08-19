@@ -94,7 +94,10 @@ it('updateProfile — Avatar-Upload legt Datei ab und schreibt avatar_path', fun
 
     $file = UploadedFile::fake()->image('me.png', 200, 200);
 
-    $this->patch(route('profile.update'), [
+    // Laravel PATCH-Tests transportieren multipart-Files nicht sauber —
+    // Method-Spoofing via POST + _method=PATCH ist der bewaehrte Weg.
+    $this->post(route('profile.update'), [
+        '_method' => 'PATCH',
         'firstName' => $user->name,
         'lastName' => $user->last_name,
         'avatar' => $file,

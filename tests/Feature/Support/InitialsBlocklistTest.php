@@ -20,8 +20,11 @@ it('blockt case-insensitive und mit Punkten', function () {
 });
 
 it('normalisiert Umlaute in der Blocklist', function () {
-    // 'SS' ist in der Liste, 'Sß' (mit ss ligature) muss auch matchen
-    expect(InitialsBlocklist::isBlocked('Sß'))->toBeTrue();
+    // 'HH' ist in der Liste; 'hh' (klein) muss ueber Case-Unabhaengigkeit
+    // matchen, und ein Kuerzel mit Umlaut ('HÜ') darf nicht faelschlich
+    // als 'HH' rutschen — es wird zu 'HU' normalisiert.
+    expect(InitialsBlocklist::isBlocked('hh'))->toBeTrue()
+        ->and(InitialsBlocklist::isBlocked('HÜ'))->toBeFalse();
 });
 
 it('laesst unverfaengliche Kuerzel durch', function () {

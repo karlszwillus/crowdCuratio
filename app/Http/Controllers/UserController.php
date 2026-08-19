@@ -287,6 +287,9 @@ class UserController extends Controller
         // der Projektliste konsistent bleibt.
         /** @var \App\Models\User $me */
         $me = auth()->user();
+        // shouldBeStrict() sperrt Lazy-Loading — Rollen explizit
+        // eager-laden, damit die Rollen-Iteration unten nicht crasht.
+        $me->loadMissing('roles');
         $service = app(\App\Services\ProjectPermissionService::class);
         $projectsRaw = $service->listProjectsForUser($me);
         $ownRoleNames = $me->roles->pluck('name')->all();
