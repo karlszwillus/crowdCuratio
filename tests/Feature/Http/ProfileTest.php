@@ -94,15 +94,19 @@ it('updateProfile — Avatar-Upload legt Datei ab und schreibt avatar_path', fun
 
     $file = UploadedFile::fake()->image('me.png', 200, 200);
 
-    // Laravel-Test-Kernel serialisiert Files nur, wenn sie explizit als
-    // $files-Argument in ->call() reingehen — inline im $data-Array
-    // kommt der Upload beim FormRequest nicht als hasFile('avatar') an.
-    $this->call('PATCH', route('profile.update'), [
+    // Method-Spoofing via POST + _method=PATCH: hier wird der File-
+    // Upload im multipart-Body sauber uebertragen. \$this->post()
+    // akzeptiert einen files-Array-Wert im \$data selbst — der
+    // Test-Kernel extrahiert UploadedFile-Instanzen daraus in \$_FILES.
+    $response = $this->post(route('profile.update'), [
+        '_method' => 'PATCH',
         'firstName' => $user->name,
         'lastName' => $user->last_name,
-    ], [], [
         'avatar' => $file,
     ]);
+
+    // Nicht 500/422 — sonst hat der Save gar nicht laufen koennen.
+    $response->assertStatus(302);
 
     $stored = $user->fresh()->avatar_path;
     expect($stored)->not->toBeNull();

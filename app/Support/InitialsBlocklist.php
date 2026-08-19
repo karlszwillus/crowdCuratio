@@ -74,7 +74,7 @@ final class InitialsBlocklist
             $out[] = $c;
         }
 
-        return array_values($out);
+        return $out;
     }
 
     /**
