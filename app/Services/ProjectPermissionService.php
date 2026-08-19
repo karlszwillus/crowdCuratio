@@ -246,7 +246,14 @@ class ProjectPermissionService
         if ($user->hasRole(RoleName::ADMIN->value)) {
             return Project::query()
                 ->join('users', 'users.id', '=', 'projects.user_id')
-                ->select('projects.*', 'users.name as user_name')
+                ->select(
+                'projects.*',
+                'users.name as user_name',
+                'users.last_name as user_last_name',
+                'users.avatar_path as user_avatar_path',
+                'users.initials as user_initials',
+                'users.initials_color as user_initials_color'
+            )
                 ->withCount('chapters')
                 ->whereNull('projects.deleted_at')
                 ->whereNull('users.deleted_at')
@@ -256,7 +263,14 @@ class ProjectPermissionService
         return Project::query()
             ->join('users', 'users.id', '=', 'projects.user_id')
             ->leftJoin('project_user_permissions', 'project_user_permissions.project_id', '=', 'projects.id')
-            ->select('projects.*', 'users.name as user_name')
+            ->select(
+                'projects.*',
+                'users.name as user_name',
+                'users.last_name as user_last_name',
+                'users.avatar_path as user_avatar_path',
+                'users.initials as user_initials',
+                'users.initials_color as user_initials_color'
+            )
             ->withCount('chapters')
             ->distinct()
             ->where(function ($query) use ($user) {
