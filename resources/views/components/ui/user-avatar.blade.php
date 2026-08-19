@@ -63,10 +63,22 @@ Props:
         : App\Support\ProfilePalette::defaultFor($firstName, $lastName);
     $avatarPath = $getAttr($u, 'avatar_path');
     $fullName = trim("{$firstName} {$lastName}");
+
+    // Tailwind purged dynamische `size-{$n}`-Klassen aus dem Bundle,
+    // wenn sie nicht als statischer String im Code stehen. Deshalb hier
+    // eine kleine Whitelist: alle Groessen, die die Aufrufer aktuell
+    // uebergeben (5,6,7,8,9,10,11,14,24) sind hier wortwoertlich da,
+    // Tailwind sieht sie und liefert die Utility-Klasse aus.
+    $sizeMap = [
+        '5' => 'size-5', '6' => 'size-6', '7' => 'size-7', '8' => 'size-8',
+        '9' => 'size-9', '10' => 'size-10', '11' => 'size-11', '12' => 'size-12',
+        '14' => 'size-14', '16' => 'size-16', '20' => 'size-20', '24' => 'size-24',
+    ];
+    $sizeClass = $sizeMap[(string) $size] ?? 'size-9';
 @endphp
 
 <span
-    {{ $attributes->merge(['class' => 'relative inline-flex size-'.$size.' items-center justify-center overflow-hidden rounded-full text-paper-0 shrink-0']) }}
+    {{ $attributes->merge(['class' => 'relative inline-flex '.$sizeClass.' items-center justify-center overflow-hidden rounded-full text-paper-0 shrink-0']) }}
     @if (! $avatarPath) style="background-color: var(--color-{{ $color }})" @endif
     role="img"
     aria-label="{{ $fullName }}"
