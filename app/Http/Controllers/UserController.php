@@ -294,7 +294,8 @@ class UserController extends Controller
         $projectsRaw = $service->listProjectsForUser($me);
         $ownRoleNames = $me->roles->pluck('name')->all();
 
-        $profileProjects = $projectsRaw->map(function (\App\Models\Project $project) use ($me, $ownRoleNames): array {
+        $profileProjects = $projectsRaw->map(function ($project) use ($me, $ownRoleNames): array {
+            /** @var \App\Models\Project $project */
             $isOwner = (int) $project->user_id === (int) $me->id;
             $roleLabel = $isOwner
                 ? __('profile_project_role_owner')
