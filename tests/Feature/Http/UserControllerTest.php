@@ -73,6 +73,41 @@ it('index: Reader bekommt 403', function () {
     $response->assertStatus(403);
 });
 
+it('edit: Admin sieht die Edit-Sicht mit Karten und Sticky-Save-Bar', function () {
+    /** @var TestCase $this */
+    /** @var User $admin */
+    $admin = User::factory()->create();
+    $admin->assignRole('Admin');
+    /** @var User $target */
+    $target = User::factory()->create(['name' => 'Alt', 'last_name' => 'Vorgestern']);
+    $target->assignRole('Reader');
+    $this->actingAs($admin);
+
+    $response = $this->get('/users/'.$target->id.'/edit');
+
+    $response->assertStatus(200);
+    // B1 (Q3-Politur): Karten-Struktur + Sticky-Save-Bar-Landmark.
+    $content = (string) $response->getContent();
+    expect($content)->toContain('name="firstName"')
+        ->and($content)->toContain('name="lastName"')
+        ->and($content)->toContain('name="adminUser"')
+        ->and($content)->toContain('role="region"'); // Sticky-Save-Bar
+});
+
+it('edit: Reader bekommt 403', function () {
+    /** @var TestCase $this */
+    /** @var User $reader */
+    $reader = User::factory()->create();
+    $reader->assignRole('Reader');
+    /** @var User $target */
+    $target = User::factory()->create();
+    $this->actingAs($reader);
+
+    $response = $this->get('/users/'.$target->id.'/edit');
+
+    $response->assertStatus(403);
+});
+
 it('update: Admin ändert Name und Rolle eines anderen Users', function () {
     /** @var TestCase $this */
     /** @var User $admin */

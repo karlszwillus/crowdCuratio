@@ -48,10 +48,17 @@
     @cc-modal-hidden="open = false"
     x-trap.noscroll.inert="open"
 >
-    <div class="relative mx-auto my-8 w-auto {{ $dialogMax }}" role="document">
-        <div class="relative rounded-md border border-ink-400 bg-white shadow-lg">
+    {{-- Q3-Followup B1 (2026-08-20): Modal-Body scrollt, wenn der
+         Inhalt hoeher wird als der Viewport (bisher lief der Modal
+         unter den Viewport-Rand — z.B. „Ausstellung exportieren").
+         Aeusserer Wrapper begrenzt die Hoehe auf calc(100vh-4rem),
+         der Body-Slot bekommt overflow-y-auto. Header und Footer
+         bleiben sichtbar, weil sie ausserhalb des scrollenden Bodys
+         sitzen. --}}
+    <div class="relative mx-auto my-8 flex max-h-[calc(100vh-4rem)] w-auto flex-col {{ $dialogMax }}" role="document">
+        <div class="relative flex flex-col overflow-hidden rounded-md border border-ink-400 bg-white shadow-lg">
             @if ($title || $closable || isset($header))
-                <header class="flex items-center justify-between gap-3 border-b border-ink-400 px-4 py-3">
+                <header class="flex flex-shrink-0 items-center justify-between gap-3 border-b border-ink-400 px-4 py-3">
                     @isset($header)
                         <div class="text-heading font-semibold text-ink-900">
                             {{ $header }}
@@ -77,12 +84,12 @@
                 </header>
             @endif
 
-            <div class="px-4 py-3">
+            <div class="flex-1 overflow-y-auto px-4 py-3">
                 {{ $slot }}
             </div>
 
             @isset($footer)
-                <footer class="flex items-center justify-end gap-2 border-t border-ink-400 px-4 py-3">
+                <footer class="flex flex-shrink-0 items-center justify-end gap-2 border-t border-ink-400 px-4 py-3">
                     {{ $footer }}
                 </footer>
             @endisset
