@@ -733,6 +733,59 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Einheitliches Save-Feedback** (Q3-Politur 2026-08-20 / UX-02,
+  UX-08, LIVE-UX-01). Nach jedem Blur-Save in der Übersetzen-Sicht
+  und in Inline-Editoren (Chapter- und Entry-Titel/Subtitle)
+  erscheint 1,5 s ein „✓ Gespeichert"-Chip neben dem Feld. Die
+  Sticky-Save-Buttons in Profil, Passwort-Karte und Metadaten
+  wechseln während des Submits auf „Speichern …" und sind
+  disabled, damit Doppel-Klicks nicht durchrutschen.
+
+- **Screenreader-Landmarks in der Metadaten-Sicht** (Q3-Politur
+  2026-08-20 / LIVE-UX-02, LIVE-UI-01). Sr-only `<h1>` als
+  Ausgangs-Landmark, jede Feld-Karte ist eine `<section>` mit
+  eigenem `<h2>`. Der Save-Footer verzichtet auf den letzten
+  Speicherzeitpunkt und zeigt stattdessen live „Keine offenen
+  Änderungen" bzw. „Änderungen offen — Speichern nicht vergessen."
+  analog zum Profil-Muster.
+
+- **Rollen-Chip-Tooltips und Editor-Hinweis für Nicht-Editoren**
+  (Q3-Politur 2026-08-20 / UX-06, B-K-04, P-08). Rollen-Chips im
+  Profil und in der Berechtigungs-Sicht bekommen einen `title` mit
+  einer einzeiligen Erklärung ("Kann lesen und kommentieren." /
+  „Kann Inhalte bearbeiten und hinzufügen." / …). Über dem Editor
+  steht für Reader/Reviewer ein einzeiliger Hinweis, was ihre Rolle
+  darf — der bisher fehlende Kontext, warum keine Save-Aktion da
+  ist.
+
+- **Diff-Banner mit Fassungs-Referenz** (Q3-Politur 2026-08-20 /
+  UX-04). Der Vergleichs-Modus im Editor zeigt jetzt „Vergleich mit
+  v9 · Autor" im Banner-Kopf — der `revision-selected`-Event trägt
+  `revisionVersion` und `revisionAuthor` mit, `history-diff.js`
+  rendert den Text daraus.
+
+- **Verlauf-Trigger mit Zahl-Badge** (Q3-Politur 2026-08-20 /
+  UX-11). Analog zum Kommentar-Trigger zeigt der Verlauf-Icon-
+  Button die tatsächliche Anzahl der Fassungen als Badge. Der
+  Legacy-Punkt bleibt als Fallback, wenn die Zahl nicht bekannt
+  ist.
+
+- **Live-Blur-Check für das Kürzel-Feld im Profil** (Q3-Politur
+  2026-08-20 / UX-01). Neuer POST-Endpunkt
+  `/profile/check-initials` liefert `{blocked, message, suggestions}`
+  als JSON. Nach dem Blur wird die Kürzel-Sperrliste sofort geprüft
+  und Vorschläge angezeigt, ohne dass der Server-Save auf Fehler
+  laufen muss. Der Server-Validator läuft parallel weiterhin beim
+  Save.
+
+- **Panel-Fokus-Return und Escape-Handling für das Invite-Modal**
+  (Q3-Politur 2026-08-20 / A11Y-03, A11Y-04). Verlauf- und
+  Kommentar-Panel merken sich beim Öffnen das zuvor fokussierte
+  Element und geben den Fokus beim Schließen dorthin zurück; beim
+  Öffnen wandert der Fokus auf den Schließen-Button. Das Invite-
+  Modal in der Berechtigungs-Sicht schließt auf Escape und setzt den
+  Fokus beim Öffnen auf das E-Mail-Feld.
+
 - **`<x-icon name="…">`-Komponente auf Lucide-Basis** (Phase
   5-D.2). Neue anonyme Blade-Component wraps `blade-ui-kit/blade-
   icons` und `mallardduck/blade-lucide-icons` und akzeptiert
@@ -1262,6 +1315,51 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
   Verwerfen leerer Eingaben ab.
 
 ### Geändert
+
+- **Comments-DB-Baseline auf Bigint + Polymorph-Index + FKs**
+  (Q3-Politur 2026-08-20 / DB-01, DB-02 / F-DB-009, F-DB-010). Neue
+  Migration `2026_08_20_150000_align_comments_fks_and_polymorph_index`
+  zieht die FK-Spalten `user_id`, `parent_id`, `commentable_id` von
+  `INT UNSIGNED` auf `BIGINT UNSIGNED` nach (Referenzziele sind seit
+  Ewigkeiten Bigint), legt einen zusammengesetzten Index auf
+  `(commentable_type, commentable_id)` und setzt echte
+  FK-Constraints auf `user_id → users.id` (RESTRICT) und
+  `parent_id → comments.id` (`nullOnDelete`). Polymorpher Lookup ist
+  jetzt indiziert; die Voraussetzung für konsistente Foreign Keys
+  ist erfüllt.
+
+- **HTML-Purifier als primärer Rich-Text-Sanitizer** (Q3-Politur
+  2026-08-20 / ADR-0029). `App\Support\RichTextSanitizer::sanitize()`
+  ruft `Purifier::clean($html, 'rich')` mit der ADR-0029-Whitelist
+  (Tags `p, br, strong, em, u, s, ul, ol, li, a, blockquote, h2-h4`,
+  href/target/rel auf `a`, nur https+http, `HTML.TargetBlank` mit
+  Noopener/Noreferrer). Der strip_tags-basierte Übergangs-Sanitizer
+  aus der Q3-Härtung bleibt als Fallback für Bootstrap-Sonderfälle.
+  `mews/purifier` ^3.4 als neue composer-Dependency.
+
+- **Preset-Highlight synchron mit den Toggles** (Q3-Politur
+  2026-08-20 / P-01). Rollen-Preset-Buttons in der Berechtigungs-
+  Sicht leuchten jetzt live mit der aktuellen Toggle-Kombination.
+  Neuer `matchedPreset`-Getter vergleicht die aktuellen `permissions`
+  gegen die drei Presets (Editor/Reviewer/Reader) statt gegen den
+  zuletzt gespeicherten `role`-Wert.
+
+- **Farb-Chip-Ring auf ring-inset** (Q3-Politur 2026-08-20 / UI-04).
+  Der aktive Ring in der Initials-Farb-Palette lag außen mit
+  `ring-offset` — das bohrte in der Chip-Reihe ein weisses Loch.
+  Innen-Ring bleibt innerhalb des Chips und kollidiert nicht mit
+  den Nachbarn.
+
+- **Restore-Dialog-Übersetzungshinweis auf info-Farbe** (Q3-Politur
+  2026-08-20 / UI-05). Der Hinweis „Es gibt Übersetzungen zu diesem
+  Block" war fälschlich als `warning` gefärbt, obwohl die Aktion
+  nicht destruktiv ist. Jetzt `info-bg`; warning/danger bleibt für
+  echte Warnungen reserviert.
+
+- **Locale-Wechsel im Profil mit Dirty-Guard** (Q3-Politur
+  2026-08-20 / UX-10). `switchLocale()` fragt vor dem Reload, wenn
+  das Formular ungespeicherte Änderungen hat. Vorher verwarf der
+  automatische Reload den Formular-State kommentarlos.
 
 - **Register-Rollen-Select übersetzt** (Q3-Härtung 2026-08-19 /
   Legacy FIND-12). `<option>`-Labels zeigten die Spatie-Rohwerte
@@ -1915,6 +2013,14 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
   in der ehemaligen `CommentTrait::commentAsUser`.
 
 ### Behoben
+
+- **`profile_pw_strength_0`-Leerkey rendert nicht mehr wörtlich**
+  (Q3-Politur 2026-08-20). Das Passwort-Stärke-Label für den
+  Ausgangs-Zustand war als leerer Locale-Key definiert und lieferte
+  je nach Missingness-Handling den Schlüssel-Text
+  („profile_pw_strength_0") ins UI. Das `pwStrengthLabels`-Array
+  liefert jetzt hart `''` für Stärke 0, der Locale-Key ist aus
+  `de.json` und `en.json` raus.
 
 - **Fokus-Ring auf Formular-Feldern wieder sichtbar** (Q3-Härtung
   2026-08-19 / LIVE-01, WCAG 2.4.7). Der Tailwind-Reset hatte
