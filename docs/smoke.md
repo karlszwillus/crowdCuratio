@@ -5,9 +5,9 @@ crowdCuratio. Ziel: ein belastbarer Vorher-Schnappschuss, gegen den wir
 nach jeder Modernisierungs-Welle vergleichen können (Regressionen
 sichtbar machen).
 
-**Stand:** 2026-05-30 (Re-Run nach v0.9.0).
+**Stand:** 2026-08-20 (nach Phase 5 + Q3-Härtung).
 **Umgebung:** Lokales Sail-Setup auf `main`,
-PHP 8.1 / Ubuntu 22.04, Apple Silicon nativ, MySQL 8, Redis 7,
+PHP 8.4 / Ubuntu 24.04, Apple Silicon nativ, MySQL 8, Redis 7,
 Mailpit, Meilisearch.
 **Tester:** Karl Szwillus.
 **App-URL:** `http://localhost:${APP_PORT:-8084}`.
@@ -45,6 +45,22 @@ die Refactoring-Welle.
 | 11  | Admin-Register-Gate (Reader/Editor blockiert) | **grün** | (Privilege-Escalation-Hotfix, v0.9.0) |
 
 \* funktional, aber mit kleinen Auffälligkeiten im UX (siehe Pfad-Details).
+
+### Pfade Phase 5 (2026-08, ergänzt)
+
+| #   | Pfad                                            | Status  | Kontext |
+|-----|-------------------------------------------------|---------|---------|
+| 12  | Dashboard: Wiederaufnahme-Zeile + Letzte Kommentare | grün    | Phase 5e |
+| 13  | Editor: Inline-Editieren + Auto-Save-Indikator  | grün    | Phase 5c |
+| 14  | Metadaten-Tab öffnen + Systemtext übernehmen    | grün    | Phase 5aa |
+| 15  | Übersetzen-Sicht: Auto-Save (Blur) + Sync-Marker | grün    | Phase 5aa |
+| 16  | Verlauf-Panel öffnen + Diff + Wiederherstellen  | grün    | Phase 5ab |
+| 17  | Kommentar-Panel öffnen + Antwort + Status-Wechsel | grün  | Phase 5ab.6 |
+| 18  | Profil: Vorname/Kürzel + Farb-Auswahl + Save    | grün    | Phase 5ac |
+| 19  | Profil: Avatar-Upload + Kürzel-Sperrliste       | grün    | Phase 5ac.2 |
+| 20  | Berechtigungs-Sicht: Rollen-Preset + Toggles + Save-Bar | grün | Phase 5d |
+| 21  | Einladungs-Flow als Admin (Rollen-Default Reader) | grün | Phase 5d.7 |
+| 22  | Persona-Test: Reader/Editor/Reviewer via Login-Wechsel | grün | Phase 5d, Persona-Smoke-Katalog in `.werkbank/ROLLEN/06-persona-smoke.md` |
 
 ---
 

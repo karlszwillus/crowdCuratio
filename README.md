@@ -10,7 +10,7 @@
 Trägerinnen: [berlinHistory e.V.](https://berlinhistory.app/) und
 Aktives Museum Berlin. Lizenziert unter GPL-3.0-or-later.
 
-## Stack (Stand Mai 2026, nach Phase 3)
+## Stack (Stand August 2026, nach Phase 5)
 
 | Schicht        | Aktuell                                                                       |
 |----------------|-------------------------------------------------------------------------------|
@@ -18,12 +18,12 @@ Aktives Museum Berlin. Lizenziert unter GPL-3.0-or-later.
 | Framework      | Laravel 12                                                                    |
 | Auth/Roles     | Laravel Breeze + spatie/laravel-permission ^6                                 |
 | Backend-Pakete | Spatie activitylog ^4, translatable ^6, welcome-notification ^2.5, Carbon v3  |
-| Frontend       | Blade + `<x-ui.*>`-Komponenten · Tailwind 4 · Alpine 3 · Livewire 4 · Vite 5 · SortableJS                          |
-| PDF-Export     | dompdf 2 + mpdf 8 *(Konsolidierung folgt in Phase 4 / ADR-0019)*              |
+| Frontend       | Blade + `<x-ui.*>`- und `<x-layout.*>`-Komponenten · Tailwind 4 · Alpine 3 · Livewire 4 mit Volt · Vite 5 · SortableJS |
+| PDF-Export     | dompdf 2 + mpdf 8 *(Konsolidierung folgt in Phase 6 / ADR-0019)*              |
 | DB             | MySQL 8 mit utf8mb4, strict-Mode                                              |
 | Dev-Container  | Laravel Sail (Ubuntu 24.04 noble, Node 22 LTS)                                |
-| Tests          | Pest 3 + PHPUnit 11, Coverage 77,5 % via PCOV                                 |
-| CI/QA          | GitHub Actions: Pest · composer audit · npm audit · Larastan v3 (Level 5, Hard-Fail mit Baseline 15) · Pint Hard-Fail · Changelog-Diff-Check · Coverage-Schwelle 65 % (Hard-Fail) · Dependabot (composer/npm/actions, weekly) |
+| Tests          | Pest 3 + PHPUnit 11, Coverage ~80 % via PCOV                                  |
+| CI/QA          | GitHub Actions: Pest · composer audit · npm audit · Larastan v3 (Level 5, Hard-Fail mit Baseline) · Pint Hard-Fail · Changelog-Diff-Check · Coverage-Schwelle 65 % (Hard-Fail) · Dependabot (composer/npm/actions, weekly) |
 
 ## Setup
 

@@ -1,0 +1,64 @@
+# Build-Context minimieren und Secrets aussperren.
+# Wird auch fuer den zukuenftigen Prod-Container-Build wichtig (ADR-0009
+# behaelt DeployHQ + Bare-Metal, aber ein CI-Build koennte spaeter dazu-
+# kommen).
+
+.git
+.gitignore
+.gitattributes
+.github/
+
+# Werkbank: lokaler Denkspeicher, nicht in Image-Layer
+.werkbank/
+
+# Dependencies — werden im Image neu installiert
+node_modules/
+vendor/
+
+# Runtime-Storage
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/framework/testing/*
+!storage/framework/cache/.gitkeep
+!storage/framework/sessions/.gitkeep
+!storage/framework/views/.gitkeep
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Tests + CI-Artefakte
+tests/
+phpunit.xml
+.phpunit.cache/
+.phpunit.result.cache
+coverage/
+
+# Docs — bleiben ausserhalb des Prod-Images
+docs/
+CHANGELOG.md
+README.md
+
+# IDE + OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Legacy-PHP-Container (nur 8.4 wird gebaut)
+docker/8.1/
+docker/8.2/
+docker/8.3/
+
+# Uploads waehrend Entwicklung
+public/uploads/
+public/storage/
+
+# Sonstiges
+crowd_curatio.pdf
+untitled folder
+*.log
