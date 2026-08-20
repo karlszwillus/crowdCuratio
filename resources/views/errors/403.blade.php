@@ -9,7 +9,9 @@ Laravel liefert diese View automatisch bei
 AuthorizationException / HttpException(403).
 --}}
 
-@extends('projects.layout')
+@extends(Auth::check() ? 'projects.layout' : 'layouts.error-guest')
+
+@section('title', __('error_403_title'))
 
 @section('content')
     @include('errors._error-shell', [

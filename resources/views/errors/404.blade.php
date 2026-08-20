@@ -8,7 +8,9 @@ Ignition, wenn APP_DEBUG=true ist (die kommt bereits vor dem
 Rendering dieser View).
 --}}
 
-@extends('projects.layout')
+@extends(Auth::check() ? 'projects.layout' : 'layouts.error-guest')
+
+@section('title', __('error_404_title'))
 
 @section('content')
     @include('errors._error-shell', [

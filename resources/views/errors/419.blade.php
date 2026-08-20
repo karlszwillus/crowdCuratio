@@ -8,7 +8,9 @@ weil der Nutzer meist noch eingeloggt ist und den letzten Screen
 zurueck haben will.
 --}}
 
-@extends('projects.layout')
+@extends(Auth::check() ? 'projects.layout' : 'layouts.error-guest')
+
+@section('title', __('error_419_title'))
 
 @section('content')
     <div class="mx-auto flex max-w-2xl flex-col items-center justify-center gap-6 px-6 py-16 text-center">
