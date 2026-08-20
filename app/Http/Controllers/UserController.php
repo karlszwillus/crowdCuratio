@@ -360,10 +360,20 @@ class UserController extends Controller
     /**
      * Resend invitation
      *
+     * Q3-Haertung F2 (2026-08-19) / SEC-02:
+     * - Vorher GET ohne Auth-Check — jeder eingeloggte User konnte fuer
+     *   beliebige User-IDs Mails ausloesen und welcome_valid_until
+     *   verlaengern (RFC 9110 § 9.2.1: GET muss idempotent und ohne
+     *   Nebenwirkung sein).
+     * - Jetzt POST + throttle:6,1 in der Route + Admin-Guard hier.
+     *
      * @return $this
      */
     public function resendInvitation($id)
     {
+        // Nur Administrator:innen duerfen fremde Einladungen erneut
+        // verschicken. Selbst-Einladung ist konzeptuell kein Feature.
+        abort_unless(auth()->user()?->hasRole(RoleName::ADMIN->value), 403);
 
         $mail = ! empty(MailSetting::first()) ? MailSetting::first() : null;
 

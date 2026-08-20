@@ -362,3 +362,22 @@ a:has(> i:only-child[class*="bi-"]) {
     border: 1px dashed var(--line-300);
     line-height: 1.5;
 }
+
+/*
+ * Q3-Härtung F3 (2026-08-19): sichtbarer Fokus-Ring auf
+ * Formular-Feldern (WCAG 2.4.7 Focus Visible). Der Tailwind-Base-
+ * Reset setzt bei Inputs `outline: none` bzw. `outline-style: none`
+ * — der Fokus war nur noch am Border-Farb-Wechsel erkennbar, was
+ * unter AA nicht ausreicht (mind. 3:1-Kontrast gegen Umgebung).
+ *
+ * Wir setzen den Fokus-Ring `focus-visible` (nicht `focus`), damit
+ * Maus-Klicks keinen bleibenden Rahmen zeigen — nur echte Tastatur-
+ * Navigation. `outline` (nicht `box-shadow`), damit die Regel mit
+ * dem globalen Skip-Link- und Locked-Pattern-Ring konsistent ist.
+ */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}

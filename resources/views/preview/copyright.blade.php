@@ -66,7 +66,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
             <div>
                 <a href="#" ><img class="logo" src="@if(isset($project->logo)){{route('image', $project->logo)}}@endif" alt="" ></a>
             </div>
-            <p id="untertitel">{!! $project->description !!}</p>
+            <p id="untertitel">@rich($project->description )</p>
             <p id="titel">
                 <a href="index.html"></a>@isset($project->name){{$project->name}}@endisset
             </p>
@@ -98,7 +98,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
         <div class="container">
             <div class="zweispaltig">
                 @if(isset($project->description))
-                    <p>{!! $project->description !!}</p>
+                    <p>@rich($project->description )</p>
                 @endif
             </div>
         </div>
@@ -110,7 +110,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
     @if(isset($content))
         <h1>{{__($type)}}</h1>
         <div class="mb-4">
-            {!! $content !!}
+            @rich($content )
         </div>
     @endif
     <div class="mt-4">

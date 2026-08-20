@@ -202,8 +202,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
         </div>
 
         {{-- Klebende Speicher-Fußzeile am Seitenende — Design v6 § 3.
-             Ein Primär-Button, ein sekundärer, Speicherstand links. --}}
-        <div class="sticky bottom-0 -mx-4 mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-line-200 bg-paper-0/95 px-6 py-3 shadow-medium backdrop-blur">
+             Ein Primär-Button, ein sekundärer, Speicherstand links.
+             Q3-Härtung F5 (2026-08-19): `z-20` gegen Quill-Toolbar-Überlappung,
+             `mt-16` schafft Puffer zwischen letztem Feld und Sticky-Footer bei
+             niedrigen Viewports (die Beschreibungs-Quill-Toolbar geriet vorher
+             hinter den Save-Footer). --}}
+        <div class="sticky bottom-0 z-20 -mx-4 mt-16 flex flex-wrap items-center justify-between gap-3 border-t border-line-200 bg-paper-0/95 px-6 py-3 shadow-medium backdrop-blur">
             <p class="text-caption text-ink-500">
                 @isset($project->updated_at)
                     {{ __('metadata_footer_last_saved') }}

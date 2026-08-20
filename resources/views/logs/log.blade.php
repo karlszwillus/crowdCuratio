@@ -42,14 +42,14 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     <span>Name</span>
                     <div class="card p-2 w-5/12">
                         <input name="nameReset" type="hidden" value="{{strip_tags($changes['name']['old'])}}"/>
-                        {!! $changes['name']['old'] !!}
+                        {{ $changes['name']['old']  }}
                     </div>
                 @endif
                 @if(isset($changes['subtitle']['old']))
                     <span>Subtitle</span>
                     <div class="card p-2 w-7/12">
                         <input name="subtitleReset" type="hidden" value="{{strip_tags($changes['subtitle']['old'])}}"/>
-                        {!! $changes['subtitle']['old'] !!}
+                        {{ $changes['subtitle']['old']  }}
                     </div>
                 @endif
                 @if(isset($changes['description']['old']))
@@ -57,7 +57,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     <div class="card p-2 w-9/12">
                         <input name="descriptionReset" type="hidden"
                                value="{{strip_tags($changes['description']['old'])}}"/>
-                        {!! $changes['description']['old'] !!}
+                        {{ $changes['description']['old']  }}
                     </div>
                 @endif
                 @if(isset($changes['link']['old']))
@@ -66,7 +66,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                         <div class="col-sm-12 p-2 w-9/12">
                             <input name="linkReset" type="hidden"
                                    value="{{strip_tags($changes['link']['old'])}}"/>
-                            {!! $changes['link']['old'] !!}
+                            {{ $changes['link']['old']  }}
                         </div>
                     </div>
                 @endif
@@ -75,14 +75,14 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     <div class="card p-2 w-9/12">
                         <input name="sourceReset" type="hidden"
                                value="{{strip_tags($changes['source']['old'])}}"/>
-                        {!! $changes['source']['old'] !!}
+                        {{ $changes['source']['old']  }}
                     </div>
                 @endif
                 @if(isset($changes['origin']['old']))
                     <span>Origin</span>
                     <div class="card p-2 w-9/12">
                         <input name="originReset" type="hidden" value="{{strip_tags($changes['origin']['old'])}}"/>
-                        {!! $changes['origin']['old'] !!}
+                        {{ $changes['origin']['old']  }}
                     </div>
                 @endif
                 @if(isset($changes['copyright']['old']))
@@ -90,14 +90,14 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     <div class="card p-2 w-9/12">
                         <input name="copyrightReset" type="hidden"
                                value="{{strip_tags($changes['copyright']['old'])}}"/>
-                        {!! $changes['copyright']['old'] !!}
+                        {{ $changes['copyright']['old']  }}
                     </div>
                 @endif
                 @if(isset($changes['text']['old']))
                     <span>Text</span>
                         <input name="textReset" type="hidden" value="{{$changes['text']['old']}}"/>
                         <input name="noHighlight" type="hidden" value="{{$changes['text']['noHighlight']}}"/>
-                        {!! $changes['text']['old'] !!}
+                        {{ $changes['text']['old']  }}
                     </div>
                 @endif
                 @if(isset($changes['image']['old']))
@@ -115,19 +115,19 @@ If not, see <https://www.gnu.org/licenses/>. -->
             @if(isset($changes['name']['old']))
                 <span>Name</span>
                 <div class="card p-2 w-5/12">
-                    {!! $changes['name']['new'] !!}
+                    {{ $changes['name']['new']  }}
                 </div>
             @endif
             @if(isset($changes['subtitle']['new']))
                 <span>Subtitle</span>
                 <div class="card p-2 w-7/12">
-                    {!! $changes['subtitle']['new'] !!}
+                    {{ $changes['subtitle']['new']  }}
                 </div>
             @endif
             @if(isset($changes['description']['new']))
                 <span>Description</span>
                 <div class="card p-2 w-9/12">
-                    {!! $changes['description']['new'] !!}
+                    {{ $changes['description']['new']  }}
                 </div>
             @endif
             @if(isset($changes['link']['new']))
@@ -136,7 +136,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     <div class="col-sm-12 p-2 w-9/12">
                         <input name="linkReset" type="hidden"
                                value="{{strip_tags($changes['link']['old'])}}"/>
-                        {!! $changes['link']['new'] !!}
+                        {{ $changes['link']['new']  }}
                     </div>
                 </div>
             @endif
@@ -145,28 +145,28 @@ If not, see <https://www.gnu.org/licenses/>. -->
                 <div class="card p-2 w-9/12">
                     <input name="sourceReset" type="hidden"
                            value="{{strip_tags($changes['source']['old'])}}"/>
-                    {!! $changes['source']['new'] !!}
+                    {{ $changes['source']['new']  }}
                 </div>
             @endif
             @if(isset($changes['origin']['new']))
                 <span>Origin</span>
                 <div class="card p-2 w-7/12">
                     <input type="hidden" value="{{$changes['origin']['new']}}"/>
-                    {!! $changes['origin']['new'] !!}
+                    {{ $changes['origin']['new']  }}
                 </div>
             @endif
             @if(isset($changes['copyright']['new']))
                 <span>Copyright</span>
                 <div class="card p-2 w-7/12">
                     <input type="hidden" value="{{$changes['copyright']['new']}}"/>
-                    {!! $changes['copyright']['new'] !!}
+                    {{ $changes['copyright']['new']  }}
                 </div>
             @endif
             @if(isset($changes['text']['new']))
                 <span>Text</span>
                 <div class="card p-2 w-9/12">
                     <input type="hidden" value="{{$changes['text']['new']}}"/>
-                    {!! $changes['text']['new'] !!}
+                    {{ $changes['text']['new']  }}
                 </div>
             @endif
             @if(isset($changes['image']['new']))

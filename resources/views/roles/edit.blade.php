@@ -62,7 +62,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                    value="{{ $value->permission_id }}"
                                    class="description"
                                    @checked(in_array($value->permission_id, old('permission', $rolePermissions ?? [])))>
-                            {!! $value->description !!}
+                            {{ $value->description  }}
                         </label>
                         <br/>
                     @endforeach

@@ -212,7 +212,9 @@ it('resendInvitation: setzt welcome_valid_until neu', function () {
     $invitee->assignRole('Reader');
     $this->actingAs($admin);
 
-    $response = $this->get('/user/'.$invitee->id.'/invitation');
+    // Q3-Haertung F2 (2026-08-19): Route ist jetzt POST +
+    // throttle:6,1 + Admin-Guard (SEC-02).
+    $response = $this->post(route('resend.invitation', $invitee->id));
 
     expect($response->status())->toBeIn([200, 302]);
 

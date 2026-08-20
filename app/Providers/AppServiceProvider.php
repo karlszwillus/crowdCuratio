@@ -71,6 +71,27 @@ class AppServiceProvider extends ServiceProvider
         Model::shouldBeStrict(! $this->app->isProduction());
 
         $this->registerLockedButtonDirective();
+        $this->registerRichDirective();
+    }
+
+    /**
+     * Blade-Direktive @rich($value) — Q3-Haertung F1 (2026-08-19) / SEC-01.
+     *
+     * Sanitisiert HTML-Content aus dem Rich-Text-Editor (Quill) und gibt
+     * ihn als sicheres HTML aus. Die Directive wird ueberall dort genutzt,
+     * wo vorher `{!! $wert !!}` fuer Rich-Text-Felder stand — insbesondere
+     * in den Preview-/PDF-Views. Plaintext-Felder gehoeren weiterhin durch
+     * `{{ }}` (Blade-Auto-Escape).
+     *
+     * Uebergangs-Sanitisierung ueber App\Support\RichTextSanitizer. ADR-0029
+     * beschliesst mittelfristig HTML-Purifier — dann tauscht die
+     * Sanitize-Implementierung, die Directive bleibt.
+     */
+    private function registerRichDirective(): void
+    {
+        Blade::directive('rich', function (string $expression): string {
+            return "<?php echo \App\Support\RichTextSanitizer::sanitize({$expression}); ?>";
+        });
     }
 
     /**
