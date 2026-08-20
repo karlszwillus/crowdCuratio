@@ -58,10 +58,13 @@ class UserController extends Controller
     public function __construct(
         // B12 (2026-08-20): Services fuer den User-Anlage-Flow, aus
         // dem alten RegisteredUserController hierher konsolidiert.
-        private readonly ?RoleResolver $roleResolver = null,
-        private readonly ?UserReactivationService $userReactivation = null,
-        private readonly ?UserOnboardingService $userOnboarding = null,
-        private readonly ?ProjectInvitationService $projectInvitation = null,
+        // Non-nullable, damit Laravel die Services aus dem Container
+        // aufloest — mit `?Type = null` waeren die Parameter optional
+        // und der Container liefert `null`, was den Store-Flow bricht.
+        private readonly RoleResolver $roleResolver,
+        private readonly UserReactivationService $userReactivation,
+        private readonly UserOnboardingService $userOnboarding,
+        private readonly ProjectInvitationService $projectInvitation,
     ) {
         $this->middleware('auth');
         // Block E / Welle E.3: `update` jetzt auch role:Admin-gated.
@@ -116,7 +119,7 @@ class UserController extends Controller
      */
     public function store(RegisterRequest $request): RedirectResponse
     {
-        if ($this->userReactivation?->existsByEmail($request->email)) {
+        if ($this->userReactivation->existsByEmail($request->email)) {
             $this->userReactivation->reactivateByEmail($request->email);
 
             return redirect()->route('users.index')->with(
@@ -133,7 +136,7 @@ class UserController extends Controller
         // durch den RoleResolver.
         $resolvedRoles = ($callerIsAdmin && $request->boolean('adminUser'))
             ? [Role::findByName(RoleName::ADMIN->value, 'web')]
-            : ($this->roleResolver?->resolve($request->input('roles')) ?? []);
+            : $this->roleResolver->resolve($request->input('roles'));
 
         // Phase 5d.7: least-privilege-Default. Rollenloser User wuerde
         // im Frontend still stehen (@can-Gates greifen schlicht nicht).
@@ -141,7 +144,6 @@ class UserController extends Controller
             $resolvedRoles = [Role::findByName(RoleName::READER->value, 'web')];
         }
 
-        abort_if($this->userOnboarding === null, 500, 'UserOnboardingService not resolved.');
         $user = $this->userOnboarding->createInvitedUser($caller, $request, $resolvedRoles);
 
         if (isset($request->projectId)) {
@@ -150,7 +152,7 @@ class UserController extends Controller
             // expliziten Narrowing-Guard.
             abort_if($caller === null, 403);
 
-            $this->projectInvitation?->attachInviteeToProject(
+            $this->projectInvitation->attachInviteeToProject(
                 $user,
                 $caller,
                 (int) $request->projectId,
