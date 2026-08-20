@@ -733,6 +733,17 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Admin-User-Edit auf Design v7** (B1 · 2026-08-20). Blade-Rewrite
+  von `resources/views/users/edit.blade.php` nach dem Profil-Muster:
+  sr-only `<h1>` als Landmark, zwei `<section>`-Karten mit `<h2>`
+  (Person, Rolle & Rechte), Sticky-Save-Footer als `role="region"`
+  mit „Keine offenen Änderungen"/"Änderungen offen"-Pending-Label
+  und `submitting`-State. Der Admin-Toggle steuert per Alpine
+  `x-show` die Rollen-Sektion — jQuery-Handler weg. Rollen-Select
+  liefert die drei Nicht-Admin-Rollen mit übersetzten Labels statt
+  Spatie-Rohwerten. Passwort-Bereich ist raus; Admin setzt kein
+  Passwort direkt (läuft über den Profil-Self-Edit-Pfad).
+
 - **Einheitliches Save-Feedback** (Q3-Politur 2026-08-20 / UX-02,
   UX-08, LIVE-UX-01). Nach jedem Blur-Save in der Übersetzen-Sicht
   und in Inline-Editoren (Chapter- und Entry-Titel/Subtitle)
@@ -2013,6 +2024,13 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
   in der ehemaligen `CommentTrait::commentAsUser`.
 
 ### Behoben
+
+- **Modal-Body scrollt bei langen Inhalten** (B1-Followup ·
+  2026-08-20). `<x-ui.modal>` bekommt `max-h-[calc(100vh-4rem)]`
+  und `flex flex-col`; der Body-Slot ist `flex-1 overflow-y-auto`.
+  Sichtbar war das am „Ausstellung exportieren"-Modal in
+  `chapters/index.blade.php`, das unter den Viewport-Rand lief.
+  Kurze Modals sind unverändert.
 
 - **`profile_pw_strength_0`-Leerkey rendert nicht mehr wörtlich**
   (Q3-Politur 2026-08-20). Das Passwort-Stärke-Label für den
