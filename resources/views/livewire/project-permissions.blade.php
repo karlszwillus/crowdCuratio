@@ -399,10 +399,24 @@ new class extends Component
             </button>
         </div>
 
+        @php
+            // Q3-Politur G4 (2026-08-20) / UX-06: Rollen-Beschreibungen
+            // fuer den Chip in der User-Liste.
+            $roleDescriptions = [
+                RoleName::READER->value   => __('role_reader_desc'),
+                RoleName::REVIEWER->value => __('role_reviewer_desc'),
+                RoleName::EDITOR->value   => __('role_editor_desc'),
+                RoleName::ADMIN->value    => __('role_admin_desc'),
+            ];
+        @endphp
+
         <ul class="p-2" role="list">
             @foreach ($this->users as $user)
                 @php
                     $isActive = $user['id'] === $selectedUserId;
+                    $userRoleDesc = $user['is_owner'] ?? false
+                        ? __('role_owner_desc')
+                        : ($roleDescriptions[$user['role']] ?? '');
                 @endphp
                 <li>
                     <button
@@ -418,7 +432,8 @@ new class extends Component
                         <x-ui.user-avatar :user="$user" size="8" text="text-caption font-semibold"/>
                         <span class="min-w-0 flex-1 truncate">
                             <span class="block text-body font-medium">{{ $user['name'] }}</span>
-                            <span class="block text-caption text-ink-500">{{ $user['role'] }}</span>
+                            <span class="block text-caption text-ink-500"
+                                  @if ($userRoleDesc !== '') title="{{ $userRoleDesc }}" @endif>{{ $user['role'] }}</span>
                         </span>
                     </button>
                 </li>
@@ -456,12 +471,17 @@ new class extends Component
                 </p>
 
                 <div class="flex flex-wrap gap-2" role="tablist">
-                    @foreach ([
-                        RoleName::READER->value   => __('role_reader'),
-                        RoleName::REVIEWER->value => __('role_reviewer'),
-                        RoleName::EDITOR->value   => __('role_editor'),
-                        'Owner'                   => __('role_owner'),
-                    ] as $roleKey => $label)
+                    @php
+                        // Q3-Politur G4 (2026-08-20) / UX-06: Rollen-Preset-
+                        // Buttons bekommen eine Erklaerung als Tooltip.
+                        $rolePresets = [
+                            RoleName::READER->value   => [__('role_reader'),   __('role_reader_desc')],
+                            RoleName::REVIEWER->value => [__('role_reviewer'), __('role_reviewer_desc')],
+                            RoleName::EDITOR->value   => [__('role_editor'),   __('role_editor_desc')],
+                            'Owner'                   => [__('role_owner'),    __('role_owner_desc')],
+                        ];
+                    @endphp
+                    @foreach ($rolePresets as $roleKey => [$label, $desc])
                         @php
                             $isRolePresetActive = ($roleKey === 'Owner' && $isOwner)
                                 || ($roleKey === $active['role']);
@@ -475,6 +495,8 @@ new class extends Component
                             @endif
                             @disabledIf($isOwnerButton || $isOwner, __('role_owner_locked_hint'))
                             aria-selected="{{ $isRolePresetActive ? 'true' : 'false' }}"
+                            @if (! $isOwnerButton && ! $isOwner) title="{{ $desc }}" @endif
+                            aria-label="{{ $label }} — {{ $desc }}"
                             class="rounded-md border px-4 py-2 text-body transition-colors
                                    {{ $isRolePresetActive
                                        ? 'bg-ink-900 text-paper-0 border-ink-900'

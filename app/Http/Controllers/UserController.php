@@ -318,16 +318,27 @@ class UserController extends Controller
         $profileProjects = $projectsRaw->map(function ($project) use ($me, $ownRoleNames): array {
             /** @var Project $project */
             $isOwner = (int) $project->user_id === (int) $me->id;
-            $roleLabel = $isOwner
-                ? __('profile_project_role_owner')
-                : (ProjectUserPermission::query()
+            // Q3-Politur G4 (2026-08-20) / UX-06: Rollen-Chip bekommt
+            // eine Erklaerung via `role_desc`. Der View haengt die als
+            // Tooltip an den Chip.
+            if ($isOwner) {
+                $roleLabel = __('profile_project_role_owner');
+                $roleDesc = __('profile_project_role_owner_desc');
+            } elseif (
+                ProjectUserPermission::query()
                     ->where('project_id', $project->id)
                     ->where('user_id', $me->id)
                     ->exists()
-                    ? __('profile_project_role_member')
-                    : (in_array(RoleName::ADMIN->value, $ownRoleNames, true)
-                        ? __('profile_project_role_admin')
-                        : __('profile_project_role_reader')));
+            ) {
+                $roleLabel = __('profile_project_role_member');
+                $roleDesc = __('profile_project_role_member_desc');
+            } elseif (in_array(RoleName::ADMIN->value, $ownRoleNames, true)) {
+                $roleLabel = __('profile_project_role_admin');
+                $roleDesc = __('profile_project_role_admin_desc');
+            } else {
+                $roleLabel = __('profile_project_role_reader');
+                $roleDesc = __('profile_project_role_reader_desc');
+            }
 
             // Kontext-Zahl: fuer Runde 1 einheitlich „N Kapitel". Die
             // rollenabhaengige Formulierung (Eintraege / offene
@@ -339,6 +350,7 @@ class UserController extends Controller
                 'id' => $project->id,
                 'name' => (string) $project->name,
                 'role' => $roleLabel,
+                'role_desc' => $roleDesc,
                 'context' => $contextText,
                 'is_owner' => $isOwner,
             ];

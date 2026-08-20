@@ -440,7 +440,9 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                                     <div class="min-w-0 flex-1">
                                         <p class="truncate text-body font-medium text-ink-900">{{ $p['name'] }}</p>
                                     </div>
-                                    <span class="rounded-full bg-canvas-bg px-2 py-0.5 text-caption text-ink-700">{{ $p['role'] }}</span>
+                                    <span class="rounded-full bg-canvas-bg px-2 py-0.5 text-caption text-ink-700"
+                                          title="{{ $p['role_desc'] }}"
+                                          aria-label="{{ $p['role'] }} — {{ $p['role_desc'] }}">{{ $p['role'] }}</span>
                                     <span class="text-caption text-ink-500">{{ $p['context'] }}</span>
                                     <a href="{{ route('projects.edit', $p['id']) }}"
                                        class="text-caption text-primary underline hover:no-underline">
