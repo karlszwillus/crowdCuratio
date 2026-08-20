@@ -24,6 +24,7 @@
     "livewire/livewire": "^4.0",
     "livewire/volt": "^1.10",
     "mallardduck/blade-lucide-icons": "^2.0",
+    "mews/purifier": "^3.4",
     "mpdf/mpdf": "^8.0",
     "spatie/laravel-activitylog": "^4.0",
     "spatie/laravel-permission": "^6.0",
