@@ -402,7 +402,11 @@ new class extends Component
 
         $user = User::where('email', $this->inviteEmail)->first();
         if ($user === null) {
-            // 5d.7-Backlog: hier kommt der neue Register-/Invite-Flow.
+            // Der Fehler-Text verweist auf /users/create (B12) —
+            // dort legt ein Admin neue Nutzer:innen an. Ein direkter
+            // Redirect aus dem Modal ist bewusst ausgelassen, weil
+            // die Projekt-Kontext-Zuordnung ohnehin im Anschluss
+            // ueber die Berechtigungs-Sicht laeuft.
             $this->inviteError = __('invite_user_not_found');
 
             return;
