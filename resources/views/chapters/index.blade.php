@@ -239,6 +239,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                 @click.outside="open = false"
                                                 :aria-expanded="open"
                                                 aria-haspopup="menu"
+                                                aria-label="{{ __('more_actions') }}"
                                                 title="{{ __('more_actions') }}"
                                                 class="inline-flex size-11 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
                                             <x-icon name="ellipsis-vertical" size="4"/>
@@ -378,6 +379,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                         @click.outside="open = false"
                                                                         :aria-expanded="open"
                                                                         aria-haspopup="menu"
+                                                                        aria-label="{{ __('more_actions') }}"
                                                                         title="{{ __('more_actions') }}"
                                                                         class="inline-flex size-11 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
                                                                     <x-icon name="ellipsis-vertical" size="4"/>

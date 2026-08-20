@@ -26,3 +26,4 @@ composer.phar
 .DS_Store
 smoke-image.jpg
 phpstan-*-errors.txt
+.werkbank-pre-cleanup.zip

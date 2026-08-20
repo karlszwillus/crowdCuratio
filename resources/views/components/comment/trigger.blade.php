@@ -26,6 +26,8 @@
     @click="window.dispatchEvent(new CustomEvent('panel:load-and-open', { detail: {{ $payload }} }))"
     title="{{ $label }}"
     aria-label="{{ $label }}"
+    aria-haspopup="dialog"
+    aria-controls="comment-panel"
     {{ $attributes->merge(['class' => 'addComment inline-flex size-11 items-center justify-center rounded-md text-ink-600 hover:bg-line-100 hover:text-ink-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary']) }}
 >
     @if ($count > 0)

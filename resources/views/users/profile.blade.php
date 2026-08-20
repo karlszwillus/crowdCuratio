@@ -492,8 +492,13 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                 </section>
 
                 {{-- Sticky-Fusszeile mit Sammel-Speichern. Nennt beim Klick
-                     was offen ist, damit der Nutzer nicht raetselt. --}}
-                <div class="fixed inset-x-0 bottom-0 z-20 border-t border-line-200 bg-paper-0/95 shadow-medium backdrop-blur">
+                     was offen ist, damit der Nutzer nicht raetselt.
+                     Q3-Politur G2 (2026-08-20) / A11Y-05: als `region` mit
+                     Label, damit Screenreader die Sammel-Save-Bar
+                     ansteuerbar finden. --}}
+                <div class="fixed inset-x-0 bottom-0 z-20 border-t border-line-200 bg-paper-0/95 shadow-medium backdrop-blur"
+                     role="region"
+                     aria-label="{{ __('profile_sticky_region_label') }}">
                     <div class="mx-auto flex max-w-4xl items-center justify-between gap-4 px-6 py-3">
                         <p class="text-caption text-ink-500" x-text="pendingLabel"></p>
                         <div class="flex gap-2">

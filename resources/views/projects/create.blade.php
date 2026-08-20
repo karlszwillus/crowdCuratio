@@ -208,7 +208,9 @@ If not, see <https://www.gnu.org/licenses/>. -->
              `mt-16` schafft Puffer zwischen letztem Feld und Sticky-Footer bei
              niedrigen Viewports (die Beschreibungs-Quill-Toolbar geriet vorher
              hinter den Save-Footer). --}}
-        <div class="sticky bottom-0 z-20 -mx-4 mt-16 flex flex-wrap items-center justify-between gap-3 border-t border-line-200 bg-paper-0/95 px-6 py-3 shadow-medium backdrop-blur">
+        <div class="sticky bottom-0 z-20 -mx-4 mt-16 flex flex-wrap items-center justify-between gap-3 border-t border-line-200 bg-paper-0/95 px-6 py-3 shadow-medium backdrop-blur"
+             role="region"
+             aria-label="{{ __('metadata_sticky_region_label') }}">
             <p class="text-caption text-ink-500">
                 @isset($project->updated_at)
                     {{ __('metadata_footer_last_saved') }}

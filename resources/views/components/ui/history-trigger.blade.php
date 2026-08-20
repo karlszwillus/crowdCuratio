@@ -51,6 +51,8 @@ Props:
     onclick="window.dispatchEvent(new CustomEvent('history-panel:load-and-open', { detail: { subjectType: @js($subjectType), subjectId: {{ (int) $subjectId }} } }))"
     class="relative inline-flex items-center justify-center rounded-md p-2 text-ink-600 hover:bg-line-100 hover:text-ink-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
     aria-label="{{ $srLabel }}"
+    aria-haspopup="dialog"
+    aria-controls="history-panel"
     title="{{ $srLabel }}"
 >
     <x-icon name="history" size="4" />

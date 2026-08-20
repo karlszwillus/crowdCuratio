@@ -560,6 +560,11 @@ new class extends Component
             aria-modal="true"
             aria-labelledby="invite-title"
             wire:click.self="closeInvite"
+            {{-- Q3-Politur G2 (2026-08-20) / A11Y-03 · A11Y-04:
+                 Escape schliesst, Fokus faellt auf das E-Mail-Feld. --}}
+            x-data
+            x-init="$nextTick(() => document.getElementById('inviteEmail')?.focus())"
+            @keydown.escape.window="$wire.closeInvite()"
         >
             <div class="w-full max-w-md rounded-lg border border-line-200 bg-paper-0 shadow-lg">
                 <header class="flex items-center justify-between border-b border-line-200 px-5 py-3">
