@@ -1,56 +1,57 @@
-<!--
+{{--
 crowdCuratio - Curating together virtually
-Copyright (C)2022 - berlinHistory e.V.
+Copyright (C)2022, 2026 - berlinHistory e.V.
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+B12 (2026-08-20): Auth-Sicht auf layouts/guest gezogen und auf
+Design v7 gebracht (analog Login).
+--}}
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+@extends('layouts.guest')
 
-You should have received a copy of the GNU General Public License
-along with this program in the file LICENSE.
+@section('title', __('forgot_password'))
+@section('subtitle', __('message_forgot_password'))
 
-If not, see <https://www.gnu.org/licenses/>. -->
+@section('content')
 
-<x-guest-layout>
-    <x-auth-card>
-        <x-slot name="logo">
-            <a href="/">
-                <x-application-logo class="w-20 h-20 fill-current text-gray-500"/>
-            </a>
-        </x-slot>
+    @if (session('status'))
+        <x-ui.banner type="success" class="mt-6">
+            {{ session('status') }}
+        </x-ui.banner>
+    @endif
 
-        <div class="mb-4 text-sm text-gray-600">
-            {{ __('message_forgot_password') }}
-        </div>
+    @if ($errors->any())
+        <x-ui.banner type="danger" class="mt-6">
+            <ul class="list-disc pl-5">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </x-ui.banner>
+    @endif
 
-        <!-- Session Status -->
-        <x-auth-session-status class="mb-4" :status="session('status')"/>
-
-        <!-- Validation Errors -->
-        <x-auth-validation-errors class="mb-4" :errors="$errors"/>
-
-        <form method="POST" action="{{ route('password.email') }}">
+    <form method="POST" action="{{ route('password.email') }}" class="mt-8 space-y-4">
         @csrf
 
-        <!-- Email Address -->
-            <div>
-                <x-label for="email" :value="__('email')"/>
+        <div>
+            <label for="email" class="mb-1 block text-caption font-medium text-ink-700">
+                {{ __('email') }} <span class="text-danger" aria-hidden="true">*</span>
+            </label>
+            <input id="email" name="email" type="email"
+                   value="{{ old('email') }}"
+                   required autofocus autocomplete="email" aria-required="true"
+                   class="w-full rounded-md border border-form-border bg-paper-0 px-3 py-2.5 text-body text-ink-900 focus:border-primary focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-primary">
+        </div>
 
-                <x-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required
-                         autofocus/>
-            </div>
+        <button type="submit"
+                class="w-full rounded-md bg-primary px-4 py-3 text-body font-semibold text-primary-on hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-bar">
+            {{ __('email_password_reset') }}
+        </button>
+    </form>
 
-            <div class="flex items-center justify-end mt-4">
-                <x-button>
-                    {{ __('email_password_reset') }}
-                </x-button>
-            </div>
-        </form>
-    </x-auth-card>
-</x-guest-layout>
+    <p class="mt-6 text-center text-caption text-ink-500">
+        <a href="{{ route('login') }}" class="text-tint-text hover:underline">
+            {{ __('login_back_to_login') }}
+        </a>
+    </p>
+
+@endsection

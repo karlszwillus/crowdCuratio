@@ -1,55 +1,43 @@
-<!--
+{{--
 crowdCuratio - Curating together virtually
-Copyright (C)2022 - berlinHistory e.V.
+Copyright (C)2022, 2026 - berlinHistory e.V.
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+B12 (2026-08-20): Auth-Sicht auf layouts/guest gezogen.
+--}}
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+@extends('layouts.guest')
 
-You should have received a copy of the GNU General Public License
-along with this program in the file LICENSE.
+@section('title', __('confirm_password_title'))
+@section('subtitle', __('message_confirm_password'))
 
-If not, see <https://www.gnu.org/licenses/>. -->
+@section('content')
 
-<x-guest-layout>
-    <x-auth-card>
-        <x-slot name="logo">
-            <a href="/">
-                <x-application-logo class="w-20 h-20 fill-current text-gray-500"/>
-            </a>
-        </x-slot>
+    @if ($errors->any())
+        <x-ui.banner type="danger" class="mt-6">
+            <ul class="list-disc pl-5">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </x-ui.banner>
+    @endif
 
-        <div class="mb-4 text-sm text-gray-600">
-            {{ __('message_confirm_password') }}
-        </div>
-
-        <!-- Validation Errors -->
-        <x-auth-validation-errors class="mb-4" :errors="$errors"/>
-
-        <form method="POST" action="{{ route('password.confirm') }}">
+    <form method="POST" action="{{ route('password.confirm') }}" class="mt-8 space-y-4">
         @csrf
 
-        <!-- Password -->
-            <div>
-                <x-label for="password" :value="__('password')"/>
+        <div>
+            <label for="password" class="mb-1 block text-caption font-medium text-ink-700">
+                {{ __('password') }} <span class="text-danger" aria-hidden="true">*</span>
+            </label>
+            <input id="password" name="password" type="password"
+                   required autofocus autocomplete="current-password"
+                   class="w-full rounded-md border border-form-border bg-paper-0 px-3 py-2.5 text-body text-ink-900 focus:border-primary focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-primary">
+        </div>
 
-                <x-input id="password" class="block mt-1 w-full"
-                         type="password"
-                         name="password"
-                         required autocomplete="current-password"/>
-            </div>
+        <button type="submit"
+                class="w-full rounded-md bg-primary px-4 py-3 text-body font-semibold text-primary-on hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-bar">
+            {{ __('confirm') }}
+        </button>
+    </form>
 
-            <div class="flex justify-end mt-4">
-                <x-button>
-                    {{ __('confirm') }}
-                </x-button>
-            </div>
-        </form>
-    </x-auth-card>
-</x-guest-layout>
+@endsection

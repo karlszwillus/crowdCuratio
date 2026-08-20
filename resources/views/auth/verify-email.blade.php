@@ -1,58 +1,39 @@
-<!--
+{{--
 crowdCuratio - Curating together virtually
-Copyright (C)2022 - berlinHistory e.V.
+Copyright (C)2022, 2026 - berlinHistory e.V.
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+B12 (2026-08-20): Auth-Sicht auf layouts/guest gezogen.
+--}}
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+@extends('layouts.guest')
 
-You should have received a copy of the GNU General Public License
-along with this program in the file LICENSE.
+@section('title', __('verify_email_title'))
+@section('subtitle', __('message_thankyou'))
 
-If not, see <https://www.gnu.org/licenses/>. -->
+@section('content')
 
-<x-guest-layout>
-    <x-auth-card>
-        <x-slot name="logo">
-            <a href="/">
-                <x-application-logo class="w-20 h-20 fill-current text-gray-500"/>
-            </a>
-        </x-slot>
+    @if (session('status') === 'verification-link-sent')
+        <x-ui.banner type="success" class="mt-6">
+            {{ __('message_new_verification') }}
+        </x-ui.banner>
+    @endif
 
-        <div class="mb-4 text-sm text-gray-600">
-            {{ __('message_thankyou') }}
-        </div>
+    <div class="mt-8 flex flex-col gap-3">
+        <form method="POST" action="{{ route('verification.send') }}">
+            @csrf
+            <button type="submit"
+                    class="w-full rounded-md bg-primary px-4 py-3 text-body font-semibold text-primary-on hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-bar">
+                {{ __('resend_verification') }}
+            </button>
+        </form>
 
-        @if (session('status') == 'verification-link-sent')
-            <div class="mb-4 font-medium text-sm text-green-600">
-                {{ __('message_new_verification') }}
-            </div>
-        @endif
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit"
+                    class="w-full rounded-md border border-ink-300 bg-canvas-bg px-4 py-3 text-body text-ink-900 hover:bg-chrome-active">
+                {{ __('logout') }}
+            </button>
+        </form>
+    </div>
 
-        <div class="mt-4 flex items-center justify-between">
-            <form method="POST" action="{{ route('verification.send') }}">
-                @csrf
-
-                <div>
-                    <x-button>
-                        {{ __('resend_verification') }}
-                    </x-button>
-                </div>
-            </form>
-
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-
-                <button type="submit" class="underline text-sm text-gray-600 hover:text-gray-900">
-                    {{ __('logout') }}
-                </button>
-            </form>
-        </div>
-    </x-auth-card>
-</x-guest-layout>
+@endsection
