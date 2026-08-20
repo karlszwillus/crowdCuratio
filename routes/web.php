@@ -109,7 +109,6 @@ Route::group(
             'text.delete'
         );
         Route::post('/check/email', [ProjectController::class, 'checkEmail'])->name('check.email');
-        Route::get('/user/{id}/project/{projectId}/info', [ProjectController::class, 'inviteUserForProject'])->name('user.info');
         // Q3-Härtung F2 (2026-08-19) / SEC-02: vorher GET ohne Auth-Guard,
         // jeder eingeloggte User konnte fuer beliebige User-IDs eine
         // Welcome-Mail ausloesen und welcome_valid_until verlaengern

@@ -1080,35 +1080,6 @@ class ProjectController extends Controller
     }
 
     /**
-     * User invitation
-     *
-     * @return Application|Factory|View
-     */
-    public function inviteUserForProject($id, $projectId)
-    {
-        // Security-Sweep-III (2026-06-22): Info-Leak geschlossen.
-        // Vorher konnte jeder eingeloggte User via GET /user/{id}/project/
-        // {projectId}/info Rollen + Permissions fremder User auf fremden
-        // Projects einsehen. Nur Project-Owner/Admin/Eingeladener-mit-
-        // update darf einladende Aktionen vorbereiten — gleicher Gate
-        // wie auf der Permission-Verwaltung in setPermissionForUserOnProject.
-        $project = Project::findOrFail($projectId);
-        $this->authorize('update', $project);
-
-        $permissions = $this->permissions->getCurrentUsersPermissions($id);
-
-        $user = User::findOrFail($id);
-        $role = isset($user->role->userRole->name) ? $user->role->userRole->name : '';
-        $permissionForProject = $this->permissions->getSelectedPermissionUser($id, $projectId);
-        $listAllPermissions = Permission::orderBy('id', 'ASC')->pluck('name', 'id');
-
-        return \view(
-            'users.create',
-            compact('user', 'permissions', 'role', 'permissionForProject', 'listAllPermissions', 'projectId')
-        );
-    }
-
-    /**
      * Check whether input email exists
      * code_error 6: already exist
      * code_error 7: doesn't exist
