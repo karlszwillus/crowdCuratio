@@ -340,7 +340,7 @@
   "existing_user": "User already exists",
   "project_right": "Project right",
   "invite": "Invite",
-  "invite_user_not_found": "No user found with this email address. New users can be created under „Users → New".",
+  "invite_user_not_found": "No user found with this email address. New users can be created under \"Users → New\".",
   "invitation_resent": "invitation resent",
   "grant": "Grant",
   "user_details": "User details",

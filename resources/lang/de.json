@@ -486,7 +486,7 @@
   "permission_publish_desc": "Projekt öffentlich schalten (PDF & Web).",
   "message_permissions_saved": "Berechtigungen gespeichert.",
   "feature_not_yet": "Diese Funktion folgt später.",
-  "invite_user_not_found": "Kein:e Nutzer:in mit dieser E-Mail-Adresse gefunden. Neue Nutzer:innen legst du unter „Nutzer:innen → Neu" an.",
+  "invite_user_not_found": "Kein:e Nutzer:in mit dieser E-Mail-Adresse gefunden. Neue Nutzer:innen legst du unter „Nutzer:innen → Neu“ an.",
   "message_invited_success": "Einladung verschickt.",
   "change_password": "Passwort ändern",
   "comment_status_open": "offen",
