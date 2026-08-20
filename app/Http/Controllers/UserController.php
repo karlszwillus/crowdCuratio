@@ -32,6 +32,7 @@ use App\Models\ProjectUserPermission;
 use App\Models\User;
 use App\Services\AvatarService;
 use App\Services\ProjectPermissionService;
+use App\Support\InitialsBlocklist;
 use App\Support\ProfilePalette;
 use App\Support\RoleName;
 use Illuminate\Contracts\Foundation\Application;
@@ -246,6 +247,30 @@ class UserController extends Controller
         Session::put('applocale', $locale);
 
         return response()->json(['ok' => true]);
+    }
+
+    /**
+     * Q3-Politur G9 (2026-08-20) / UX-01: Live-Blur-Check fuers Kuerzel.
+     * Der FormRequest prueft weiterhin final beim Save — hier ist der
+     * vorlaeufige JSON-Endpoint fuer die Sofort-Rueckmeldung.
+     */
+    public function checkInitials(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if ($user === null) {
+            abort(401);
+        }
+        $candidate = (string) $request->input('initials', '');
+        $blocked = InitialsBlocklist::isBlocked($candidate);
+        $suggestions = $blocked
+            ? InitialsBlocklist::suggestFor((string) $user->name, (string) $user->last_name)
+            : [];
+
+        return response()->json([
+            'blocked' => $blocked,
+            'message' => $blocked ? __('profile_initials_blocked') : null,
+            'suggestions' => $suggestions,
+        ]);
     }
 
     /**

@@ -85,6 +85,41 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
             normalizeInitials() {
                 this.initials = (this.initials || '').toUpperCase().replace(/[^A-ZÄÖÜ0-9]/g, '').slice(0, 3);
             },
+            // Q3-Politur G9 (2026-08-20) / UX-01: Live-Blur-Check gegen
+            // die Sperrliste. Ergaenzt den Server-Validator, ersetzt ihn
+            // nicht — beim Save laeuft nochmal derselbe Check.
+            liveInitialsBlocked: false,
+            liveInitialsMessage: '',
+            liveInitialsSuggestions: [],
+            async checkInitialsRemote() {
+                const value = (this.initials || '').trim();
+                if (value === '') {
+                    this.liveInitialsBlocked = false;
+                    this.liveInitialsMessage = '';
+                    this.liveInitialsSuggestions = [];
+                    return;
+                }
+                const token = document.querySelector('meta[name=csrf-token]')?.content;
+                try {
+                    const res = await fetch(init.checkInitialsUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': token || '',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        body: JSON.stringify({ initials: value }),
+                    });
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    this.liveInitialsBlocked = !!data.blocked;
+                    this.liveInitialsMessage = data.message || '';
+                    this.liveInitialsSuggestions = Array.isArray(data.suggestions) ? data.suggestions : [];
+                } catch (e) {
+                    // Netzwerkfehler: stumm. Server-Save fangt es auf.
+                }
+            },
             pickColor(t) { this.currentColor = t; this._dirty = true; },
             onAvatarPicked(event) {
                 const file = event.target.files?.[0];
@@ -108,6 +143,13 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
             },
             async switchLocale(code) {
                 if (this.locale === code) return;
+                // Q3-Politur G9 (2026-08-20) / UX-10: der Reload nach
+                // Locale-Wechsel wuerde ungespeicherte Aenderungen im
+                // Formular verwerfen. Vorher fragen, wenn was offen ist.
+                if (this._dirty || (this.$root && this.$root.submitting)) {
+                    const msg = init.localeConfirm || 'Ungespeicherte Änderungen gehen verloren. Sprache trotzdem wechseln?';
+                    if (! window.confirm(msg)) return;
+                }
                 this.locale = code;
                 await this._persist(init.localeUrl, { locale: code });
                 window.location.reload();
@@ -240,6 +282,8 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                       'hasStoredAvatar' => (bool) $userAvatarPath,
                       'localeUrl' => route('profile.locale'),
                       'themeUrl' => route('profile.theme'),
+                      'localeConfirm' => __('profile_locale_switch_confirm'),
+                      'checkInitialsUrl' => route('profile.check_initials'),
                       'pendingLabel' => __('profile_pending_label'),
                       'noPendingLabel' => __('profile_no_pending'),
                       'saveFailedLabel' => __('profile_save_failed'),
@@ -333,12 +377,35 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                                         </label>
                                         <input id="profile-initials" name="initials" type="text"
                                                maxlength="3" size="4"
-                                               x-model="initials" @input="normalizeInitials(); dirty()"
+                                               x-model="initials"
+                                               @input="normalizeInitials(); dirty()"
+                                               @blur="checkInitialsRemote()"
+                                               :aria-invalid="liveInitialsBlocked ? 'true' : null"
+                                               aria-describedby="profile-initials-live-error"
                                                @class([
                                                    'w-20 rounded-md border bg-paper-0 px-3 py-2 text-center font-mono uppercase text-ink-900',
                                                    'border-danger' => $errors->has('initials'),
                                                    'border-line-200' => ! $errors->has('initials'),
                                                ])/>
+                                        {{-- Q3-Politur G9 (2026-08-20) / UX-01:
+                                             Live-Rueckmeldung nach Blur (parallel zum
+                                             Server-Validator, der beim Save nochmal prueft). --}}
+                                        <p x-show="liveInitialsBlocked && liveInitialsMessage"
+                                           x-cloak
+                                           id="profile-initials-live-error"
+                                           class="mt-1 text-caption text-danger"
+                                           x-text="liveInitialsMessage"
+                                           role="status"></p>
+                                        <div x-show="liveInitialsBlocked && liveInitialsSuggestions.length > 0"
+                                             x-cloak
+                                             class="mt-2 flex flex-wrap items-center gap-2">
+                                            <span class="text-caption text-ink-500">{{ __('profile_initials_suggestions') }}</span>
+                                            <template x-for="s in liveInitialsSuggestions" :key="s">
+                                                <button type="button" @click="initials = s; dirty(); liveInitialsBlocked = false"
+                                                        class="rounded-md border border-line-200 bg-canvas-bg px-2 py-0.5 font-mono text-caption text-ink-900 hover:bg-chrome-active"
+                                                        x-text="s"></button>
+                                            </template>
+                                        </div>
                                         @error('initials')
                                             <p class="mt-1 text-caption text-danger">{{ $message }}</p>
                                             @php
@@ -365,7 +432,13 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                                             @foreach ($palette as $token)
                                                 <button type="button" @click="pickColor(@js($token))"
                                                         :aria-pressed="currentColor === @js($token) ? 'true' : 'false'"
-                                                        :class="currentColor === @js($token) ? 'ring-2 ring-ink-900 ring-offset-2 ring-offset-canvas-bg' : ''"
+                                                        {{-- Q3-Politur G9 (2026-08-20) / UI-04:
+                                                             ring-inset statt ring-offset — der aussenliegende
+                                                             offset-Ring bohrte in der Palette-Reihe ein weisses
+                                                             Loch pro aktiver Chip. Innen liegender Ring bleibt
+                                                             innerhalb des Chips und kollidiert nicht mit den
+                                                             Nachbarn. --}}
+                                                        :class="currentColor === @js($token) ? 'ring-2 ring-inset ring-paper-0' : ''"
                                                         style="background-color: var(--color-{{ $token }})"
                                                         class="size-8 rounded-full border border-line-200"
                                                         aria-label="{{ $token }}"></button>

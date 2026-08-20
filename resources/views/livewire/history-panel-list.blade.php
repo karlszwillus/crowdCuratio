@@ -81,9 +81,14 @@ new class extends Component
             ];
         }
 
+        // Q3-Politur G9 (2026-08-20) / UX-04: Diff-Banner traegt jetzt
+        // Version und Autor-Name mit — Kurator sieht sofort, welche
+        // Fassung er vor Augen hat.
         $this->dispatch(
             'revision-selected',
             revisionId: $revisionId,
+            revisionVersion: (int) $revision->version,
+            revisionAuthor: (string) ($revision->causer?->name ?? __('history_author_unknown')),
             subjectType: RevisionSubject::shortName($revision->subject_type),
             subjectId: (int) $revision->subject_id,
             fields: $fields,

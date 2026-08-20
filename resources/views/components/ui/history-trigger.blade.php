@@ -18,32 +18,35 @@ Props:
     'subjectType',
     'subjectId',
     'label' => null,
-    // Optional: hat der Block schon Revisions? Wenn null, prueft die
-    // Komponente selbst per COUNT-Query. Aufrufer, die die Zahl schon
-    // eager geladen haben (withCount('revisions')) koennen sie hier
-    // reinreichen und die Extra-Query sparen.
+    // Optional: Anzahl Revisions. Akzeptiert:
+    //   - null → Komponente prueft selbst per COUNT-Query
+    //   - bool → true == "≥1 vorhanden" (Legacy-Punkt), false == keine
+    //   - int  → exakte Zahl (empfohlen, wenn Aufrufer withCount hat)
     'hasHistory' => null,
 ])
 
 @php
     $srLabel = $label ?? __('history_open_button');
 
-    // Phase 5ab.3-Followup: Indikator „gab schon eine Aenderung".
-    // Analog zum Bestandsverhalten des alten rotate-ccw-Links, das dem
-    // Kurator sofort zeigte, wo Historie vorliegt. Fallback auf
-    // Selbst-Query, wenn kein hasHistory reingereicht wurde.
-    $indicator = $hasHistory;
-    if ($indicator === null) {
+    // Q3-Politur G9 (2026-08-20) / UX-11: aus dem Legacy-Punkt wird ein
+    // Zahl-Badge analog Kommentar-Trigger. `$hasHistory` darf jetzt eine
+    // Zahl sein — bleibt fuer Alt-Aufrufer als bool rueckwaertskompatibel.
+    if (is_int($hasHistory)) {
+        $historyCount = $hasHistory;
+    } elseif ($hasHistory === true) {
+        $historyCount = null; // bekannt: „gibt welche", aber Zahl unklar
+    } elseif ($hasHistory === false) {
+        $historyCount = 0;
+    } else {
         $fqcn = \App\Support\RevisionSubject::TYPES[$subjectType] ?? null;
-        if ($fqcn !== null) {
-            $indicator = \App\Models\Revision::query()
+        $historyCount = $fqcn !== null
+            ? \App\Models\Revision::query()
                 ->where('subject_type', $fqcn)
                 ->where('subject_id', (int) $subjectId)
-                ->exists();
-        } else {
-            $indicator = false;
-        }
+                ->count()
+            : 0;
     }
+    $indicator = $historyCount === null ? true : $historyCount > 0;
 @endphp
 
 <button
@@ -57,13 +60,25 @@ Props:
 >
     <x-icon name="history" size="4" />
     @if ($indicator)
-        {{-- 2 px kleiner Punkt oben rechts, primary-Farbe. `sr-only`-
-             Zusatz nennt den Zustand fuer Screenreader (§ WCAG 1.4.1
-             „Nicht ausschliesslich Farbe"). --}}
-        <span
-            aria-hidden="true"
-            class="absolute right-1.5 top-1.5 size-2 rounded-full bg-primary ring-2 ring-paper-0"
-        ></span>
-        <span class="sr-only">— {{ __('history_has_changes') }}</span>
+        {{-- Zahl-Badge oben rechts (analog Kommentar-Trigger). Bei
+             unbekannter Zahl faellt es auf einen kleinen Punkt zurueck,
+             damit der Vorher-Kontrakt „Punkt = Historie da" nicht bricht.
+             sr-only-Zusatz nennt den Zustand fuer Screenreader
+             (§ WCAG 1.4.1 „Nicht ausschliesslich Farbe"). --}}
+        @if (is_int($historyCount) && $historyCount > 0)
+            <span
+                aria-hidden="true"
+                class="absolute -right-1 -top-1 inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-primary px-1 text-caption font-medium text-primary-on ring-2 ring-paper-0"
+            >{{ $historyCount }}</span>
+            <span class="sr-only">
+                — {{ __('history_has_changes_count', ['count' => $historyCount]) }}
+            </span>
+        @else
+            <span
+                aria-hidden="true"
+                class="absolute right-1.5 top-1.5 size-2 rounded-full bg-primary ring-2 ring-paper-0"
+            ></span>
+            <span class="sr-only">— {{ __('history_has_changes') }}</span>
+        @endif
     @endif
 </button>

@@ -250,6 +250,60 @@ new class extends Component
     }
 
     /**
+     * Q3-Politur G9 (2026-08-20) / P-01: welches Preset entspricht der
+     * aktuellen Toggle-Kombination? Getter wird von den Preset-Buttons
+     * gelesen und leuchtet live mit — der bisherige Vergleich gegen
+     * den serverseitig gespeicherten `role`-Wert hinkte hinterher, sobald
+     * der Nutzer einzelne Toggles anfasste, ohne zu speichern.
+     */
+    public function getMatchedPresetProperty(): ?string
+    {
+        $current = [
+            PermissionName::EDIT->value    => (bool) ($this->permissions[PermissionName::EDIT->value] ?? false),
+            PermissionName::ADD->value     => (bool) ($this->permissions[PermissionName::ADD->value] ?? false),
+            PermissionName::DELETE->value  => (bool) ($this->permissions[PermissionName::DELETE->value] ?? false),
+            PermissionName::PUBLISH->value => (bool) ($this->permissions[PermissionName::PUBLISH->value] ?? false),
+            PermissionName::COMMENT->value => (bool) ($this->permissions[PermissionName::COMMENT->value] ?? false),
+            PermissionName::INVITE->value  => (bool) ($this->permissions[PermissionName::INVITE->value] ?? false),
+        ];
+
+        $presets = [
+            RoleName::EDITOR->value => [
+                PermissionName::EDIT->value    => true,
+                PermissionName::ADD->value     => true,
+                PermissionName::DELETE->value  => true,
+                PermissionName::PUBLISH->value => true,
+                PermissionName::COMMENT->value => true,
+                PermissionName::INVITE->value  => false,
+            ],
+            RoleName::REVIEWER->value => [
+                PermissionName::EDIT->value    => false,
+                PermissionName::ADD->value     => false,
+                PermissionName::DELETE->value  => false,
+                PermissionName::PUBLISH->value => false,
+                PermissionName::COMMENT->value => true,
+                PermissionName::INVITE->value  => false,
+            ],
+            RoleName::READER->value => [
+                PermissionName::EDIT->value    => false,
+                PermissionName::ADD->value     => false,
+                PermissionName::DELETE->value  => false,
+                PermissionName::PUBLISH->value => false,
+                PermissionName::COMMENT->value => false,
+                PermissionName::INVITE->value  => false,
+            ],
+        ];
+
+        foreach ($presets as $role => $mask) {
+            if ($mask === $current) {
+                return $role;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Persistiert die vier Toggles fuer den aktiven User als
      * project_user_permissions-Zeilen (Set-Semantik). view und comment
      * werden IMMER mitgeschrieben — sonst wuerde der User seine
@@ -483,8 +537,13 @@ new class extends Component
                     @endphp
                     @foreach ($rolePresets as $roleKey => [$label, $desc])
                         @php
+                            // Q3-Politur G9 (2026-08-20) / P-01: der
+                            // Highlight-Vergleich laeuft jetzt live gegen
+                            // die aktuelle Toggle-Kombination
+                            // ($this->matchedPreset), nicht mehr gegen
+                            // den zuletzt gespeicherten $active['role'].
                             $isRolePresetActive = ($roleKey === 'Owner' && $isOwner)
-                                || ($roleKey === $active['role']);
+                                || ($roleKey === $this->matchedPreset);
                             $isOwnerButton = ($roleKey === 'Owner');
                         @endphp
                         <button
