@@ -178,6 +178,12 @@ new class extends Component
             . 'hover:bg-line-100/60 '
             . 'focus:bg-line-100/60 focus-visible:ring-2 focus-visible:ring-brand-bar/50';
 
+    // Q3-Politur G1-Followup (2026-08-20) / UX-08 fuer Chapters+Entries:
+    // eindeutiger Identifier fuer den Alpine-Wrapper, damit der 1.5-s-
+    // "gespeichert"-Chip pro Feld korrekt filtert (mehrere inline-editor-
+    // Instanzen leben gleichzeitig im DOM).
+    $chipKey = class_basename($model).'#'.$model->getKey().'#'.$field;
+
     $variantClasses = match ($variant) {
         'title'    => $shared.' text-title font-semibold text-ink-900 tracking-tight',
         'heading'  => $shared.' text-heading font-semibold text-ink-900',
@@ -188,7 +194,32 @@ new class extends Component
     };
 @endphp
 
-<div>
+<div
+    class="relative"
+    x-data="{
+        chipVisible: false,
+        _chipTimer: null,
+        showChip() {
+            this.chipVisible = true;
+            clearTimeout(this._chipTimer);
+            this._chipTimer = setTimeout(() => { this.chipVisible = false; }, 1500);
+        },
+    }"
+    {{-- Q3-Politur G1-Followup (2026-08-20): Livewire feuert nach jedem
+         erfolgreichen Save ein `saved`-Browser-Event mit
+         `{field, model, id}`. Wir filtern per zusammengesetztem Schluessel,
+         damit nur die richtige inline-editor-Instanz aufleuchtet. --}}
+    @saved.window="
+        if (
+            $event.detail
+            && $event.detail.field === @js($field)
+            && $event.detail.model === @js(class_basename($model))
+            && String($event.detail.id) === @js((string) $model->getKey())
+        ) {
+            showChip();
+        }
+    "
+>
     @if (! empty($options))
         {{-- Select nutzt `wire:model.live`, nicht `.blur`: bei einem
              Dropdown feuert der Browser-Change-Event beim Klick auf
@@ -235,4 +266,17 @@ new class extends Component
             {{ $message }}
         </p>
     @enderror
+
+    {{-- 1.5-s-Chip nach Blur-Save. Absolut positioniert, damit der Chip
+         den Feld-Fluss nicht verschiebt. `x-cloak` unterdrueckt den
+         Chip beim initialen Paint. --}}
+    <span
+        x-cloak
+        x-show="chipVisible"
+        x-transition.opacity.duration.150ms
+        aria-hidden="true"
+        class="pointer-events-none absolute -top-2 right-1 inline-flex items-center gap-1 rounded-full bg-success-bg px-2 py-0.5 text-caption text-success shadow-subtle"
+    >
+        ✓ {{ __('saved') }}
+    </span>
 </div>
