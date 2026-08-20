@@ -56,7 +56,8 @@ If not, see <https://www.gnu.org/licenses/>. -->
           action="@if(isset($project->id)) {{ route('projects.update',$project->id) }} @else {{ route('projects.store') }} @endif"
           method="POST"
           enctype="multipart/form-data"
-          x-data="{ nameLen: @js(isset($project->name) ? mb_strlen((string) $project->name) : 0) }">
+          x-data="{ nameLen: @js(isset($project->name) ? mb_strlen((string) $project->name) : 0), submitting: false }"
+          @submit="submitting = true">
         @csrf
         @if(isset($project->id))
             @method('PUT')
@@ -224,9 +225,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     </a>
                 @endisset
                 <button type="submit"
-                        class="inline-flex items-center gap-1 rounded-md bg-primary px-4 py-2 text-body font-medium text-primary-on hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                        :disabled="submitting"
+                        class="inline-flex items-center gap-1 rounded-md bg-primary px-4 py-2 text-body font-medium text-primary-on hover:opacity-90 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
                     <x-icon name="save" size="4"/>
-                    <span>{{ __('save') }}</span>
+                    <span x-show="!submitting">{{ __('save') }}</span>
+                    <span x-show="submitting" x-cloak>{{ __('save') }} …</span>
                 </button>
             </div>
         </div>

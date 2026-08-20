@@ -17,8 +17,12 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
     // Blade-Directive-Parser stolpert ueber @json(...) mit einem
     // Array-Literal, das mehrere Funktionsaufrufe enthaelt. Deshalb
     // vorher als Variable zuweisen und dann @json($var) rendern.
+    // Q3-Politur G1 (2026-08-20) / LIVE-UX-01: strength=0 hat kein Label
+    // (Nutzer:in hat nichts getippt). Frueher: __('profile_pw_strength_0')
+    // mit leerem JSON-Wert. Laravel gibt bei leerem oder fehlendem Key
+    // den Key selbst zurueck; das rutschte als woertliche Ausgabe ins UI.
     $pwStrengthLabels = [
-        __('profile_pw_strength_0'),
+        '',
         __('profile_pw_strength_1'),
         __('profile_pw_strength_2'),
         __('profile_pw_strength_3'),
@@ -29,6 +33,8 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
     window.ccPasswordCard = function () {
         return {
             pw: '', confirm: '',
+            // Q3-Politur G1 (2026-08-20) / UX-02: Submit-Feedback.
+            submitting: false,
             get strength() {
                 const s = this.pw || '';
                 if (s.length === 0) return 0;
@@ -55,6 +61,8 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
             locale: init.locale,
             theme: init.theme,
             _dirty: false,
+            // Q3-Politur G1 (2026-08-20) / UX-02: Submit-Feedback.
+            submitting: false,
             hasStoredAvatar: !! init.hasStoredAvatar,
             removedAvatar: false,
             previewAvatarUrl: null,
@@ -235,7 +243,8 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                       'pendingLabel' => __('profile_pending_label'),
                       'noPendingLabel' => __('profile_no_pending'),
                       'saveFailedLabel' => __('profile_save_failed'),
-                  ]))">
+                  ]))"
+                  @submit="submitting = true">
                 @csrf
                 @method('PATCH')
 
@@ -494,9 +503,10 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                                 {{ __('profile_discard') }}
                             </button>
                             <button type="submit"
-                                    :disabled="!isDirty"
+                                    :disabled="!isDirty || submitting"
                                     class="rounded-md bg-primary px-4 py-1.5 text-caption font-semibold text-paper-0 hover:opacity-90 disabled:opacity-40">
-                                {{ __('save') }}
+                                <span x-show="!submitting">{{ __('save') }}</span>
+                                <span x-show="submitting" x-cloak>{{ __('save') }} …</span>
                             </button>
                         </div>
                     </div>
@@ -509,7 +519,8 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
             <form method="POST" action="{{ route('profile.password') }}"
                   id="password"
                   class="mt-6 scroll-mt-6"
-                  x-data="ccPasswordCard()">
+                  x-data="ccPasswordCard()"
+                  @submit="submitting = true">
                 @csrf
                 @method('PATCH')
                 <section class="rounded-lg border border-line-200 bg-paper-0 p-6 shadow-subtle">
@@ -555,8 +566,10 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                     <div class="mt-4 flex flex-wrap items-center justify-between gap-2">
                         <p class="text-caption text-ink-500">{{ __('profile_password_session_hint') }}</p>
                         <button type="submit"
-                                class="rounded-md border border-ink-300 bg-canvas-bg px-4 py-1.5 text-caption font-semibold text-ink-900 hover:bg-chrome-active">
-                            {{ __('profile_password_save') }}
+                                :disabled="submitting"
+                                class="rounded-md border border-ink-300 bg-canvas-bg px-4 py-1.5 text-caption font-semibold text-ink-900 hover:bg-chrome-active disabled:opacity-40">
+                            <span x-show="!submitting">{{ __('profile_password_save') }}</span>
+                            <span x-show="submitting" x-cloak>{{ __('profile_password_save') }} …</span>
                         </button>
                     </div>
                 </section>

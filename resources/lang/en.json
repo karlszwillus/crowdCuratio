@@ -512,7 +512,6 @@
   "profile_password_session_hint": "Other sessions stay signed in after the change.",
   "profile_password_save": "Save password",
   "profile_password_updated": "Password updated.",
-  "profile_pw_strength_0": "",
   "profile_pw_strength_1": "weak",
   "profile_pw_strength_2": "ok",
   "profile_pw_strength_3": "strong",
