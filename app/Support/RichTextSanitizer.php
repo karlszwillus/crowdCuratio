@@ -61,6 +61,13 @@ class RichTextSanitizer
             return '';
         }
 
+        // Q3-Politur G10-Followup (2026-08-20): Pre-Filter fuer
+        // script/style. Purifier `HTML.ForbiddenElements` greift je
+        // nach Version nur ueber eine Custom-Definition. Der Regex-
+        // Pre-Filter entfernt hier robust Tag UND Content, unabhaengig
+        // davon wie die Purifier-Config verhaellt.
+        $html = self::stripScriptAndStyleElements($html);
+
         // Primaerpfad: Purifier. Bei Facade-/Container-Problemen
         // fallen wir auf den strip_tags-Filter zurueck, damit
         // wenigstens die grobkoernige Bereinigung greift.
@@ -75,6 +82,29 @@ class RichTextSanitizer
             // Reduktion, veraendertes Rendering) auf.
             return self::legacyStripTags($html);
         }
+    }
+
+    /**
+     * Entfernt <script>...</script> und <style>...</style> komplett
+     * inklusive Content. Purifier laesst je nach Version die Text-
+     * Nodes zwischen den Tags stehen — dieser Pre-Filter macht das
+     * defensiv vorher.
+     */
+    private static function stripScriptAndStyleElements(string $html): string
+    {
+        $pattern = '#<(script|style)\b[^>]*>.*?</\1\s*>#is';
+        $prev = null;
+        // Verschachtelte Faelle iterativ aufloesen — <script>-Tags in
+        // <script>-Content sind exotisch, aber safe-by-loop.
+        while ($prev !== $html) {
+            $prev = $html;
+            $html = (string) preg_replace($pattern, '', $html);
+        }
+        // Selbst-schliessende / unvollstaendige script-/style-Tags
+        // ohne Closer.
+        $html = (string) preg_replace('#<(script|style)\b[^>]*/?>#i', '', $html);
+
+        return $html;
     }
 
     /**
