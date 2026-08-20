@@ -207,9 +207,13 @@ new class extends Component
             @endforeach
         </select>
     @elseif ($multiline)
+        {{-- Q3-Politur G6 (2026-08-20) / LV-03: nur `wire:model.blur`.
+             Zwei parallele wire:model auf demselben Feld wirken nicht
+             wie dokumentiert — Livewire nimmt eines, das andere ist
+             tot. Save-Roundtrip laeuft ueber Blur, das reicht fuer
+             den Inline-Editor. --}}
         <textarea
             wire:model.blur="value"
-            wire:model.live.debounce.1500ms="value"
             aria-label="{{ $label }}"
             @error('value') aria-invalid="true" aria-describedby="inline-editor-error-{{ $field }}" @enderror
             class="{{ $variantClasses }}"
@@ -220,7 +224,6 @@ new class extends Component
             type="text"
             value="{{ $value }}"
             wire:model.blur="value"
-            wire:model.live.debounce.1500ms="value"
             aria-label="{{ $label }}"
             @error('value') aria-invalid="true" aria-describedby="inline-editor-error-{{ $field }}" @enderror
             class="{{ $variantClasses }}"
