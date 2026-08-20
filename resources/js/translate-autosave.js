@@ -74,6 +74,27 @@ function updateOverallProgress() {
     label.textContent = pct + '%';
 }
 
+/**
+ * Q3-Politur G1 (2026-08-20) / UX-08: sichtbares Feedback nach
+ * erfolgreichem Blur-Save. Ein 1.5-s-Chip neben dem Feld — parallel
+ * zur Live-Region-Ansage fuer Screenreader.
+ */
+function showSavedChip(input) {
+    let chip = input.parentElement?.querySelector('[data-saved-chip]');
+    if (!chip) {
+        chip = document.createElement('span');
+        chip.dataset.savedChip = '1';
+        chip.className = 'ml-2 inline-flex items-center gap-1 rounded-full bg-success-bg px-2 py-0.5 text-caption text-success transition-opacity duration-200';
+        chip.textContent = '✓ gespeichert';
+        input.parentElement?.appendChild(chip);
+    }
+    chip.style.opacity = '1';
+    clearTimeout(chip._hideTimer);
+    chip._hideTimer = setTimeout(() => {
+        chip.style.opacity = '0';
+    }, 1500);
+}
+
 async function saveField(input) {
     const name = input.name;
     if (!name || !name.startsWith('translations[')) return;
@@ -102,6 +123,7 @@ async function saveField(input) {
         if (!res.ok) throw new Error('save failed');
         input.dataset.lastSaved = value;
         setFieldStatus(input, value.trim() !== '');
+        showSavedChip(input);
         window.ccAnnounce?.('Übersetzung gespeichert.');
     } catch (e) {
         window.ccToast?.('Speichern fehlgeschlagen — der Wert bleibt stehen.', 'error');

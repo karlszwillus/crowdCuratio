@@ -28,37 +28,47 @@ function findBlockElements(subjectType, subjectId) {
     return document.querySelectorAll(`${BLOCK_SELECTOR}[data-history-subject="${marker}"]`);
 }
 
-function ensureBanner() {
+function ensureBanner(version, author) {
+    // Q3-Politur G9 (2026-08-20) / UX-04: Banner traegt Version + Autor.
+    // Der Banner wird bei jedem enterDiffMode neu befuellt, damit die
+    // Referenz mitwandert, wenn der Nutzer eine andere Fassung anklickt.
     let banner = document.getElementById(BANNER_ID);
-    if (banner) return banner;
-    banner = document.createElement('div');
-    banner.id = BANNER_ID;
-    banner.className =
-        'fixed left-1/2 top-4 z-30 flex -translate-x-1/2 items-center gap-3 rounded-md border border-warning bg-warning-bg px-4 py-2 text-caption text-warning shadow-medium';
-    banner.setAttribute('role', 'status');
+    if (!banner) {
+        banner = document.createElement('div');
+        banner.id = BANNER_ID;
+        banner.className =
+            'fixed left-1/2 top-4 z-30 flex -translate-x-1/2 items-center gap-3 rounded-md border border-warning bg-warning-bg px-4 py-2 text-caption text-warning shadow-medium';
+        banner.setAttribute('role', 'status');
+        document.body.appendChild(banner);
+    }
+    const baseLabel = window.ccI18n?.historyDiffBanner || 'Nur zum Ansehen — Vergleichsmodus aktiv';
+    const refTemplate = window.ccI18n?.historyDiffRef || 'Vergleich mit v:version · :author';
+    const refLabel = version != null
+        ? refTemplate.replace(':version', String(version)).replace(':author', author || '?')
+        : '';
     banner.innerHTML = `
-        <span class="font-medium">${window.ccI18n?.historyDiffBanner || 'Nur zum Ansehen — Vergleichsmodus aktiv'}</span>
+        <span class="font-medium">${baseLabel}</span>
+        ${refLabel ? `<span class="text-ink-700">${refLabel}</span>` : ''}
         <button
             type="button"
             data-history-diff-close
             class="rounded-md border border-warning bg-paper-0 px-2 py-0.5 text-caption text-ink-900 hover:bg-canvas-bg"
         >${window.ccI18n?.historyDiffClose || 'Vergleich schließen'}</button>
     `;
-    document.body.appendChild(banner);
     banner.querySelector('[data-history-diff-close]').addEventListener('click', () => {
         window.dispatchEvent(new CustomEvent('history:diff-close'));
     });
     return banner;
 }
 
-function enterDiffMode(subjectType, subjectId, fields) {
+function enterDiffMode(subjectType, subjectId, fields, version, author) {
     // Immer erst alle bestehenden Overlays und Locks entfernen, bevor
     // die neue Fassung reinkommt. Sonst summieren sich die Diffs zweier
     // hintereinander angeklickter Fassungen visuell — Karl hat das im
     // Panel als „additives" Verhalten gemeldet.
     clearDiffState();
     document.documentElement.dataset.historyDiff = 'on';
-    ensureBanner();
+    ensureBanner(version, author);
 
     const blocks = findBlockElements(subjectType, subjectId);
     blocks.forEach((block) => {
@@ -109,9 +119,9 @@ function exitDiffMode() {
 window.addEventListener('revision-selected', (event) => {
     const detail = event.detail?.[0] ?? event.detail;
     if (!detail) return;
-    const { subjectType, subjectId, fields } = detail;
+    const { subjectType, subjectId, fields, revisionVersion, revisionAuthor } = detail;
     if (!subjectType || !subjectId || !fields) return;
-    enterDiffMode(subjectType, Number(subjectId), fields);
+    enterDiffMode(subjectType, Number(subjectId), fields, revisionVersion, revisionAuthor);
 });
 
 window.addEventListener('history:diff-close', () => {

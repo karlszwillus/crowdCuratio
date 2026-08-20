@@ -56,15 +56,28 @@ Props:
     x-cloak
     x-data="{
         open: false,
-        openPanel() { this.open = true; },
+        _previousFocus: null,
+        openPanel() {
+            // Q3-Politur G2 (2026-08-20) / A11Y-04: Fokus-Return.
+            this._previousFocus = document.activeElement;
+            this.open = true;
+            this.$nextTick(() => {
+                this.$refs.closeBtn?.focus();
+            });
+        },
         closePanel() {
             this.open = false;
+            const target = this._previousFocus;
+            this._previousFocus = null;
             const url = new URL(window.location.href);
             if (url.searchParams.has('comment')) {
                 url.searchParams.delete('comment');
                 url.searchParams.delete('model');
                 url.searchParams.delete('type');
                 window.history.replaceState({}, '', url.toString());
+            }
+            if (target && typeof target.focus === 'function' && document.contains(target)) {
+                this.$nextTick(() => target.focus());
             }
         },
     }"
@@ -145,6 +158,7 @@ Props:
          Alpine schaltet !translate-x-0 additiv dazu. Das inline-Style
          gibt der Transition das ease-out-expo-Easing (0.16, 1, 0.3, 1). --}}
     <aside
+        id="comment-panel"
         :class="open ? 'translate-x-0' : 'translate-x-full'"
         role="dialog"
         aria-modal="true"
@@ -157,6 +171,7 @@ Props:
             <h2 class="text-heading font-semibold text-ink-900">{{ $panelTitle }}</h2>
             <button
                 type="button"
+                x-ref="closeBtn"
                 @click="closePanel()"
                 class="rounded-md p-2 text-ink-600 hover:bg-line-100 hover:text-ink-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 aria-label="{{ __('close') }}"

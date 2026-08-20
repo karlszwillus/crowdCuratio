@@ -250,6 +250,60 @@ new class extends Component
     }
 
     /**
+     * Q3-Politur G9 (2026-08-20) / P-01: welches Preset entspricht der
+     * aktuellen Toggle-Kombination? Getter wird von den Preset-Buttons
+     * gelesen und leuchtet live mit — der bisherige Vergleich gegen
+     * den serverseitig gespeicherten `role`-Wert hinkte hinterher, sobald
+     * der Nutzer einzelne Toggles anfasste, ohne zu speichern.
+     */
+    public function getMatchedPresetProperty(): ?string
+    {
+        $current = [
+            PermissionName::EDIT->value    => (bool) ($this->permissions[PermissionName::EDIT->value] ?? false),
+            PermissionName::ADD->value     => (bool) ($this->permissions[PermissionName::ADD->value] ?? false),
+            PermissionName::DELETE->value  => (bool) ($this->permissions[PermissionName::DELETE->value] ?? false),
+            PermissionName::PUBLISH->value => (bool) ($this->permissions[PermissionName::PUBLISH->value] ?? false),
+            PermissionName::COMMENT->value => (bool) ($this->permissions[PermissionName::COMMENT->value] ?? false),
+            PermissionName::INVITE->value  => (bool) ($this->permissions[PermissionName::INVITE->value] ?? false),
+        ];
+
+        $presets = [
+            RoleName::EDITOR->value => [
+                PermissionName::EDIT->value    => true,
+                PermissionName::ADD->value     => true,
+                PermissionName::DELETE->value  => true,
+                PermissionName::PUBLISH->value => true,
+                PermissionName::COMMENT->value => true,
+                PermissionName::INVITE->value  => false,
+            ],
+            RoleName::REVIEWER->value => [
+                PermissionName::EDIT->value    => false,
+                PermissionName::ADD->value     => false,
+                PermissionName::DELETE->value  => false,
+                PermissionName::PUBLISH->value => false,
+                PermissionName::COMMENT->value => true,
+                PermissionName::INVITE->value  => false,
+            ],
+            RoleName::READER->value => [
+                PermissionName::EDIT->value    => false,
+                PermissionName::ADD->value     => false,
+                PermissionName::DELETE->value  => false,
+                PermissionName::PUBLISH->value => false,
+                PermissionName::COMMENT->value => false,
+                PermissionName::INVITE->value  => false,
+            ],
+        ];
+
+        foreach ($presets as $role => $mask) {
+            if ($mask === $current) {
+                return $role;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Persistiert die vier Toggles fuer den aktiven User als
      * project_user_permissions-Zeilen (Set-Semantik). view und comment
      * werden IMMER mitgeschrieben — sonst wuerde der User seine
@@ -399,10 +453,24 @@ new class extends Component
             </button>
         </div>
 
+        @php
+            // Q3-Politur G4 (2026-08-20) / UX-06: Rollen-Beschreibungen
+            // fuer den Chip in der User-Liste.
+            $roleDescriptions = [
+                RoleName::READER->value   => __('role_reader_desc'),
+                RoleName::REVIEWER->value => __('role_reviewer_desc'),
+                RoleName::EDITOR->value   => __('role_editor_desc'),
+                RoleName::ADMIN->value    => __('role_admin_desc'),
+            ];
+        @endphp
+
         <ul class="p-2" role="list">
             @foreach ($this->users as $user)
                 @php
                     $isActive = $user['id'] === $selectedUserId;
+                    $userRoleDesc = $user['is_owner'] ?? false
+                        ? __('role_owner_desc')
+                        : ($roleDescriptions[$user['role']] ?? '');
                 @endphp
                 <li>
                     <button
@@ -418,7 +486,8 @@ new class extends Component
                         <x-ui.user-avatar :user="$user" size="8" text="text-caption font-semibold"/>
                         <span class="min-w-0 flex-1 truncate">
                             <span class="block text-body font-medium">{{ $user['name'] }}</span>
-                            <span class="block text-caption text-ink-500">{{ $user['role'] }}</span>
+                            <span class="block text-caption text-ink-500"
+                                  @if ($userRoleDesc !== '') title="{{ $userRoleDesc }}" @endif>{{ $user['role'] }}</span>
                         </span>
                     </button>
                 </li>
@@ -456,15 +525,25 @@ new class extends Component
                 </p>
 
                 <div class="flex flex-wrap gap-2" role="tablist">
-                    @foreach ([
-                        RoleName::READER->value   => __('role_reader'),
-                        RoleName::REVIEWER->value => __('role_reviewer'),
-                        RoleName::EDITOR->value   => __('role_editor'),
-                        'Owner'                   => __('role_owner'),
-                    ] as $roleKey => $label)
+                    @php
+                        // Q3-Politur G4 (2026-08-20) / UX-06: Rollen-Preset-
+                        // Buttons bekommen eine Erklaerung als Tooltip.
+                        $rolePresets = [
+                            RoleName::READER->value   => [__('role_reader'),   __('role_reader_desc')],
+                            RoleName::REVIEWER->value => [__('role_reviewer'), __('role_reviewer_desc')],
+                            RoleName::EDITOR->value   => [__('role_editor'),   __('role_editor_desc')],
+                            'Owner'                   => [__('role_owner'),    __('role_owner_desc')],
+                        ];
+                    @endphp
+                    @foreach ($rolePresets as $roleKey => [$label, $desc])
                         @php
+                            // Q3-Politur G9 (2026-08-20) / P-01: der
+                            // Highlight-Vergleich laeuft jetzt live gegen
+                            // die aktuelle Toggle-Kombination
+                            // ($this->matchedPreset), nicht mehr gegen
+                            // den zuletzt gespeicherten $active['role'].
                             $isRolePresetActive = ($roleKey === 'Owner' && $isOwner)
-                                || ($roleKey === $active['role']);
+                                || ($roleKey === $this->matchedPreset);
                             $isOwnerButton = ($roleKey === 'Owner');
                         @endphp
                         <button
@@ -475,6 +554,8 @@ new class extends Component
                             @endif
                             @disabledIf($isOwnerButton || $isOwner, __('role_owner_locked_hint'))
                             aria-selected="{{ $isRolePresetActive ? 'true' : 'false' }}"
+                            @if (! $isOwnerButton && ! $isOwner) title="{{ $desc }}" @endif
+                            aria-label="{{ $label }} — {{ $desc }}"
                             class="rounded-md border px-4 py-2 text-body transition-colors
                                    {{ $isRolePresetActive
                                        ? 'bg-ink-900 text-paper-0 border-ink-900'
@@ -560,6 +641,11 @@ new class extends Component
             aria-modal="true"
             aria-labelledby="invite-title"
             wire:click.self="closeInvite"
+            {{-- Q3-Politur G2 (2026-08-20) / A11Y-03 · A11Y-04:
+                 Escape schliesst, Fokus faellt auf das E-Mail-Feld. --}}
+            x-data
+            x-init="$nextTick(() => document.getElementById('inviteEmail')?.focus())"
+            @keydown.escape.window="$wire.closeInvite()"
         >
             <div class="w-full max-w-md rounded-lg border border-line-200 bg-paper-0 shadow-lg">
                 <header class="flex items-center justify-between border-b border-line-200 px-5 py-3">

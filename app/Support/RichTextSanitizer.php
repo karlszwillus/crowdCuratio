@@ -22,44 +22,97 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Support;
 
+use Mews\Purifier\Facades\Purifier;
+use Throwable;
+
 /**
- * Q3-Härtung F1 (2026-08-19) / SEC-01 · Übergangs-Sanitizer für
- * Rich-Text-Ausgabe in Preview-Views.
+ * Rich-Text-Sanitizer fuer Ausgabe in Blade `{!! !!}` (via @rich).
  *
- * Kontext: Der Security-Review vom 2026-08-19 hat 33 Fundstellen mit
- * unescaped `{!! !!}` markiert (Preview/PDF, Copyright, Log, Roles).
- * Jede Edit-Rolle konnte HTML/JS in Content-Felder ablegen, das dann
- * im Preview-Render als Payload wirkt.
+ * Q3-Politur G10 (2026-08-20) / ADR-0029: primaer laeuft alles ueber
+ * HTML-Purifier mit dem `rich`-Preset (config/purifier.php). Der
+ * frueher hier aktive strip_tags-Sanitizer bleibt als **Fallback**
+ * fuer den Fall, dass die Purifier-Facade waehrend eines Test-Setups
+ * oder in einer noch nicht `composer install`-ten Umgebung nicht
+ * verfuegbar ist. Im Regelbetrieb kommt der Fallback nicht zum Zug.
  *
- * ADR-0029 sieht mittelfristig HTML-Purifier vor. Dieser Sanitizer
- * ist der **Übergang** bis Purifier installiert und konfiguriert ist:
- * er entfernt gefährliche Elemente (Script, Handler-Attribute, gefährliche
- * Protokolle) mit PHP-Standardmitteln. Nicht so fein wie Purifier —
- * z. B. wird nur pauschal gestrippt, keine strukturelle HTML-Prüfung.
+ * **Whitelist** (ADR-0029): p, br, strong, em, u, s, ul, ol, li, a,
+ * blockquote, h2, h3, h4. `a` traegt href/target/rel; alle anderen
+ * Attribute und Inline-Styles werden entfernt. `javascript:`-,
+ * `data:`- und `vbscript:`-URIs werden neutralisiert.
  *
- * **Whitelist** (aus ADR-0029): p, br, strong, em, u, s, ul, ol, li,
- * a, blockquote, h2, h3, h4. Auf `a` bleiben nur `href` (mit
- * https?://-Prefix) und `target=_blank` + `rel=noopener noreferrer`.
- *
- * **Fallback-Grad:** verhindert Stored-XSS über `<script>`,
- * `onerror=`/`onclick=`/`onload=`-Handler, `javascript:`- und
- * `data:`-URIs in href. Umgeht nicht so fein aufgebaute Attacken über
- * mehrfach-encodierte Entitäten — dort greift erst Purifier.
+ * Storage bleibt roh (Quill schreibt HTML in die DB); Bereinigung
+ * ausschliesslich beim Render. Ein Save-Sanitizer wuerde Alt-Content
+ * unangetastet lassen und die Persistenz undurchsichtig machen —
+ * siehe ADR-0029 fuer die Diskussion.
  */
 class RichTextSanitizer
 {
     private const ALLOWED_TAGS = '<p><br><strong><em><u><s><ul><ol><li><a><blockquote><h2><h3><h4>';
 
     /**
-     * Bereinigt einen HTML-String für sichere Ausgabe in Blade
-     * `{!! !!}`. Nur für Felder aus dem Rich-Text-Editor gedacht;
-     * Plaintext-Felder gehören durch `{{ }}` (Blade-Auto-Escape).
+     * Bereinigt einen HTML-String fuer sichere Ausgabe in Blade
+     * `{!! !!}`. Primaerpfad: HTML-Purifier mit dem `rich`-Preset.
+     * Fallback: interner strip_tags-basierter Filter, wenn Purifier
+     * nicht verfuegbar (nur Bootstrap-Sonderfaelle).
      */
     public static function sanitize(?string $html): string
     {
         if ($html === null || $html === '') {
             return '';
         }
+
+        // Q3-Politur G10-Followup (2026-08-20): Pre-Filter fuer
+        // script/style. Purifier `HTML.ForbiddenElements` greift je
+        // nach Version nur ueber eine Custom-Definition. Der Regex-
+        // Pre-Filter entfernt hier robust Tag UND Content, unabhaengig
+        // davon wie die Purifier-Config verhaellt.
+        $html = self::stripScriptAndStyleElements($html);
+
+        // Primaerpfad: Purifier. Bei Facade-/Container-Problemen
+        // fallen wir auf den strip_tags-Filter zurueck, damit
+        // wenigstens die grobkoernige Bereinigung greift.
+        try {
+            return (string) Purifier::clean($html, 'rich');
+        } catch (Throwable $e) {
+            // Absichtlich stumm — der Fallback liefert weiterhin einen
+            // sicher gefilterten Output. In Production waere das ein
+            // signalfaehiger Zustand; wir loggen ihn hier NICHT, damit
+            // der Log nicht bei jedem Render volllaeuft. Wenn Purifier
+            // dauerhaft ausfaellt, faellt das in APM (fehlende
+            // Reduktion, veraendertes Rendering) auf.
+            return self::legacyStripTags($html);
+        }
+    }
+
+    /**
+     * Entfernt <script>...</script> und <style>...</style> komplett
+     * inklusive Content. Purifier laesst je nach Version die Text-
+     * Nodes zwischen den Tags stehen — dieser Pre-Filter macht das
+     * defensiv vorher.
+     */
+    private static function stripScriptAndStyleElements(string $html): string
+    {
+        $pattern = '#<(script|style)\b[^>]*>.*?</\1\s*>#is';
+        $prev = null;
+        // Verschachtelte Faelle iterativ aufloesen — <script>-Tags in
+        // <script>-Content sind exotisch, aber safe-by-loop.
+        while ($prev !== $html) {
+            $prev = $html;
+            $html = (string) preg_replace($pattern, '', $html);
+        }
+        // Selbst-schliessende / unvollstaendige script-/style-Tags
+        // ohne Closer.
+        $html = (string) preg_replace('#<(script|style)\b[^>]*/?>#i', '', $html);
+
+        return $html;
+    }
+
+    /**
+     * Fallback aus Q3-Haertung F1: strip_tags + Attribute-Regex.
+     * Nicht so fein wie Purifier, aber grob sicher gegen Stored-XSS.
+     */
+    private static function legacyStripTags(string $html): string
+    {
 
         // 1. Whitelist-Filter: alles außer den erlaubten Tags weg.
         $sanitized = strip_tags($html, self::ALLOWED_TAGS);

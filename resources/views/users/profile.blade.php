@@ -17,8 +17,12 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
     // Blade-Directive-Parser stolpert ueber @json(...) mit einem
     // Array-Literal, das mehrere Funktionsaufrufe enthaelt. Deshalb
     // vorher als Variable zuweisen und dann @json($var) rendern.
+    // Q3-Politur G1 (2026-08-20) / LIVE-UX-01: strength=0 hat kein Label
+    // (Nutzer:in hat nichts getippt). Frueher: __('profile_pw_strength_0')
+    // mit leerem JSON-Wert. Laravel gibt bei leerem oder fehlendem Key
+    // den Key selbst zurueck; das rutschte als woertliche Ausgabe ins UI.
     $pwStrengthLabels = [
-        __('profile_pw_strength_0'),
+        '',
         __('profile_pw_strength_1'),
         __('profile_pw_strength_2'),
         __('profile_pw_strength_3'),
@@ -29,6 +33,8 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
     window.ccPasswordCard = function () {
         return {
             pw: '', confirm: '',
+            // Q3-Politur G1 (2026-08-20) / UX-02: Submit-Feedback.
+            submitting: false,
             get strength() {
                 const s = this.pw || '';
                 if (s.length === 0) return 0;
@@ -55,6 +61,8 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
             locale: init.locale,
             theme: init.theme,
             _dirty: false,
+            // Q3-Politur G1 (2026-08-20) / UX-02: Submit-Feedback.
+            submitting: false,
             hasStoredAvatar: !! init.hasStoredAvatar,
             removedAvatar: false,
             previewAvatarUrl: null,
@@ -76,6 +84,41 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
             dirty() { this._dirty = true; },
             normalizeInitials() {
                 this.initials = (this.initials || '').toUpperCase().replace(/[^A-ZÄÖÜ0-9]/g, '').slice(0, 3);
+            },
+            // Q3-Politur G9 (2026-08-20) / UX-01: Live-Blur-Check gegen
+            // die Sperrliste. Ergaenzt den Server-Validator, ersetzt ihn
+            // nicht — beim Save laeuft nochmal derselbe Check.
+            liveInitialsBlocked: false,
+            liveInitialsMessage: '',
+            liveInitialsSuggestions: [],
+            async checkInitialsRemote() {
+                const value = (this.initials || '').trim();
+                if (value === '') {
+                    this.liveInitialsBlocked = false;
+                    this.liveInitialsMessage = '';
+                    this.liveInitialsSuggestions = [];
+                    return;
+                }
+                const token = document.querySelector('meta[name=csrf-token]')?.content;
+                try {
+                    const res = await fetch(init.checkInitialsUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': token || '',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        body: JSON.stringify({ initials: value }),
+                    });
+                    if (!res.ok) return;
+                    const data = await res.json();
+                    this.liveInitialsBlocked = !!data.blocked;
+                    this.liveInitialsMessage = data.message || '';
+                    this.liveInitialsSuggestions = Array.isArray(data.suggestions) ? data.suggestions : [];
+                } catch (e) {
+                    // Netzwerkfehler: stumm. Server-Save fangt es auf.
+                }
             },
             pickColor(t) { this.currentColor = t; this._dirty = true; },
             onAvatarPicked(event) {
@@ -100,6 +143,13 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
             },
             async switchLocale(code) {
                 if (this.locale === code) return;
+                // Q3-Politur G9 (2026-08-20) / UX-10: der Reload nach
+                // Locale-Wechsel wuerde ungespeicherte Aenderungen im
+                // Formular verwerfen. Vorher fragen, wenn was offen ist.
+                if (this._dirty || (this.$root && this.$root.submitting)) {
+                    const msg = init.localeConfirm || 'Ungespeicherte Änderungen gehen verloren. Sprache trotzdem wechseln?';
+                    if (! window.confirm(msg)) return;
+                }
                 this.locale = code;
                 await this._persist(init.localeUrl, { locale: code });
                 window.location.reload();
@@ -232,10 +282,13 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                       'hasStoredAvatar' => (bool) $userAvatarPath,
                       'localeUrl' => route('profile.locale'),
                       'themeUrl' => route('profile.theme'),
+                      'localeConfirm' => __('profile_locale_switch_confirm'),
+                      'checkInitialsUrl' => route('profile.check_initials'),
                       'pendingLabel' => __('profile_pending_label'),
                       'noPendingLabel' => __('profile_no_pending'),
                       'saveFailedLabel' => __('profile_save_failed'),
-                  ]))">
+                  ]))"
+                  @submit="submitting = true">
                 @csrf
                 @method('PATCH')
 
@@ -324,12 +377,35 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                                         </label>
                                         <input id="profile-initials" name="initials" type="text"
                                                maxlength="3" size="4"
-                                               x-model="initials" @input="normalizeInitials(); dirty()"
+                                               x-model="initials"
+                                               @input="normalizeInitials(); dirty()"
+                                               @blur="checkInitialsRemote()"
+                                               :aria-invalid="liveInitialsBlocked ? 'true' : null"
+                                               aria-describedby="profile-initials-live-error"
                                                @class([
                                                    'w-20 rounded-md border bg-paper-0 px-3 py-2 text-center font-mono uppercase text-ink-900',
                                                    'border-danger' => $errors->has('initials'),
                                                    'border-line-200' => ! $errors->has('initials'),
                                                ])/>
+                                        {{-- Q3-Politur G9 (2026-08-20) / UX-01:
+                                             Live-Rueckmeldung nach Blur (parallel zum
+                                             Server-Validator, der beim Save nochmal prueft). --}}
+                                        <p x-show="liveInitialsBlocked && liveInitialsMessage"
+                                           x-cloak
+                                           id="profile-initials-live-error"
+                                           class="mt-1 text-caption text-danger"
+                                           x-text="liveInitialsMessage"
+                                           role="status"></p>
+                                        <div x-show="liveInitialsBlocked && liveInitialsSuggestions.length > 0"
+                                             x-cloak
+                                             class="mt-2 flex flex-wrap items-center gap-2">
+                                            <span class="text-caption text-ink-500">{{ __('profile_initials_suggestions') }}</span>
+                                            <template x-for="s in liveInitialsSuggestions" :key="s">
+                                                <button type="button" @click="initials = s; dirty(); liveInitialsBlocked = false"
+                                                        class="rounded-md border border-line-200 bg-canvas-bg px-2 py-0.5 font-mono text-caption text-ink-900 hover:bg-chrome-active"
+                                                        x-text="s"></button>
+                                            </template>
+                                        </div>
                                         @error('initials')
                                             <p class="mt-1 text-caption text-danger">{{ $message }}</p>
                                             @php
@@ -356,7 +432,13 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                                             @foreach ($palette as $token)
                                                 <button type="button" @click="pickColor(@js($token))"
                                                         :aria-pressed="currentColor === @js($token) ? 'true' : 'false'"
-                                                        :class="currentColor === @js($token) ? 'ring-2 ring-ink-900 ring-offset-2 ring-offset-canvas-bg' : ''"
+                                                        {{-- Q3-Politur G9 (2026-08-20) / UI-04:
+                                                             ring-inset statt ring-offset — der aussenliegende
+                                                             offset-Ring bohrte in der Palette-Reihe ein weisses
+                                                             Loch pro aktiver Chip. Innen liegender Ring bleibt
+                                                             innerhalb des Chips und kollidiert nicht mit den
+                                                             Nachbarn. --}}
+                                                        :class="currentColor === @js($token) ? 'ring-2 ring-inset ring-paper-0' : ''"
                                                         style="background-color: var(--color-{{ $token }})"
                                                         class="size-8 rounded-full border border-line-200"
                                                         aria-label="{{ $token }}"></button>
@@ -431,7 +513,9 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                                     <div class="min-w-0 flex-1">
                                         <p class="truncate text-body font-medium text-ink-900">{{ $p['name'] }}</p>
                                     </div>
-                                    <span class="rounded-full bg-canvas-bg px-2 py-0.5 text-caption text-ink-700">{{ $p['role'] }}</span>
+                                    <span class="rounded-full bg-canvas-bg px-2 py-0.5 text-caption text-ink-700"
+                                          title="{{ $p['role_desc'] }}"
+                                          aria-label="{{ $p['role'] }} — {{ $p['role_desc'] }}">{{ $p['role'] }}</span>
                                     <span class="text-caption text-ink-500">{{ $p['context'] }}</span>
                                     <a href="{{ route('projects.edit', $p['id']) }}"
                                        class="text-caption text-primary underline hover:no-underline">
@@ -483,8 +567,13 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                 </section>
 
                 {{-- Sticky-Fusszeile mit Sammel-Speichern. Nennt beim Klick
-                     was offen ist, damit der Nutzer nicht raetselt. --}}
-                <div class="fixed inset-x-0 bottom-0 z-20 border-t border-line-200 bg-paper-0/95 shadow-medium backdrop-blur">
+                     was offen ist, damit der Nutzer nicht raetselt.
+                     Q3-Politur G2 (2026-08-20) / A11Y-05: als `region` mit
+                     Label, damit Screenreader die Sammel-Save-Bar
+                     ansteuerbar finden. --}}
+                <div class="fixed inset-x-0 bottom-0 z-20 border-t border-line-200 bg-paper-0/95 shadow-medium backdrop-blur"
+                     role="region"
+                     aria-label="{{ __('profile_sticky_region_label') }}">
                     <div class="mx-auto flex max-w-4xl items-center justify-between gap-4 px-6 py-3">
                         <p class="text-caption text-ink-500" x-text="pendingLabel"></p>
                         <div class="flex gap-2">
@@ -494,9 +583,10 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                                 {{ __('profile_discard') }}
                             </button>
                             <button type="submit"
-                                    :disabled="!isDirty"
+                                    :disabled="!isDirty || submitting"
                                     class="rounded-md bg-primary px-4 py-1.5 text-caption font-semibold text-paper-0 hover:opacity-90 disabled:opacity-40">
-                                {{ __('save') }}
+                                <span x-show="!submitting">{{ __('save') }}</span>
+                                <span x-show="submitting" x-cloak>{{ __('save') }} …</span>
                             </button>
                         </div>
                     </div>
@@ -509,7 +599,8 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
             <form method="POST" action="{{ route('profile.password') }}"
                   id="password"
                   class="mt-6 scroll-mt-6"
-                  x-data="ccPasswordCard()">
+                  x-data="ccPasswordCard()"
+                  @submit="submitting = true">
                 @csrf
                 @method('PATCH')
                 <section class="rounded-lg border border-line-200 bg-paper-0 p-6 shadow-subtle">
@@ -555,8 +646,10 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                     <div class="mt-4 flex flex-wrap items-center justify-between gap-2">
                         <p class="text-caption text-ink-500">{{ __('profile_password_session_hint') }}</p>
                         <button type="submit"
-                                class="rounded-md border border-ink-300 bg-canvas-bg px-4 py-1.5 text-caption font-semibold text-ink-900 hover:bg-chrome-active">
-                            {{ __('profile_password_save') }}
+                                :disabled="submitting"
+                                class="rounded-md border border-ink-300 bg-canvas-bg px-4 py-1.5 text-caption font-semibold text-ink-900 hover:bg-chrome-active disabled:opacity-40">
+                            <span x-show="!submitting">{{ __('profile_password_save') }}</span>
+                            <span x-show="submitting" x-cloak>{{ __('profile_password_save') }} …</span>
                         </button>
                     </div>
                 </section>

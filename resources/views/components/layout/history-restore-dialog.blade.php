@@ -102,7 +102,12 @@ Der Panel-Button feuert `history:restore-request` mit
             <p class="rounded-md border border-line-200 bg-canvas-bg p-3 text-caption text-ink-700">
                 {{ __('history_restore_body_kept') }}
             </p>
-            <p x-show="hasTranslations" class="rounded-md border border-warning bg-warning-bg p-3 text-caption text-warning">
+            {{-- Q3-Politur G9 (2026-08-20) / UI-05: der Uebersetzungs-
+                 Hinweis war als warning gefaerbt, obwohl er informativ ist
+                 (kein Datenverlust — Restore ueberschreibt die aktuelle
+                 Fassung wie dokumentiert). Warn/Danger bleibt fuer echte
+                 Warnungen reserviert. --}}
+            <p x-show="hasTranslations" class="rounded-md border border-info/20 bg-info-bg p-3 text-caption text-info">
                 {{ __('history_restore_body_translation_warning') }}
             </p>
             <p x-show="error" class="rounded-md border border-danger bg-danger-bg p-3 text-caption text-danger" x-text="error"></p>

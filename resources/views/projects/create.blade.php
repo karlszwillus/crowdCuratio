@@ -25,6 +25,16 @@ If not, see <https://www.gnu.org/licenses/>. -->
          allen vier Screens. Nur zeigen, wenn wir ein bestehendes
          Projekt bearbeiten — bei der Neuanlage (POST /projects
          ohne existierendes $project->id) gibt es noch keine Tabs. --}}
+    {{-- Q3-Politur G3 (2026-08-20) / LIVE-UX-02: Screenreader brauchen
+         eine H1 als Ausgangs-Landmark auf jeder Sicht. --}}
+    <h1 class="sr-only">
+        @isset($project->id)
+            {{ __('metadata_page_h1_edit', ['name' => $project->name]) }}
+        @else
+            {{ __('metadata_page_h1_new') }}
+        @endisset
+    </h1>
+
     @if (isset($project->id))
         <div class="mb-6 flex flex-wrap items-center justify-between gap-4
                     border-b border-line-200 pb-3">
@@ -56,7 +66,16 @@ If not, see <https://www.gnu.org/licenses/>. -->
           action="@if(isset($project->id)) {{ route('projects.update',$project->id) }} @else {{ route('projects.store') }} @endif"
           method="POST"
           enctype="multipart/form-data"
-          x-data="{ nameLen: @js(isset($project->name) ? mb_strlen((string) $project->name) : 0) }">
+          x-data="{
+              nameLen: @js(isset($project->name) ? mb_strlen((string) $project->name) : 0),
+              submitting: false,
+              {{-- Q3-Politur G3 (2026-08-20) / LIVE-UX-02: pending-Label
+                   analog Profil-Muster (kein Timestamp mehr im Footer). --}}
+              isDirty: false,
+          }"
+          @input.capture="isDirty = true"
+          @change.capture="isDirty = true"
+          @submit="submitting = true">
         @csrf
         @if(isset($project->id))
             @method('PUT')
@@ -64,10 +83,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
         {{-- 5aa.2 § 3: Projektname. Jedes Feld eine Karte, ein Label,
              Sternchen in danger direkt am Label, kein „* (Pflichtfeld)". --}}
-        <div class="mb-4 rounded-md border border-line-200 bg-paper-0 p-5">
-            <label for="inputProjectName" class="mb-1 block text-caption font-semibold text-ink-700">
-                {{ __('project_name') }} <span class="text-danger" aria-hidden="true">*</span>
-            </label>
+        <section class="mb-4 rounded-md border border-line-200 bg-paper-0 p-5">
+            <h2 class="mb-1 text-caption font-semibold text-ink-700">
+                <label for="inputProjectName">
+                    {{ __('project_name') }} <span class="text-danger" aria-hidden="true">*</span>
+                </label>
+            </h2>
             <p class="mb-2 text-caption text-ink-500">{{ __('metadata_field_name_hint') }}</p>
             <div class="flex flex-wrap items-center gap-3">
                 <input id="inputProjectName"
@@ -83,13 +104,13 @@ If not, see <https://www.gnu.org/licenses/>. -->
                       x-text="`${nameLen} / 80`">
                 </span>
             </div>
-        </div>
+        </section>
 
         {{-- Projektbild: eigene Vorschau + Datei-Meta, kein natives Browser-Label
              (Design v6 § 3: „DurchsuchenChoose File No file chosen" ist doppelt
              lokalisierte Browser-Zeichenkette und darf nicht im UI stehen). --}}
-        <div class="mb-4 rounded-md border border-line-200 bg-paper-0 p-5"
-             x-data="{
+        <section class="mb-4 rounded-md border border-line-200 bg-paper-0 p-5"
+                 x-data="{
                  file: null,
                  preview: @js(isset($project->logo) ? route('image', $project->logo) : null),
                  fileName: @js($project->logo ?? null),
@@ -112,10 +133,10 @@ If not, see <https://www.gnu.org/licenses/>. -->
                      this.$refs.input.value = '';
                  },
              }">
-            <label class="mb-1 block text-caption font-semibold text-ink-700">
+            <h2 class="mb-1 text-caption font-semibold text-ink-700">
                 {{ __('project_thumbnail') }}
                 <span class="text-caption font-normal text-ink-500">{{ __('label_optional') }}</span>
-            </label>
+            </h2>
             <p class="mb-3 text-caption text-ink-500">{{ __('metadata_field_thumbnail_hint') }}</p>
 
             <div class="flex flex-wrap items-start gap-4">
@@ -148,23 +169,23 @@ If not, see <https://www.gnu.org/licenses/>. -->
                            :value="removed ? '' : @js($project->logo ?? '')"/>
                 </div>
             </div>
-        </div>
+        </section>
 
         {{-- Beschreibung — Quill-Editor bleibt im bestehenden #descriptionId. --}}
-        <div class="mb-4 rounded-md border border-line-200 bg-paper-0 p-5">
-            <label class="mb-1 block text-caption font-semibold text-ink-700">{{ __('description') }}</label>
+        <section class="mb-4 rounded-md border border-line-200 bg-paper-0 p-5">
+            <h2 class="mb-1 text-caption font-semibold text-ink-700">{{ __('description') }}</h2>
             <div id="descriptionId" class="rounded-md border border-line-200 bg-canvas-bg"></div>
-        </div>
+        </section>
 
         {{-- Impressum — Systemtext-Übernahme kopiert den aktuellen /settings-Text
              ins Projekt-Feld. Danach entkoppelt. Bleibt das Feld später wieder
              leer, greift der Systemtext beim Publish automatisch. --}}
-        <div class="mb-4 rounded-md border border-line-200 bg-paper-0 p-5">
+        <section class="mb-4 rounded-md border border-line-200 bg-paper-0 p-5">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                    <label class="mb-1 block text-caption font-semibold text-ink-700">
+                    <h2 class="mb-1 text-caption font-semibold text-ink-700">
                         {{ __('project_imprint') }} <span class="text-danger" aria-hidden="true">*</span>
-                    </label>
+                    </h2>
                     <p class="mb-3 text-caption text-ink-500">{{ __('metadata_imprint_intro') }}</p>
                 </div>
                 @isset($project->id)
@@ -177,16 +198,16 @@ If not, see <https://www.gnu.org/licenses/>. -->
                 @endisset
             </div>
             <div id="imprintId" class="rounded-md border border-line-200 bg-canvas-bg"></div>
-        </div>
+        </section>
 
         {{-- Geschäftsbedingungen — analog zum Impressum. --}}
-        <div class="mb-4 rounded-md border border-line-200 bg-paper-0 p-5">
+        <section class="mb-4 rounded-md border border-line-200 bg-paper-0 p-5">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                    <label class="mb-1 block text-caption font-semibold text-ink-700">
+                    <h2 class="mb-1 text-caption font-semibold text-ink-700">
                         {{ __('project_terms') }}
                         <span class="text-caption font-normal text-ink-500">{{ __('label_optional') }}</span>
-                    </label>
+                    </h2>
                     <p class="mb-3 text-caption text-ink-500">{{ __('metadata_terms_intro') }}</p>
                 </div>
                 @isset($project->id)
@@ -199,7 +220,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                 @endisset
             </div>
             <div id="termsId" class="rounded-md border border-line-200 bg-canvas-bg"></div>
-        </div>
+        </section>
 
         {{-- Klebende Speicher-Fußzeile am Seitenende — Design v6 § 3.
              Ein Primär-Button, ein sekundärer, Speicherstand links.
@@ -207,14 +228,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
              `mt-16` schafft Puffer zwischen letztem Feld und Sticky-Footer bei
              niedrigen Viewports (die Beschreibungs-Quill-Toolbar geriet vorher
              hinter den Save-Footer). --}}
-        <div class="sticky bottom-0 z-20 -mx-4 mt-16 flex flex-wrap items-center justify-between gap-3 border-t border-line-200 bg-paper-0/95 px-6 py-3 shadow-medium backdrop-blur">
+        <div class="sticky bottom-0 z-20 -mx-4 mt-16 flex flex-wrap items-center justify-between gap-3 border-t border-line-200 bg-paper-0/95 px-6 py-3 shadow-medium backdrop-blur"
+             role="region"
+             aria-label="{{ __('metadata_sticky_region_label') }}">
             <p class="text-caption text-ink-500">
-                @isset($project->updated_at)
-                    {{ __('metadata_footer_last_saved') }}
-                    {{ $project->updated_at->format('d.m.Y, H:i') }}
-                @else
-                    {{ __('metadata_page_hint') }}
-                @endisset
+                <span x-show="!isDirty">{{ __('metadata_footer_no_pending') }}</span>
+                <span x-show="isDirty" x-cloak>{{ __('metadata_footer_pending') }}</span>
             </p>
             <div class="flex items-center gap-2">
                 @isset($project->id)
@@ -224,9 +243,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     </a>
                 @endisset
                 <button type="submit"
-                        class="inline-flex items-center gap-1 rounded-md bg-primary px-4 py-2 text-body font-medium text-primary-on hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                        :disabled="submitting"
+                        class="inline-flex items-center gap-1 rounded-md bg-primary px-4 py-2 text-body font-medium text-primary-on hover:opacity-90 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
                     <x-icon name="save" size="4"/>
-                    <span>{{ __('save') }}</span>
+                    <span x-show="!submitting">{{ __('save') }}</span>
+                    <span x-show="submitting" x-cloak>{{ __('save') }} …</span>
                 </button>
             </div>
         </div>

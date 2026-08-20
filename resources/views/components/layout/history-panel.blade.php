@@ -36,8 +36,27 @@ Props:
     x-cloak
     x-data="{
         open: false,
-        openPanel() { this.open = true; },
-        closePanel() { this.open = false; },
+        _previousFocus: null,
+        openPanel() {
+            // Q3-Politur G2 (2026-08-20) / A11Y-04: Fokus-Return.
+            // Merkt sich das aktuell fokussierte Element, damit
+            // wir beim Schliessen dorthin zuruecksetzen.
+            this._previousFocus = document.activeElement;
+            this.open = true;
+            this.$nextTick(() => {
+                this.$refs.closeBtn?.focus();
+            });
+        },
+        closePanel() {
+            this.open = false;
+            const target = this._previousFocus;
+            this._previousFocus = null;
+            // Fokus zurueck auf den ausloesenden Trigger, wenn er
+            // noch im DOM ist.
+            if (target && typeof target.focus === 'function' && document.contains(target)) {
+                this.$nextTick(() => target.focus());
+            }
+        },
     }"
     @keydown.escape.window="if (open) closePanel()"
     @panel:open.window="
@@ -63,6 +82,7 @@ Props:
     ></div>
 
     <aside
+        id="history-panel"
         :class="open ? 'translate-x-0' : 'translate-x-full'"
         role="dialog"
         aria-modal="true"
@@ -75,6 +95,7 @@ Props:
             <h2 class="text-heading font-semibold text-ink-900">{{ $panelTitle }}</h2>
             <button
                 type="button"
+                x-ref="closeBtn"
                 @click="closePanel()"
                 class="rounded-md p-2 text-ink-600 hover:bg-line-100 hover:text-ink-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 aria-label="{{ __('close') }}"

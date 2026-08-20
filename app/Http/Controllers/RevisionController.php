@@ -189,11 +189,15 @@ class RevisionController extends Controller
         // Revision angelegt. Wir markieren sie nachtraeglich mit einer
         // meta-Zeile "wiederhergestellt aus vN", damit die Karte im
         // Panel entsprechend beschriftet werden kann.
+        // Q3-Politur G7 (2026-08-20) / CD-05: sortieren nach id, nicht
+        // created_at. Sekundenaufloesung reicht bei parallelen Writes
+        // nicht; RevisionControllerTest musste bisher subMinutes(6)
+        // zwischen zwei Saves einbauen, um die Reihenfolge zu erzwingen.
         /** @var Revision|null $newRevision */
         $newRevision = Revision::query()
             ->where('subject_type', $subject::class)
             ->where('subject_id', $subject->getKey())
-            ->latest('created_at')
+            ->latest('id')
             ->first();
         if ($newRevision !== null && $newRevision->id !== $revision->id) {
             $snapshot = $newRevision->snapshot;

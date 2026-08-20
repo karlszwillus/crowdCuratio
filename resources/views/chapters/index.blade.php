@@ -34,6 +34,19 @@ If not, see <https://www.gnu.org/licenses/>. -->
 @endsection
 
 @section('main')
+    {{-- Q3-Politur G4 (2026-08-20) / UX-06: Rollen-Hinweis fuer Nutzer:innen,
+         die den Editor lesen aber nicht editieren koennen. Steht als
+         eigene Zeile unter dem Editor-Chrome, damit Reader/Reviewer
+         wissen, warum die Save-Aktionen fehlen. --}}
+    @php
+        $viewerCanUpdate = Auth::user()?->can('update', $project) ?? false;
+        $viewerCanPreview = Auth::user()?->can('preview') ?? false;
+        $roleHint = null;
+        if (! $viewerCanUpdate) {
+            $roleHint = $viewerCanPreview ? __('role_hint_reviewer') : __('role_hint_reader');
+        }
+    @endphp
+
     {{-- Editor-Chrome (Handoff v4 Screen 02, Phase 5-D.5):
          Brotkrumen links, Segmented Control mittig, Publish-Button
          und ⋮-Menü rechts. Sticky an der Canvas-Oberkante, damit
@@ -126,6 +139,13 @@ If not, see <https://www.gnu.org/licenses/>. -->
             @endcan
         </div>
     </div>
+
+    @if ($roleHint)
+        <p class="mb-4 rounded-md border border-line-200 bg-paper-0 px-4 py-2 text-caption text-ink-700"
+           role="note">
+            {{ $roleHint }}
+        </p>
+    @endif
 
     @if ($message = Session::get('success'))
         <x-ui.banner type="success" class="mb-4" dismissible>
@@ -239,6 +259,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                 @click.outside="open = false"
                                                 :aria-expanded="open"
                                                 aria-haspopup="menu"
+                                                aria-label="{{ __('more_actions') }}"
                                                 title="{{ __('more_actions') }}"
                                                 class="inline-flex size-11 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
                                             <x-icon name="ellipsis-vertical" size="4"/>
@@ -378,6 +399,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                                         @click.outside="open = false"
                                                                         :aria-expanded="open"
                                                                         aria-haspopup="menu"
+                                                                        aria-label="{{ __('more_actions') }}"
                                                                         title="{{ __('more_actions') }}"
                                                                         class="inline-flex size-11 items-center justify-center rounded-md hover:bg-line-100 hover:text-ink-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
                                                                     <x-icon name="ellipsis-vertical" size="4"/>
