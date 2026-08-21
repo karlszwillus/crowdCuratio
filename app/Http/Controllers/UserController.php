@@ -22,6 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\UpdateOwnPasswordRequest;
 use App\Http\Requests\UpdateOwnProfileRequest;
 use App\Http\Requests\UpdateUserAsAdminRequest;
@@ -30,7 +31,6 @@ use App\Models\NotificationPreference;
 use App\Models\Project;
 use App\Models\ProjectUserPermission;
 use App\Models\User;
-use App\Http\Requests\Auth\RegisterRequest;
 use App\Services\AvatarService;
 use App\Services\ProjectInvitationService;
 use App\Services\ProjectPermissionService;
