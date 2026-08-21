@@ -144,10 +144,11 @@ Route::group(
         // `role:Admin` auf create/store/index/edit/update/destroy hat
         // (Defense-in-depth zur `RegisterRequest::authorize()`-Pruefung
         // und zum Admin-Gate im UserOnboardingService).
+        // GET-Redirect fuer bestehende Bookmarks — Release-Iteration
+        // lang, dann weg. POST braucht keine Rueckwaertskompat, weil
+        // kein Bookmark POSTet — die alte /register-POST-Route ist
+        // ersatzlos entfallen (siehe B12-Migration in CHANGELOG).
         Route::redirect('/register', '/users/create', 301)->name('register');
-        Route::post('/register', function () {
-            abort(410, 'POST /register ist entfallen — bitte POST /users nutzen.');
-        })->middleware('role:Admin')->name('register.store');
         Route::resource('/users', UserController::class);
         Route::get('/profile', [UserController::class, 'profile'])->name(
             'profile'
