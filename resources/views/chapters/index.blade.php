@@ -47,22 +47,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
         }
     @endphp
 
-    {{-- Editor-Chrome (Handoff v4 Screen 02, Phase 5-D.5):
-         Brotkrumen links, Segmented Control mittig, Publish-Button
-         und ⋮-Menü rechts. Sticky an der Canvas-Oberkante, damit
-         Kontext und Publish beim Scrollen im Blick bleiben. --}}
-    <div class="sticky top-0 z-20 -mx-6 -mt-6 mb-6 flex flex-wrap items-center justify-between gap-4
-                border-b border-line-200 bg-canvas-bg/95 px-6 py-3
-                backdrop-blur supports-[backdrop-filter]:bg-canvas-bg/80">
-        <div class="min-w-0 flex-1">
-            <x-ui.breadcrumb :tree="app(App\Services\ProjectTreeService::class)->breadcrumbTree($data)" />
-        </div>
-
-        <div class="flex items-center gap-3">
-            @can('update', $project)
-                <x-projects.tabs :project="$project" active="edit"/>
-            @endcan
-
+    {{-- Editor-Chrome (Handoff v4 Screen 02, Phase 5-D.5). Sticky-
+         Bar-Rahmen und Breadcrumb+Tabs kommen aus <x-projects.chrome>,
+         die Editor-spezifischen Aktionen (Publish + ⋮-Menu) haengen im
+         actions-Slot. --}}
+    <x-projects.chrome :project="$project" active="edit">
+        <x-slot:actions>
             @if (Auth::user()->can('publish', $project) || Auth::user()->can('preview'))
                 <button
                     type="button"
@@ -137,8 +127,8 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     </div>
                 </div>
             @endcan
-        </div>
-    </div>
+        </x-slot:actions>
+    </x-projects.chrome>
 
     @if ($roleHint)
         <p class="mb-4 rounded-md border border-line-200 bg-paper-0 px-4 py-2 text-caption text-ink-700"
