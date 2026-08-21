@@ -75,7 +75,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
         <div id="burgermenu" onClick="toggle('sprachebtn')"> <span id="burgerbutton">
         <i class="fa fa-language" id="spracheicon"></i></span></div>
         <ul id="" class="accent">
-            @if(!in_array(Route::currentRouteName(),['translate','log.detail']))
+            @if(!in_array(Route::currentRouteName(),['translate']))
                 @foreach (Config::get('languages') as $lang => $language)
                     <a href="{{ route('lang.switch', $lang) }}">
                         <button class="sprache" id="sprachede">{{$language}}</button>

@@ -329,13 +329,6 @@ Route::group(
 
         Route::get('lang/{lang}', [LanguageController::class, 'switchLang'])->name('lang.switch');
 
-        Route::get(
-            '/project/{projectId}/log/{id}/',
-            [ProjectController::class, 'getDetails']
-        )->name(
-            'log.detail'
-        );
-
         Route::post(
             '/reset-log',
             [ProjectController::class, 'resetValue']
