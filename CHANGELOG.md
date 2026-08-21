@@ -733,6 +733,23 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Auth- und User-Anlage-Altlasten aufgeräumt** (B12 · 2026-08-20).
+  Der `/register`-Endpunkt aus dem alten `RegisteredUserController`
+  ist in `UserController::create/store` konsolidiert; die alte
+  `auth/register.blade.php` ist weg, die neue `users/create.blade.php`
+  ist v7-mustergerecht (analog `users/edit`). `/register` bleibt eine
+  Release-Iteration lang als 301-Redirect auf `/users/create`. Ein
+  neues `layouts/guest.blade.php` extrahiert das Split-Layout aus der
+  Login-Sicht — Login, Passwort-vergessen, Passwort-zurücksetzen,
+  E-Mail-Bestätigen und Passwort-bestätigen liegen jetzt gemeinsam
+  darauf. Die Spatie-Welcome-Notification-Sicht folgt dem gleichen
+  Muster. Die vier Fehler-Sichten (403/404/419/500) wählen ihr Layout
+  dynamisch — authenticated bleibt Rail-basiert, unauthenticated
+  bekommt ein neues minimales `layouts/error-guest.blade.php` ohne
+  Rail und Editor-Chrome. Toter `user.info`-Endpunkt aus dem
+  Vor-Livewire-Berechtigungs-Flow (`ProjectController::inviteUserForProject`)
+  gelöscht.
+
 - **Admin-User-Edit auf Design v7** (B1 · 2026-08-20). Blade-Rewrite
   von `resources/views/users/edit.blade.php` nach dem Profil-Muster:
   sr-only `<h1>` als Landmark, zwei `<section>`-Karten mit `<h2>`
@@ -1905,6 +1922,25 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Entfernt
 
+- **`RegisteredUserController` und `auth/register.blade.php`**
+  (B12 · 2026-08-20). Der User-Anlage-Flow ist in `UserController`
+  konsolidiert, die Blade-Sicht lebt jetzt als `users/create.blade.php`
+  auf Design v7.
+
+- **`user.info`-Endpunkt aus dem Vor-Livewire-Berechtigungs-Flow**
+  (B12 · 2026-08-20). `ProjectController::inviteUserForProject` und
+  die tote `users/create.blade.php`-Detail-Sicht sind gelöscht —
+  ersetzt durch die Livewire-`project-permissions`-Komponente.
+
+- **Breeze-Reste `auth-card`, `auth-session-status`,
+  `auth-validation-errors`** (B12 · 2026-08-20). Nur noch von den
+  jetzt aufgeräumten Auth-Sichten referenziert; die Sichten nutzten
+  ohnehin einen nie existierenden `<x-guest-layout>` — waren daher
+  seit Ewigkeiten faktisch kaputt.
+
+- **`auth/verify.blade.php` und `auth/passwords/{confirm,email,reset}.blade.php`**
+  (B12 · 2026-08-20). Duplikate ohne Aufrufer.
+
 - **Verwaiste Blade-View `resources/views/contents/comment.blade.php`**
   (Q3-Härtung 2026-08-19 / Legacy FIND-01). Kein `view()`-Aufruf mehr
   im Bestand — nur ein Kommentar-Verweis in `resources/js/datatable.js`.
@@ -2024,6 +2060,19 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
   in der ehemaligen `CommentTrait::commentAsUser`.
 
 ### Behoben
+
+- **Fehlerseiten rendern ohne Rail, wenn kein User eingeloggt ist**
+  (B12 · 2026-08-20). 403/404/419/500 zogen bisher immer
+  `projects.layout` inklusive Rail — auch für unauthenticated
+  Aufrufer. Neu: `Auth::check()` schaltet auf ein minimales
+  Guest-Error-Layout. Sichtbar geworden ist das an einem
+  abgelaufenen Welcome-Notification-Link.
+
+- **`invite_user_not_found`-Text ohne Werkbank-Slug**
+  (B12 · 2026-08-20). Der User-facing Text enthielt „Neuanlage
+  folgt in 5d.7" — Slug ist raus, neuer Text verweist auf die
+  jetzt bestehende Anlage-Sicht. Der Locale-Key fehlte in `en.json`
+  komplett und wurde ergänzt.
 
 - **Modal-Body scrollt bei langen Inhalten** (B1-Followup ·
   2026-08-20). `<x-ui.modal>` bekommt `max-h-[calc(100vh-4rem)]`
