@@ -681,7 +681,7 @@ test('RegisterRequest: firstName ist Pflicht (Admin-Einladung)', function () {
     $response = $this->actingAs($admin)
         ->from(route('users.create'))
         ->post(
-            route('users.create'),
+            route('users.store'),
             [
                 // firstName absichtlich weggelassen
                 'lastName' => 'Mustermann',
