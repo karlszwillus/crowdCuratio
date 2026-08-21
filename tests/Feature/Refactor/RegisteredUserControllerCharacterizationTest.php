@@ -62,7 +62,7 @@ it('store: Admin lädt neuen User mit Role-Namen ein (heutiges Blade)', function
     $admin->assignRole('Admin');
     $this->actingAs($admin);
 
-    $response = $this->post('/register', [
+    $response = $this->post('/users', [
         'firstName' => 'Berta',
         'lastName' => 'Beispiel',
         'email' => 'berta@example.test',
@@ -86,7 +86,7 @@ it('store: Admin lädt neuen User mit Role-ID ein (alter View / API-Client)', fu
 
     $editorRoleId = Role::where('name', 'Editor')->value('id');
 
-    $response = $this->post('/register', [
+    $response = $this->post('/users', [
         'firstName' => 'Carlo',
         'lastName' => 'Beispiel',
         'email' => 'carlo@example.test',
@@ -109,7 +109,7 @@ it('create: Admin sieht das Register-Formular mit verfügbaren Rollen', function
     $admin->assignRole('Admin');
     $this->actingAs($admin);
 
-    $response = $this->get('/register');
+    $response = $this->get('/users/create');
 
     expect($response->status())->toBeIn([200, 302]);
 });
@@ -121,7 +121,7 @@ it('create: Reader bekommt 403 (role:Admin-Middleware)', function () {
     $reader->assignRole('Reader');
     $this->actingAs($reader);
 
-    $response = $this->get('/register');
+    $response = $this->get('/users/create');
 
     $response->assertStatus(403);
 });
@@ -136,7 +136,7 @@ it('store: bei gesetzter projectId werden project-scoped Permissions geschrieben
     $project = makeProject($admin);
     $readerRoleId = Role::where('name', 'Reader')->value('id');
 
-    $response = $this->post('/register', [
+    $response = $this->post('/users', [
         'firstName' => 'Erna',
         'lastName' => 'Beispiel',
         'email' => 'erna@example.test',
@@ -174,7 +174,7 @@ it('store: ein soft-deletetes User wird über den Reaktivierungs-Pfad wieder akt
         'deleted_at' => now()->subDay(),
     ]);
 
-    $response = $this->post('/register', [
+    $response = $this->post('/users', [
         'firstName' => 'Egal',
         'lastName' => 'Egal',
         'email' => 'wieder@example.test',
@@ -197,7 +197,7 @@ it('store: Admin lädt einen Admin-User ein (adminUser=true), Spatie-Rolle Admin
     $admin->assignRole('Admin');
     $this->actingAs($admin);
 
-    $response = $this->post('/register', [
+    $response = $this->post('/users', [
         'firstName' => 'Frieda',
         'lastName' => 'Admin',
         'email' => 'frieda@example.test',
@@ -225,7 +225,7 @@ it('store: Reader kann adminUser=true NICHT setzen — kein Privilege-Escalation
     $reader->assignRole('Reader');
     $this->actingAs($reader);
 
-    $response = $this->post('/register', [
+    $response = $this->post('/users', [
         'firstName' => 'Versuch',
         'lastName' => 'Eskalation',
         'email' => 'eskalation@example.test',
@@ -247,7 +247,7 @@ it('store: Admin lädt neuen User mit Role-Name als Single-String ein (kein Arra
     $admin->assignRole('Admin');
     $this->actingAs($admin);
 
-    $response = $this->post('/register', [
+    $response = $this->post('/users', [
         'firstName' => 'Dora',
         'lastName' => 'Beispiel',
         'email' => 'dora@example.test',
@@ -271,7 +271,7 @@ it('store (Phase 5d.7): Admin laedt ohne roles-Field ein → User faellt auf Rea
     $admin->assignRole('Admin');
     $this->actingAs($admin);
 
-    $response = $this->post('/register', [
+    $response = $this->post('/users', [
         'firstName' => 'Emma',
         'lastName' => 'Beispiel',
         'email' => 'emma@example.test',

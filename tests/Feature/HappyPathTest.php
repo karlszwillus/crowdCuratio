@@ -159,8 +159,8 @@ test('Happy-Path: Admin lädt einen neuen User ein und Welcome-Notification wird
     $admin->assignRole('Admin');
 
     $response = $this->actingAs($admin)
-        ->from(route('register'))
-        ->post(route('register.store'), [
+        ->from(route('users.create'))
+        ->post(route('users.store'), [
             'firstName' => 'Neuer',
             'lastName' => 'Editor',
             'email' => 'neuer.editor@example.com',

@@ -79,7 +79,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                 >
                     @if(isset(Auth::user()->currentRole) && Auth::user()->currentRole[0]->name == 'Admin')
                         <a class="block px-4 py-2 text-body text-ink-900 hover:bg-ink-400/10" href="{{ route('users.index') }}">{{__('all_users')}}</a>
-                        <a class="block px-4 py-2 text-body text-ink-900 hover:bg-ink-400/10" href="{{ route('register') }}">{{__('add_new')}}</a>
+                        <a class="block px-4 py-2 text-body text-ink-900 hover:bg-ink-400/10" href="{{ route('users.create') }}">{{__('add_new')}}</a>
                         <a class="block px-4 py-2 text-body text-ink-900 hover:bg-ink-400/10" href="{{ route('roles.index') }}">{{__('roles')}}</a>
                     @endif
                     <a class="block px-4 py-2 text-body text-ink-900 hover:bg-ink-400/10" href="{{ route('profile') }}">{{__('profile')}}</a>

@@ -85,16 +85,19 @@ it('lehnt einen authentifizierten User ohne Admin-Rolle auf einer role:Admin-ges
 
     $this->actingAs($reader);
 
-    // GET /register trägt seit Phase 2.5 explizit `role:Admin` als
-    // Middleware (routes/web.php Z. 131-133) — Self-Service-Register-
-    // Pfad wurde geschlossen, neue User können nur durch Admins
-    // angelegt werden. Spatie-RoleMiddleware wirft für einen
-    // authentifizierten Reader eine AuthorizationException → 403.
+    // GET /users/create traegt seit Phase 2.5 explizit `role:Admin` als
+    // Middleware — Self-Service-Register-Pfad wurde geschlossen, neue
+    // User koennen nur durch Admins angelegt werden. Spatie-Role-
+    // Middleware wirft fuer einen authentifizierten Reader eine
+    // AuthorizationException → 403.
     //
-    // Der Test fixiert, dass der `role:`-Alias zur Klasse aufgelöst
+    // Der Test fixiert, dass der `role:`-Alias zur Klasse aufgeloest
     // wird. Im Refactor wandert die Alias-Registrierung von
     // Kernel::$routeMiddleware in $middleware->alias() im Bootstrap.
-    $response = $this->get('/register');
+    // Endpunkt-Umzug in B12 (2026-08-20): `/register` → `/users/create`
+    // mit 301-Redirect fuer Alt-Bookmarks, Middleware sitzt nun auf
+    // Route::resource('/users', ...) im Constructor von UserController.
+    $response = $this->get('/users/create');
 
     $response->assertStatus(403);
 });

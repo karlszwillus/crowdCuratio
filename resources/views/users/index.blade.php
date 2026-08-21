@@ -86,7 +86,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                 </div>
 
                 <a
-                    href="{{ route('register') }}"
+                    href="{{ route('users.create') }}"
                     class="inline-flex items-center gap-1.5 rounded-md bg-primary px-3.5 py-2
                            text-body font-medium text-primary-on hover:opacity-90
                            focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-bar"

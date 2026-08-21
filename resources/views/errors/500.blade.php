@@ -12,7 +12,9 @@ Rewrite schliessen. In APP_DEBUG=true landet der Nutzer ohnehin
 in Laravel Ignition und sieht diese View gar nicht.
 --}}
 
-@extends('projects.layout')
+@extends(Auth::check() ? 'projects.layout' : 'layouts.error-guest')
+
+@section('title', __('error_500_title'))
 
 @section('content')
     @include('errors._error-shell', [

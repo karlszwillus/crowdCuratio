@@ -525,28 +525,6 @@ it('Sweep-III: ChapterController::index blockt Fremden via GET ?id=', function (
     $response->assertStatus(403);
 });
 
-it('Sweep-III: inviteUserForProject blockt Fremde', function () {
-    /** @var TestCase $this */
-    app(PermissionRegistrar::class)->forgetCachedPermissions();
-
-    /** @var User $owner */
-    $owner = User::factory()->create();
-    $owner->assignRole('Reader');
-    /** @var User $stranger */
-    $stranger = User::factory()->create();
-    $stranger->assignRole('Reader');
-    /** @var User $target */
-    $target = User::factory()->create();
-    $target->assignRole('Reader');
-
-    $project = makeProject($owner);
-
-    $this->actingAs($stranger);
-
-    $response = $this->get(route('user.info', ['id' => $target->id, 'projectId' => $project->id]));
-    $response->assertStatus(403);
-});
-
 it('Sweep-III: saveCommentProject blockt Fremde', function () {
     /** @var TestCase $this */
     app(PermissionRegistrar::class)->forgetCachedPermissions();

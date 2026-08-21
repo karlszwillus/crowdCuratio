@@ -1,120 +1,66 @@
-<x-guest-layout>
-    <x-auth-card>
-        <x-slot name="logo">
+{{--
+crowdCuratio - Curating together virtually
+Copyright (C)2022, 2026 - berlinHistory e.V.
 
-        </x-slot>
-        @if ($errors->any())
-            <div class="alert alert-danger">
-                <strong>{{__('whoops')}}</strong> {{__('message_problem_input')}}<br><br>
-                <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
-        <form method="POST">
-            @csrf
+B12 (2026-08-20): Welcome-Notification-Sicht (Spatie-Package) auf
+layouts/guest gezogen und auf Design v7 gebracht.
+--}}
 
-            <input type="hidden" name="email" value="{{ $user->email }}"/>
+@extends('layouts.guest')
 
-            <div>
-                <x-label for="password" :value="__('password')"/>
+@section('title', __('welcome_set_password_title'))
+@section('subtitle', __('welcome_set_password_subtitle'))
 
-                <div>
-                    <input class="block mt-1 w-full" id="password" type="password"
-                           class="@error('password') is-invalid @enderror"
-                           name="password" required autocomplete="new-password">
+@section('content')
 
-                    @error('password')
-                    <span>
-                    <strong>{{ $message }}</strong>
-                </span>
-                    @enderror
-                </div>
-            </div>
+    @if ($errors->any())
+        <x-ui.banner type="danger" class="mt-6">
+            <ul class="list-disc pl-5">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </x-ui.banner>
+    @endif
 
-            <div class="mt-4">
-                <x-label for="password-confirm" :value="__('confirm_password')"/>
-                <div>
-                    <input class="block mt-1 w-full" id="password-confirm" type="password" name="password_confirmation"
-                           required
-                           autocomplete="new-password">
-                </div>
-            </div>
+    <form method="POST" class="mt-8 space-y-4">
+        @csrf
 
-            <div class="form-check mt-4">
-                <input id="policy" type="checkbox"
-                       class="form-check-input"
-                       name="policy">
-                <label class="form-check-label">
-                        Ich habe die <a href="#" data-toggle="modal" data-target="#agbs" id="agb" style="text-decoration: underline; !important;">AGBs</a>
-                        und die <a href="" data-toggle="modal" data-target="#privacy" id="privacyPolicy" style="text-decoration: underline; !important;">Datenschutzerklärung</a> gelesen und bin mit der Verwendung meiner personenbezogenen Daten
-                        einverstanden.
-                </label>
-            </div>
+        <input type="hidden" name="email" value="{{ $user->email }}"/>
 
-            <div class="flex items-center justify-end mt-4">
-                <x-button type="submit" class="ml-3">
-                    {{ __('save_password_login') }}
-                </x-button>
-            </div>
-        </form>
-        <!-- Modal -->
-        <div class="modal fade" id="agbs" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">AGBs</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <span id="contentAgbs"></span>
-                    </div>
-                </div>
-            </div>
+        <div>
+            <label for="password" class="mb-1 block text-caption font-medium text-ink-700">
+                {{ __('password') }} <span class="text-danger" aria-hidden="true">*</span>
+            </label>
+            <input id="password" name="password" type="password"
+                   required autofocus autocomplete="new-password"
+                   class="w-full rounded-md border border-form-border bg-paper-0 px-3 py-2.5 text-body text-ink-900 focus:border-primary focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-primary">
         </div>
 
-        <div class="modal fade" id="privacy" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLabel">Datenschutzerklärung</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <span id="contentPolicy"></span>
-                    </div>
-                </div>
-            </div>
+        <div>
+            <label for="password_confirmation" class="mb-1 block text-caption font-medium text-ink-700">
+                {{ __('confirm_password') }} <span class="text-danger" aria-hidden="true">*</span>
+            </label>
+            <input id="password_confirmation" name="password_confirmation" type="password"
+                   required autocomplete="new-password"
+                   class="w-full rounded-md border border-form-border bg-paper-0 px-3 py-2.5 text-body text-ink-900 focus:border-primary focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-primary">
         </div>
 
-    </x-auth-card>
-</x-guest-layout>
-<script>
-    $('#agb').click(function () {
-        $.ajax({
-            type: 'GET',
-            url: "{{route('auth.terms')}}",
-            success: function (data) {
-                let jsonPretty = JSON.stringify(data);
-                $('#contentAgbs').html(JSON.parse(jsonPretty));
-            }
-        });
-    });
+        <label for="policy" class="flex items-start gap-2 text-body text-ink-700">
+            <input id="policy" name="policy" type="checkbox" value="1"
+                   class="mt-1 size-4 rounded border-form-border text-primary focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-primary"/>
+            <span>
+                {!! __('welcome_consent_html', [
+                    'terms' => '<a href="'.route('auth.terms').'" target="_blank" rel="noopener" class="text-tint-text hover:underline">'.__('terms').'</a>',
+                    'policy' => '<a href="'.route('auth.policy').'" target="_blank" rel="noopener" class="text-tint-text hover:underline">'.__('privacy_policy').'</a>',
+                ]) !!}
+            </span>
+        </label>
 
-    $('#privacyPolicy').click(function () {
-        $.ajax({
-            type: 'GET',
-            url: "{{route('auth.policy')}}",
-            success: function (data) {
-                let jsonPrettyPolicy = JSON.stringify(data);
-                $('#contentPolicy').html(JSON.parse(jsonPrettyPolicy));
-            }
-        });
-    });
-</script>
+        <button type="submit"
+                class="w-full rounded-md bg-primary px-4 py-3 text-body font-semibold text-primary-on hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-bar">
+            {{ __('save_password_login') }}
+        </button>
+    </form>
+
+@endsection

@@ -152,6 +152,13 @@ return [
     'attributes' => [
         'name' => 'Titel',
         'imprint' => 'Impressum',
+        'firstName' => 'Vorname',
+        'lastName' => 'Nachname',
+        'email' => 'E-Mail-Adresse',
+        'policy' => 'Zustimmung zur Datenschutz-Erklärung',
+        'password' => 'Passwort',
+        'roles' => 'Rolle',
+        'inviteEmail' => 'E-Mail-Adresse',
     ],
 
 ];

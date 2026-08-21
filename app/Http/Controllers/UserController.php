@@ -22,6 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\UpdateOwnPasswordRequest;
 use App\Http\Requests\UpdateOwnProfileRequest;
 use App\Http\Requests\UpdateUserAsAdminRequest;
@@ -31,10 +32,14 @@ use App\Models\Project;
 use App\Models\ProjectUserPermission;
 use App\Models\User;
 use App\Services\AvatarService;
+use App\Services\ProjectInvitationService;
 use App\Services\ProjectPermissionService;
+use App\Services\UserOnboardingService;
+use App\Services\UserReactivationService;
 use App\Support\InitialsBlocklist;
 use App\Support\ProfilePalette;
 use App\Support\RoleName;
+use App\Support\RoleResolver;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
@@ -50,13 +55,25 @@ use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
-    public function __construct()
-    {
+    public function __construct(
+        // B12 (2026-08-20): Services fuer den User-Anlage-Flow, aus
+        // dem alten RegisteredUserController hierher konsolidiert.
+        // Non-nullable, damit Laravel die Services aus dem Container
+        // aufloest — mit `?Type = null` waeren die Parameter optional
+        // und der Container liefert `null`, was den Store-Flow bricht.
+        private readonly RoleResolver $roleResolver,
+        private readonly UserReactivationService $userReactivation,
+        private readonly UserOnboardingService $userOnboarding,
+        private readonly ProjectInvitationService $projectInvitation,
+    ) {
         $this->middleware('auth');
         // Block E / Welle E.3: `update` jetzt auch role:Admin-gated.
+        // B12 (2026-08-20): `create` und `store` neu hinzugekommen —
+        // ehemals /register in RegisteredUserController, jetzt
+        // /users/create resp. POST /users.
         // Self-Edit lebt auf einer eigenen Route (`PATCH /profile`)
         // mit eigenem FormRequest — siehe `updateProfile` unten.
-        $this->middleware('role:Admin')->only(['index', 'edit', 'update', 'destroy']);
+        $this->middleware('role:Admin')->only(['index', 'create', 'store', 'edit', 'update', 'destroy']);
     }
 
     /**
@@ -82,23 +99,70 @@ class UserController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     *
-     * @return Response
+     * B12 (2026-08-20): Anlage-Formular fuer einen neuen User.
+     * Aus dem alten RegisteredUserController hierher konsolidiert.
      */
-    public function create()
+    public function create(): View
     {
-        //
+        // F-DB-013: vorher Role::where('id', 'not like', '1') —
+        // LIKE auf INT-Spalte mit hartkodierter Admin-ID.
+        $roles = Role::where('name', '!=', RoleName::ADMIN->value)->pluck('name', 'name')->all();
+
+        return view('users.create', compact('roles'));
     }
 
     /**
-     * Store a newly created resource in storage.
-     *
-     * @return Response
+     * B12 (2026-08-20): Neuen User anlegen. Orchestriert vier Services:
+     * Reaktivierung, Admin-Bypass, Standard-Onboarding und optionale
+     * Projekt-Zuordnung. Aus dem alten RegisteredUserController::store
+     * unveraendert uebernommen.
      */
-    public function store(Request $request)
+    public function store(RegisterRequest $request): RedirectResponse
     {
-        //
+        if ($this->userReactivation->existsByEmail($request->email)) {
+            $this->userReactivation->reactivateByEmail($request->email);
+
+            return redirect()->route('users.index')->with(
+                'success',
+                __('users_create_reactivated')
+            );
+        }
+
+        $caller = $request->user();
+        $callerIsAdmin = $caller?->hasRole(RoleName::ADMIN->value) === true;
+
+        // Wenn der Caller Admin ist und `adminUser=true` schickt,
+        // landet der Eingeladene als Admin — alle anderen Wege gehen
+        // durch den RoleResolver.
+        $resolvedRoles = ($callerIsAdmin && $request->boolean('adminUser'))
+            ? [Role::findByName(RoleName::ADMIN->value, 'web')]
+            : $this->roleResolver->resolve($request->input('roles'));
+
+        // Phase 5d.7: least-privilege-Default. Rollenloser User wuerde
+        // im Frontend still stehen (@can-Gates greifen schlicht nicht).
+        if ($resolvedRoles === []) {
+            $resolvedRoles = [Role::findByName(RoleName::READER->value, 'web')];
+        }
+
+        $user = $this->userOnboarding->createInvitedUser($caller, $request, $resolvedRoles);
+
+        if (isset($request->projectId)) {
+            // Die Route ist per `role:Admin`-Middleware geschuetzt —
+            // `$caller` ist hier nie null. Larastan braucht den
+            // expliziten Narrowing-Guard.
+            abort_if($caller === null, 403);
+
+            $this->projectInvitation->attachInviteeToProject(
+                $user,
+                $caller,
+                (int) $request->projectId,
+                $resolvedRoles,
+            );
+
+            return redirect()->back()->with('success', __('users_create_success'));
+        }
+
+        return redirect()->route('users.index')->with('success', __('users_create_success'));
     }
 
     /**

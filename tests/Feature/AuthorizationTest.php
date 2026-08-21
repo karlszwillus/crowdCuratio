@@ -679,9 +679,9 @@ test('RegisterRequest: firstName ist Pflicht (Admin-Einladung)', function () {
     $admin->assignRole('Admin');
 
     $response = $this->actingAs($admin)
-        ->from(route('register'))
+        ->from(route('users.create'))
         ->post(
-            route('register'),
+            route('users.store'),
             [
                 // firstName absichtlich weggelassen
                 'lastName' => 'Mustermann',
@@ -717,8 +717,8 @@ test('NF-SEC-202: non-Admin kann keinen User über /register anlegen', function 
     // keine Rolle — `role:Admin`-Route-Middleware muss 403 liefern.
 
     $response = $this->actingAs($intruder)
-        ->from(route('register'))
-        ->post(route('register'), [
+        ->from(route('users.create'))
+        ->post(route('users.store'), [
             'firstName' => 'Mallory',
             'lastName' => 'Intruder',
             'email' => 'mallory@example.com',
@@ -738,8 +738,8 @@ test('NF-SEC-202: Admin kann Admin-Einladung anlegen, is_admin wird gesetzt', fu
     $admin->assignRole('Admin');
 
     $response = $this->actingAs($admin)
-        ->from(route('register'))
-        ->post(route('register'), [
+        ->from(route('users.create'))
+        ->post(route('users.store'), [
             'firstName' => 'Alice',
             'lastName' => 'Admin',
             'email' => 'alice.admin@example.com',
@@ -762,8 +762,8 @@ test('NF-SEC-202: Admin lädt regulären User ein — is_admin bleibt false', fu
     Role::firstOrCreate(['name' => 'Editor', 'guard_name' => 'web']);
 
     $response = $this->actingAs($admin)
-        ->from(route('register'))
-        ->post(route('register'), [
+        ->from(route('users.create'))
+        ->post(route('users.store'), [
             'firstName' => 'Bob',
             'lastName' => 'Editor',
             'email' => 'bob.editor@example.com',
@@ -780,7 +780,7 @@ test('NF-SEC-202: Admin lädt regulären User ein — is_admin bleibt false', fu
 
 test('NF-SEC-202: Gast wird auf Login umgeleitet (auth-Middleware vor role:Admin)', function () {
     /** @var TestCase $this */
-    $response = $this->post(route('register'), [
+    $response = $this->post(route('users.store'), [
         'firstName' => 'Eve',
         'lastName' => 'Guest',
         'email' => 'eve@example.com',
