@@ -453,7 +453,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
             </form>
         </div>
     </x-ui.modal>
-    @include('Entry.index')
+    @include('entries._add-modal')
     @include('contents.index')
     {{-- Stakeholder-Fix Juni 2026: `@include('contents.gallery')` war
          hier ein Doppel-Include — `contents.index` (Z. 86) lädt das
@@ -547,11 +547,9 @@ If not, see <https://www.gnu.org/licenses/>. -->
             $(this).append("<textarea name='chapterDescription' style='display:none'>" + chapterDescription + "</textarea>");
         });
 
-        //Submit entry
-        $('#submit_entry').click(function () {
-            let entryDescription = quillEntry.root.innerHTML;
-            $(this).append("<textarea name='entryDescription' style='display:none'>" + entryDescription + "</textarea>");
-        });
+        // Submit entry — mit I1 (2026-08-21) entfaellt: der Alpine-
+        // Modal in entries/_add-modal.blade.php extrahiert den Quill-
+        // Content im eigenen @submit-Handler in ein hidden Feld.
 
         //tooltip initialize
         $(function () {
@@ -673,29 +671,14 @@ If not, see <https://www.gnu.org/licenses/>. -->
         }
 
 
-        // Add Entry — Event-Delegation, damit auch der Trigger aus
-        // dem Sidebar-Tree (Livewire-gerendert, nicht beim Page-Load
-        // im DOM) greift. Ohne Delegation feuert der Handler nur
-        // fuer den Trigger im Chapter-Card, der Sidebar-Tree-Trigger
-        // oeffnet den Modal ohne gesetzte chapterId und der Request
-        // faellt in der Policy mit 403 durch.
-        //
-        // Persona-Smoke 2026-08-15: Selektoren auf #entry_frm bzw.
-        // #chapter_frm pinnen, sonst kreuzen sich Chapter- und
-        // Entry-Modal (beide haben ein hidden input[name=chapterId]).
-        // Wenn Bootstrap beim Oeffnen des Entry-Modals ein anderes
-        // Modal schliesst, feuert dessen hidden.bs.modal-Handler
-        // resetChapterForm — und das globale
-        // $('input[name=chapterId]').val('') leert auch das gerade
-        // per .addEntry gesetzte Feld im Entry-Modal → 403.
-        $(document).on('click', '.addEntry', function () {
-            $('#entryTitle').val('');
-            $('#entrySubtitle').val('');
-            let id = $(this).attr('data-id');
-            let chapter = $(this).attr('data-chapter');
-            $('#entry_frm input[name="chapterId"]').val(id);
-            $('#lblChapter').text(chapter);
-        });
+        // Add Entry — I1 (2026-08-21): Der Trigger dispatched jetzt
+        // ein `entry-modal:open`-Event mit `{chapterId, chapterName}`.
+        // Der Modal ist eine Alpine-Komponente (entries/_add-modal),
+        // die die Werte selbst uebernimmt. jQuery-Handler `.addEntry`,
+        // `resetEntryForm`, `entry_frm` und `hidden.bs.modal` sind
+        // damit weg — der frueher wiederholt aufgetretene 403 durch
+        // chapterId-Reset-Konflikt zwischen Chapter- und Entry-Modal
+        // ist strukturell nicht mehr moeglich.
 
         // Phase 2 / D.12: zentrale Helper für Chapter-Form-Mode.
         // Phase-1-Verzweigung im Controller ist weg — wir müssen jetzt
@@ -731,29 +714,12 @@ If not, see <https://www.gnu.org/licenses/>. -->
         // resetChapterForm/setChapterFormUpdate werden dort weiter
         // genutzt.
 
-        //Modify entry
-        // Phase 2 / D.13: zentrale Helper für Entry-Form-Mode (analog
-        // zu Chapter, siehe oben). Add ist Default, Modify schaltet auf
-        // PATCH um.
-        const entryStoreUrl = "{{ route('entries.store') }}";
-        const entryUpdateUrlTpl = "{{ route('entries.update', ':id') }}";
-
-        function resetEntryForm() {
-            $('#entry_frm').attr('action', entryStoreUrl);
-            $('#entry_frm input[name="_method"]').val('');
-            $('input[name="entryId"]').val('');
-        }
-
-        function setEntryFormUpdate(id) {
-            $('#entry_frm').attr('action', entryUpdateUrlTpl.replace(':id', id));
-            $('#entry_frm input[name="_method"]').val('PATCH');
-        }
-
-        $('#entryModal').on('hidden.bs.modal', resetEntryForm);
-
-        // Modify-Entry-Handler entfällt seit Phase 5c.6.b — Entry-
+        // Modify-Entry-Handler entfaellt seit Phase 5c.6.b — Entry-
         // Titel, Subtitel und Beschreibung werden direkt im Entry-
-        // Card editiert. Add-Entry-Modal bleibt unangetastet.
+        // Card editiert. Add-Entry-Modal ist mit I1 (2026-08-21)
+        // ganz auf Alpine umgezogen; die frueheren entryStoreUrl-,
+        // resetEntryForm- und hidden.bs.modal-Handler sind hier
+        // ersatzlos entfallen.
 
         // Modify-Text-Handler entfaellt seit Phase 5c.6.c.4 —
         // Text-Content wird ueber die rich-text-editor-Volt-

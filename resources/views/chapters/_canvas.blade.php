@@ -1312,11 +1312,8 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                                     <div class="mb-4">
                                         <button type="button"
                                                 title="{{__('add_entry')}}"
-                                                data-chapter="{{$chapter->name}}"
-                                                data-id="{{$chapter->id}}"
-                                                data-toggle="modal"
-                                                data-target="#entryModal"
-                                                class="addEntry inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-body font-medium text-primary-on hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                                                onclick="window.dispatchEvent(new CustomEvent('entry-modal:open', { detail: { chapterId: {{ (int) $chapter->id }}, chapterName: @js((string) $chapter->name) } }))"
+                                                class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-body font-medium text-primary-on hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
                                             <x-icon name="plus" size="4"/>
                                             <span>{{ __('chapter_empty_action') }}</span>
                                         </button>
@@ -1332,11 +1329,8 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                             <div class="mb-6 ml-4">
                                 <button type="button"
                                         title="{{__('add_entry')}}"
-                                        data-chapter="{{$chapter->name}}"
-                                        data-id="{{$chapter->id}}"
-                                        data-toggle="modal"
-                                        data-target="#entryModal"
-                                        class="addEntry add_entry inline-flex w-full items-center justify-center gap-2 rounded-md
+                                        onclick="window.dispatchEvent(new CustomEvent('entry-modal:open', { detail: { chapterId: {{ (int) $chapter->id }}, chapterName: @js((string) $chapter->name) } }))"
+                                        class="add_entry inline-flex w-full items-center justify-center gap-2 rounded-md
                                                border border-dashed border-line-200 bg-paper-50
                                                px-4 py-2.5 text-body text-ink-500
                                                hover:border-ink-400 hover:bg-line-100/40 hover:text-ink-700
