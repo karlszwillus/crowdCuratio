@@ -210,14 +210,11 @@ new class extends Component
          `{field, model, id}`. Wir filtern per zusammengesetztem Schluessel,
          damit nur die richtige inline-editor-Instanz aufleuchtet. --}}
     @saved.window="
-        if (
-            $event.detail
+        ($event.detail
             && $event.detail.field === @js($field)
             && $event.detail.model === @js(class_basename($model))
-            && String($event.detail.id) === @js((string) $model->getKey())
-        ) {
-            showChip();
-        }
+            && String($event.detail.id) === @js((string) $model->getKey()))
+        && showChip()
     "
 >
     @if (! empty($options))
