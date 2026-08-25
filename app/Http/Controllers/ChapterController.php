@@ -54,6 +54,9 @@ class ChapterController extends Controller
         private readonly ChapterService $chapters,
         private readonly ContentReorderService $reorder,
         private readonly CommentService $comments,
+        // I3 (2026-08-21): CommentRetrieve aus dem Container statt
+        // per `new CommentRetrieve` in einzelnen Actions.
+        private readonly CommentRetrieve $commentRetrieve,
     ) {
         $this->middleware('auth');
     }
@@ -216,7 +219,7 @@ class ChapterController extends Controller
         $chapter = Chapter::findOrFail($id);
         $this->authorize('view', $chapter);
 
-        $comment = new CommentRetrieve;
+        $comment = $this->commentRetrieve;
 
         return $comment->getComments('App\Models\Chapter', $id);
     }

@@ -44,6 +44,8 @@ class EntryController extends Controller
     public function __construct(
         private readonly EntryService $entries,
         private readonly CommentService $comments,
+        // I3 (2026-08-21): CommentRetrieve aus dem Container.
+        private readonly CommentRetrieve $commentRetrieve,
     ) {
         $this->middleware('auth');
     }
@@ -189,7 +191,7 @@ class EntryController extends Controller
         $entry = Entry::findOrFail($id);
         $this->authorize('view', $entry);
 
-        $comment = new CommentRetrieve;
+        $comment = $this->commentRetrieve;
 
         return $comment->getComments('App\Models\Entry', $id);
     }

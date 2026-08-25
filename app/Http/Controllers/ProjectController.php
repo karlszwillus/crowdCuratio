@@ -79,6 +79,11 @@ class ProjectController extends Controller
         private readonly ProjectPermissionService $permissions,
         private readonly CommentService $comments,
         private readonly SourceService $sources,
+        // I3 (2026-08-21): Services die frueher als `new CommentRetrieve;`
+        // bzw. `new UserService;` in einzelnen Actions gebaut wurden,
+        // laufen jetzt ueber den Container.
+        private readonly CommentRetrieve $commentRetrieve,
+        private readonly UserService $users,
     ) {
         $this->middleware('auth');
         // Block D / D.4: Drei-Wege-Authorization in einen Pfad
@@ -208,7 +213,7 @@ class ProjectController extends Controller
 
         if (isset($request['comment'])) {
             $isComment = true;
-            $comment = new CommentRetrieve;
+            $comment = $this->commentRetrieve;
 
             $comments = $comment->getComments($request['model'], $request['comment']);
 
@@ -224,7 +229,7 @@ class ProjectController extends Controller
         $listRole = Role::where('name', '!=', RoleName::ADMIN->value)->pluck('name', 'id');
         // F-DB-014: SoftDeletes-Scope greift implizit — kein whereNull nötig.
         $users = User::all();
-        $userService = new UserService;
+        $userService = $this->users;
         $listPermissions = $userService->getAllUsers($project->id);
         $allPermissions = Permission::pluck('name', 'id');
         $currentUserPermissions = $this->permissions->getCurrentUsersPermissions(Auth::user()->id);
@@ -401,7 +406,7 @@ class ProjectController extends Controller
         $project = Project::findOrFail($id);
         $this->authorize('comment', $project);
 
-        $comment = new CommentRetrieve;
+        $comment = $this->commentRetrieve;
 
         return $comment->getComments('App\Models\Project', $id);
     }
@@ -521,7 +526,7 @@ class ProjectController extends Controller
         }
         $this->authorize('view', $project);
 
-        $log = new LogService;
+        $log = new LogService('text');
         $activities = $log->textLog($id);
 
         return redirect()->back()->with('activities', $activities);
