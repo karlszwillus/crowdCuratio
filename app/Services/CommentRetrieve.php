@@ -52,42 +52,16 @@ class CommentRetrieve
         // class durchgereicht).
         $pathReply = '';
 
-        switch ($class) {
-            case 'App\Models\Project':
-                $pathReply = 'comment.project.save';
-                $data['id'] = $id;
-                $data['pathComment'] = '';
-                break;
-            case 'App\Models\Chapter':
-                $pathReply = 'comment.save';
-                $data['pathComment'] = 'comment.chapter';
-                $data['id'] = $id;
-                break;
-            case 'App\Models\Entry':
-                $pathReply = 'comment.entry.save';
-                $data['pathComment'] = 'comment.entry';
-                $data['id'] = $id;
-                break;
-            case 'App\Models\Gallery':
-                $pathReply = 'comment.gallery.save';
-                $data['pathComment'] = 'comment.gallery';
-                $data['id'] = $id;
-                break;
-            case 'App\Models\Audiovisual':
-                $pathReply = 'comment.audiovisual.save';
-                $data['pathComment'] = 'comment.audiovisual';
-                $data['id'] = $id;
-                break;
-            case 'App\Models\Image':
-                $pathReply = 'comment.image.save';
-                $data['pathComment'] = 'comment.image';
-                $data['id'] = $id;
-                break;
-            case 'App\Models\Text':
-                $pathReply = 'comment.text.save';
-                $data['pathComment'] = 'comment.text';
-                $data['id'] = $id;
-                break;
+        // I2 (2026-08-21): Route-Mapping ueber CommentableRoutes-
+        // Registry statt lokaler switch-Kaskade. MediaContent oder
+        // andere nicht-registrierte Klassen fallen weiterhin auf den
+        // Default (leerer pathReply/pathComment) — der foreach-Loop
+        // unten ist darauf vorbereitet.
+        $routes = \App\Support\CommentableRoutes::for($class);
+        if ($routes !== null) {
+            $pathReply = $routes['save'];
+            $data['pathComment'] = $routes['base'];
+            $data['id'] = $id;
         }
 
         // F-DB-014: alle hier möglichen Klassen (Project/Chapter/Entry/

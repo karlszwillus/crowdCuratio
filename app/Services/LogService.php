@@ -22,7 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Services;
 
-use App\Models\Gallery;
+use App\Support\ContentTypeRegistry;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Spatie\Activitylog\Models\Activity;
@@ -35,35 +35,17 @@ class LogService
 
     protected $property;
 
-    public function __construct($model)
+    public function __construct(string $model)
     {
-        switch ($model) {
-            case 'text':
-                $this->model = 'App\Models\Text';
-                $this->table = 'texts';
-                $this->property = 'text';
-                break;
-            case 'image':
-                $this->model = 'App\Models\Image';
-                $this->table = 'images';
-                $this->property = 'name';
-                break;
-            case 'entry':
-                $this->model = 'App\Models\Entry';
-                $this->table = 'entries';
-                $this->property = 'name';
-                break;
-            case 'chapter':
-                $this->model = 'App\Models\Chapter';
-                $this->table = 'chapters';
-                $this->property = 'name';
-                break;
-            case 'gallery':
-                $this->model = Gallery::class;
-                $this->table = 'galleries';
-                $this->property = 'name';
-                break;
+        // I2 (2026-08-21): String → Model/Table/Property-Mapping laeuft
+        // jetzt ueber ContentTypeRegistry statt eines lokalen switch.
+        $config = ContentTypeRegistry::for($model);
+        if ($config === null) {
+            return;
         }
+        $this->model = $config['model'];
+        $this->table = $config['table'];
+        $this->property = $config['property'];
     }
 
     /**
