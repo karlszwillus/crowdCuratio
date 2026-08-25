@@ -14,6 +14,7 @@
  */
 
 use App\Models\Revision;
+use App\Models\Source;
 use App\Support\RevisionSubject;
 use Livewire\Attributes\On;
 use Livewire\Volt\Component;
@@ -64,10 +65,33 @@ new class extends Component
 
         /** @var array<string, array{old: mixed, new: mixed}> $changes */
         $changes = $revision->snapshot['changes'] ?? [];
+        // A7 (2026-08-21): fuer `origin`/`copyright`-Aenderungen an
+        // Image und Text sind die Werte Source-IDs. Damit der Diff
+        // im Panel „Autor A → Autor B" zeigt statt „5 → 7", laden
+        // wir die Sources einmalig ins Cache.
+        $sourceIdsInSnapshot = [];
+        foreach ($changes as $field => $delta) {
+            if (in_array($field, ['origin', 'copyright'], true)) {
+                foreach (['old', 'new'] as $side) {
+                    if (isset($delta[$side]) && is_numeric($delta[$side])) {
+                        $sourceIdsInSnapshot[] = (int) $delta[$side];
+                    }
+                }
+            }
+        }
+        $sourceLabels = $sourceIdsInSnapshot === []
+            ? []
+            : Source::query()->whereIn('id', array_unique($sourceIdsInSnapshot))->pluck('name', 'id')->all();
+
         $fields = [];
         foreach ($changes as $field => $delta) {
-            $old = self::stringifyDelta($delta['old'] ?? null);
-            $new = self::stringifyDelta($delta['new'] ?? null);
+            $isSourceRef = in_array($field, ['origin', 'copyright'], true);
+            $old = $isSourceRef
+                ? self::resolveSourceLabel($delta['old'] ?? null, $sourceLabels)
+                : self::stringifyDelta($delta['old'] ?? null);
+            $new = $isSourceRef
+                ? self::resolveSourceLabel($delta['new'] ?? null, $sourceLabels)
+                : self::stringifyDelta($delta['new'] ?? null);
             if ($old === '' && $new === '') {
                 continue;
             }
@@ -138,6 +162,33 @@ new class extends Component
         }
 
         return '';
+    }
+
+    /**
+     * A7 (2026-08-21): loest eine Source-ID auf den Namen auf,
+     * damit `origin`/`copyright`-Diffs im Verlauf-Panel „Autor A
+     * → Autor B" zeigen statt „5 → 7". Fallback: leerer String
+     * fuer null, „Quelle #ID" fuer geloeschte Sources (ID war
+     * gesetzt, aber Zeile ist raus — bewusst als sichtbarer
+     * Marker, damit der Kurator die Diff-Historie nachvollziehen
+     * kann, ohne die geloeschte Source aus dem Log zu ziehen).
+     *
+     * @param  array<int, string>  $labelCache
+     */
+    private static function resolveSourceLabel(mixed $value, array $labelCache): string
+    {
+        if ($value === null || $value === '') {
+            return '';
+        }
+        if (! is_numeric($value)) {
+            return self::stringifyDelta($value);
+        }
+        $id = (int) $value;
+        if ($id <= 0) {
+            return '';
+        }
+
+        return $labelCache[$id] ?? '#'.$id;
     }
 
     public function with(): array

@@ -381,7 +381,7 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                                                                                         <div class="mt-4 border-t border-line-100 pt-3">
                                                                                             @can('update', $project)
                                                                                                 <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
-                                                                                                    <div>
+                                                                                                    <div data-history-field="copyright">
                                                                                                         <label class="mb-1 block text-caption font-medium text-ink-700">
                                                                                                             {{ __('copyright') }} <span class="text-danger" aria-hidden="true">*</span>
                                                                                                         </label>
@@ -393,7 +393,7 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                                                                                                             :label="__('copyright')"
                                                                                                             :key="'text-copyright-'.$item->text->id" />
                                                                                                     </div>
-                                                                                                    <div>
+                                                                                                    <div data-history-field="origin">
                                                                                                         <label class="mb-1 block text-caption font-medium text-ink-700">
                                                                                                             {{ __('origin') }} <span class="text-danger" aria-hidden="true">*</span>
                                                                                                         </label>
@@ -504,7 +504,7 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                                                                                                 {{-- 5z.9/§ 8: Copyright und Quelle stehen offen, kein <details>
                                                                                                      mehr — gleiche Stelle wie beim Text- und Galerie-Block. --}}
                                                                                                 <div class="mt-2 grid grid-cols-1 gap-3 md:grid-cols-2">
-                                                                                                    <div>
+                                                                                                    <div data-history-field="copyright">
                                                                                                         <label class="mb-1 block text-caption font-medium text-ink-700">
                                                                                                             {{ __('copyright') }} <span class="text-danger" aria-hidden="true">*</span>
                                                                                                         </label>
@@ -515,7 +515,7 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                                                                                                             :label="__('copyright')"
                                                                                                             :key="'av-copyright-'.$item->audiovisual->id" />
                                                                                                     </div>
-                                                                                                    <div>
+                                                                                                    <div data-history-field="source">
                                                                                                         <label class="mb-1 block text-caption font-medium text-ink-700">
                                                                                                             {{ __('origin') }} <span class="text-danger" aria-hidden="true">*</span>
                                                                                                         </label>
@@ -565,7 +565,7 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                                                                          hat 'App\Models\Gallery' (ADR-0022). --}}
                                                                     @if(isset($item) && $item->content_type == 'App\Models\Gallery')
                                                                         @if(isset($item->gallery))
-                                                                            <li class="item gallery content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
+                                                                            <li class="item gallery content" data-content="{{$item->id}}" data-entry="{{$entry->id}}" data-history-subject="Gallery:{{$item->gallery->id}}" id="{{$item->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
                                                                                 <x-ui.block-card type="gallery" class="mb-4" :save-slot="'Gallery-'.$item->gallery->id">
                                                                                     {{-- Phase 5y.1: Block-Aktionen wandern in den
                                                                                          `actions`-Slot der Block-Card. Vorher standen
@@ -608,34 +608,43 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
 
                                                                                     <div>
                                                                                         @can('update', $project)
-                                                                                            <livewire:inline-editor
-                                                                                                :model="$item->gallery"
-                                                                                                field="title"
-                                                                                                rules="nullable|string|max:255"
-                                                                                                :label="__('title')"
-                                                                                                :variant="'heading'"
-                                                                                                :key="'gallery-title-'.$item->gallery->id"
-                                                                                            />
-                                                                                            <livewire:inline-editor
-                                                                                                :model="$item->gallery"
-                                                                                                field="subtitle"
-                                                                                                rules="nullable|string|max:255"
-                                                                                                :variant="'subtitle'"
-                                                                                                :key="'gallery-subtitle-'.$item->gallery->id"
-                                                                                            />
+                                                                                            {{-- A7 (2026-08-21): data-history-field-Wrapper
+                                                                                                 damit history-diff.js die Wort-Diffs an
+                                                                                                 die richtigen Gallery-Felder haengen kann. --}}
+                                                                                            <div data-history-field="title">
+                                                                                                <livewire:inline-editor
+                                                                                                    :model="$item->gallery"
+                                                                                                    field="title"
+                                                                                                    rules="nullable|string|max:255"
+                                                                                                    :label="__('title')"
+                                                                                                    :variant="'heading'"
+                                                                                                    :key="'gallery-title-'.$item->gallery->id"
+                                                                                                />
+                                                                                            </div>
+                                                                                            <div data-history-field="subtitle">
+                                                                                                <livewire:inline-editor
+                                                                                                    :model="$item->gallery"
+                                                                                                    field="subtitle"
+                                                                                                    rules="nullable|string|max:255"
+                                                                                                    :variant="'subtitle'"
+                                                                                                    :key="'gallery-subtitle-'.$item->gallery->id"
+                                                                                                />
+                                                                                            </div>
                                                                                             {{-- Phase 5y.1: der Rich-Text-Editor bleibt
                                                                                                  fuer Editor:innen dauerhaft anzeigbar
                                                                                                  (er ist die Bearbeitungsflaeche); dort
                                                                                                  verursacht seine Mindesthoehe keine
                                                                                                  Leerflaeche mehr, weil die Aktionen jetzt
                                                                                                  im Kopf liegen und nicht mehr darunter. --}}
-                                                                                            <livewire:rich-text-editor
-                                                                                                :model="$item->gallery"
-                                                                                                field="description"
-                                                                                                rules="nullable|string"
-                                                                                                :label="__('gallery_description')"
-                                                                                                :key="'gallery-description-'.$item->gallery->id"
-                                                                                            />
+                                                                                            <div data-history-field="description">
+                                                                                                <livewire:rich-text-editor
+                                                                                                    :model="$item->gallery"
+                                                                                                    field="description"
+                                                                                                    rules="nullable|string"
+                                                                                                    :label="__('gallery_description')"
+                                                                                                    :key="'gallery-description-'.$item->gallery->id"
+                                                                                                />
+                                                                                            </div>
                                                                                         @else
                                                                                             <h4 class="text-heading font-semibold text-ink-900">{{$item->gallery->title}}</h4>
                                                                                             @if (! empty(trim($item->gallery->subtitle ?? '')))
@@ -1181,6 +1190,7 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                                                                                                     x-show="editingImageId === {{ $image->id }}"
                                                                                                     x-cloak
                                                                                                     data-image-id="{{ $image->id }}"
+                                                                                                    data-history-subject="Image:{{ $image->id }}"
                                                                                                     @keydown.escape.window="exitDetail()"
                                                                                                     class="gallery-detail-row mt-4 rounded-md border border-line-200 bg-paper-50 p-4"
                                                                                                 >
@@ -1214,7 +1224,7 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
 
                                                                                                         {{-- Vier Felder: Titel · Bildbeschreibung · Urheberrecht · Quelle. --}}
                                                                                                         <div class="grid grid-cols-1 gap-4">
-                                                                                                            <div>
+                                                                                                            <div data-history-field="alt">
                                                                                                                 <label class="mb-1 block text-caption font-medium text-ink-700">{{ __('title') }}</label>
                                                                                                                 <livewire:inline-editor
                                                                                                                     :model="$image"
@@ -1224,7 +1234,7 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                                                                                                                 />
                                                                                                                 <p class="mt-1 text-caption text-ink-500">{{ __('gallery_field_title_hint') }}</p>
                                                                                                             </div>
-                                                                                                            <div>
+                                                                                                            <div data-history-field="description">
                                                                                                                 <label class="mb-1 block text-caption font-medium text-ink-700">
                                                                                                                     {{ __('gallery_image_description') }} <span class="text-danger" aria-hidden="true">*</span>
                                                                                                                 </label>
@@ -1236,7 +1246,7 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                                                                                                                 />
                                                                                                                 <p class="mt-1 text-caption text-ink-500">{{ __('gallery_field_description_hint') }}</p>
                                                                                                             </div>
-                                                                                                            <div>
+                                                                                                            <div data-history-field="copyright">
                                                                                                                 <label class="mb-1 block text-caption font-medium text-ink-700">
                                                                                                                     {{ __('copyright') }} <span class="text-danger" aria-hidden="true">*</span>
                                                                                                                 </label>
@@ -1248,7 +1258,7 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                                                                                                                     :label="__('copyright')"
                                                                                                                     :key="'image-detail-copyright-'.$image->id" />
                                                                                                             </div>
-                                                                                                            <div>
+                                                                                                            <div data-history-field="origin">
                                                                                                                 <label class="mb-1 block text-caption font-medium text-ink-700">
                                                                                                                     {{ __('origin') }} <span class="text-danger" aria-hidden="true">*</span>
                                                                                                                 </label>
