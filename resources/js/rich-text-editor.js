@@ -71,12 +71,29 @@ document.addEventListener('alpine:init', () => {
                 theme: 'snow',
             });
 
-            // Initial-HTML einspielen — Quill akzeptiert HTML über
-            // clipboard.dangerouslyPasteHTML() ohne Sanitizer, was
-            // hier gewollt ist: die Werte kommen aus der DB und
-            // waren dort schon.
+            // Initial-HTML einspielen — Karls Bug-Report 2026-08-21:
+            // `dangerouslyPasteHTML(html)` mit nur einem Argument pastet
+            // an die aktuelle Selection, was bei frisch instanziiertem
+            // Quill (kein Fokus) einen Leer-Newline-Vorspann im Delta
+            // hinterlaesst. Der DOM zeigt nur den Content, aber der
+            // interne Delta hat einen unsichtbaren Anfangs-Block; beim
+            // Tippen an DOM-Position 0 landet der Insert an einer Stelle,
+            // die im DOM nicht sichtbar ist, Backspace loescht dann das
+            // falsche Zeichen. `setContents(clipboard.convert(...))`
+            // ersetzt den Delta komplett und haelt DOM und Delta synchron.
             if (this.initialHtml !== '') {
-                this.quill.clipboard.dangerouslyPasteHTML(this.initialHtml);
+                // Bug-Fix 2026-08-21: der frueher benutzte
+                // `clipboard.dangerouslyPasteHTML(this.initialHtml)`
+                // pastet an die aktuelle Selection (bei frisch
+                // instanziiertem Quill = null) und hinterlaesst einen
+                // unsichtbaren Leer-Vorspann im Delta. Symptome:
+                // Backspace am Anfang loescht ins Leere, Backspace am
+                // Ende wirkt erst nach Fokus-Wechsel, Zeichen bleiben
+                // stehen. Direct-DOM-Init + explizite Quill-Sync loesen
+                // das sauber — Quill parst den DOM neu und baut Delta
+                // + Selection konsistent darueber.
+                this.quill.root.innerHTML = this.initialHtml;
+                this.quill.update('silent');
             }
 
             const pushSave = debounce(() => {
