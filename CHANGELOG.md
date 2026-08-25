@@ -2113,6 +2113,18 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Behoben
 
+- **Cursor-Bug im Rich-Text-Editor der Content-Blöcke**
+  (2026-08-21). Beim Editieren von Content-Text-Blöcken löschte
+  Backspace am Anfang ins Leere, am Ende wirkte er erst nach
+  Fokus-Wechsel — vereinzelt blieben getippte Zeichen stehen.
+  Ursache: `clipboard.dangerouslyPasteHTML(html)` beim Editor-
+  Init pastet an die aktuelle Selection (bei frisch instanziiertem
+  Quill 1.x = null) und hinterlässt einen unsichtbaren Leer-
+  Vorspann im Delta. DOM und Delta divergieren, Insert/Backspace
+  treffen falsche Positionen. Jetzt: `root.innerHTML = html` +
+  `quill.update('silent')` — Quill parst den DOM und synchronisiert
+  Delta + Selection sauber.
+
 - **`LogService`-Konstruktor lief mit `null`-Model** (I3 ·
   2026-08-21). `new LogService;` in `ProjectController::getCurrentLog`
   rief den Konstruktor ohne den erforderlichen `$model`-Slug — die
