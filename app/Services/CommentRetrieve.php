@@ -22,6 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Services;
 
+use App\Support\CommentableRoutes;
 use App\Support\CommentStatus;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Auth;
@@ -57,7 +58,7 @@ class CommentRetrieve
         // andere nicht-registrierte Klassen fallen weiterhin auf den
         // Default (leerer pathReply/pathComment) — der foreach-Loop
         // unten ist darauf vorbereitet.
-        $routes = \App\Support\CommentableRoutes::for($class);
+        $routes = CommentableRoutes::for($class);
         if ($routes !== null) {
             $pathReply = $routes['save'];
             $data['pathComment'] = $routes['base'];
