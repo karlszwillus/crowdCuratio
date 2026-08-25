@@ -60,6 +60,8 @@ class ContentController extends Controller
         private readonly ImageService $images,
         private readonly GalleryService $galleries,
         private readonly ContentReorderService $reorder,
+        // I3 (2026-08-21): CommentRetrieve aus dem Container.
+        private readonly CommentRetrieve $commentRetrieve,
     ) {
         $this->middleware('auth');
     }
@@ -430,7 +432,7 @@ class ContentController extends Controller
         $text = Text::findOrFail($id);
         $this->authorize('view', $text);
 
-        $comment = new CommentRetrieve;
+        $comment = $this->commentRetrieve;
 
         return $comment->getComments('App\Models\MediaContent', $id);
     }
@@ -483,7 +485,7 @@ class ContentController extends Controller
         $image = Image::findOrFail($id);
         $this->authorize('view', $image);
 
-        $comment = new CommentRetrieve;
+        $comment = $this->commentRetrieve;
 
         return $comment->getComments('App\Models\MediaContent', $id);
     }

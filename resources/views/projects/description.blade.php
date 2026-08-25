@@ -46,7 +46,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
     {{-- Phase 5ab.3: Der alte Version-Log-Block hier (Karten-Liste mit
          Namen und Uhrzeit unter dem Editor) ist durch das Verlauf-Panel
-         oben abgeloest. Die `log.detail`-Route bleibt vorerst bestehen —
-         eine tiefere Aufraeumung folgt in 5ab.6, sobald wir sicher sind,
-         dass keine externe Verlinkung sie mehr braucht. --}}
+         oben abgeloest. Die frueher hier ergaenzende `log.detail`-Route
+         ist mit A4 (2026-08-21) entfallen — der Verlauf-Panel-Flow deckt
+         alles ab, was die Legacy-Log-Sicht geleistet hat. --}}
 @endsection

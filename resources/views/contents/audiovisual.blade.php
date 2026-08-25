@@ -17,6 +17,11 @@ along with this program in the file LICENSE.
 
 If not, see <https://www.gnu.org/licenses/>. -->
 
+{{-- I1 (2026-08-21) DEPRECATED: dieser Modal geht mit C1 (Inline-Add-
+     Flow, Design v6/v7 § Screen 05·5) weg. Bis dahin nutzt er weiter
+     jQuery-Verkabelung aus chapters/index.blade.php. Kein neuer Aufwand
+     hier — bei jedem Fund lieber C1 vorziehen. --}}
+
 <x-ui.modal id="audiovisualModal" :title="__('add_content')" size="lg">
     <div class="row">
         <div id="infoMsg" class=""></div>

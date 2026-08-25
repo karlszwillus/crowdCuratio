@@ -34,7 +34,6 @@ use App\Models\Image;
 use App\Models\Permission;
 use App\Models\Project;
 use App\Models\Revision;
-use App\Models\Source;
 use App\Models\Text;
 use App\Models\TranslationSourceReference;
 use App\Models\User;
@@ -80,6 +79,11 @@ class ProjectController extends Controller
         private readonly ProjectPermissionService $permissions,
         private readonly CommentService $comments,
         private readonly SourceService $sources,
+        // I3 (2026-08-21): Services die frueher als `new CommentRetrieve;`
+        // bzw. `new UserService;` in einzelnen Actions gebaut wurden,
+        // laufen jetzt ueber den Container.
+        private readonly CommentRetrieve $commentRetrieve,
+        private readonly UserService $users,
     ) {
         $this->middleware('auth');
         // Block D / D.4: Drei-Wege-Authorization in einen Pfad
@@ -209,7 +213,7 @@ class ProjectController extends Controller
 
         if (isset($request['comment'])) {
             $isComment = true;
-            $comment = new CommentRetrieve;
+            $comment = $this->commentRetrieve;
 
             $comments = $comment->getComments($request['model'], $request['comment']);
 
@@ -225,7 +229,7 @@ class ProjectController extends Controller
         $listRole = Role::where('name', '!=', RoleName::ADMIN->value)->pluck('name', 'id');
         // F-DB-014: SoftDeletes-Scope greift implizit — kein whereNull nötig.
         $users = User::all();
-        $userService = new UserService;
+        $userService = $this->users;
         $listPermissions = $userService->getAllUsers($project->id);
         $allPermissions = Permission::pluck('name', 'id');
         $currentUserPermissions = $this->permissions->getCurrentUsersPermissions(Auth::user()->id);
@@ -402,7 +406,7 @@ class ProjectController extends Controller
         $project = Project::findOrFail($id);
         $this->authorize('comment', $project);
 
-        $comment = new CommentRetrieve;
+        $comment = $this->commentRetrieve;
 
         return $comment->getComments('App\Models\Project', $id);
     }
@@ -522,97 +526,10 @@ class ProjectController extends Controller
         }
         $this->authorize('view', $project);
 
-        $log = new LogService;
+        $log = new LogService('text');
         $activities = $log->textLog($id);
 
         return redirect()->back()->with('activities', $activities);
-    }
-
-    /**
-     * @return Application|Factory|View
-     */
-    public function getDetails($project, $id)
-    {
-        $project = Project::findOrFail($project);
-
-        // Block E.7b Sub-Welle 3-Hotfix (ADR-0022, ADR-0013):
-        // getDetails liefert Activity-Log-Diffs des Projekts —
-        // sollte nur Lese-berechtigte sehen.
-        $this->authorize('view', $project);
-
-        $activities = Activity::where('id', '=', $id)->get();
-
-        $changes = [];
-
-        foreach ($activities as $key => $value) {
-            if (isset($value->changes['old'])) {
-                foreach ($value->changes['old'] as $k => $property) {
-                    if (in_array($k, ['origin', 'copyright'])) {
-                        $old = Source::where('id', $property)->where('type', $k)->first();
-                        $new = Source::where('id', $value->changes['attributes'][$k])->where('type', $k)->first();
-
-                        $highlight = $this->highlightTextDifference(
-                            $old->name,
-                            $new->name
-                        );
-
-                        $changes[$k] = [
-                            'old' => $highlight['old'],
-                            'new' => $highlight['new'],
-                            'oldId' => $property,
-                        ];
-                    } else {
-                        if (in_array($k, ['url', 'image'])) {
-                            $changes[$k] = [
-                                'old' => $property,
-                                'new' => $value->changes['attributes'][$k],
-                            ];
-                        } else {
-
-                            $highlight = $this->highlightTextDifference(
-                                $property,
-                                $value->changes['attributes'][$k]
-                            );
-
-                            $changes[$k] = [
-                                'old' => $highlight['old'],
-                                'new' => $highlight['new'],
-                                'noHighlight' => $property,
-                            ];
-                        }
-                    }
-                }
-
-                $changes['subjectId'] = $value->subject_id;
-                $changes['subjectType'] = $value->subject_type;
-            }
-        }
-
-        return view('logs.log', compact('changes', 'project'));
-    }
-
-    /**
-     * Difference between text
-     *
-     * @return string[]
-     */
-    public function highlightTextDifference($old, $new)
-    {
-        $from_start = is_null($old) ? strspn($new, "\0") : strspn($old ^ $new, "\0");
-        $from_end = is_null($old) ? strspn(strrev($new), "\0") : strspn(strrev($old) ^ strrev($new), "\0");
-
-        $old_end = strlen($old) - $from_end;
-        $new_end = strlen($new) - $from_end;
-
-        $start = substr($new, 0, $from_start);
-        $end = substr($new, $new_end);
-        $new_diff = substr($new, $from_start, $new_end - $from_start);
-        $old_diff = substr($old, $from_start, $old_end - $from_start);
-
-        $new = "$start<span style='background-color:#ccffcc'>$new_diff</span>$end";
-        $old = "$start<del style='background-color:#ffcccc'>$old_diff</del>$end";
-
-        return ['old' => $old, 'new' => $new];
     }
 
     /**

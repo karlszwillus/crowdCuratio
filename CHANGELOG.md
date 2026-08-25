@@ -733,6 +733,28 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Editor-Chrome als eigene Komponente, Editor-Split** (I1 ·
+  2026-08-21). Der Chapter-Loop mit Kapitel-Kopf, Entry-Rendering
+  und Content-Block-Karten sitzt jetzt in `chapters/_canvas.blade.php`
+  — `chapters/index.blade.php` ist von 2.650 auf ~1.220 Zeilen
+  geschrumpft. Der Sticky-Header mit Breadcrumb, Tabs, Publish-
+  Button und ⋮-Menü kommt aus der neuen `<x-projects.chrome>`-
+  Komponente; die drei Sichten `chapters/index`, `projects/create`
+  (Metadaten) und `projects/permissions` teilen sie sich mit
+  optionalem `actions`-Slot.
+
+- **Entry-Add-Modal auf Alpine, jQuery-Verkabelung raus** (I1 ·
+  2026-08-21). Der Entry-Modal war über ~50 Zeilen jQuery in
+  `chapters/index.blade.php` und `resources/js/modal-wire.js` an
+  seine Trigger verkabelt — der Persona-Smoke vom 15. August hatte
+  den Flow mehrfach reproduzieren müssen wegen `chapterId`-Reset-
+  Konflikten zwischen Chapter- und Entry-Modal. Neu in
+  `entries/_add-modal.blade.php`: Alpine-Root, hört auf ein
+  `entry-modal:open`-CustomEvent, rendert die v7-Modal-Struktur,
+  Quill-Content wird im `@submit`-Handler in ein Hidden-Feld
+  geschrieben. Der frühere Ordner `Entry/` (Großschreibung) ist
+  weg — Case-Kanonisierung auf `entries/` für Windows-Freundlichkeit.
+
 - **Auth- und User-Anlage-Altlasten aufgeräumt** (B12 · 2026-08-20).
   Der `/register`-Endpunkt aus dem alten `RegisteredUserController`
   ist in `UserController::create/store` konsolidiert; die alte
@@ -1344,6 +1366,24 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Geändert
 
+- **String-Type-Switch auf Registry-Pattern konvergiert** (I2 ·
+  2026-08-21 / ARCH-02, F-ARCH-009). Zwei Switch-Kaskaden, die
+  Content-Type-Slugs bzw. Model-FQCN auf Modell-Klasse, Tabelle,
+  Property und Routen mappten (`LogService`, `CommentRetrieve`),
+  laufen jetzt über zwei kleine Registries in `App\Support`:
+  `ContentTypeRegistry` (Slug → Model/Table/Property, sechs
+  Content-Modelle inkl. Audiovisual) und `CommentableRoutes`
+  (FQCN → Save-/Base-Route, sieben commentable Modelle). Neue
+  Content-Modelle werden jetzt an einer Stelle registriert.
+
+- **Service-DI-Sweep — Container statt `new Service()`** (I3 ·
+  2026-08-21 / ARCH-03, F-ARCH-011). Sechs direkte
+  `new CommentRetrieve;` und ein `new UserService;` in
+  `ProjectController`, `ChapterController`, `ContentController`
+  und `EntryController` sind auf Constructor-Injection umgestellt.
+  Services werden aus dem Laravel-Container aufgelöst — künftige
+  DI-Abhängigkeiten der Services greifen dann automatisch.
+
 - **Comments-DB-Baseline auf Bigint + Polymorph-Index + FKs**
   (Q3-Politur 2026-08-20 / DB-01, DB-02 / F-DB-009, F-DB-010). Neue
   Migration `2026_08_20_150000_align_comments_fks_and_polymorph_index`
@@ -1922,6 +1962,18 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Entfernt
 
+- **`log.detail`-Route und Legacy-Log-Detail-Sicht** (A4 ·
+  2026-08-21). Der `GET /project/{projectId}/log/{id}`-Endpunkt
+  war seit Phase 5ab.3 durch das Livewire-Verlauf-Panel abgelöst,
+  keine Verlinkung mehr im Bestand. Weg: Route, `ProjectController::getDetails`,
+  Helper `highlightTextDifference`, `resources/views/logs/log.blade.php`,
+  `Source`-Import in `ProjectController`, fünf `in_array`-Checks in
+  Rail/Header/Preview-Views — insgesamt ~285 Zeilen.
+
+- **`resources/js/modal-wire.js`** (I1 · 2026-08-21). Das
+  Wire-Up-Modul war nur für die `entryModal`-Trigger-Bridge da; mit
+  dem Alpine-Umbau des Modals entfällt es ersatzlos.
+
 - **`RegisteredUserController` und `auth/register.blade.php`**
   (B12 · 2026-08-20). Der User-Anlage-Flow ist in `UserController`
   konsolidiert, die Blade-Sicht lebt jetzt als `users/create.blade.php`
@@ -2060,6 +2112,13 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
   in der ehemaligen `CommentTrait::commentAsUser`.
 
 ### Behoben
+
+- **`LogService`-Konstruktor lief mit `null`-Model** (I3 ·
+  2026-08-21). `new LogService;` in `ProjectController::getCurrentLog`
+  rief den Konstruktor ohne den erforderlichen `$model`-Slug — die
+  Query lief mit `subject_type = null` und lieferte immer eine
+  leere Aktivitäts-Liste. Jetzt `new LogService('text')` analog
+  zum Route-Namen `log.text`.
 
 - **Fehlerseiten rendern ohne Rail, wenn kein User eingeloggt ist**
   (B12 · 2026-08-20). 403/404/419/500 zogen bisher immer

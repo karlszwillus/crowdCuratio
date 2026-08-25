@@ -10,15 +10,7 @@ ab (Phase 5d.4).
 @extends('projects.layout')
 
 @section('main')
-    <div class="sticky top-0 z-20 -mx-6 -mt-6 mb-6 flex flex-wrap items-center justify-between gap-4
-                border-b border-line-200 bg-canvas-bg/95 px-6 py-3
-                backdrop-blur supports-[backdrop-filter]:bg-canvas-bg/80">
-        <div class="min-w-0 flex-1">
-            <x-ui.breadcrumb :tree="app(App\Services\ProjectTreeService::class)->breadcrumbTree($project)"/>
-        </div>
-
-        <x-projects.tabs :project="$project" active="permissions"/>
-    </div>
+    <x-projects.chrome :project="$project" active="permissions"/>
 
     <livewire:project-permissions :project-id="$project->id"/>
 @endsection

@@ -185,11 +185,8 @@ new class extends Component
                             <li>
                                 <button
                                     type="button"
-                                    data-toggle="modal"
-                                    data-target="#entryModal"
-                                    data-chapter="{{ $chapter->name }}"
-                                    data-id="{{ $chapter->id }}"
-                                    class="addEntry add_entry ml-2 mt-1 inline-flex items-center gap-1 text-caption text-ink-500 hover:text-ink-900"
+                                    onclick="window.dispatchEvent(new CustomEvent('entry-modal:open', { detail: { chapterId: {{ (int) $chapter->id }}, chapterName: @js((string) $chapter->name) } }))"
+                                    class="add_entry ml-2 mt-1 inline-flex items-center gap-1 text-caption text-ink-500 hover:text-ink-900"
                                 >
                                     <x-icon name="plus" size="4"/>
                                     <span>{{ __('add_entry') }}</span>
