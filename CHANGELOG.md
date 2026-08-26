@@ -733,6 +733,18 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Verlauf-Panel für Gallery- und Image-Metadaten voll verkabelt**
+  (A7 · 2026-08-21). `chapters/_canvas.blade.php` bekommt an Gallery,
+  Image-Detail-Zeile und den vier Bild-Feldern (`alt`, `description`,
+  `origin`, `copyright`) die passenden `data-history-subject`- und
+  `data-history-field`-Attribute — die Diff-Overlays des Verlauf-
+  Panels landen jetzt an der richtigen Stelle. Bild-Detail-Header
+  hat einen eigenen Verlauf-Trigger. `origin`/`copyright`-Diffs
+  werden im Panel als Source-Namen statt IDs gerendert (neuer
+  `resolveSourceLabel`-Helper in `history-panel-list`). Der Marker
+  am Verlauf-Icon leuchtet erst ab v2 — die Anlage-Revision (v1)
+  zählt nicht als Historie; die Zahl-Badge zeigt die Zahl der Edits.
+
 - **Editor-Chrome als eigene Komponente, Editor-Split** (I1 ·
   2026-08-21). Der Chapter-Loop mit Kapitel-Kopf, Entry-Rendering
   und Content-Block-Karten sitzt jetzt in `chapters/_canvas.blade.php`
@@ -2112,6 +2124,24 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
   in der ehemaligen `CommentTrait::commentAsUser`.
 
 ### Behoben
+
+- **`wire:model.blur` in Livewire 4 feuerte keinen Commit** (A7 ·
+  2026-08-21). Das Blur-Sync im `inline-editor.blade.php` synced
+  zwar den ephemeral state, schickte aber keinen Server-Roundtrip
+  — mit dem Ergebnis, dass Bild-Titel und -Beschreibung nicht
+  gespeichert wurden. Diagnose per Chrome-in-Chrome mit Karl.
+  Workaround: expliziter `@blur="$wire.$commit()"`-Handler
+  ersetzt den `.blur`-Modifier. Verhalten aus Nutzersicht
+  identisch, Wert wird beim Verlassen des Feldes gespeichert.
+
+- **Livewire-Parse-Fehler `Unexpected token 'if'`** (A7 ·
+  2026-08-21). Der `@saved.window`-Handler im `inline-editor`
+  enthielt seit Q3-Politur G1 ein `if`-Statement — Alpine
+  wickelt Event-Handler in einen Expression-Kontext, was das
+  Statement bricht. Mit A7 wurde der Handler auf viele Gallery-
+  und Image-Instanzen dupliziert und der Parse-Fehler sichtbar,
+  blockierte die Save-Bridge. Fix: dieselbe Filter-Bedingung
+  als Kurzschluss-Expression (`… && showChip()`).
 
 - **Cursor-Bug im Rich-Text-Editor der Content-Blöcke**
   (2026-08-21). Beim Editieren von Content-Text-Blöcken löschte

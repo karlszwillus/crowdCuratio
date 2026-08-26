@@ -46,7 +46,11 @@ Props:
                 ->count()
             : 0;
     }
-    $indicator = $historyCount === null ? true : $historyCount > 0;
+    // A7-Followup (Karl 2026-08-21): v1 (Anlage) zaehlt nicht als
+    // „Verlauf" — der Marker erscheint erst ab dem ersten Edit.
+    // Anzeige-Zahl ist die Zahl der Edits (Revisions - 1).
+    $editCount = $historyCount === null ? null : max(0, $historyCount - 1);
+    $indicator = $historyCount === null ? true : ($historyCount > 1);
 @endphp
 
 <button
@@ -65,13 +69,13 @@ Props:
              damit der Vorher-Kontrakt „Punkt = Historie da" nicht bricht.
              sr-only-Zusatz nennt den Zustand fuer Screenreader
              (§ WCAG 1.4.1 „Nicht ausschliesslich Farbe"). --}}
-        @if (is_int($historyCount) && $historyCount > 0)
+        @if (is_int($editCount) && $editCount > 0)
             <span
                 aria-hidden="true"
                 class="absolute -right-1 -top-1 inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-primary px-1 text-caption font-medium text-primary-on ring-2 ring-paper-0"
-            >{{ $historyCount }}</span>
+            >{{ $editCount }}</span>
             <span class="sr-only">
-                — {{ __('history_has_changes_count', ['count' => $historyCount]) }}
+                — {{ __('history_has_changes_count', ['count' => $editCount]) }}
             </span>
         @else
             <span
