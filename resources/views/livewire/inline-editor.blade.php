@@ -194,29 +194,32 @@ new class extends Component
     };
 @endphp
 
-<div
-    class="relative"
-    x-data="{
-        chipVisible: false,
-        _chipTimer: null,
-        showChip() {
-            this.chipVisible = true;
-            clearTimeout(this._chipTimer);
-            this._chipTimer = setTimeout(() => { this.chipVisible = false; }, 1500);
-        },
-    }"
-    {{-- Q3-Politur G1-Followup (2026-08-20): Livewire feuert nach jedem
-         erfolgreichen Save ein `saved`-Browser-Event mit
-         `{field, model, id}`. Wir filtern per zusammengesetztem Schluessel,
-         damit nur die richtige inline-editor-Instanz aufleuchtet. --}}
-    @saved.window="
-        ($event.detail
-            && $event.detail.field === @js($field)
-            && $event.detail.model === @js(class_basename($model))
-            && String($event.detail.id) === @js((string) $model->getKey()))
-        && showChip()
-    "
->
+{{-- Bug-Fix 2026-08-21 (Chrome-in-Chrome-Debug mit Karl): Der frueher
+     hier hoehe genutzte `x-data`+`@saved.window`-Root ist zum eigenen
+     `<div>` innen wandert. Livewire 3 installiert intern selbst ein
+     Alpine-`x-data` auf dem Component-Root, damit `wire:model` seinen
+     Sync-Kontext bekommt. Unsere manuelle x-data-Deklaration auf dem
+     gleichen Element uebersteuerte diese interne Konfiguration, mit
+     dem Effekt, dass `wire:model.blur` keinen commit mehr auslost. --}}
+<div class="relative">
+    <div
+        x-data="{
+            chipVisible: false,
+            _chipTimer: null,
+            showChip() {
+                this.chipVisible = true;
+                clearTimeout(this._chipTimer);
+                this._chipTimer = setTimeout(() => { this.chipVisible = false; }, 1500);
+            },
+        }"
+        @saved.window="
+            ($event.detail
+                && $event.detail.field === @js($field)
+                && $event.detail.model === @js(class_basename($model))
+                && String($event.detail.id) === @js((string) $model->getKey()))
+            && showChip()
+        "
+    >
     @if (! empty($options))
         {{-- Select nutzt `wire:model.live`, nicht `.blur`: bei einem
              Dropdown feuert der Browser-Change-Event beim Klick auf
@@ -276,4 +279,5 @@ new class extends Component
     >
         ✓ {{ __('saved') }}
     </span>
+    </div>
 </div>
