@@ -31,6 +31,7 @@ use App\Models\NotificationPreference;
 use App\Models\Project;
 use App\Models\ProjectUserPermission;
 use App\Models\User;
+use App\Services\AccountDeletionService;
 use App\Services\AvatarService;
 use App\Services\ProjectInvitationService;
 use App\Services\ProjectPermissionService;
@@ -65,6 +66,8 @@ class UserController extends Controller
         private readonly UserReactivationService $userReactivation,
         private readonly UserOnboardingService $userOnboarding,
         private readonly ProjectInvitationService $projectInvitation,
+        // B2 (2026-08-21) / DSGVO: Konto-Loeschung mit 30-Tage-Frist.
+        private readonly AccountDeletionService $accountDeletion,
     ) {
         $this->middleware('auth');
         // Block E / Welle E.3: `update` jetzt auch role:Admin-gated.
@@ -353,6 +356,59 @@ class UserController extends Controller
         return redirect()->route('profile')->with('success', __('profile_password_updated'));
     }
 
+    /**
+     * B2 (2026-08-21) / DSGVO: Konto-Loeschung anmelden. Ab jetzt
+     * laeuft die 30-Tage-Grace-Period, in der der User via Login
+     * seine Loeschung wieder ruecknehmen kann.
+     */
+    public function scheduleDeletion(\App\Http\Requests\ScheduleAccountDeletionRequest $request): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+
+        // Cross-Check: alle vom User besessenen Projekte muessen einen
+        // Nachfolger haben. Ohne Uebergabe wuerden die Projekte
+        // Owner-los in die Grace-Period rutschen.
+        $ownedIds = $request->ownedProjectIds();
+        $handovers = $request->handovers();
+        $missing = array_diff($ownedIds, array_keys($handovers));
+        if ($missing !== []) {
+            return redirect()->route('profile')->withErrors([
+                'handovers' => __('profile_deletion_handover_missing'),
+            ]);
+        }
+
+        try {
+            $this->accountDeletion->schedule($user, $request->input('reason'), $handovers);
+        } catch (\RuntimeException $e) {
+            return redirect()->route('profile')->withErrors([
+                'handovers' => $e->getMessage(),
+            ]);
+        }
+
+        return redirect()->route('profile')->with(
+            'success',
+            __('profile_deletion_scheduled', ['days' => \App\Models\User::DELETION_GRACE_DAYS])
+        );
+    }
+
+    /**
+     * B2 (2026-08-21) / DSGVO: geplante Konto-Loeschung wieder
+     * aufheben. Wird typischerweise aus dem Login-Reaktivierungs-
+     * Dialog gerufen, funktioniert aber auch aus der Profil-Sicht.
+     */
+    public function cancelScheduledDeletion(Request $request): RedirectResponse
+    {
+        /** @var User $user */
+        $user = $request->user();
+        $this->accountDeletion->cancel($user);
+
+        return redirect()->route('profile')->with(
+            'success',
+            __('profile_deletion_cancelled')
+        );
+    }
+
     public function updateTheme(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -455,7 +511,18 @@ class UserController extends Controller
             $prefs->notify_weekly_digest = false;
         }
 
-        return view('users.profile', compact('roles', 'profileProjects', 'prefs'));
+        // B2 (2026-08-21) / DSGVO: fuer die Konto-Loeschen-Karte
+        // brauchen wir die owned Projekte (Uebergabe-Pflicht) und die
+        // moeglichen Uebergabe-Empfaenger.
+        $ownedProjects = Project::query()
+            ->where('user_id', $me->id)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+        $handoverCandidates = $ownedProjects->isEmpty()
+            ? collect()
+            : $this->accountDeletion->candidatesForHandover($me);
+
+        return view('users.profile', compact('roles', 'profileProjects', 'prefs', 'ownedProjects', 'handoverCandidates'));
     }
 
     /**
