@@ -1204,12 +1204,23 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                                                                                                         <span class="text-caption text-ink-500">
                                                                                                             {{ __('gallery_image_n_of_m', ['n' => $loop->iteration, 'm' => $item->gallery->images->count()]) }}
                                                                                                         </span>
-                                                                                                        <button type="button"
-                                                                                                                @click="exitDetail()"
-                                                                                                                title="{{ __('close') }}"
-                                                                                                                class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900">
-                                                                                                            <x-icon name="x" size="4"/>
-                                                                                                        </button>
+                                                                                                        <div class="flex items-center gap-1">
+                                                                                                            {{-- A7-Followup (2026-08-21): Verlauf-Trigger fuer
+                                                                                                                 die Bild-Metadaten (alt, description, origin,
+                                                                                                                 copyright). Image ist ein eigenes revidiertes
+                                                                                                                 Subject; der Kurator kommt hier direkt zur
+                                                                                                                 Bild-Historie. --}}
+                                                                                                            <x-ui.history-trigger
+                                                                                                                subjectType="Image"
+                                                                                                                :subjectId="$image->id"
+                                                                                                            />
+                                                                                                            <button type="button"
+                                                                                                                    @click="exitDetail()"
+                                                                                                                    title="{{ __('close') }}"
+                                                                                                                    class="inline-flex size-11 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900">
+                                                                                                                <x-icon name="x" size="4"/>
+                                                                                                            </button>
+                                                                                                        </div>
                                                                                                     </header>
 
                                                                                                     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
