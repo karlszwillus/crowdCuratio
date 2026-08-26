@@ -53,6 +53,17 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        // B2 (2026-08-21) / DSGVO: wenn das Konto zur Loeschung
+        // angemeldet ist, direkt zum Profil mit einem Reaktivierungs-
+        // Banner statt zur Homepage.
+        $user = $request->user();
+        if ($user !== null && $user->isScheduledForDeletion()) {
+            return redirect()->route('profile')->with(
+                'reactivation_offer',
+                (int) $user->deletionDaysRemaining()
+            );
+        }
+
         return redirect()->intended(RouteServiceProvider::HOME);
     }
 

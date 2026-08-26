@@ -166,6 +166,9 @@ Route::group(
         Route::post('/profile/check-initials', [UserController::class, 'checkInitials'])->name('profile.check_initials');
         // Phase 5ac.4: eigener Save fuer Passwort-Wechsel.
         Route::patch('/profile/password', [UserController::class, 'updatePassword'])->name('profile.password');
+        // B2 (2026-08-21) / DSGVO: Konto-Loeschung mit 30-Tage-Frist.
+        Route::post('/profile/schedule-deletion', [UserController::class, 'scheduleDeletion'])->name('profile.schedule_deletion');
+        Route::post('/profile/cancel-deletion', [UserController::class, 'cancelScheduledDeletion'])->name('profile.cancel_deletion');
         Route::get('/permission/user/{id}/', [ProjectController::class, 'givePermissionToUser'])->name(
             'permission.project'
         );

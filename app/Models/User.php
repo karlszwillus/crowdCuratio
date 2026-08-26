@@ -92,7 +92,54 @@ class User extends Authenticatable
         'welcome_valid_until' => 'datetime',
         'is_admin' => 'boolean',
         'create_project' => 'boolean',
+        // B2 (2026-08-21) / DSGVO: Konto-Loeschung mit 30-Tage-Frist.
+        'deletion_scheduled_at' => 'datetime',
     ];
+
+    /**
+     * B2 (2026-08-21) / DSGVO: Grace-Period fuer selbst-angeforderte
+     * Konto-Loeschung. Wird an mehreren Stellen gebraucht (Profil-
+     * Card, Login-Reaktivierungs-Angebot, Cron-Purge), daher als
+     * Konstante am Model.
+     */
+    public const DELETION_GRACE_DAYS = 30;
+
+    public function isScheduledForDeletion(): bool
+    {
+        // Model::shouldBeStrict() wirft MissingAttributeException,
+        // wenn die Column nicht in `->attributes` steht — nach einem
+        // Factory-create() ohne explizit gesetztem Wert ist das der
+        // Fall. Wir greifen deshalb direkt in $this->attributes und
+        // umgehen die strict-Kontrolle fuer diesen defensiven Getter.
+        return ! empty($this->attributes['deletion_scheduled_at']);
+    }
+
+    /**
+     * Zeitpunkt, an dem das Konto endgueltig (soft-)geloescht wird.
+     * Null, wenn keine Loeschung angemeldet ist.
+     */
+    public function deletionDueAt(): ?Carbon
+    {
+        if (! $this->isScheduledForDeletion()) {
+            return null;
+        }
+
+        return $this->deletion_scheduled_at?->copy()->addDays(self::DELETION_GRACE_DAYS);
+    }
+
+    /**
+     * Anzahl verbleibender Tage bis zur endgueltigen (soft-)Loeschung.
+     * Null, wenn keine Loeschung angemeldet ist.
+     */
+    public function deletionDaysRemaining(): ?int
+    {
+        $due = $this->deletionDueAt();
+        if ($due === null) {
+            return null;
+        }
+
+        return max(0, (int) now()->diffInDays($due, false));
+    }
 
     /**
      * Get role of user
