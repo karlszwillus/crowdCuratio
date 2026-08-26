@@ -61,7 +61,9 @@ it('InlineEditor rendert das aktuelle Feld-Value in einem <input>', function () 
     Livewire::actingAs($owner)
         ->test('inline-editor', ['model' => $chapter, 'field' => 'name'])
         ->assertSee('Ursprünglicher Titel', false)
-        ->assertSee('wire:model.blur="value"', false);
+        // Bug-Fix 2026-08-21: Livewire 4 rendert wire:model.blur zwar
+        // aus, feuert aber keinen Commit — explizit @blur="$commit()".
+        ->assertSee('wire:model="value"', false);
 });
 
 it('InlineEditor mit multiline=true rendert ein <textarea>', function () {
