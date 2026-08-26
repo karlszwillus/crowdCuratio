@@ -244,7 +244,8 @@ new class extends Component
              tot. Save-Roundtrip laeuft ueber Blur, das reicht fuer
              den Inline-Editor. --}}
         <textarea
-            wire:model.blur="value"
+            wire:model="value"
+            @blur="$wire.$commit()"
             aria-label="{{ $label }}"
             @error('value') aria-invalid="true" aria-describedby="inline-editor-error-{{ $field }}" @enderror
             class="{{ $variantClasses }}"
@@ -254,7 +255,8 @@ new class extends Component
         <input
             type="text"
             value="{{ $value }}"
-            wire:model.blur="value"
+            wire:model="value"
+            @blur="$wire.$commit()"
             aria-label="{{ $label }}"
             @error('value') aria-invalid="true" aria-describedby="inline-editor-error-{{ $field }}" @enderror
             class="{{ $variantClasses }}"
