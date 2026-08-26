@@ -18,7 +18,7 @@ namespace App\Services;
 
 use App\Models\Project;
 use App\Models\User;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
@@ -128,9 +128,9 @@ final class AccountDeletionService
      * das aktuelle User-Konto sind. Wird von der Profil-Sicht fuer
      * die Empfaenger-Auswahl gebraucht.
      *
-     * @return \Illuminate\Support\Collection<int, User>
+     * @return Collection<int, User>
      */
-    public function candidatesForHandover(User $excluding): \Illuminate\Support\Collection
+    public function candidatesForHandover(User $excluding): Collection
     {
         return User::query()
             ->whereNull('deletion_scheduled_at')

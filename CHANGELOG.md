@@ -733,6 +733,20 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Konto-Löschung mit 30-Tage-Frist** (B2 · 2026-08-26). Neue Karte
+  im Profil, über die eingeloggte User ihre Konto-Löschung selbst
+  anmelden. Owner müssen ihre Projekte vorab an einen anderen User
+  übergeben — der Request lehnt die Anmeldung ohne Übergabe ab und
+  gibt das fehlende Projekt als Validierungsfehler zurück. Innerhalb
+  der 30 Tage bleibt der Account voll nutzbar; beim Login zeigt das
+  Profil ein Reaktivierungs-Banner mit „Löschung zurücknehmen". Neuer
+  `AccountDeletionService` bündelt Schedule, Cancel und die endgültige
+  Soft-Löschung; ein Artisan-Command `users:purge-scheduled` (mit
+  `--dry-run`) räumt abgelaufene Konten und ist als täglicher Cron
+  vorgesehen. Migration ergänzt `deletion_scheduled_at` und
+  `deletion_reason` auf `users`. DSGVO-konformer Grace-Zeitraum ist
+  als Konstante `User::DELETION_GRACE_DAYS` zentralisiert.
+
 - **Verlauf-Panel für Gallery- und Image-Metadaten voll verkabelt**
   (A7 · 2026-08-21). `chapters/_canvas.blade.php` bekommt an Gallery,
   Image-Detail-Zeile und den vier Bild-Feldern (`alt`, `description`,

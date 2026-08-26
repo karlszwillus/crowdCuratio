@@ -7,10 +7,17 @@
 
 use App\Models\Project;
 use App\Models\User;
-use App\Services\AccountDeletionService;
 use App\Support\RoleName;
 use Illuminate\Support\Facades\Artisan;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
+
+beforeEach(function () {
+    // Spatie speichert Rollen pro Guard — der 'web'-Guard ist der
+    // Standard fuer die App. RefreshDatabase löscht die Roles-Tabelle
+    // vor jedem Test, deshalb hier neu anlegen.
+    Role::firstOrCreate(['name' => RoleName::READER->value, 'guard_name' => 'web']);
+});
 
 /**
  * B2 (2026-08-21) / DSGVO: Konto-Loeschung mit 30-Tage-Frist.
@@ -20,7 +27,6 @@ use Tests\TestCase;
  * - Cancel innerhalb der Frist (Login-Reaktivierung)
  * - Purge-Command nach Ablauf
  */
-
 it('Schedule: User meldet Konto-Loeschung an und laeuft in die 30-Tage-Frist', function () {
     /** @var TestCase $this */
     /** @var User $user */

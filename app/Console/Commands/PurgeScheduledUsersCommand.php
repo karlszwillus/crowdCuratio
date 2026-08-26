@@ -16,6 +16,7 @@ declare(strict_types=1);
 
 namespace App\Console\Commands;
 
+use App\Models\User;
 use App\Services\AccountDeletionService;
 use Illuminate\Console\Command;
 
@@ -38,9 +39,9 @@ class PurgeScheduledUsersCommand extends Command
     public function handle(AccountDeletionService $service): int
     {
         if ($this->option('dry-run')) {
-            $count = \App\Models\User::query()
+            $count = User::query()
                 ->whereNotNull('deletion_scheduled_at')
-                ->where('deletion_scheduled_at', '<=', now()->subDays(\App\Models\User::DELETION_GRACE_DAYS))
+                ->where('deletion_scheduled_at', '<=', now()->subDays(User::DELETION_GRACE_DAYS))
                 ->count();
             $this->info("Dry-Run: {$count} Konto(s) waeren jetzt gepurgt worden.");
 

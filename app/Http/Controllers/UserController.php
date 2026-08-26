@@ -23,6 +23,7 @@ If not, see <https://www.gnu.org/licenses/>.
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Requests\ScheduleAccountDeletionRequest;
 use App\Http\Requests\UpdateOwnPasswordRequest;
 use App\Http\Requests\UpdateOwnProfileRequest;
 use App\Http\Requests\UpdateUserAsAdminRequest;
@@ -361,7 +362,7 @@ class UserController extends Controller
      * laeuft die 30-Tage-Grace-Period, in der der User via Login
      * seine Loeschung wieder ruecknehmen kann.
      */
-    public function scheduleDeletion(\App\Http\Requests\ScheduleAccountDeletionRequest $request): RedirectResponse
+    public function scheduleDeletion(ScheduleAccountDeletionRequest $request): RedirectResponse
     {
         /** @var User $user */
         $user = $request->user();
@@ -388,7 +389,7 @@ class UserController extends Controller
 
         return redirect()->route('profile')->with(
             'success',
-            __('profile_deletion_scheduled', ['days' => \App\Models\User::DELETION_GRACE_DAYS])
+            __('profile_deletion_scheduled', ['days' => User::DELETION_GRACE_DAYS])
         );
     }
 

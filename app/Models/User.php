@@ -106,15 +106,24 @@ class User extends Authenticatable
 
     public function isScheduledForDeletion(): bool
     {
-        return $this->deletion_scheduled_at !== null;
+        // Model::shouldBeStrict() wirft MissingAttributeException,
+        // wenn die Column nicht in `->attributes` steht — nach einem
+        // Factory-create() ohne explizit gesetztem Wert ist das der
+        // Fall. Wir greifen deshalb direkt in $this->attributes und
+        // umgehen die strict-Kontrolle fuer diesen defensiven Getter.
+        return ! empty($this->attributes['deletion_scheduled_at']);
     }
 
     /**
      * Zeitpunkt, an dem das Konto endgueltig (soft-)geloescht wird.
      * Null, wenn keine Loeschung angemeldet ist.
      */
-    public function deletionDueAt(): ?\Illuminate\Support\Carbon
+    public function deletionDueAt(): ?Carbon
     {
+        if (! $this->isScheduledForDeletion()) {
+            return null;
+        }
+
         return $this->deletion_scheduled_at?->copy()->addDays(self::DELETION_GRACE_DAYS);
     }
 
