@@ -16,12 +16,12 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Exceptions\AccountDeletion\HandoverMissingException;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use RuntimeException;
 
 /**
  * B2 (2026-08-21) — DSGVO-Baseline: Konto-Loeschung mit 30-Tage-Frist.
@@ -46,7 +46,7 @@ final class AccountDeletionService
      *
      * @param  array<int, int>  $projectHandovers  Map project_id => new_owner_user_id
      *
-     * @throws RuntimeException wenn ein Owner-Projekt keinen Nachfolger hat.
+     * @throws HandoverMissingException wenn ein Owner-Projekt keinen Nachfolger hat.
      */
     public function schedule(User $user, ?string $reason, array $projectHandovers): void
     {
@@ -67,13 +67,13 @@ final class AccountDeletionService
             foreach ($ownedProjects as $project) {
                 $newOwnerId = $projectHandovers[$project->id] ?? null;
                 if ($newOwnerId === null) {
-                    throw new RuntimeException(
-                        "Projekt-Uebergabe fehlt fuer project_id={$project->id}."
-                    );
+                    throw new HandoverMissingException((int) $project->id);
                 }
                 if ((int) $newOwnerId === (int) $user->id) {
-                    throw new RuntimeException(
-                        "Neuer Owner darf nicht der loeschende User selbst sein (project_id={$project->id})."
+                    throw new HandoverMissingException(
+                        projectId: (int) $project->id,
+                        attemptedNewOwnerId: (int) $newOwnerId,
+                        message: "Neuer Owner darf nicht der loeschende User selbst sein (project_id={$project->id}).",
                     );
                 }
                 Project::query()

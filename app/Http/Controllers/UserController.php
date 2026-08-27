@@ -22,6 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\AccountDeletion\HandoverMissingException;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\ScheduleAccountDeletionRequest;
 use App\Http\Requests\UpdateOwnPasswordRequest;
@@ -373,10 +374,10 @@ class UserController extends Controller
                 $request->input('reason'),
                 $request->handovers(),
             );
-        } catch (\RuntimeException $e) {
+        } catch (HandoverMissingException $e) {
             // Der FormRequest deckt die uebliche „Handover fehlt"-Regel
             // (HasHandoverForEveryOwnedProject) ab. Der Service wirft
-            // trotzdem als letzte Verteidigung — etwa wenn zwischen
+            // die Exception als letzte Verteidigung — etwa wenn zwischen
             // Validation und Transaktion ein neues Owner-Projekt kommt.
             return redirect()->route('profile')->withErrors([
                 'handovers' => $e->getMessage(),

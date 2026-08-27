@@ -42,7 +42,7 @@ use App\Services\CommentService;
 use App\Services\LogService;
 use App\Services\ProjectImageService;
 use App\Services\ProjectPermissionService;
-use App\Services\SourceService;
+use App\Services\RevisionRevertService;
 use App\Services\UserService;
 use App\Support\ProjectLegalText;
 use App\Support\RevisionSubject;
@@ -78,12 +78,14 @@ class ProjectController extends Controller
         private readonly ProjectImageService $images,
         private readonly ProjectPermissionService $permissions,
         private readonly CommentService $comments,
-        private readonly SourceService $sources,
         // I3 (2026-08-21): Services die frueher als `new CommentRetrieve;`
         // bzw. `new UserService;` in einzelnen Actions gebaut wurden,
         // laufen jetzt ueber den Container.
         private readonly CommentRetrieve $commentRetrieve,
         private readonly UserService $users,
+        // Q3-Abschluss (2026-08-27): Verlauf-Wiederherstellen aus dem
+        // Fat-Controller extrahiert (~78 LoC).
+        private readonly RevisionRevertService $revert,
     ) {
         $this->middleware('auth');
         // Block D / D.4: Drei-Wege-Authorization in einen Pfad
@@ -584,73 +586,23 @@ class ProjectController extends Controller
      */
     public function resetValue(Request $request)
     {
-        // Security-Sweep-III (2026-06-22): vorher rief der Endpunkt
-        // `$request['subjectType']::findorFail($request['subjectId'])`
-        // ohne Whitelist + ohne Authorize. Damit war jede beliebige
-        // Klasse mit findOrFail() instantiierbar — RCE-naher Vektor.
-        // Whitelist auf die fünf curating-relevanten Content-Modelle,
-        // dann project-scoped authorize('update', $model).
-        $whitelist = [
-            Chapter::class,
-            Entry::class,
-            Text::class,
-            Image::class,
-            Gallery::class,
-            Audiovisual::class,
-        ];
-
+        // Security-Sweep-III (2026-06-22): Whitelist gegen RCE-nahen
+        // Vektor via freies `::findOrFail()`. Whitelist + Feld-Zuweisung
+        // wohnen seit Q3-Abschluss (2026-08-27) im RevisionRevertService;
+        // der Controller macht nur noch Request-Gate + Authorize + Delegate.
         if (! $request->filled('subjectType')) {
             return redirect(session('links')[2]);
         }
 
-        if (! in_array($request['subjectType'], $whitelist, true)) {
+        $subjectType = (string) $request['subjectType'];
+        if (! $this->revert->isRevertible($subjectType)) {
             abort(403);
         }
 
-        $model = $request['subjectType']::findOrFail($request['subjectId']);
+        $model = $subjectType::findOrFail($request['subjectId']);
         $this->authorize('update', $model);
 
-        if (isset($request['nameReset'])) {
-            $model->name = $request['nameReset'];
-        }
-
-        if (isset($request['subtitleReset'])) {
-            $model->subtitle = $request['subtitleReset'];
-        }
-
-        if (isset($request['descriptionReset'])) {
-            $model->description = $request['descriptionReset'];
-        }
-
-        if (isset($request['copyrightReset'])) {
-            $model->copyright = $this->sources->findOrCreateId($request['copyrightReset'], 'Copyright');
-        }
-
-        if (isset($request['originReset'])) {
-            $model->copyright = $this->sources->findOrCreateId($request['copyrightReset'], 'Origin');
-        }
-
-        if (isset($request['textReset'])) {
-            $model->text = $request['noHighlight'];
-        }
-
-        if (isset($request['imageReset'])) {
-            $model->image = $request['imageReset'];
-        }
-
-        if (isset($request['urlReset'])) {
-            $model->url = $request['urlReset'];
-        }
-
-        if (isset($request['sourceReset'])) {
-            $model->source = $request['sourceReset'];
-        }
-
-        if (isset($request['linkReset'])) {
-            $model->link = $request['linkReset'];
-        }
-
-        $model->save();
+        $this->revert->revert($model, $request->all());
 
         return redirect(session('links')[2]);
     }

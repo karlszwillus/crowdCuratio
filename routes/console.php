@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schedule;
 
 /*
@@ -42,8 +43,8 @@ Schedule::command('users:purge-scheduled')
     ->dailyAt('03:15')
     ->withoutOverlapping()
     ->onSuccess(function () {
-        \Illuminate\Support\Facades\Log::info('schedule.users_purge_scheduled.success');
+        Log::info('schedule.users_purge_scheduled.success');
     })
     ->onFailure(function () {
-        \Illuminate\Support\Facades\Log::error('schedule.users_purge_scheduled.failure');
+        Log::error('schedule.users_purge_scheduled.failure');
     });
