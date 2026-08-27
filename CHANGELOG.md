@@ -733,6 +733,30 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Konto-Löschung — Nachreview + Scheduler** (B2 · 2026-08-27).
+  Nachreview auf B2 gehärtet: `AccountDeletionService` loggt jede
+  State-Transition strukturiert als `account.deletion.*`, `purgeExpired`
+  läuft je User in eigener Transaktion mit `lockForUpdate` und
+  Re-Check (schließt eine Race gegen Owner-Rücktransfer),
+  `schedule()` ist idempotent — ein zweiter Aufruf verlängert die
+  Grace-Period nicht. Die Owner-Handover-Validierung liegt jetzt als
+  Rule (`HasHandoverForEveryOwnedProject`) im FormRequest; der
+  Controller-Cross-Check ist raus. `users:purge-scheduled` ist als
+  täglicher Scheduler-Eintrag in `routes/console.php` verkabelt.
+  Ops-Voraussetzung `* * * * * php artisan schedule:run` steht jetzt
+  im Deploy-Runbook. ADR-0031 dokumentiert die DSGVO-Löschstrategie.
+
+- **Q3-Abschluss-Nachlauf: Domain-Exception + Verlauf-Reset extrahiert**
+  (2026-08-27). Zwei Blocker aus dem Gesamt-Architektur-Nachreview
+  im selben PR abgeräumt. `AccountDeletionService` wirft jetzt eine
+  fachspezifische `App\Exceptions\AccountDeletion\HandoverMissingException`
+  statt generischem `RuntimeException` — Log-Filter, Sentry-Grouping und
+  Test-Assertions bleiben spezifisch. Der Verlauf-Wiederherstellen-
+  Endpunkt (`ProjectController::resetValue`, vorher ~78 LoC inline) läuft
+  jetzt über den neuen `RevisionRevertService`; die Content-Whitelist
+  liegt als `REVERTIBLE_MODELS`-Konstante am Service, der Controller
+  schrumpft auf Request-Gate + Authorize + Delegate.
+
 - **Konto-Löschung mit 30-Tage-Frist** (B2 · 2026-08-26). Neue Karte
   im Profil, über die eingeloggte User ihre Konto-Löschung selbst
   anmelden. Owner müssen ihre Projekte vorab an einen anderen User

@@ -16,11 +16,12 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Exceptions\AccountDeletion\HandoverMissingException;
 use App\Models\Project;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use RuntimeException;
+use Illuminate\Support\Facades\Log;
 
 /**
  * B2 (2026-08-21) — DSGVO-Baseline: Konto-Loeschung mit 30-Tage-Frist.
@@ -45,25 +46,34 @@ final class AccountDeletionService
      *
      * @param  array<int, int>  $projectHandovers  Map project_id => new_owner_user_id
      *
-     * @throws RuntimeException wenn ein Owner-Projekt keinen Nachfolger hat.
+     * @throws HandoverMissingException wenn ein Owner-Projekt keinen Nachfolger hat.
      */
     public function schedule(User $user, ?string $reason, array $projectHandovers): void
     {
+        // Idempotenz-Guard: eine bereits angemeldete Loeschung darf nicht
+        // durch einen erneuten Schedule verlaengert werden — sonst haetten
+        // Nutzer:innen einen Missbrauchs-Vektor, die Grace-Period beliebig
+        // zu verschieben. Wer verlaengern will, muss zuerst cancel() rufen.
+        if ($user->isScheduledForDeletion()) {
+            return;
+        }
+
         DB::transaction(function () use ($user, $reason, $projectHandovers): void {
             $ownedProjects = Project::query()
                 ->where('user_id', $user->id)
+                ->lockForUpdate()
                 ->get(['id']);
 
             foreach ($ownedProjects as $project) {
                 $newOwnerId = $projectHandovers[$project->id] ?? null;
                 if ($newOwnerId === null) {
-                    throw new RuntimeException(
-                        "Projekt-Uebergabe fehlt fuer project_id={$project->id}."
-                    );
+                    throw new HandoverMissingException((int) $project->id);
                 }
                 if ((int) $newOwnerId === (int) $user->id) {
-                    throw new RuntimeException(
-                        "Neuer Owner darf nicht der loeschende User selbst sein (project_id={$project->id})."
+                    throw new HandoverMissingException(
+                        projectId: (int) $project->id,
+                        attemptedNewOwnerId: (int) $newOwnerId,
+                        message: "Neuer Owner darf nicht der loeschende User selbst sein (project_id={$project->id}).",
                     );
                 }
                 Project::query()
@@ -74,6 +84,13 @@ final class AccountDeletionService
             $user->deletion_scheduled_at = now();
             $user->deletion_reason = $reason;
             $user->save();
+
+            Log::channel(config('logging.default'))->info('account.deletion.scheduled', [
+                'user_id' => $user->id,
+                'scheduled_at' => $user->deletion_scheduled_at?->toIso8601String(),
+                'reason' => $reason,
+                'handovers' => array_map(static fn ($v) => (int) $v, $projectHandovers),
+            ]);
         });
     }
 
@@ -86,9 +103,15 @@ final class AccountDeletionService
         if (! $user->isScheduledForDeletion()) {
             return;
         }
+        $scheduledAt = $user->deletion_scheduled_at?->toIso8601String();
         $user->deletion_scheduled_at = null;
         $user->deletion_reason = null;
         $user->save();
+
+        Log::channel(config('logging.default'))->info('account.deletion.cancelled', [
+            'user_id' => $user->id,
+            'was_scheduled_at' => $scheduledAt,
+        ]);
     }
 
     /**
@@ -104,22 +127,51 @@ final class AccountDeletionService
             ->where('deletion_scheduled_at', '<=', $cutoff)
             ->get();
 
+        $purged = 0;
+
         foreach ($expired as $user) {
             // Owner-Projekte muessen zum Zeitpunkt des Schedule bereits
-            // uebertragen worden sein (schedule() erzwingt das). Falls
-            // in der Zwischenzeit wieder ein Projekt hierhin gezogen
-            // wurde, blocken wir und ueberlassen es dem Admin.
-            $stillOwning = Project::query()
-                ->where('user_id', $user->id)
-                ->exists();
-            if ($stillOwning) {
-                continue;
-            }
+            // uebertragen worden sein (schedule() erzwingt das). Zwischen
+            // Ownership-Check und SoftDelete koennte ein Admin in dem
+            // Fensterchen ein Projekt zurueckuebertragen — deshalb pruefen
+            // und loeschen wir innerhalb derselben Transaktion mit
+            // lockForUpdate auf der User-Row.
+            $purged += DB::transaction(function () use ($user): int {
+                /** @var User|null $locked */
+                $locked = User::query()
+                    ->whereKey($user->id)
+                    ->lockForUpdate()
+                    ->first();
+                if (! $locked instanceof User || ! $locked->isScheduledForDeletion()) {
+                    return 0;
+                }
+                $stillOwning = Project::query()
+                    ->where('user_id', $locked->id)
+                    ->exists();
+                if ($stillOwning) {
+                    Log::channel(config('logging.default'))->warning('account.deletion.purge_skipped_owner', [
+                        'user_id' => $locked->id,
+                        'reason' => 'still_owning_projects',
+                    ]);
 
-            $user->delete(); // SoftDelete
+                    return 0;
+                }
+
+                $scheduledAt = $locked->deletion_scheduled_at?->toIso8601String();
+                $reason = $locked->deletion_reason;
+                $locked->delete(); // SoftDelete
+
+                Log::channel(config('logging.default'))->info('account.deletion.purged', [
+                    'user_id' => $locked->id,
+                    'scheduled_at' => $scheduledAt,
+                    'reason' => $reason,
+                ]);
+
+                return 1;
+            });
         }
 
-        return $expired->count();
+        return $purged;
     }
 
     /**

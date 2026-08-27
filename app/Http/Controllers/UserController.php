@@ -22,6 +22,7 @@ If not, see <https://www.gnu.org/licenses/>.
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\AccountDeletion\HandoverMissingException;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\ScheduleAccountDeletionRequest;
 use App\Http\Requests\UpdateOwnPasswordRequest;
@@ -367,21 +368,17 @@ class UserController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        // Cross-Check: alle vom User besessenen Projekte muessen einen
-        // Nachfolger haben. Ohne Uebergabe wuerden die Projekte
-        // Owner-los in die Grace-Period rutschen.
-        $ownedIds = $request->ownedProjectIds();
-        $handovers = $request->handovers();
-        $missing = array_diff($ownedIds, array_keys($handovers));
-        if ($missing !== []) {
-            return redirect()->route('profile')->withErrors([
-                'handovers' => __('profile_deletion_handover_missing'),
-            ]);
-        }
-
         try {
-            $this->accountDeletion->schedule($user, $request->input('reason'), $handovers);
-        } catch (\RuntimeException $e) {
+            $this->accountDeletion->schedule(
+                $user,
+                $request->input('reason'),
+                $request->handovers(),
+            );
+        } catch (HandoverMissingException $e) {
+            // Der FormRequest deckt die uebliche „Handover fehlt"-Regel
+            // (HasHandoverForEveryOwnedProject) ab. Der Service wirft
+            // die Exception als letzte Verteidigung — etwa wenn zwischen
+            // Validation und Transaktion ein neues Owner-Projekt kommt.
             return redirect()->route('profile')->withErrors([
                 'handovers' => $e->getMessage(),
             ]);

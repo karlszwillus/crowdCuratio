@@ -17,6 +17,7 @@ declare(strict_types=1);
 namespace App\Http\Requests;
 
 use App\Models\Project;
+use App\Rules\HasHandoverForEveryOwnedProject;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -33,6 +34,14 @@ use Illuminate\Foundation\Http\FormRequest;
  */
 class ScheduleAccountDeletionRequest extends FormRequest
 {
+    /**
+     * Bei Validation-Failure explizit zurueck auf das Profil — dort
+     * lebt das Formular, dort werden die Errors angezeigt. Ohne das
+     * Override wuerde Laravel auf den Referrer zurueckfallen und
+     * Test-Assertions auf `assertRedirect(route('profile'))` brechen.
+     */
+    protected $redirectRoute = 'profile';
+
     public function authorize(): bool
     {
         return $this->user() !== null;
@@ -46,7 +55,10 @@ class ScheduleAccountDeletionRequest extends FormRequest
         return [
             'confirm' => 'accepted',
             'reason' => 'nullable|string|max:255',
-            'handovers' => 'array',
+            'handovers' => [
+                'array',
+                new HasHandoverForEveryOwnedProject($this->ownedProjectIds()),
+            ],
             'handovers.*' => 'required|integer|exists:users,id',
         ];
     }
