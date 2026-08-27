@@ -733,6 +733,19 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Konto-Löschung — Nachreview + Scheduler** (B2 · 2026-08-27).
+  Nachreview auf B2 gehärtet: `AccountDeletionService` loggt jede
+  State-Transition strukturiert als `account.deletion.*`, `purgeExpired`
+  läuft je User in eigener Transaktion mit `lockForUpdate` und
+  Re-Check (schließt eine Race gegen Owner-Rücktransfer),
+  `schedule()` ist idempotent — ein zweiter Aufruf verlängert die
+  Grace-Period nicht. Die Owner-Handover-Validierung liegt jetzt als
+  Rule (`HasHandoverForEveryOwnedProject`) im FormRequest; der
+  Controller-Cross-Check ist raus. `users:purge-scheduled` ist als
+  täglicher Scheduler-Eintrag in `routes/console.php` verkabelt.
+  Ops-Voraussetzung `* * * * * php artisan schedule:run` steht jetzt
+  im Deploy-Runbook. ADR-0031 dokumentiert die DSGVO-Löschstrategie.
+
 - **Konto-Löschung mit 30-Tage-Frist** (B2 · 2026-08-26). Neue Karte
   im Profil, über die eingeloggte User ihre Konto-Löschung selbst
   anmelden. Owner müssen ihre Projekte vorab an einen anderen User

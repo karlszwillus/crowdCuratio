@@ -367,21 +367,17 @@ class UserController extends Controller
         /** @var User $user */
         $user = $request->user();
 
-        // Cross-Check: alle vom User besessenen Projekte muessen einen
-        // Nachfolger haben. Ohne Uebergabe wuerden die Projekte
-        // Owner-los in die Grace-Period rutschen.
-        $ownedIds = $request->ownedProjectIds();
-        $handovers = $request->handovers();
-        $missing = array_diff($ownedIds, array_keys($handovers));
-        if ($missing !== []) {
-            return redirect()->route('profile')->withErrors([
-                'handovers' => __('profile_deletion_handover_missing'),
-            ]);
-        }
-
         try {
-            $this->accountDeletion->schedule($user, $request->input('reason'), $handovers);
+            $this->accountDeletion->schedule(
+                $user,
+                $request->input('reason'),
+                $request->handovers(),
+            );
         } catch (\RuntimeException $e) {
+            // Der FormRequest deckt die uebliche „Handover fehlt"-Regel
+            // (HasHandoverForEveryOwnedProject) ab. Der Service wirft
+            // trotzdem als letzte Verteidigung — etwa wenn zwischen
+            // Validation und Transaktion ein neues Owner-Projekt kommt.
             return redirect()->route('profile')->withErrors([
                 'handovers' => $e->getMessage(),
             ]);
