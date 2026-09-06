@@ -22,9 +22,12 @@ If not, see <https://www.gnu.org/licenses/>.
 use App\Http\Controllers\AudiovisualController;
 use App\Http\Controllers\Auth\MyWelcomeController;
 use App\Http\Controllers\ChapterController;
+use App\Http\Controllers\ContentCommentController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EntryController;
+use App\Http\Controllers\GalleryBlockController;
+use App\Http\Controllers\ImageBlockController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectCommentController;
@@ -36,6 +39,7 @@ use App\Http\Controllers\PublicController;
 use App\Http\Controllers\RevisionController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SettingController;
+use App\Http\Controllers\TextBlockController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use Spatie\WelcomeNotification\WelcomesNewUsers;
@@ -109,9 +113,9 @@ Route::group(
         Route::resource('/chapters', ChapterController::class);
         Route::resource('/entries', EntryController::class);
         // Route::resource('/contents', \App\Http\Controllers\ContentController::class);
-        Route::post('/text/store', [ContentController::class, 'saveText'])->name('text.store');
-        Route::get('/edit/{id}/text', [ContentController::class, 'editText'])->name('text.edit');
-        Route::delete('/delete/{id}/text', [ContentController::class, 'destroyText'])->name(
+        Route::post('/text/store', [TextBlockController::class, 'saveText'])->name('text.store');
+        Route::get('/edit/{id}/text', [TextBlockController::class, 'editText'])->name('text.edit');
+        Route::delete('/delete/{id}/text', [TextBlockController::class, 'destroyText'])->name(
             'text.delete'
         );
         Route::post('/check/email', [ProjectPermissionController::class, 'checkEmail'])->name('check.email');
@@ -126,16 +130,16 @@ Route::group(
         )->middleware('throttle:6,1')->name(
             'resend.invitation'
         );
-        Route::post('/image/store', [ContentController::class, 'saveImage'])->name('image.store');
+        Route::post('/image/store', [ImageBlockController::class, 'saveImage'])->name('image.store');
         // Phase 5y.6: Bild-Sortierung innerhalb einer Galerie.
-        Route::post('/gallery/{gallery}/images/reorder', [ContentController::class, 'reorderImages'])
+        Route::post('/gallery/{gallery}/images/reorder', [GalleryBlockController::class, 'reorderImages'])
             ->name('gallery.images.reorder');
-        Route::post('/gallery/{gallery}/images/drop', [ContentController::class, 'dropImage'])
+        Route::post('/gallery/{gallery}/images/drop', [GalleryBlockController::class, 'dropImage'])
             ->name('gallery.images.drop');
-        Route::get('/edit/{id}/image', [ContentController::class, 'editImage'])->name(
+        Route::get('/edit/{id}/image', [ImageBlockController::class, 'editImage'])->name(
             'image.edit'
         );
-        Route::delete('/delete/{id}/image', [ContentController::class, 'destroyImage'])->name(
+        Route::delete('/delete/{id}/image', [ImageBlockController::class, 'destroyImage'])->name(
             'image.delete'
         );
         Route::get('/element', [ProjectController::class, 'element'])->name('element');
@@ -232,45 +236,45 @@ Route::group(
         )->name(
             'comment.entry.status'
         );
-        Route::post('/comment/text', [ContentController::class, 'commentText'])->name(
+        Route::post('/comment/text', [ContentCommentController::class, 'commentText'])->name(
             'comment.text'
         );
-        Route::get('/comment/text/{id}/', [ContentController::class, 'getTextComment'])->name(
+        Route::get('/comment/text/{id}/', [ContentCommentController::class, 'getTextComment'])->name(
             'comment.text.show'
         );
         Route::post(
             '/comment/text/{id}/save',
-            [ContentController::class, 'saveCommentText']
+            [ContentCommentController::class, 'saveCommentText']
         )->name(
             'comment.text.save'
         );
         Route::post(
             '/comment/text/status',
-            [ContentController::class, 'setCommentStatusText']
+            [ContentCommentController::class, 'setCommentStatusText']
         )->name(
             'comment.text.status'
         );
         Route::post(
             '/text/reset',
-            [ContentController::class, 'resetText']
+            [TextBlockController::class, 'resetText']
         )->name(
             'text.reset'
         );
-        Route::post('/comment/image', [ContentController::class, 'commentImage'])->name(
+        Route::post('/comment/image', [ContentCommentController::class, 'commentImage'])->name(
             'comment.image'
         );
-        Route::get('/comment/image/{id}/', [ContentController::class, 'getImageComment'])->name(
+        Route::get('/comment/image/{id}/', [ContentCommentController::class, 'getImageComment'])->name(
             'comment.image.show'
         );
         Route::post(
             '/comment/image/{id}/save',
-            [ContentController::class, 'saveCommentImage']
+            [ContentCommentController::class, 'saveCommentImage']
         )->name(
             'comment.image.save'
         );
         Route::post(
             '/comment/image/status',
-            [ContentController::class, 'setCommentStatusImage']
+            [ContentCommentController::class, 'setCommentStatusImage']
         )->name(
             'comment.image.status'
         );
@@ -353,7 +357,7 @@ Route::group(
 
         Route::get(
             '/allComments',
-            [ContentController::class, 'listComments']
+            [ContentCommentController::class, 'listComments']
         )->name(
             'all.comments'
         );
@@ -385,12 +389,12 @@ Route::group(
             [RevisionController::class, 'restore']
         )->name('revisions.restore');
 
-        Route::post(
-            '/project/save-translate-text',
-            [ContentController::class, 'saveTranslatedText']
-        )->name(
-            'save.translation.text'
-        );
+        // Q4-Etappe 2 / I7 (2026-08-27): Tote Route `save.translation.text`
+        // entfernt. Ziel-Methode war `ContentController::saveTranslatedText`
+        // — als `private` markiert (E.7b 4a-Hotfix-II.b) und ohne Aufrufer
+        // in Blade oder JS. Ein POST haette 500 geworfen. Der
+        // Translation-Body-Save laeuft ueber TextBlockController::saveText
+        // im `translationMode`-Pfad.
 
         Route::get(
             '/project/{id}/metadata',
@@ -401,26 +405,26 @@ Route::group(
 
         Route::post(
             '/comment/{id}/update/{status}',
-            [ContentController::class, 'updateCommentStatus']
+            [ContentCommentController::class, 'updateCommentStatus']
         )->name(
             'comment.update.status'
         );
 
         Route::post(
             '/save-gallery',
-            [ContentController::class, 'saveGallery']
+            [GalleryBlockController::class, 'saveGallery']
         )->name(
             'save.gallery'
         );
 
         Route::get(
             '/gallery/{id}/edit',
-            [ContentController::class, 'editGallery']
+            [GalleryBlockController::class, 'editGallery']
         )->name(
             'gallery.edit'
         );
 
-        Route::delete('/delete/{id}/gallery', [ContentController::class, 'destroyGallery'])->name(
+        Route::delete('/delete/{id}/gallery', [GalleryBlockController::class, 'destroyGallery'])->name(
             'gallery.delete'
         );
 
@@ -448,12 +452,12 @@ Route::group(
 
         Route::post(
             '/comment/{id}/gallery',
-            [ContentController::class, 'saveCommentGallery']
+            [ContentCommentController::class, 'saveCommentGallery']
         )->name(
             'comment.gallery.save'
         );
 
-        Route::post('/comment/gallery', [ContentController::class, 'commentGallery'])->name(
+        Route::post('/comment/gallery', [ContentCommentController::class, 'commentGallery'])->name(
             'comment.gallery'
         );
 

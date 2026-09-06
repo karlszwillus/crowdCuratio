@@ -733,6 +733,30 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Q4-Etappe 2 · I7 · ContentController-Split** (2026-08-27). Der
+  `ContentController` (784 LoC, mischte Text/Image/Gallery-CRUD +
+  acht praktisch identische Kommentar-Methoden + Autocomplete +
+  Translation-Helper) ist auf 85 LoC reduziert und enthält nur noch
+  den Source-Autocomplete-AJAX-Endpunkt. Vier neue Controller nach
+  Content-Type: `TextBlockController` (save, edit, destroy, reset),
+  `ImageBlockController` (save, edit, destroy) und
+  `GalleryBlockController` (reorder, drop, save, edit, destroy). Der
+  neue polymorphe `ContentCommentController` bündelt die früheren
+  Kommentar-Methoden über `App\Support\ContentTypeRegistry` — dünne
+  öffentliche Wrapper pro Type (Text/Image/Gallery) halten die
+  Route-Namen unverändert, der Body ist zu vier Kern-Methoden
+  (`storeComment`, `getComments`, `saveCommentAction`, `setStatus`)
+  dedupliziert; `listComments` und `updateCommentStatus` leben
+  ebenfalls dort. Die frühere `translateField`-Logik ist als
+  `SourceTranslationService` extrahiert und wird von beiden
+  Save-Pfaden (Text/Image) genutzt. 25 Routen auf neue Controller
+  umgemappt, alle Route-Namen unverändert. Die tote Route
+  `save.translation.text` (Ziel war `private`, kein Frontend-
+  Aufrufer) ist entfernt. `ContentControllerTranslationTest` auf die
+  neuen Aufhänger umgebogen; Text-Body-Translation läuft weiter über
+  Reflection auf die private `TextBlockController::saveTranslated
+  Text`, Source-Translation direkt über den neuen Service.
+
 - **Q4-Etappe 2 · Controller-Refactoring (I6 · ProjectController-Split)**
   (2026-08-27). Der `ProjectController` (1.165 LoC, 8 Concerns) ist auf
   593 LoC halbiert. Vier neue Controller nach Ressourcen-Schnitt:

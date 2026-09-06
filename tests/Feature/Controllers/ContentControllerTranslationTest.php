@@ -20,11 +20,12 @@ along with this program in the file LICENSE.
 If not, see <https://www.gnu.org/licenses/>.
  */
 
-use App\Http\Controllers\ContentController;
+use App\Http\Controllers\TextBlockController;
 use App\Models\Source;
 use App\Models\Text;
 use App\Models\User;
 use App\Services\SourceService;
+use App\Services\SourceTranslationService;
 use App\Support\PermissionName;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Permission;
@@ -33,15 +34,14 @@ use Tests\TestCase;
 
 /*
 |--------------------------------------------------------------------------
-| ContentController — Translation-Pfade
+| Translation-Pfade (frueher ContentController)
 |--------------------------------------------------------------------------
 |
-| Deckt die zwei Translation-Helper translateField (Source-en-
-| Übersetzung) und saveTranslatedText (Text-Body-en-Übersetzung)
-| ab. Beide werden von saveText im Translation-Modus aufgerufen
-| und sind heute ungetested — Translation-Refactor steht in
-| einem späteren Block aus, bis dahin sichert dieser Test den
-| Vertrag.
+| Q4-Etappe 2 / I7 (2026-08-27): Der frueher als
+| `ContentController::translateField` lebende Helper wandert in den neuen
+| `SourceTranslationService`; `saveTranslatedText` bleibt private, aber
+| im neuen `TextBlockController`. Die Charakterisierungs-Tests sind auf
+| die neuen Aufhaenger umgezogen.
 */
 
 beforeEach(function () {
@@ -53,29 +53,18 @@ beforeEach(function () {
 });
 
 /**
- * E.7b 4a-Hotfix-II.b (ADR-0023): translateField + saveTranslatedText
- * sind auf `private` reduziert, weil sie nur intern aus saveText/
- * saveImage aufgerufen werden (keine eigene Route). Diese Charakter-
- * isierungs-Tests sollen das Verhalten dennoch direkt pinnen,
- * ohne den gesamten saveText()-Pfad aufzubauen. Reflection-Trick,
- * analog ProjectControllerLogTest::invokeHistory.
- *
- * Spätere Welle dürfte beide in einen TranslationService extrahieren,
- * dann werden diese Tests umgezogen und der Reflection-Trick fällt.
+ * Q4-Etappe 2 / I7 (2026-08-27): `saveTranslatedText` bleibt private im
+ * TextBlockController — wird nur aus `saveText()` heraus im
+ * `translationMode`-Pfad aufgerufen. Reflection-Trick analog
+ * ProjectControllerLogTest::invokeHistory.
  */
-function invokeTranslateField(ContentController $controller, int $id, string $field, mixed $translated): void
-{
-    $method = new ReflectionMethod($controller, 'translateField');
-    $method->invoke($controller, $id, $field, $translated);
-}
-
-function invokeSaveTranslatedText(ContentController $controller, Request $request): void
+function invokeSaveTranslatedText(TextBlockController $controller, Request $request): void
 {
     $method = new ReflectionMethod($controller, 'saveTranslatedText');
     $method->invoke($controller, $request);
 }
 
-it('translateField schreibt en-Übersetzung auf das Source-name-Feld', function () {
+it('SourceTranslationService schreibt en-Übersetzung auf das Source-name-Feld', function () {
     /** @var TestCase $this */
     /** @var User $owner */
     $owner = User::factory()->create();
@@ -86,15 +75,9 @@ it('translateField schreibt en-Übersetzung auf das Source-name-Feld', function 
     $sourceService = new SourceService;
     $sourceId = $sourceService->findOrCreateId('DE-Quelle', 'Origin');
 
-    /** @var ContentController $controller */
-    $controller = app(ContentController::class);
-
-    // Vorsicht: die Methode-Signatur translateField($id, $field,
-    // $translated) ist parameter-name-irreführend — `$field` ist
-    // der EN-Value, das Ziel-Modell-Feld ist hartkodiert auf
-    // `name`. `$translated` ist das is_translated-Flag (truthy/
-    // falsy). Wird im Service-Refactor späterer Block geradezogen.
-    invokeTranslateField($controller, $sourceId, 'EN-Quelle', true);
+    /** @var SourceTranslationService $translator */
+    $translator = app(SourceTranslationService::class);
+    $translator->translate($sourceId, 'EN-Quelle', true);
 
     $source = Source::findOrFail($sourceId);
 
@@ -122,8 +105,8 @@ it('saveTranslatedText schreibt en-Übersetzung auf den Text-Body', function () 
         'isTranslated' => true,
     ]);
 
-    /** @var ContentController $controller */
-    $controller = app(ContentController::class);
+    /** @var TextBlockController $controller */
+    $controller = app(TextBlockController::class);
 
     invokeSaveTranslatedText($controller, $request);
 
@@ -152,8 +135,8 @@ it('saveTranslatedText überspringt en-Update beim "undefined"-Sentinel', functi
         'isTranslated' => true,
     ]);
 
-    /** @var ContentController $controller */
-    $controller = app(ContentController::class);
+    /** @var TextBlockController $controller */
+    $controller = app(TextBlockController::class);
 
     invokeSaveTranslatedText($controller, $request);
 
@@ -179,8 +162,8 @@ it('saveTranslatedText filtert script-Tags aus dem EN-Body', function () {
         'isTranslated' => true,
     ]);
 
-    /** @var ContentController $controller */
-    $controller = app(ContentController::class);
+    /** @var TextBlockController $controller */
+    $controller = app(TextBlockController::class);
 
     invokeSaveTranslatedText($controller, $request);
 
