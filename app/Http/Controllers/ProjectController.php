@@ -23,45 +23,31 @@ If not, see <https://www.gnu.org/licenses/>.
 namespace App\Http\Controllers;
 
 use App\Data\ProjectData;
-use App\Http\Requests\StoreCommentRequest;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
-use App\Models\Audiovisual;
-use App\Models\Chapter;
 use App\Models\Entry;
-use App\Models\Gallery;
 use App\Models\Image;
 use App\Models\Permission;
 use App\Models\Project;
-use App\Models\Revision;
 use App\Models\Text;
-use App\Models\TranslationSourceReference;
 use App\Models\User;
 use App\Services\CommentRetrieve;
-use App\Services\CommentService;
 use App\Services\LogService;
 use App\Services\ProjectImageService;
 use App\Services\ProjectPermissionService;
 use App\Services\RevisionRevertService;
 use App\Services\UserService;
 use App\Support\ProjectLegalText;
-use App\Support\RevisionSubject;
 use App\Support\RoleName;
-use Dompdf\Dompdf;
-use Dompdf\Options;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Lang;
@@ -77,10 +63,13 @@ class ProjectController extends Controller
     public function __construct(
         private readonly ProjectImageService $images,
         private readonly ProjectPermissionService $permissions,
-        private readonly CommentService $comments,
         // I3 (2026-08-21): Services die frueher als `new CommentRetrieve;`
         // bzw. `new UserService;` in einzelnen Actions gebaut wurden,
         // laufen jetzt ueber den Container.
+        // Q4-Etappe 2 / I6 (2026-08-27): `CommentService` wandert mit den
+        // vier Kommentar-Methoden in den ProjectCommentController;
+        // `CommentRetrieve` bleibt hier, weil `edit()` es fuer das
+        // eingebettete Kommentar-Panel nutzt.
         private readonly CommentRetrieve $commentRetrieve,
         private readonly UserService $users,
         // Q3-Abschluss (2026-08-27): Verlauf-Wiederherstellen aus dem
@@ -382,135 +371,13 @@ class ProjectController extends Controller
         return view('projects.element');
     }
 
-    /**
-     * Comment project — neuer Top-Level-Kommentar.
-     *
-     * Route hat kein {project} in der URL, deshalb resolved Laravel
-     * das Project-Argument nicht — wir laden es explizit aus
-     * $request->id, wie der alte CommentTrait das auch tat.
-     */
-    public function commentProject(StoreCommentRequest $request): RedirectResponse
-    {
-        $project = Project::findOrFail($request->validated('id'));
-        $this->authorize('comment', $project);
-        $this->comments->addComment($project, $request);
-
-        return redirect()->back()->with('success', 'Reply to comment added successfully');
-    }
-
-    /**
-     * Retrieve all comment of current project
-     *
-     * @return JsonResponse
-     */
-    public function getProjectComment($id)
-    {
-        $project = Project::findOrFail($id);
-        $this->authorize('comment', $project);
-
-        $comment = $this->commentRetrieve;
-
-        return $comment->getComments('App\Models\Project', $id);
-    }
-
-    /**
-     * Routet eine save-Submission (Edit/Delete/Reply).
-     *
-     * Security-Sweep-III (2026-06-22): vorher hatte die Methoden-
-     * Signatur `Project $project` über Route-Model-Binding, aber die
-     * Route `POST /comment/project/{id}/save` hat `{id}`, nicht
-     * `{project}` — Laravel instantiierte ein leeres Project-Modell.
-     * Toter Auth-Hook + keine explizite Authorize-Logik. Jetzt:
-     * Project via $request->route('id') laden, authorize('comment').
-     */
-    public function saveCommentProject(Request $request): RedirectResponse
-    {
-        $project = Project::findOrFail($request->route('id'));
-        $this->authorize('comment', $project);
-
-        $this->comments->dispatchSaveAction($project, $request);
-
-        return redirect()->back()->with('success', 'Comment-Aktion ausgeführt');
-    }
-
-    /**
-     * Setzt den Status eines Comments auf einem Project.
-     *
-     * Security-Sweep-III (2026-06-22): vorher toter Route-Model-Binding
-     * (Route hat kein {project}). Jetzt: Comment via Request-id laden,
-     * Project via CommentService::resolveProjectForComment auflösen,
-     * authorize('comment') auf dem Project — analog zu setComment-
-     * StatusChapter/Entry/Text/Image.
-     */
-    public function setCommentStatusProject(Request $request): JsonResponse
-    {
-        $commentId = (int) $request['id'];
-        $project = $this->comments->resolveProjectForComment($commentId);
-
-        if ($project === null) {
-            abort(404);
-        }
-
-        $this->authorize('comment', $project);
-
-        $this->comments->setCommentStatus($commentId, (int) $request['status']);
-
-        return response()->json(['success' => true]);
-    }
-
-    /**
-     * Set permission for user on project
-     */
-    public function setPermissionForUserOnProject(Request $request): RedirectResponse
-    {
-        $userId = (int) $request['user'];
-        $projectId = (int) $request['project'];
-        $permissionIds = (array) ($request['permissions'] ?? []);
-
-        // Block E.7b Sub-Welle 3-Hotfix (ADR-0022, ADR-0013):
-        // KRITISCH — bisher konnte JEDER eingeloggte User via direktem
-        // POST `/project/permission` einem beliebigen User volle Rechte
-        // auf jedes Projekt vergeben. Privilege Escalation, vergleichbar
-        // mit NF-SEC-202. update-Gate: nur Owner/Admin/Eingeladener-mit-
-        // edit darf Permissions verteilen.
-        $project = Project::findOrFail($projectId);
-        $this->authorize('update', $project);
-
-        $this->permissions->setForUserOnProject(
-            $userId,
-            $projectId,
-            $permissionIds,
-            (int) Auth::user()->id,
-        );
-
-        $user = User::findOrFail($userId);
-        $permissions = $this->permissions->getCurrentUsersPermissions($userId);
-
-        return redirect()->back()->with([
-            'error_code' => 5,
-            'user' => $user,
-            'permissions' => $permissions,
-        ]);
-    }
-
-    /**
-     * ajax retrieve user's permission
-     */
-    public function givePermissionToUser($id): JsonResponse
-    {
-        [$userId, $projectId] = array_map('intval', explode('_', $id));
-
-        // Block E.7b Sub-Welle 3-Hotfix (ADR-0022, ADR-0013):
-        // Info-Leak — gibt Permission-IDs eines beliebigen Users
-        // auf ein beliebiges Projekt heraus. Gate analog
-        // setPermissionForUserOnProject.
-        $project = Project::findOrFail($projectId);
-        $this->authorize('update', $project);
-
-        $data = $this->permissions->getPermissionIdsForUserOnProject($userId, $projectId);
-
-        return response()->json($data);
-    }
+    // Q4-Etappe 2 / I6 (2026-08-27): Kommentar-Endpunkte
+    // (`commentProject`, `getProjectComment`, `saveCommentProject`,
+    // `setCommentStatusProject`) leben ab jetzt in
+    // `App\Http\Controllers\ProjectCommentController`. Rechte-Endpunkte
+    // (`setPermissionForUserOnProject`, `givePermissionToUser`,
+    // `checkEmail`, `deleteUserFromProject`) in
+    // `App\Http\Controllers\ProjectPermissionController`.
 
     /**
      * @return array|mixed
@@ -607,346 +474,11 @@ class ProjectController extends Controller
         return redirect(session('links')[2]);
     }
 
-    /**
-     * Translate project
-     *
-     * @return Application|Factory|View
-     */
-    public function translateCurrentProject($id)
-    {
-        $project = Project::findOrFail($id);
-
-        // Reader-Frontend-Härtung Juni 2026 (Smoke-Findings nach
-        // E.7a-Hotfix). Vorher nur `auth`-Middleware — jeder
-        // Reader konnte fremde Project-Inhalte in der
-        // Übersetzungs-Maske sehen und (via Sub-POSTs) potentiell
-        // mit-bearbeiten. Analog zum editMetaData-Hotfix: Owner
-        // ODER Admin ODER Eingeladener mit edit-Permission über
-        // ProjectPolicy::update.
-        $this->authorize('update', $project);
-
-        App::setlocale('de');
-        $data = $this->allData($id);
-
-        // 5aa.3-Followup: Die neue Blade-Sicht rendert Text/Gallery/
-        // Audiovisual direkt aus der `mediaContent`-Kette. Weil
-        // `Model::shouldBeStrict()` Lazy-Loading verbietet, ziehen wir
-        // die polymorphen Ziel-Modelle hier gezielt nach; `allData`
-        // bleibt für seine eigene Prozent-Rechnung unverändert.
-        $tree = Project::withTranslateTree()->findOrFail($id);
-        foreach ($tree->chapters as $chapter) {
-            foreach ($chapter->entries as $entry) {
-                foreach ($entry->mediaContent as $mc) {
-                    $mc->loadMissing('text', 'gallery.images', 'audiovisual');
-                }
-            }
-        }
-        $data['data'] = $tree->chapters;
-
-        // Phase 5ab.5 (Design v6 § 4): Sync-Warnung „Original nach
-        // Uebersetzung geaendert". Wir sammeln pro Feld die
-        // source_revision_id, auf der die Uebersetzung basiert, und
-        // vergleichen sie mit der aktuellen (neuesten) Revision des
-        // Subjects. Das Blade liest daraus $outdatedFields[$key]
-        // und rendert den Warn-Chip.
-        $outdatedFields = $this->buildOutdatedTranslationMap($tree);
-
-        // Phase 5d.4-Followup: $project fuer die einheitliche
-        // Tab-Leiste (<x-projects.tabs>) mitliefern.
-        return view('translate.index', compact('data', 'project', 'outdatedFields'));
-    }
-
-    /**
-     * Phase 5ab.5: Map aller uebersetzten Felder auf einen Boolean, ob
-     * das Original nach der Uebersetzung geaendert wurde.
-     *
-     * Key-Schema: „Model.id.field" (dieselben Payload-Keys wie in
-     * saveTranslations()). Wert: true = veraltet, false = frisch.
-     *
-     * @return array<string, bool>
-     */
-    private function buildOutdatedTranslationMap(Project $tree): array
-    {
-        // Alle Subjects sammeln, die im Tree vorkommen.
-        /** @var array<string, array<int, int>> $subjects */
-        $subjects = [];
-        foreach ($tree->chapters as $chapter) {
-            $subjects[Chapter::class][] = $chapter->id;
-            foreach ($chapter->entries as $entry) {
-                $subjects[Entry::class][] = $entry->id;
-                foreach ($entry->mediaContent as $mc) {
-                    foreach (['text', 'gallery', 'audiovisual'] as $rel) {
-                        /** @var Model|null $obj */
-                        $obj = $mc->{$rel} ?? null;
-                        if ($obj) {
-                            $subjects[$obj::class][] = (int) $obj->getKey();
-                        }
-                    }
-                }
-            }
-        }
-
-        // Bulk-Query: Referenzen fuer die gesammelten Subjects.
-        $refs = collect();
-        foreach ($subjects as $type => $ids) {
-            if ($ids === []) {
-                continue;
-            }
-            $refs = $refs->concat(
-                TranslationSourceReference::query()
-                    ->where('subject_type', $type)
-                    ->whereIn('subject_id', $ids)
-                    ->get(['subject_type', 'subject_id', 'field', 'source_revision_id'])
-            );
-        }
-        if ($refs->isEmpty()) {
-            return [];
-        }
-
-        // Aktuelle Revisions-ID je Subject einmal auflösen — verglichen
-        // wird die höchste ID pro (type, id).
-        $latestByKey = [];
-        foreach ($subjects as $type => $ids) {
-            if ($ids === []) {
-                continue;
-            }
-            Revision::query()
-                ->where('subject_type', $type)
-                ->whereIn('subject_id', $ids)
-                ->selectRaw('subject_id, MAX(id) as latest_id')
-                ->groupBy('subject_id')
-                ->get()
-                ->each(function ($row) use (&$latestByKey, $type): void {
-                    // selectRaw fuegt latest_id/subject_id an, ohne dass die
-                    // Model-Klasse sie kennt — Attribute-Getter statt Property.
-                    $subjectId = (int) $row->getAttribute('subject_id');
-                    $latestByKey[$type.'|'.$subjectId] = (int) $row->getAttribute('latest_id');
-                });
-        }
-
-        $map = [];
-        foreach ($refs as $ref) {
-            $latest = $latestByKey[$ref->subject_type.'|'.$ref->subject_id] ?? null;
-            $short = RevisionSubject::shortName($ref->subject_type);
-            if ($short === null || $latest === null) {
-                continue;
-            }
-            $key = $short.'.'.$ref->subject_id.'.'.$ref->field;
-            $map[$key] = $latest > $ref->source_revision_id;
-        }
-
-        return $map;
-    }
-
-    /**
-     * Phase 5aa.3: Bulk-Save aller englischen Übersetzungen einer
-     * Projekt-Übersetzen-Sicht in einem Rutsch.
-     *
-     * Erwartet einen `translations`-Payload der Form
-     * `{ 'Chapter.5.name': 'English name', 'Text.42.text': '...' }`.
-     * Der Key-Prefix ist das Kurzname des Modells; die Save-Kette
-     * ruft `setTranslation(field, 'en', value)` und `save()` auf.
-     *
-     * Nicht-erlaubte Modelltypen oder Modelle aus fremden Projekten
-     * werden übersprungen (Authorization pro Modell über ProjectPolicy).
-     */
-    public function saveTranslations(Request $request, int $id)
-    {
-        $project = Project::findOrFail($id);
-        $this->authorize('update', $project);
-
-        $payload = $request->input('translations', []);
-        if (! is_array($payload)) {
-            $payload = [];
-        }
-
-        $modelMap = [
-            'Chapter' => Chapter::class,
-            'Entry' => Entry::class,
-            'Text' => Text::class,
-            'Gallery' => Gallery::class,
-            'Image' => Image::class,
-            'Audiovisual' => Audiovisual::class,
-        ];
-
-        foreach ($payload as $key => $value) {
-            [$modelKey, $modelId, $field] = array_pad(explode('.', $key, 3), 3, null);
-            if (! isset($modelMap[$modelKey]) || $modelId === null || $field === null) {
-                continue;
-            }
-            /** @var Chapter|Entry|Text|Gallery|Image|Audiovisual|null $model */
-            $model = $modelMap[$modelKey]::find($modelId);
-            if ($model === null) {
-                continue;
-            }
-
-            // Gehört das Modell wirklich zu diesem Projekt? Die
-            // `project()`-Kette der Modelle gibt bei einigen (Chapter,
-            // Entry) eine Relation, bei anderen (Text, Audiovisual) das
-            // Model direkt zurück — beide Zweige normalisieren.
-            $modelProject = null;
-            $result = $model->project();
-            if ($result instanceof Relation) {
-                $modelProject = $result->getResults();
-            } elseif ($result instanceof Project) {
-                $modelProject = $result;
-            }
-            if ($modelProject === null || (int) $modelProject->id !== (int) $project->id) {
-                continue;
-            }
-            if (! in_array($field, $model->translatable ?? [], true)) {
-                continue;
-            }
-
-            $model->setTranslation($field, 'en', (string) $value);
-            $model->save();
-
-            // Phase 5ab.5 (Design v6 § 4): Sync-Marker fuer „Original
-            // nach Uebersetzung geaendert". Wir merken die aktuelle
-            // Fassung des Subjects als Referenz. Aendert der Kurator
-            // spaeter das Original, waechst die Version — und wir
-            // koennen den Warn-Chip zeigen.
-            $latestRevisionId = Revision::query()
-                ->where('subject_type', $model::class)
-                ->where('subject_id', $model->getKey())
-                ->latest('created_at')
-                ->value('id');
-            if ($latestRevisionId !== null) {
-                TranslationSourceReference::updateOrCreate(
-                    [
-                        'subject_type' => $model::class,
-                        'subject_id' => $model->getKey(),
-                        'field' => $field,
-                        'locale' => 'en',
-                    ],
-                    ['source_revision_id' => $latestRevisionId]
-                );
-            }
-        }
-
-        // 5aa.3-Followup: Auto-Save-on-Blur schickt AJAX — dann JSON-Antwort,
-        // sonst wie bisher zurück zur Übersetzen-Sicht mit Success-Meldung.
-        if ($request->wantsJson() || $request->ajax()) {
-            return response()->json(['ok' => true]);
-        }
-
-        return redirect()
-            ->route('translate', $project->id)
-            ->with('success', __('message_edit_project_success'));
-    }
-
-    /**
-     * @return array
-     */
-    public function allData($id)
-    {
-        // Strict-Mode: chapters/entries/mediaContent müssen eager
-        // geladen sein, weil die Schleife unten direkt auf
-        // $project->chapters, $chapter->entries und
-        // $entry->mediaContent zugreift.
-        $project = Project::withTranslateTree()->findOrFail($id);
-        $data = [];
-        $isTranslated = 0;
-        $total = 0;
-
-        foreach ($project->chapters as $chapter) {
-            $data[$chapter->id] = $chapter;
-            if ($chapter->is_translated == 1) {
-                $isTranslated++;
-            }
-            $total++;
-            $entries = [];
-            foreach ($chapter->entries as $entry) {
-                $entries[$entry->id] = $entry;
-                if ($entry->is_translated == 1) {
-                    $isTranslated++;
-                }
-                $total++;
-                $array = [];
-                if (count($entry->mediaContent) > 0) {
-                    $collection = $entry->mediaContent->toArray();
-                    usort(
-                        $collection,
-                        function ($item1, $item2) {
-                            return $item1['position'] <=> $item2['position'];
-                        }
-                    );
-
-                    foreach ($collection as $item) {
-                        // E.7b Welle 4b (ADR-0022): Diskriminator-Check
-                        // auf content_type / content_id (neue Spalten).
-                        // Doppelschreibung in den Services hält die alten
-                        // gleichwertig bis Welle 4d.
-                        if ($item['content_type'] == 'App\Models\Text') {
-                            // Strict-Mode: originText/copyrightText
-                            // werden unten gleich gelesen, deshalb
-                            // gleich mit-eager-laden.
-                            $text = Text::with(['originText', 'copyrightText'])
-                                ->find($item['content_id']);
-                            if ($text) {
-                                $text->media_id = $item['id'];
-                                $array[] = $text;
-                                if ($text->is_translated == 1) {
-                                    $isTranslated++;
-                                }
-                                $total++;
-
-                                if ($text->originText->is_translated == 1) {
-                                    $isTranslated++;
-                                }
-                                $total++;
-
-                                if ($text->copyrightText->is_translated == 1) {
-                                    $isTranslated++;
-                                }
-                                $total++;
-                            }
-                        } elseif ($item['content_type'] == 'App\Models\Audiovisual') {
-                            $audiovisual = Audiovisual::find($item['content_id']);
-                            if ($audiovisual) {
-                                $audiovisual->media_id = $item['id'];
-                                $array[] = $audiovisual;
-                                if ($audiovisual->is_translated == 1) {
-                                    $isTranslated++;
-                                }
-                                $total++;
-
-                            }
-                        } else {
-                            // E.7b Welle 4b: ehemals media_contentable_type
-                            // == 'App\Models\Image' (historischer Schiefstand).
-                            // Neue Spalte content_type führt sauber Gallery::class.
-                            // Strict-Mode: images wird unten gleich
-                            // gelesen, deshalb mit-eager-laden.
-                            $gallery = Gallery::with('images')->find($item['content_id']);
-                            // $image = Image::find($item['content_id']);
-                            if ($gallery) {
-                                $gallery->media_id = $item['id'];
-                                $gallery->image_list = $gallery->images;
-                                $array[] = $gallery;
-
-                                if ($gallery->is_translated == 1) {
-                                    $isTranslated++;
-                                }
-                                $total++;
-                            }
-                        }
-                    }
-                }
-
-                $entries[$entry->id]->media = $array;
-            }
-            $data[$chapter->id]->entry = $entries;
-        }
-
-        $percentage = 0;
-
-        if ($isTranslated > 0) {
-            $percentage = round(($isTranslated / $total) * 100, 2);
-        }
-
-        return ['data' => $data, 'percentageOfTranslation' => $percentage, 'projectId' => $id];
-    }
+    // Q4-Etappe 2 / I6 (2026-08-27): `translateCurrentProject`,
+    // `saveTranslations` und die private `allData()` leben ab jetzt in
+    // `App\Http\Controllers\ProjectTranslationController`. Die
+    // Sync-Warn-Logik wurde als `TranslationOutdatedMapService`
+    // extrahiert.
 
     /**
      * Check whether input email exists
@@ -955,49 +487,11 @@ class ProjectController extends Controller
      *
      * @return RedirectResponse
      */
-    protected function checkEmail(Request $request)
-    {
-        $user = User::where('email', $request->userEmail)->first();
-
-        if ($user) {
-            $role = isset($user->role->userRole->name) ? $user->role->userRole->name : '';
-            $permissionForRole = [];
-            if (isset($user->role->userRole->id)) {
-                $permissionForRole = Role::query()
-                    ->join('role_has_permissions', 'role_has_permissions.role_id', '=', 'roles.id')
-                    ->join('permissions', 'permissions.id', '=', 'role_has_permissions.permission_id')
-                    ->where('roles.id', $user->role->userRole->id)
-                    ->pluck('permissions.name');
-            }
-            $listAllPermissions = Permission::orderBy('id', 'ASC')->pluck('name', 'id');
-            $permissionForProject = $user->getAllPermissions()->pluck('name')->toArray();
-            $permissionProject = $user->getAllPermissions()->pluck('name')->toArray();
-
-            return Redirect()->back()->with(
-                [
-                    'error_code' => 6,
-                    'user' => $user,
-                    'role' => $role,
-                    'listAllPermissions' => $listAllPermissions,
-                    'permissionForProject' => $permissionForProject,
-                    'permissionProject' => $permissionProject,
-                    'permissionForRole' => $permissionForRole,
-                ]
-            );
-        } else {
-            return Redirect()->back()->with(['error_code' => 7, 'email' => $request->userEmail]);
-        }
-    }
-
-    /**
-     * Delete user from single project
-     */
-    protected function deleteUserFromProject($userId, $projectId): RedirectResponse
-    {
-        $this->permissions->removeUserFromProject((int) $userId, (int) $projectId);
-
-        return redirect()->back()->with('success', __('message_edit_project_success'));
-    }
+    // Q4-Etappe 2 / I6 (2026-08-27): `checkEmail` und
+    // `deleteUserFromProject` leben ab jetzt in
+    // `App\Http\Controllers\ProjectPermissionController`.
+    // `deleteUserFromProject` bekam beim Umzug ein `authorize('update')`-
+    // Gate — siehe .werkbank/REVIEW/Q3-abschluss/2026-08-27-security-nachtrag.md.
 
     /**
      * Edit metadata
@@ -1037,76 +531,9 @@ class ProjectController extends Controller
      * @param  $id
      * @return Application|Factory|View
      */
-    public function previewProject(Request $request)
-    {
-        $parameters = [];
-
-        if (isset($request['colorAccent'])) {
-            $parameters['colorAccent'] = $request['colorAccent'];
-        }
-        if (isset($request['colorChapter'])) {
-            $parameters['colorChapter'] = $request['colorChapter'];
-        }
-        $parameters['backgroundSecond'] = (isset($request['backgroundSecond'])) ? 'hintergrundgrau' : 'hintergrundweiss';
-        if (isset($request['collapse'])) {
-            $parameters['collapse'] = 1;
-        }
-        if (isset($request['pdf'])) {
-            $parameters['pdf'] = 1;
-        }
-        $parameters['id'] = $request['project'];
-        $project = Project::withPreviewTree()->findOrFail($request['project']);
-
-        // Block E.7b Sub-Welle 3-Hotfix (ADR-0022, ADR-0013):
-        // Web-Preview eines fremden Projekts war ohne Gate erreichbar
-        // — Reader-via-URL.
-        $this->authorize('view', $project);
-
-        return \view('preview.index', compact('project', 'parameters'));
-    }
-
-    /**
-     * Generate pdf
-     */
-    public function downloadPreview(Request $request)
-    {
-
-        $parameters = [];
-
-        if (isset($request->colorAccent)) {
-            $parameters['colorAccent'] = $request->colorAccent;
-        }
-        if (isset($request->colorChapter)) {
-            $parameters['colorChapter'] = $request->colorChapter;
-        }
-        $parameters['backgroundSecond'] = (isset($request->backgroundSecond)) ? 'hintergrundgrau' : 'hintergrundweiss';
-        if (isset($request->collapse)) {
-            $parameters['collapse'] = $request->collapse;
-        }
-        if (isset($request->pdf)) {
-            $parameters['pdf'] = 1;
-        }
-
-        $project = Project::withPreviewTree()->findOrFail($request->id);
-
-        // Block E.7b Sub-Welle 3-Hotfix (ADR-0022, ADR-0013):
-        // PDF-Download fremder Projekte ohne Gate war erreichbar.
-        $this->authorize('view', $project);
-
-        $html = View('preview.pdf', compact('project', 'parameters'))->render();
-
-        $options = new Options;
-        $options->setChroot(['/var/www/html/public/']);
-        $dompdf = new Dompdf($options);
-        $dompdf->loadHtml($html);
-
-        // Render the HTML as PDF
-        $dompdf->render();
-
-        // Output the generated PDF to Browser
-        $dompdf->stream();
-
-    }
+    // Q4-Etappe 2 / I6 (2026-08-27): `previewProject` und
+    // `downloadPreview` leben ab jetzt in
+    // `App\Http\Controllers\ProjectPreviewController`.
 
     /**
      * Phase 5aa.2/Design v6 § 3: „Systemtext übernehmen".

@@ -96,6 +96,16 @@ new class extends Component
     /** Fehler-Text unterm E-Mail-Feld, wenn User nicht gefunden. */
     public string $inviteError = '';
 
+    /**
+     * Q4-Etappe 2 (2026-08-27): Sichtbarkeit + Kandidat-ID fuer den
+     * „User aus Projekt entfernen"-Confirmation-Dialog. Der bisherige
+     * DELETE-Endpunkt hatte keinen Frontend-Aufrufer — der Dialog
+     * bindet ihn jetzt an einen Button im Detail-Panel-Header.
+     */
+    public bool $showRemoveModal = false;
+
+    public ?int $removeCandidateId = null;
+
     public function mount(int $projectId): void
     {
         $this->projectId = $projectId;
@@ -318,6 +328,20 @@ new class extends Component
     }
 
     /**
+     * Q4-Etappe 2 (2026-08-27): Der Remove-Button darf nur eingeblendet
+     * werden, wenn der eingeloggte User `update` auf dem Projekt hat.
+     * `invite` allein reicht nicht — Reader mit Kommentar-Recht sehen
+     * die Sicht, sollen aber niemanden entfernen koennen.
+     */
+    #[Computed]
+    public function canManagePermissions(): bool
+    {
+        $project = Project::findOrFail($this->projectId);
+
+        return Gate::allows('update', $project);
+    }
+
+    /**
      * Oeffnet das Invite-Modal. Nur Nutzer:innen mit invite-Permission
      * auf dem Projekt sehen den Button (Sichtbarkeit wird server-side
      * aus @can('invite', $project) im Blade geregelt).
@@ -334,6 +358,74 @@ new class extends Component
         $this->showInviteModal = false;
         $this->inviteEmail = '';
         $this->inviteError = '';
+    }
+
+    /**
+     * Q4-Etappe 2 (2026-08-27): Confirmation-Dialog fuer das Entfernen
+     * eines Users aus dem Projekt oeffnen.
+     */
+    public function askRemoveUser(int $userId): void
+    {
+        // Owner darf nicht via Remove-Flow entfernt werden — Owner-
+        // Wechsel laeuft ueber Konto-Loeschung / Handover (B2).
+        $project = Project::findOrFail($this->projectId);
+        if ((int) $project->user_id === $userId) {
+            return;
+        }
+        Gate::authorize('update', $project);
+
+        $this->removeCandidateId = $userId;
+        $this->showRemoveModal = true;
+    }
+
+    public function cancelRemove(): void
+    {
+        $this->showRemoveModal = false;
+        $this->removeCandidateId = null;
+    }
+
+    /**
+     * Q4-Etappe 2 (2026-08-27): Bestaetigung des Remove-Flows —
+     * ProjectPermissionService::removeUserFromProject faehrt die
+     * Pivot-Zeilen weg, der User bleibt bestehen.
+     */
+    public function confirmRemoveUser(): void
+    {
+        if ($this->removeCandidateId === null) {
+            return;
+        }
+
+        $project = Project::findOrFail($this->projectId);
+        if ((int) $project->user_id === $this->removeCandidateId) {
+            $this->cancelRemove();
+
+            return;
+        }
+        Gate::authorize('update', $project);
+
+        $removedId = $this->removeCandidateId;
+        app(ProjectPermissionService::class)->removeUserFromProject(
+            $removedId,
+            $this->projectId,
+        );
+
+        $this->showRemoveModal = false;
+        $this->removeCandidateId = null;
+
+        // Wenn der entfernte User aktuell ausgewaehlt war: auf einen
+        // anderen Kandidaten springen (Owner-Fallback).
+        if ($this->selectedUserId === $removedId) {
+            $firstUser = $this->buildUserList()->first();
+            if ($firstUser !== null) {
+                $this->selectUser((int) $firstUser['id']);
+            } else {
+                $this->selectedUserId = 0;
+                $this->permissions = [];
+                $this->initialPermissions = [];
+            }
+        }
+
+        $this->dispatch('cc-toast-success', message: __('message_permissions_user_removed'));
     }
 
     /**
@@ -429,10 +521,26 @@ new class extends Component
 
             <div class="flex items-center gap-4">
                 <x-ui.user-avatar :user="$active" size="14" text="text-title font-semibold"/>
-                <div class="min-w-0">
+                <div class="min-w-0 flex-1">
                     <div class="text-title font-semibold text-ink-900">{{ $active['name'] }}</div>
                     <div class="truncate text-body text-ink-500">{{ $active['email'] }}</div>
                 </div>
+                {{-- Q4-Etappe 2 (2026-08-27): User aus Projekt entfernen.
+                     Nur sichtbar wenn nicht Owner und der eingeloggte
+                     Nutzer `update`-Recht hat (Owner/Admin/Editor). --}}
+                @if (! $isOwner && $this->canManagePermissions)
+                    <button
+                        type="button"
+                        wire:click="askRemoveUser({{ (int) $active['id'] }})"
+                        class="inline-flex items-center gap-1.5 rounded-md border border-line-200 bg-paper-0 px-3 py-1.5
+                               text-caption font-medium text-danger hover:bg-danger-bg
+                               focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger"
+                        aria-label="{{ __('permissions_remove_user_aria', ['name' => $active['name']]) }}"
+                    >
+                        <x-icon name="user-minus" size="4"/>
+                        {{ __('permissions_remove_user') }}
+                    </button>
+                @endif
             </div>
 
             <div class="mt-8">
@@ -514,5 +622,18 @@ new class extends Component
     <x-projects.permissions.invite-modal
         :show="$showInviteModal"
         :error="$inviteError"
+    />
+
+    {{-- Q4-Etappe 2 (2026-08-27): Confirmation-Dialog fuer
+         „User aus Projekt entfernen". --}}
+    @php
+        $removeCandidate = $removeCandidateId !== null
+            ? $this->users->firstWhere('id', $removeCandidateId)
+            : null;
+        $removeCandidateName = $removeCandidate['name'] ?? '';
+    @endphp
+    <x-projects.permissions.remove-confirm-modal
+        :show="$showRemoveModal"
+        :candidate-name="$removeCandidateName"
     />
 </div>

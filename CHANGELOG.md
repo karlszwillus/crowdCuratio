@@ -733,6 +733,26 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Q4-Etappe 2 · Controller-Refactoring (I6 · ProjectController-Split)**
+  (2026-08-27). Der `ProjectController` (1.165 LoC, 8 Concerns) ist auf
+  593 LoC halbiert. Vier neue Controller nach Ressourcen-Schnitt:
+  `ProjectPreviewController` (Preview + PDF-Download),
+  `ProjectCommentController` (Top-Level-Kommentare, save, status),
+  `ProjectPermissionController` (setPermission, givePermission,
+  checkEmail, deleteUserFromProject) und `ProjectTranslationController`
+  (Übersetzen-Sicht + Bulk-Save). Die ~85-LoC-`buildOutdatedTranslation
+  Map`-Logik ist als eigener `TranslationOutdatedMapService`
+  extrahiert. Route-Namen bleiben identisch (12 Routen umgemappt), keine
+  Blade-`route()`-Anpassungen nötig. Der bisher orphan-Endpunkt
+  `deleteUserFromProject` (kein Frontend-Aufrufer, kein Authorize-Gate)
+  bekommt eine echte UI-Anbindung: neuer „Aus Projekt entfernen"-Button
+  im Detail-Panel der `project-permissions`-Volt-Sicht mit
+  Confirmation-Dialog (sichtbar nur bei `!$isOwner` und `update`-Recht),
+  Server-side Gate `authorize('update', $project)` in
+  `deleteUserFromProject` — dokumentiert als Sicherheits-Nachtrag
+  (SEC-Q4-01) im `.werkbank/REVIEW/Q3-abschluss/`-Ordner. Sieben neue
+  Locale-Keys (`permissions_remove_user_*`).
+
 - **Q4-Etappe 1 · Sanierungs-Vorlauf** (2026-08-27). Vier kleine
   Splits als geschlossener Zug: Der neue `ProfileController` bündelt
   die Self-Service-Endpunkte (`profile`, `updateProfile`,

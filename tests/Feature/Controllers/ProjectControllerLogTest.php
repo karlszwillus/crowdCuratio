@@ -21,6 +21,7 @@ If not, see <https://www.gnu.org/licenses/>.
  */
 
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ProjectTranslationController;
 use App\Models\Chapter;
 use App\Models\User;
 use App\Support\PermissionName;
@@ -58,8 +59,11 @@ it('allData liefert für ein leeres Project ein 100%-Translation-Paket', functio
 
     $project = makeProject($owner);
 
-    /** @var ProjectController $controller */
-    $controller = app(ProjectController::class);
+    // Q4-Etappe 2 / I6 (2026-08-27): `allData` wandert mit
+    // `translateCurrentProject` und `saveTranslations` in den
+    // `ProjectTranslationController`. Sichtbarkeit bleibt public.
+    /** @var ProjectTranslationController $controller */
+    $controller = app(ProjectTranslationController::class);
 
     $result = $controller->allData($project->id);
 
@@ -94,8 +98,8 @@ it('allData zählt Chapters/Entries und deren Übersetzungs-Status', function ()
 
     makeEntry($chapter1);
 
-    /** @var ProjectController $controller */
-    $controller = app(ProjectController::class);
+    /** @var ProjectTranslationController $controller */
+    $controller = app(ProjectTranslationController::class);
 
     $result = $controller->allData($project->id);
 

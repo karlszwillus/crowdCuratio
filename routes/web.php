@@ -27,7 +27,11 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EntryController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProjectCommentController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ProjectPermissionController;
+use App\Http\Controllers\ProjectPreviewController;
+use App\Http\Controllers\ProjectTranslationController;
 use App\Http\Controllers\PublicController;
 use App\Http\Controllers\RevisionController;
 use App\Http\Controllers\RoleController;
@@ -89,7 +93,9 @@ Route::group(
     ['middleware' => ['auth']],
     function () {
         Route::resource('/projects', ProjectController::class);
-        Route::delete('/user/{userId}/project/{projectId}', [ProjectController::class, 'deleteUserFromProject'])->name(
+        // Q4-Etappe 2 / I6 (2026-08-27): Rechte-Endpunkte im
+        // ProjectPermissionController. Route-Namen bleiben.
+        Route::delete('/user/{userId}/project/{projectId}', [ProjectPermissionController::class, 'deleteUserFromProject'])->name(
             'project.user_delete'
         );
         // Phase 5d.4: Berechtigungssicht (Screen 3B). Loest die alte
@@ -108,7 +114,7 @@ Route::group(
         Route::delete('/delete/{id}/text', [ContentController::class, 'destroyText'])->name(
             'text.delete'
         );
-        Route::post('/check/email', [ProjectController::class, 'checkEmail'])->name('check.email');
+        Route::post('/check/email', [ProjectPermissionController::class, 'checkEmail'])->name('check.email');
         // Q3-Härtung F2 (2026-08-19) / SEC-02: vorher GET ohne Auth-Guard,
         // jeder eingeloggte User konnte fuer beliebige User-IDs eine
         // Welcome-Mail ausloesen und welcome_valid_until verlaengern
@@ -173,7 +179,7 @@ Route::group(
         // B2 (2026-08-21) / DSGVO: Konto-Loeschung mit 30-Tage-Frist.
         Route::post('/profile/schedule-deletion', [ProfileController::class, 'scheduleDeletion'])->name('profile.schedule_deletion');
         Route::post('/profile/cancel-deletion', [ProfileController::class, 'cancelScheduledDeletion'])->name('profile.cancel_deletion');
-        Route::get('/permission/user/{id}/', [ProjectController::class, 'givePermissionToUser'])->name(
+        Route::get('/permission/user/{id}/', [ProjectPermissionController::class, 'givePermissionToUser'])->name(
             'permission.project'
         );
         Route::post('/comment/chapter', [ChapterController::class, 'commentChapter'])->name(
@@ -268,12 +274,14 @@ Route::group(
         )->name(
             'comment.image.status'
         );
-        Route::post('/comment/project', [ProjectController::class, 'commentProject'])->name(
+        // Q4-Etappe 2 / I6 (2026-08-27): Kommentar-Endpunkte im
+        // ProjectCommentController. Route-Namen bleiben.
+        Route::post('/comment/project', [ProjectCommentController::class, 'commentProject'])->name(
             'comment.project'
         );
         Route::get(
             '/comment/project/{id}/',
-            [ProjectController::class, 'getProjectComment']
+            [ProjectCommentController::class, 'getProjectComment']
         )->name(
             'comment.project.show'
         );
@@ -297,19 +305,19 @@ Route::group(
         );
         Route::post(
             '/comment/project/{id}/save',
-            [ProjectController::class, 'saveCommentProject']
+            [ProjectCommentController::class, 'saveCommentProject']
         )->name(
             'comment.project.save'
         );
         Route::post(
             '/comment/project/status',
-            [ProjectController::class, 'setCommentStatusProject']
+            [ProjectCommentController::class, 'setCommentStatusProject']
         )->name(
             'comment.project.status'
         );
         Route::post(
             '/project/permission',
-            [ProjectController::class, 'setPermissionForUserOnProject']
+            [ProjectPermissionController::class, 'setPermissionForUserOnProject']
         )->name(
             'project.permission'
         );
@@ -350,16 +358,18 @@ Route::group(
             'all.comments'
         );
 
+        // Q4-Etappe 2 / I6 (2026-08-27): Uebersetzungs-Endpunkte im
+        // ProjectTranslationController. Route-Namen bleiben.
         Route::get(
             '/project/{id}/translate',
-            [ProjectController::class, 'translateCurrentProject']
+            [ProjectTranslationController::class, 'translateCurrentProject']
         )->name(
             'translate'
         );
 
         Route::post(
             '/project/{id}/translate',
-            [ProjectController::class, 'saveTranslations']
+            [ProjectTranslationController::class, 'saveTranslations']
         )->name(
             'translate.save'
         );
@@ -447,7 +457,9 @@ Route::group(
             'comment.gallery'
         );
 
-        Route::get('/preview', [ProjectController::class, 'previewProject'])->name(
+        // Q4-Etappe 2 / I6 (2026-08-27): Preview/PDF-Download im
+        // ProjectPreviewController. Route-Namen bleiben.
+        Route::get('/preview', [ProjectPreviewController::class, 'previewProject'])->name(
             'preview'
         );
 
@@ -458,7 +470,7 @@ Route::group(
         // /image/{file} (disk `public`, /uploads/images/) der saubere
         // Ersatz, nicht eine Wiederauferstehung dieser Route.
 
-        Route::get('/preview/download', [ProjectController::class, 'downloadPreview'])->name(
+        Route::get('/preview/download', [ProjectPreviewController::class, 'downloadPreview'])->name(
             'download'
         );
 
