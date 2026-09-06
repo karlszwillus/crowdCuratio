@@ -26,6 +26,7 @@ use App\Http\Controllers\ContentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EntryController;
 use App\Http\Controllers\LanguageController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\PublicController;
 use App\Http\Controllers\RevisionController;
@@ -150,25 +151,28 @@ Route::group(
         // ersatzlos entfallen (siehe B12-Migration in CHANGELOG).
         Route::redirect('/register', '/users/create', 301)->name('register');
         Route::resource('/users', UserController::class);
-        Route::get('/profile', [UserController::class, 'profile'])->name(
+        // Q4-Etappe 1 / I8 (2026-08-27): Self-Service-Endpunkte
+        // wandern auf `ProfileController`. Route-Namen bleiben, damit
+        // alle Blade-`route()`-Aufrufe unveraendert weiterlaufen.
+        Route::get('/profile', [ProfileController::class, 'profile'])->name(
             'profile'
         );
         // Block E / Welle E.3: Self-Edit-Pfad eigene Route mit eigenem
         // FormRequest (UpdateOwnProfileRequest). Target ist immer
         // auth()->user(), kein {user}-Param nötig.
-        Route::patch('/profile', [UserController::class, 'updateProfile'])->name(
+        Route::patch('/profile', [ProfileController::class, 'updateProfile'])->name(
             'profile.update'
         );
         // Phase 5ac.1: Sofort-Wirkung fuer Sprache und Theme.
-        Route::post('/profile/locale', [UserController::class, 'updateLocale'])->name('profile.locale');
-        Route::post('/profile/theme', [UserController::class, 'updateTheme'])->name('profile.theme');
+        Route::post('/profile/locale', [ProfileController::class, 'updateLocale'])->name('profile.locale');
+        Route::post('/profile/theme', [ProfileController::class, 'updateTheme'])->name('profile.theme');
         // Q3-Politur G9 (2026-08-20) / UX-01: Live-Blur-Check fuers Kuerzel.
-        Route::post('/profile/check-initials', [UserController::class, 'checkInitials'])->name('profile.check_initials');
+        Route::post('/profile/check-initials', [ProfileController::class, 'checkInitials'])->name('profile.check_initials');
         // Phase 5ac.4: eigener Save fuer Passwort-Wechsel.
-        Route::patch('/profile/password', [UserController::class, 'updatePassword'])->name('profile.password');
+        Route::patch('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
         // B2 (2026-08-21) / DSGVO: Konto-Loeschung mit 30-Tage-Frist.
-        Route::post('/profile/schedule-deletion', [UserController::class, 'scheduleDeletion'])->name('profile.schedule_deletion');
-        Route::post('/profile/cancel-deletion', [UserController::class, 'cancelScheduledDeletion'])->name('profile.cancel_deletion');
+        Route::post('/profile/schedule-deletion', [ProfileController::class, 'scheduleDeletion'])->name('profile.schedule_deletion');
+        Route::post('/profile/cancel-deletion', [ProfileController::class, 'cancelScheduledDeletion'])->name('profile.cancel_deletion');
         Route::get('/permission/user/{id}/', [ProjectController::class, 'givePermissionToUser'])->name(
             'permission.project'
         );

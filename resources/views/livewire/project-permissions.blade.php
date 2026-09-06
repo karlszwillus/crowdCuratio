@@ -24,6 +24,7 @@ use App\Models\Project;
 use App\Models\User;
 use App\Services\ProjectPermissionService;
 use App\Support\PermissionName;
+use App\Support\PermissionPresets;
 use App\Support\RoleName;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Attributes\Computed;
@@ -215,32 +216,10 @@ new class extends Component
         //   Reader:   view
         // view ist implizit — Reader kriegt keine der 6 sichtbaren
         // Toggles, kann aber die Seite trotzdem lesen.
-        $presets = [
-            RoleName::EDITOR->value => [
-                PermissionName::EDIT->value    => true,
-                PermissionName::ADD->value     => true,
-                PermissionName::DELETE->value  => true,
-                PermissionName::PUBLISH->value => true,
-                PermissionName::COMMENT->value => true,
-                PermissionName::INVITE->value  => false,
-            ],
-            RoleName::REVIEWER->value => [
-                PermissionName::EDIT->value    => false,
-                PermissionName::ADD->value     => false,
-                PermissionName::DELETE->value  => false,
-                PermissionName::PUBLISH->value => false,
-                PermissionName::COMMENT->value => true,
-                PermissionName::INVITE->value  => false,
-            ],
-            RoleName::READER->value => [
-                PermissionName::EDIT->value    => false,
-                PermissionName::ADD->value     => false,
-                PermissionName::DELETE->value  => false,
-                PermissionName::PUBLISH->value => false,
-                PermissionName::COMMENT->value => false,
-                PermissionName::INVITE->value  => false,
-            ],
-        ];
+        // Q4-Etappe 1 / I4 (2026-08-27): Preset-Masken zentral in
+        // App\Support\PermissionPresets — vorher lebten sie 1:1
+        // ebenfalls in getMatchedPresetProperty() als Duplikat.
+        $presets = PermissionPresets::masks();
 
         if (! isset($presets[$role])) {
             return;
@@ -267,34 +246,9 @@ new class extends Component
             PermissionName::INVITE->value  => (bool) ($this->permissions[PermissionName::INVITE->value] ?? false),
         ];
 
-        $presets = [
-            RoleName::EDITOR->value => [
-                PermissionName::EDIT->value    => true,
-                PermissionName::ADD->value     => true,
-                PermissionName::DELETE->value  => true,
-                PermissionName::PUBLISH->value => true,
-                PermissionName::COMMENT->value => true,
-                PermissionName::INVITE->value  => false,
-            ],
-            RoleName::REVIEWER->value => [
-                PermissionName::EDIT->value    => false,
-                PermissionName::ADD->value     => false,
-                PermissionName::DELETE->value  => false,
-                PermissionName::PUBLISH->value => false,
-                PermissionName::COMMENT->value => true,
-                PermissionName::INVITE->value  => false,
-            ],
-            RoleName::READER->value => [
-                PermissionName::EDIT->value    => false,
-                PermissionName::ADD->value     => false,
-                PermissionName::DELETE->value  => false,
-                PermissionName::PUBLISH->value => false,
-                PermissionName::COMMENT->value => false,
-                PermissionName::INVITE->value  => false,
-            ],
-        ];
-
-        foreach ($presets as $role => $mask) {
+        // Q4-Etappe 1 / I4 (2026-08-27): Preset-Masken kommen aus
+        // App\Support\PermissionPresets — vorher inline dupliziert.
+        foreach (PermissionPresets::masks() as $role => $mask) {
             if ($mask === $current) {
                 return $role;
             }
@@ -438,66 +392,24 @@ new class extends Component
 ?>
 <div class="grid grid-cols-[280px_1fr] gap-6">
 
-    {{-- LINKS: Mitarbeitende-Sidebar --}}
-    <aside class="rounded-lg border border-line-200 bg-paper-0"
-           aria-label="{{ __('collaborators') }}">
-        <div class="flex items-center justify-between border-b border-line-200 px-4 py-3">
-            <h2 class="text-heading font-semibold text-ink-900">
-                {{ __('collaborators') }}
-            </h2>
-            <button
-                type="button"
-                wire:click="invite"
-                class="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5
-                       text-caption font-medium text-primary-on hover:opacity-90
-                       focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-            >
-                <x-icon name="plus" size="4"/>
-                {{ __('invite') }}
-            </button>
-        </div>
-
-        @php
-            // Q3-Politur G4 (2026-08-20) / UX-06: Rollen-Beschreibungen
-            // fuer den Chip in der User-Liste.
-            $roleDescriptions = [
-                RoleName::READER->value   => __('role_reader_desc'),
-                RoleName::REVIEWER->value => __('role_reviewer_desc'),
-                RoleName::EDITOR->value   => __('role_editor_desc'),
-                RoleName::ADMIN->value    => __('role_admin_desc'),
-            ];
-        @endphp
-
-        <ul class="p-2" role="list">
-            @foreach ($this->users as $user)
-                @php
-                    $isActive = $user['id'] === $selectedUserId;
-                    $userRoleDesc = $user['is_owner'] ?? false
-                        ? __('role_owner_desc')
-                        : ($roleDescriptions[$user['role']] ?? '');
-                @endphp
-                <li>
-                    <button
-                        type="button"
-                        wire:click="selectUser({{ $user['id'] }})"
-                        aria-current="{{ $isActive ? 'true' : 'false' }}"
-                        class="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left transition-colors
-                               {{ $isActive
-                                   ? 'bg-danger-bg text-ink-900'
-                                   : 'text-ink-900 hover:bg-line-100/40' }}
-                               focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-bar"
-                    >
-                        <x-ui.user-avatar :user="$user" size="8" text="text-caption font-semibold"/>
-                        <span class="min-w-0 flex-1 truncate">
-                            <span class="block text-body font-medium">{{ $user['name'] }}</span>
-                            <span class="block text-caption text-ink-500"
-                                  @if ($userRoleDesc !== '') title="{{ $userRoleDesc }}" @endif>{{ $user['role'] }}</span>
-                        </span>
-                    </button>
-                </li>
-            @endforeach
-        </ul>
-    </aside>
+    {{-- LINKS: Mitarbeitende-Sidebar
+         Q4-Etappe 1 / I4 (2026-08-27): Extrahiert nach
+         components/projects/permissions/sidebar.blade.php --}}
+    @php
+        // Q3-Politur G4 (2026-08-20) / UX-06: Rollen-Beschreibungen
+        // fuer den Chip in der User-Liste.
+        $roleDescriptions = [
+            RoleName::READER->value   => __('role_reader_desc'),
+            RoleName::REVIEWER->value => __('role_reviewer_desc'),
+            RoleName::EDITOR->value   => __('role_editor_desc'),
+            RoleName::ADMIN->value    => __('role_admin_desc'),
+        ];
+    @endphp
+    <x-projects.permissions.sidebar
+        :users="$this->users"
+        :selected-user-id="$selectedUserId"
+        :role-descriptions="$roleDescriptions"
+    />
 
     {{-- RECHTS: Detail-Sicht --}}
     <section class="rounded-lg border border-line-200 bg-paper-50 p-6"
@@ -572,51 +484,12 @@ new class extends Component
                 </div>
             </div>
 
-            <div class="mt-6 overflow-hidden rounded-lg border border-line-200 bg-paper-0">
-                @php
-                    // Sechs Toggles (Karl-Entscheidung 2026-08-15).
-                    // Handoff v4 zeigt vier — comment + invite sind
-                    // die Erweiterung, dokumentiert im Briefing
-                    // permission-matrix-6-toggles.md.
-                    $toggleRows = [
-                        PermissionName::EDIT->value    => [__('permission_edit_title'),    __('permission_edit_desc')],
-                        PermissionName::ADD->value     => [__('permission_add_title'),     __('permission_add_desc')],
-                        PermissionName::DELETE->value  => [__('permission_delete_title'),  __('permission_delete_desc')],
-                        PermissionName::PUBLISH->value => [__('permission_publish_title'), __('permission_publish_desc')],
-                        PermissionName::COMMENT->value => [__('permission_comment_title'), __('permission_comment_desc')],
-                        PermissionName::INVITE->value  => [__('permission_invite_title'),  __('permission_invite_desc')],
-                    ];
-                @endphp
-                @foreach ($toggleRows as $permName => [$title, $desc])
-                    @php
-                        $isOn = $isOwner ? true : (bool) ($permissions[$permName] ?? false);
-                        $disabled = $isOwner;
-                    @endphp
-                    <div class="flex items-start justify-between gap-4 border-b border-line-100 px-5 py-4 last:border-b-0">
-                        <div class="min-w-0 flex-1">
-                            <div class="text-body font-semibold text-ink-900">{{ $title }}</div>
-                            <div class="text-caption text-ink-500">{{ $desc }}</div>
-                        </div>
-                        <button
-                            type="button"
-                            role="switch"
-                            aria-checked="{{ $isOn ? 'true' : 'false' }}"
-                            aria-label="{{ $title }}"
-                            @if (! $disabled) wire:click="$toggle('permissions.{{ $permName }}')" @endif
-                            @disabledIf($disabled, __('role_owner_locked_hint'))
-                            class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors
-                                   {{ $isOn ? 'bg-primary' : 'bg-line-200' }}
-                                   focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                        >
-                            <span
-                                aria-hidden="true"
-                                class="inline-block size-5 transform rounded-full bg-white shadow transition-transform
-                                       {{ $isOn ? 'translate-x-5' : 'translate-x-0.5' }}"
-                            ></span>
-                        </button>
-                    </div>
-                @endforeach
-            </div>
+            {{-- Q4-Etappe 1 / I4 (2026-08-27): Extrahiert nach
+                 components/projects/permissions/toggle-list.blade.php --}}
+            <x-projects.permissions.toggle-list
+                :permissions="$permissions"
+                :is-owner="$isOwner"
+            />
 
             {{-- Save-Bar erscheint, sobald ein Toggle vom Initial-
                  zustand abweicht. Wir rendern die Bar per Blade-@if
@@ -635,82 +508,11 @@ new class extends Component
         @endif
     </section>
 
-    {{-- Invite-Modal (5d.4). Livewire schaltet die Sichtbarkeit ueber
-         $showInviteModal, Alpine-x-show haengt daran fuer Enter/Leave-
-         Transitions. --}}
-    @if ($showInviteModal)
-        <div
-            class="fixed inset-0 z-40 flex items-center justify-center bg-ink-900/40 px-4"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="invite-title"
-            wire:click.self="closeInvite"
-            {{-- Q3-Politur G2 (2026-08-20) / A11Y-03 · A11Y-04:
-                 Escape schliesst, Fokus faellt auf das E-Mail-Feld. --}}
-            x-data
-            x-init="$nextTick(() => document.getElementById('inviteEmail')?.focus())"
-            @keydown.escape.window="$wire.closeInvite()"
-        >
-            <div class="w-full max-w-md rounded-lg border border-line-200 bg-paper-0 shadow-lg">
-                <header class="flex items-center justify-between border-b border-line-200 px-5 py-3">
-                    <h3 id="invite-title" class="text-heading font-semibold text-ink-900">
-                        {{ __('invite') }}
-                    </h3>
-                    <button
-                        type="button"
-                        wire:click="closeInvite"
-                        aria-label="{{ __('close') }}"
-                        class="rounded-md p-1 text-ink-500 hover:bg-ink-900/5 hover:text-ink-900
-                               focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-900"
-                    >
-                        <x-icon name="x" size="4"/>
-                    </button>
-                </header>
-
-                <form wire:submit.prevent="submitInvite" class="p-5">
-                    <label for="inviteEmail" class="mb-1 block text-caption font-medium text-ink-700">
-                        {{ __('email') }}
-                    </label>
-                    <input
-                        type="email"
-                        id="inviteEmail"
-                        wire:model="inviteEmail"
-                        required
-                        autocomplete="email"
-                        placeholder="name@example.org"
-                        @if ($inviteError) aria-invalid="true" aria-describedby="inviteError" @endif
-                        class="block w-full rounded-md border border-line-200 bg-paper-0 px-3 py-2 text-body text-ink-900
-                               focus:border-primary focus:outline focus:outline-2 focus:outline-offset-1 focus:outline-primary"
-                    />
-                    @if ($inviteError)
-                        <p id="inviteError" role="alert"
-                           class="mt-1 text-caption text-danger">
-                            {{ $inviteError }}
-                        </p>
-                    @endif
-
-                    <div class="mt-5 flex items-center justify-end gap-2">
-                        <button
-                            type="button"
-                            wire:click="closeInvite"
-                            class="inline-flex items-center rounded-md bg-transparent px-4 py-2 text-body font-medium text-ink-700
-                                   hover:bg-ink-900/5
-                                   focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink-900"
-                        >
-                            {{ __('cancel') }}
-                        </button>
-                        <button
-                            type="submit"
-                            class="inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-body font-medium text-primary-on
-                                   hover:opacity-90
-                                   focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                        >
-                            <x-icon name="send" size="4"/>
-                            {{ __('invite') }}
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    @endif
+    {{-- Invite-Modal (5d.4).
+         Q4-Etappe 1 / I4 (2026-08-27): Extrahiert nach
+         components/projects/permissions/invite-modal.blade.php --}}
+    <x-projects.permissions.invite-modal
+        :show="$showInviteModal"
+        :error="$inviteError"
+    />
 </div>

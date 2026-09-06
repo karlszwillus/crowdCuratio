@@ -195,25 +195,13 @@ If not, see <https://www.gnu.org/licenses/>. -->
         </div>
     </x-ui.modal>
 
-    <x-ui.modal id="commentModal" :title="__('add_new_element_comment')" size="lg">
-        <div class="row">
-            <div id="headerComment"></div>
-
-            <div id="listComment"></div>
-            <form id="frmComment" action="" method="post">
-                @csrf
-                <input name="id" type="hidden" id="commentId">
-                <input name="IdProjectComment" type="hidden" id="IdProjectComment">
-                <div class="col-xs-12 mt-7">
-                    <textarea id="commentProjectId" name="comment" class="form-control mb-3"
-                              placeholder="{{__('leave_comment')}}" onkeyup="enableButton()"></textarea>
-                </div>
-                <div class="col-xs-12">
-                    <button id="commentButton" type="submit" class="btn btn-primary float-right reply-comment" disabled>{{__('save')}}</button>
-                </div>
-            </form>
-        </div>
-    </x-ui.modal>
+    {{-- Q4-Etappe 1 · Vorräumung (2026-08-27): Der frühere `commentModal`
+         hier war seit dem Umzug auf die Livewire-Volt-Kommentar-
+         Komponenten (comment-composer / comment-text-editor /
+         comment-status-switcher / comment-panel-list) tot — kein
+         Aufrufer, kein `data-target`, kein `.modal('show')`. Modal-
+         Rumpf + zugehörige JS-Handler (enableButton, IdProjectComment-
+         Set) entfernt. --}}
 
     @php
         // 5aa.4 Design v6 § 5: Umfangszeile — projektweite Zählung von Kapitel,
@@ -1048,18 +1036,13 @@ If not, see <https://www.gnu.org/licenses/>. -->
         });
 
 
-        function enableButton(){
-            $('#commentButton').prop('disabled', false);
-        }
-
-
+        // Q4-Etappe 1 · Vorräumung (2026-08-27): `enableButton()` und die
+        // `#IdProjectComment`-Setter gehörten zum entfernten commentModal
+        // weiter oben. Wurden im gleichen Zug weggeräumt.
 
         $(document).ready(function () {
 
 			/*$(".col-sm-3").append($(".row.versions"));*/
-
-            //Set project comment id
-            $('#IdProjectComment').val({!! json_encode($project->id) !!});
 
             //Check copyright and origin for Text
             $("#text_frm").submit(function (event) {

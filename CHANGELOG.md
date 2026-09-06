@@ -733,6 +733,28 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Q4-Etappe 1 · Sanierungs-Vorlauf** (2026-08-27). Vier kleine
+  Splits als geschlossener Zug: Der neue `ProfileController` bündelt
+  die Self-Service-Endpunkte (`profile`, `updateProfile`,
+  `updatePassword`, `updateLocale`, `updateTheme`, `checkInitials`,
+  `scheduleDeletion`, `cancelScheduledDeletion`); der `UserController`
+  ist ab jetzt rein Admin-User-Management. Die Route-Namen bleiben
+  gleich, daher keine Blade-`route()`-Anpassungen nötig. Die
+  Livewire-Volt-Sicht `project-permissions` verliert die drei
+  größten Blade-Blöcke (Sidebar, Toggle-List, Invite-Modal) an
+  neue Sub-Components unter `components/projects/permissions/*`; die
+  drei Preset-Masken (Editor/Reviewer/Reader) leben zentral in der
+  neuen Support-Klasse `App\Support\PermissionPresets` statt in zwei
+  Duplikaten. Neue `App\Http\Middleware\LogContext` reichert jeden
+  Log-Eintrag mit `request_id` und (wenn eingeloggt) `user_id` an —
+  Prod-Log-Grouping für die frischen `account.deletion.*`-Events wird
+  sofort nutzbar, `X-Request-Id`-Header wird respektiert bzw. neu
+  vergeben und im Response gespiegelt. Vorräumung nebenbei: der tote
+  `commentModal`-Rumpf in `chapters/index.blade.php` (kein Aufrufer
+  seit dem Umzug auf die Livewire-Kommentar-Komponenten) ist raus,
+  zusammen mit den zugehörigen JS-Handlern `enableButton()` und
+  `#IdProjectComment`-Set.
+
 - **Konto-Löschung — Nachreview + Scheduler** (B2 · 2026-08-27).
   Nachreview auf B2 gehärtet: `AccountDeletionService` loggt jede
   State-Transition strukturiert als `account.deletion.*`, `purgeExpired`
