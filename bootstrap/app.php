@@ -21,6 +21,7 @@ If not, see <https://www.gnu.org/licenses/>.
  */
 
 use App\Http\Middleware\Language;
+use App\Http\Middleware\LogContext;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -37,10 +38,16 @@ return Application::configure(basePath: dirname(__DIR__))
         channels: __DIR__.'/../routes/channels.php',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // Web-Group: Language hinten anhängen. EncryptCookies,
+        // Q4-Etappe 1 / I10 (2026-08-27): LogContext-Middleware
+        // reichert jeden Log-Eintrag mit request_id + user_id an. Muss
+        // ganz vorn im Web-Stack sitzen (`prepend`), damit auch
+        // Fehler in nachgelagerten Middlewares die Kontext-Info
+        // haben. Web-Group: Language hinten anhaengen. EncryptCookies,
         // StartSession, VerifyCsrfToken, SubstituteBindings,
         // ShareErrorsFromSession kommen aus dem Framework-Default.
-        $middleware->web(append: [
+        $middleware->web(prepend: [
+            LogContext::class,
+        ], append: [
             Language::class,
         ]);
 
