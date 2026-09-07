@@ -733,6 +733,28 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Q4-Etappe 2 · I5 · chapters/_canvas Sub-Extraktion + I11 · AJAX-
+  Prefix** (2026-08-27). Die 1.377-LoC-`chapters/_canvas.blade.php` ist
+  auf 414 LoC reduziert; die drei Content-Type-Zweige (Text /
+  Audiovisual / Gallery) rufen jetzt Sub-Components unter
+  `components/content/*` (`text-block`, `audiovisual-block`,
+  `gallery-block`). Der Gallery-Block selbst zerlegt die zwei
+  Bild-Iterationen (Kachel-Grid und Detail-Editor) in
+  Sub-Sub-Components (`components/content/gallery/image-tile`,
+  `image-detail`); Alpine-State und -Methoden fürs Drag&Drop und den
+  Detail-Wechsel leben weiter im x-data des Gallery-Blocks — die
+  Sub-Components sitzen im DOM-Scope davon, damit `pickedId`,
+  `editingImageId`, `pick()`, `drop()`, `enterDetail()`, `moveBy()`,
+  `exitDetail()` transparent bleiben. Route-Namen, Livewire-Bindings,
+  `data-history-*`-Attribute unverändert. Vier interne AJAX-Endpunkte
+  (Locale-Switch, Theme-Switch, Initials-Check, Source-Autocomplete)
+  laufen jetzt unter dem Prefix `/api/internal/` als
+  Weichenstellung für eine spätere Phase-6-`/api/v1/`-Struktur;
+  Route-Namen bleiben identisch, alle Aufrufer nutzen `route()` und
+  ziehen automatisch mit. `POST /profile/schedule-deletion` und
+  `cancel-deletion` bleiben auf `/profile/*`, weil sie Form-Submits
+  mit Redirect-Antwort sind, keine JSON-Endpunkte.
+
 - **Q4-Etappe 2 · I7 · ContentController-Split** (2026-08-27). Der
   `ContentController` (784 LoC, mischte Text/Image/Gallery-CRUD +
   acht praktisch identische Kommentar-Methoden + Autocomplete +
