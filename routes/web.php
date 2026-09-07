@@ -79,6 +79,11 @@ Route::group(
     ['middleware' => ['auth', 'role:Admin']],
     function () {
         Route::resource('/settings', SettingController::class);
+        // Q4-Etappe 3 / C0-8b (2026-09-07): GUI-Wrapper fuer den
+        // Migrations-Assistenten (`SourceMigrationService`), analog
+        // zum Artisan-Command `sources:migrate`. Admin-only.
+        Route::view('/admin/sources/migration', 'admin.sources.migration')
+            ->name('admin.sources.migration');
     }
 );
 

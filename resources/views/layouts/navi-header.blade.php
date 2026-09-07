@@ -34,6 +34,13 @@ If not, see <https://www.gnu.org/licenses/>. -->
                         {{__('setting')}}
                     </a>
                 </li>
+                {{-- Q4-Etappe 3 / C0-8b: GUI-Wrapper fuer den
+                     Quellen-Migrations-Assistenten. --}}
+                <li>
+                    <a class="block rounded-md px-3 py-2 text-body text-chrome-on hover:bg-chrome-active" href="{{route('admin.sources.migration')}}">
+                        {{__('sources_migration_title')}}
+                    </a>
+                </li>
             @endif
 
             <li x-data="{ open: false }" class="relative">

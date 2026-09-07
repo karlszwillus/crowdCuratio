@@ -31,6 +31,15 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
 
 /**
+ * Q4-Etappe 3 / C0-8a Erweiterung (2026-09-07): Ab jetzt schreibt der
+ * Service `copyright_id` und `origin_id` als FKs auf `sources` (projekt-
+ * scoped via SourceService). Die Legacy-Strings `copyright`/`source`
+ * werden bis zum Backfill weiter mitgeschrieben — der Reader liest
+ * bevorzugt aus der Source-Relation und fällt auf die alten Strings
+ * zurück, wenn kein FK gesetzt ist.
+ */
+
+/**
  * Kapselt die Schreibpfade auf Audiovisual-Modelle (Block F.6).
  *
  * Übernimmt die `store`-/`delete`-Logik aus dem
@@ -46,22 +55,56 @@ class AudiovisualService
 {
     use UploadTrait;
 
+    public function __construct(
+        private readonly SourceService $sources,
+    ) {}
+
     /**
      * Legt ein neues Audiovisual an und hängt es per MediaContent
      * an einen Entry.
      */
     public function create(AudiovisualData $data, int $entryId): Audiovisual
     {
+        // Q4-Etappe 3 / C0-8a Erweiterung (2026-09-07): Project-ID
+        // ueber die Entry-Chain aufloesen und Copyright/Origin als
+        // Source-Row anlegen; die Legacy-Strings bleiben mit
+        // geschrieben, bis der Backfill den Bestand nachgezogen hat.
+        $projectId = $this->resolveProjectIdForEntry($entryId);
+
+        $copyrightId = ($data->copyright !== null && $data->copyright !== '')
+            ? $this->sources->findOrCreateId($data->copyright, 'Copyright', $projectId)
+            : null;
+        $originId = ($data->source !== null && $data->source !== '')
+            ? $this->sources->findOrCreateId($data->source, 'Origin', $projectId)
+            : null;
+
         $audiovisual = Audiovisual::create([
             'link' => $data->link,
             'source' => $data->source,
             'copyright' => $data->copyright,
+            'copyright_id' => $copyrightId,
+            'origin_id' => $originId,
             'type' => $data->type,
         ]);
 
         $this->attachToEntry($audiovisual->id, $entryId);
 
         return $audiovisual;
+    }
+
+    /**
+     * Q4-Etappe 3 / C0-8a: Project-ID fuer den Create-Pfad ueber die
+     * Entry-Chain — analog TextService::resolveProjectIdForEntry.
+     */
+    private function resolveProjectIdForEntry(int $entryId): ?int
+    {
+        $entry = Entry::find($entryId);
+        if ($entry === null) {
+            return null;
+        }
+        $project = $entry->project();
+
+        return $project?->id;
     }
 
     /**
@@ -81,6 +124,10 @@ class AudiovisualService
             $audiovisual->setTranslation('copyright', 'en', $data->copyright ?? '');
             $audiovisual->setTranslation('source', 'en', $data->source ?? '');
         } else {
+            // Q4-Etappe 3 / C0-8a Erweiterung: Project-ID ueber die
+            // vorhandene `->project()`-Methode des AV-Modells.
+            $projectId = $audiovisual->project()?->id;
+
             if ($data->link !== null) {
                 $audiovisual->link = $data->link;
             }
@@ -89,9 +136,15 @@ class AudiovisualService
             }
             if ($data->copyright !== null) {
                 $audiovisual->copyright = $data->copyright;
+                $audiovisual->copyright_id = $data->copyright === ''
+                    ? null
+                    : $this->sources->findOrCreateId($data->copyright, 'Copyright', $projectId);
             }
             if ($data->source !== null) {
                 $audiovisual->source = $data->source;
+                $audiovisual->origin_id = $data->source === ''
+                    ? null
+                    : $this->sources->findOrCreateId($data->source, 'Origin', $projectId);
             }
         }
 

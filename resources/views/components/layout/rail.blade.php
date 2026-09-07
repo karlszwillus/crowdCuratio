@@ -146,6 +146,16 @@ Nutzung: `<x-layout.rail :active="'projects'" />` im äußeren
             >
                 <x-icon name="settings" size="5" :decorative="false" :label="__('setting')"/>
             </a>
+            {{-- Q4-Etappe 3 / C0-8b: GUI-Wrapper fuer den Quellen-
+                 Migrations-Assistenten. --}}
+            <a
+                href="{{ route('admin.sources.migration') }}"
+                class="{{ $itemBase }} {{ $active === 'sources_migration' ? $itemActive : '' }}"
+                title="{{ __('sources_migration_title') }}"
+                @if ($active === 'sources_migration') aria-current="page" @endif
+            >
+                <x-icon name="database" size="5" :decorative="false" :label="__('sources_migration_title')"/>
+            </a>
         @endif
     </nav>
 

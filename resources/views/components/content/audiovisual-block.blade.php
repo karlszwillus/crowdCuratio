@@ -78,17 +78,23 @@
                             <p class="mt-1 text-caption text-ink-500">{{ __('transcript_hint') }}</p>
                         </div>
 
-                        {{-- 5z.9/§ 8: Copyright und Quelle stehen offen, kein <details>
-                             mehr — gleiche Stelle wie beim Text- und Galerie-Block. --}}
+                        {{-- Q4-Etappe 3 / C0-8a Erweiterung (2026-09-07):
+                             Copyright und Quelle laufen ab jetzt ueber
+                             die projekt-scopeden Source-Rows, analog
+                             Text- und Image-Block. Legacy-Strings
+                             (`copyright`/`source`) werden bis zum
+                             Backfill mitgeschrieben, Reader liest
+                             bevorzugt aus copyrightSource/originSource. --}}
                         <div class="mt-2 grid grid-cols-1 gap-3 md:grid-cols-2">
                             <div data-history-field="copyright">
                                 <label class="mb-1 block text-caption font-medium text-ink-700">
                                     {{ __('copyright') }} <span class="text-danger" aria-hidden="true">*</span>
                                 </label>
-                                <livewire:inline-editor
+                                <livewire:source-picker
                                     :model="$item->audiovisual"
-                                    field="copyright"
-                                    rules="nullable|string|max:255"
+                                    field="copyright_id"
+                                    relation="copyrightSource"
+                                    source-type="Copyright"
                                     :label="__('copyright')"
                                     :key="'av-copyright-'.$item->audiovisual->id" />
                             </div>
@@ -96,19 +102,24 @@
                                 <label class="mb-1 block text-caption font-medium text-ink-700">
                                     {{ __('origin') }} <span class="text-danger" aria-hidden="true">*</span>
                                 </label>
-                                <livewire:inline-editor
+                                <livewire:source-picker
                                     :model="$item->audiovisual"
-                                    field="source"
-                                    rules="nullable|string|max:255"
+                                    field="origin_id"
+                                    relation="originSource"
+                                    source-type="Origin"
                                     :label="__('origin')"
-                                    :key="'av-source-'.$item->audiovisual->id" />
+                                    :key="'av-origin-'.$item->audiovisual->id" />
                             </div>
                         </div>
                     </div>
                 @else
+                    {{-- Q4-Etappe 3 / C0-8a Erweiterung: Reader liest
+                         bevorzugt aus der FK-basierten Source-Relation,
+                         faellt auf die Legacy-Strings zurueck, bis der
+                         Backfill den Bestand nachgezogen hat. --}}
                     <p class="metadata mt-2">
-                        Copyright {!! $item->audiovisual->copyright !!}<br>
-                        Origin {!! $item->audiovisual->source !!}
+                        Copyright {!! $item->audiovisual->copyrightSource?->name ?? $item->audiovisual->copyright !!}<br>
+                        Origin {!! $item->audiovisual->originSource?->name ?? $item->audiovisual->source !!}
                     </p>
                 @endcan
             </div>
@@ -116,8 +127,12 @@
             @can('update', $project)
                 @php
                     $avMissing = collect([
-                        empty(trim(strip_tags((string) $item->audiovisual->copyright))) ? __('copyright') : null,
-                        empty(trim(strip_tags((string) $item->audiovisual->source))) ? __('origin') : null,
+                        // Q4-Etappe 3 / C0-8a: fehlend, wenn weder
+                        // FK noch Legacy-String gesetzt sind.
+                        ($item->audiovisual->copyright_id === null
+                            && empty(trim(strip_tags((string) $item->audiovisual->copyright)))) ? __('copyright') : null,
+                        ($item->audiovisual->origin_id === null
+                            && empty(trim(strip_tags((string) $item->audiovisual->source)))) ? __('origin') : null,
                         empty(trim(strip_tags((string) $item->audiovisual->transcript))) ? __('transcript') : null,
                     ])->filter()->values();
                 @endphp

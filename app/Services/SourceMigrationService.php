@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Models\Audiovisual;
 use App\Models\Entry;
 use App\Models\Gallery;
 use App\Models\Image;
@@ -189,6 +190,8 @@ final class SourceMigrationService
      *     freetext_candidates: int,
      *     kind_suggestions: array<string, int>,
      *     migrated: int,
+     *     av_pending: int,
+     *     av_backfilled: int,
      * }
      */
     public function runFor(int $projectId, bool $dryRun): array
@@ -199,6 +202,8 @@ final class SourceMigrationService
         $groups = $this->dedupCandidates($candidates);
         $runKey = 'run-'.now()->format('Y-m-d-His').'-p'.$projectId;
 
+        $avPending = $this->pendingAudiovisualBackfillCount($projectId);
+
         $report = [
             'project_id' => $projectId,
             'run_key' => $runKey,
@@ -208,6 +213,8 @@ final class SourceMigrationService
             'freetext_candidates' => 0,
             'kind_suggestions' => ['archivalie' => 0, 'publikation' => 0, 'interview' => 0, 'abbildung' => 0, 'sonstige' => 0],
             'migrated' => 0,
+            'av_pending' => $avPending,
+            'av_backfilled' => 0,
         ];
 
         foreach ($groups as $group) {
@@ -223,6 +230,15 @@ final class SourceMigrationService
         if ($dryRun) {
             return $report;
         }
+
+        // Q4-Etappe 3 / C0-8a Erweiterung (2026-09-07): Audiovisual-
+        // Backfill. Bestehende AV-Rows haben Copyright/Origin als
+        // Legacy-Strings — die legen wir jetzt als projekt-scopede
+        // Source-Rows an und setzen die FKs. Passiert vor dem
+        // Text/Image-Merge, damit ein neu angelegter AV-Copyright
+        // auch bei einer spaeteren Text-Merge-Gruppe teilnehmen
+        // kann.
+        $report['av_backfilled'] = $this->backfillAudiovisualsForProject($projectId, $runKey);
 
         // Commit: Backup + Neu-Anlage + Referenz-Umbiegung in einer
         // Transaktion pro Gruppe. Wenn irgendwo etwas kippt, rollback
@@ -283,6 +299,30 @@ final class SourceMigrationService
                     'kind_suggested' => $projectSource->kind,
                 ]);
 
+                // Q4-Etappe 3 / C0-8b Fix (2026-09-07): Alt-Rows soft-
+                // deleten, wenn kein anderes Projekt sie noch
+                // referenziert. Sonst zeigt der source-picker sie
+                // weiter als Duplikate an. Rows, die noch von einem
+                // fremden Projekt referenziert sind, bleiben sichtbar
+                // — das eigene Projekt sieht sie nicht mehr, weil
+                // der Picker jetzt auf project_id filtert.
+                foreach ($sources as $source) {
+                    $referencedElsewhere = Text::query()
+                        ->where(fn ($q) => $q->where('origin', $source->id)->orWhere('copyright', $source->id))
+                        ->exists()
+                        || Image::query()
+                            ->where(fn ($q) => $q->where('origin', $source->id)->orWhere('copyright', $source->id))
+                            ->exists();
+
+                    if (! $referencedElsewhere) {
+                        $source->delete();
+                        Log::channel(config('logging.default'))->info('sources.migration.legacy_soft_deleted', [
+                            'run_key' => $runKey,
+                            'source_id' => $source->id,
+                        ]);
+                    }
+                }
+
                 $report['migrated']++;
             });
         }
@@ -313,6 +353,128 @@ final class SourceMigrationService
                 'updated_at' => now(),
             ]
         );
+    }
+
+    /**
+     * Q4-Etappe 3 / C0-8a Erweiterung (2026-09-07): Zaehlt AV-Rows im
+     * Projekt, die noch einen Legacy-Copyright/Source-String halten,
+     * aber noch keinen FK auf sources.
+     */
+    private function pendingAudiovisualBackfillCount(int $projectId): int
+    {
+        return DB::table('audiovisuals')
+            ->join('media_content', function ($join) {
+                $join->on('media_content.content_id', '=', 'audiovisuals.id')
+                    ->where('media_content.content_type', '=', Audiovisual::class);
+            })
+            ->join('entries', function ($join) {
+                $join->on('entries.id', '=', 'media_content.parent_id')
+                    ->where('media_content.parent_type', '=', Entry::class);
+            })
+            ->join('chapters', 'chapters.id', '=', 'entries.chapter_id')
+            ->where('chapters.project_id', $projectId)
+            ->where(function ($q) {
+                $q->where(function ($qq) {
+                    $qq->whereNull('audiovisuals.copyright_id')
+                        ->whereNotNull('audiovisuals.copyright');
+                })->orWhere(function ($qq) {
+                    $qq->whereNull('audiovisuals.origin_id')
+                        ->whereNotNull('audiovisuals.source');
+                });
+            })
+            ->count();
+    }
+
+    /**
+     * Q4-Etappe 3 / C0-8a Erweiterung (2026-09-07): Legt fuer alle
+     * AV-Rows im Projekt, die noch Legacy-Copyright/Source-Strings
+     * halten, projekt-scopede Source-Zeilen an und setzt die FKs.
+     * Nutzt SourceService::findOrCreateId, damit gleiche Namen
+     * innerhalb des Projekts zusammen gruppiert werden.
+     */
+    private function backfillAudiovisualsForProject(int $projectId, string $runKey): int
+    {
+        $affected = 0;
+
+        // Alle AV-Rows im Projekt einsammeln — via Entry-Chain.
+        $avIds = DB::table('audiovisuals')
+            ->join('media_content', function ($join) {
+                $join->on('media_content.content_id', '=', 'audiovisuals.id')
+                    ->where('media_content.content_type', '=', Audiovisual::class);
+            })
+            ->join('entries', function ($join) {
+                $join->on('entries.id', '=', 'media_content.parent_id')
+                    ->where('media_content.parent_type', '=', Entry::class);
+            })
+            ->join('chapters', 'chapters.id', '=', 'entries.chapter_id')
+            ->where('chapters.project_id', $projectId)
+            ->pluck('audiovisuals.id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        if ($avIds === []) {
+            return 0;
+        }
+
+        // Kleiner lokaler Wrapper um SourceService — der ist hier
+        // absichtlich als Konstruktor-Dep nicht drin (der Service
+        // wurde bewusst kompakt gehalten und findet-or-creates
+        // direkt). Wir bauen die Source-Row mit setTranslation.
+        foreach (Audiovisual::whereIn('id', $avIds)->get() as $av) {
+            $changed = false;
+
+            $copyright = trim((string) $av->copyright);
+            if ($av->copyright_id === null && $copyright !== '') {
+                $av->copyright_id = $this->findOrCreateProjectSource($copyright, 'Copyright', $projectId);
+                $changed = true;
+            }
+
+            $origin = trim((string) $av->source);
+            if ($av->origin_id === null && $origin !== '') {
+                $av->origin_id = $this->findOrCreateProjectSource($origin, 'Origin', $projectId);
+                $changed = true;
+            }
+
+            if ($changed) {
+                $av->save();
+                $affected++;
+                Log::channel(config('logging.default'))->info('sources.migration.av_backfilled', [
+                    'run_key' => $runKey,
+                    'project_id' => $projectId,
+                    'audiovisual_id' => $av->id,
+                    'copyright_id' => $av->copyright_id,
+                    'origin_id' => $av->origin_id,
+                ]);
+            }
+        }
+
+        return $affected;
+    }
+
+    /**
+     * Inline-Variante von SourceService::findOrCreateId, damit der
+     * Migrations-Service keinen Container-Roundtrip pro Zeile machen
+     * muss. Verhalten identisch.
+     */
+    private function findOrCreateProjectSource(string $value, string $type, int $projectId): int
+    {
+        $existing = Source::query()
+            ->where('type', $type)
+            ->where('project_id', $projectId)
+            ->get()
+            ->first(fn (Source $s) => (string) $s->name === $value);
+
+        if ($existing !== null) {
+            return (int) $existing->id;
+        }
+
+        $source = new Source;
+        $source->type = $type;
+        $source->project_id = $projectId;
+        $source->setTranslation('name', app()->getLocale(), $value);
+        $source->save();
+
+        return (int) $source->id;
     }
 
     /**

@@ -733,6 +733,46 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Q4-Etappe 3 · C0 · Erweiterung: Audiovisual auf Source-Rows +
+  GUI-Wrapper + Picker-Scoping** (2026-09-07). Nachlauf zum
+  C0-Kern-PR, im gleichen Branch. Drei Ergänzungen:
+  * **Audiovisual-Umstellung.** Migration
+    `add_source_scope_to_audiovisuals_table` ergänzt `copyright_id`
+    und `origin_id` als nullable FKs auf `sources`. `Audiovisual`-
+    Model hat neue Relations `copyrightSource()` und
+    `originSource()`. `AudiovisualService` nimmt `SourceService`
+    als Konstruktor-Dep; `create`/`update` legen Source-Rows
+    projekt-scoped an und setzen die FKs. Legacy-Strings
+    (`copyright`/`source`) werden bis zum Backfill mitgeschrieben —
+    der Reader liest bevorzugt aus der Source-Relation.
+    `audiovisual-block.blade` nutzt jetzt den `<livewire:source-
+    picker>` statt zweier `<livewire:inline-editor>`. Der Angaben-
+    Status-Check akzeptiert beide Wege (FK oder Legacy-String).
+  * **AV-Backfill im Migrations-Assistenten.**
+    `SourceMigrationService` erweitert um
+    `pendingAudiovisualBackfillCount` und
+    `backfillAudiovisualsForProject`. Kommandobzw. GUI-Report zeigt
+    `av_pending` und `av_backfilled`. `Log::info('sources.migration.
+    av_backfilled')` pro Zeile.
+  * **GUI-Wrapper `/admin/sources/migration` (C0c).** Livewire-Volt-
+    Sicht (Admin-only) mit Projekt-Liste, Dry-Run-Report,
+    Confirmation-Dialog, History der letzten 20 Läufe aus
+    `sources_backup`. Verlinkt in Rail und Navi-Header. `rows` als
+    Column-Alias auf `row_count` umbenannt (MySQL-8-Reservat).
+  * **Picker scopet auf Projekt.** Der `source-picker` filtert
+    Vorschläge und Dedup jetzt auf `project_id`, damit Alt-Rows
+    fremder Projekte nicht mehr im Autocomplete auftauchen.
+    `createAndSelect` legt neue Rows project-scoped an.
+    `currentName` nutzt `loadMissing`, damit
+    `Model::shouldBeStrict()` nicht wegen Lazy-Load meckert.
+  * **Migrations-Cleanup.** Migrierte Alt-Rows werden nach der
+    Referenz-Umbiegung SoftDeleted, wenn kein anderes Projekt sie
+    noch referenziert — verhindert Duplikate in der
+    Nach-Migration-Anzeige.
+  * **Backlog-Notizen:** C0d (dedizierte Quellenverwaltung pro
+    Projekt, Vorarbeit Zitat-Block), UX-BLK-01 (Angaben-Status-
+    Chip live aktualisieren — betrifft alle Block-Types).
+
 - **Q4-Etappe 3 · C0 · Quellen-Datenmodell projekt-scopen (8a + 8b)**
   (2026-09-07). Vorarbeit für den Zitat-Block und den Reader-Umbau
   aus Phase 6. Zwei zusammengehörige Änderungen an derselben

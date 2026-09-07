@@ -64,6 +64,8 @@ class MigrateSourcesToProjectCommand extends Command
         $this->line("Kandidaten:       {$report['candidates']} Alt-Sources referenziert");
         $this->line("Dedup-Gruppen:    {$report['groups']} nach Normalisierung");
         $this->line("Freitext-Hinweise: {$report['freetext_candidates']}");
+        $this->line("AV-Backfill:      {$report['av_pending']} Audiovisual-Rows offen"
+            .($dryRun ? '' : ' · '.$report['av_backfilled'].' erledigt'));
         $this->newLine();
         $this->line('kind-Vorschlaege:');
         foreach ($report['kind_suggestions'] as $kind => $count) {
