@@ -48,6 +48,13 @@ projects/create.blade.php. Admin und Owner haben `invite` implizit
             'href'   => route('translate', $project->id),
             'active' => $active === 'translate',
         ],
+        // Q4-Etappe 3 / C0d (2026-09-07): Quellenverwaltung
+        // pro Projekt. Verlinkt zur Livewire-Vollpage.
+        [
+            'label'  => __('sources'),
+            'href'   => route('projects.sources', $project->id),
+            'active' => $active === 'sources',
+        ],
     ];
 
     if ($canInvite) {

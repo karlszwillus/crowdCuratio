@@ -41,6 +41,8 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\TextBlockController;
 use App\Http\Controllers\UserController;
+use App\Models\Project;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Spatie\WelcomeNotification\WelcomesNewUsers;
 
@@ -111,6 +113,14 @@ Route::group(
         // Modal-Kaskade aus projects/create ab.
         Route::get('/projects/{project}/permissions', [ProjectController::class, 'permissions'])
             ->name('projects.permissions');
+        // Q4-Etappe 3 / C0d (2026-09-07): Quellenverwaltung pro Projekt.
+        // Volt-Component `project-sources` gated per Route-Middleware
+        // `auth` und intern in mount() ueber `authorize('update', $project)`.
+        Route::get('/projects/{project}/sources', function (Project $project) {
+            Gate::authorize('update', $project);
+
+            return view('projects.sources', compact('project'));
+        })->name('projects.sources');
         Route::post('/projects/{project}/metadata/adopt-system-text',
             [ProjectController::class, 'adoptSystemLegalText'])
             ->name('projects.metadata.adopt_system_text');
