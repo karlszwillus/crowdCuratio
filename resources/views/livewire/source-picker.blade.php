@@ -153,12 +153,22 @@ new class extends Component
         // Für kleine Source-Tabellen ist ein PHP-Roundtrip auf der
         // Locale-aufgelösten Name-Property sauberer und Dialekt-
         // unabhängig.
+        // Q4-Etappe 3 / C0-8a (2026-09-07): Dedup und Neu-Anlage
+        // scopen auf das Parent-Project, damit „Landesarchiv Berlin"
+        // in Projekt A und in Projekt B zwei separate Zeilen ergibt
+        // und der Alt-Bestand (project_id=NULL) nicht mit-matched wird.
+        $projectId = $this->resolveProject()?->id;
+
         $needle = mb_strtolower($name);
-        $existing = Source::where('type', $this->sourceType)
-            ->get()
+        $builder = Source::where('type', $this->sourceType);
+        if ($projectId !== null) {
+            $builder->where('project_id', $projectId);
+        }
+        $existing = $builder->get()
             ->first(fn (Source $source) => mb_strtolower((string) $source->name) === $needle);
 
         $source = $existing ?? Source::create([
+            'project_id' => $projectId,
             'name' => $name,
             'type' => $this->sourceType,
             'is_translated' => false,
@@ -186,6 +196,13 @@ new class extends Component
      */
     private function currentName(): string
     {
+        // Q4-Etappe 3 / C0-8a Erweiterung (2026-09-07):
+        // Model::shouldBeStrict() verbietet Lazy-Loading — vor dem
+        // Zugriff auf die BelongsTo-Relation deshalb explizit
+        // eager-loaden. Wenn die Relation gar nicht existiert
+        // (Randfall in Volt-Tests), gibt loadMissing ohne Fehler
+        // durch und der Fallback greift.
+        $this->model->loadMissing($this->relation);
         $related = $this->model->{$this->relation};
 
         return $related?->name ?? '';
@@ -202,6 +219,17 @@ new class extends Component
     {
         $q = trim($query);
         $builder = Source::where('type', $this->sourceType);
+
+        // Q4-Etappe 3 / C0-8a (2026-09-07): Nach der Projekt-Scope-
+        // Umstellung filtern wir hier auf `project_id = <projectId>`,
+        // damit die Vorschlagsliste nicht Alt-Rows anderer Projekte
+        // (bzw. den ungescopeten Vor-C0-Bestand) mit anzeigt. Wenn das
+        // Parent-Modell keine Project-Bindung hat (Randfall — Volt-
+        // Test-Setup), zeigen wir wie bisher alles.
+        $projectId = $this->resolveProject()?->id;
+        if ($projectId !== null) {
+            $builder->where('project_id', $projectId);
+        }
 
         if ($q !== '') {
             $builder->where('name', 'like', '%'.$q.'%');

@@ -44,7 +44,10 @@ beforeEach(function () {
 
 function audiovisualService(): AudiovisualService
 {
-    return new AudiovisualService;
+    // Q4-Etappe 3 / C0-8a Erweiterung (2026-09-07): Service braucht
+    // jetzt `SourceService` als Konstruktor-Dep — Container aufloesen
+    // statt manuell instanziieren.
+    return app(AudiovisualService::class);
 }
 
 it('resolveLink wandelt eine YouTube-URL in den embed-Pfad', function () {

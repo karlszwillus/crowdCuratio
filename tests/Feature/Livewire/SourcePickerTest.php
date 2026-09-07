@@ -24,6 +24,7 @@ use App\Models\Source;
 use App\Models\User;
 use App\Support\PermissionName;
 use App\Support\RoleName;
+use Illuminate\Support\Facades\App;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -39,6 +40,13 @@ use Tests\TestCase;
 */
 
 beforeEach(function () {
+    // Q4-Etappe 3 / C0-8a (2026-09-07): Locale explizit setzen — im
+    // CI kann die default-Locale (via env / RequestContext) abweichen,
+    // und HasTranslations::setAttribute schreibt sonst in eine andere
+    // Locale als der Picker beim Read erwartet. Lokal war das ein
+    // no-op, auf GitHub-Actions blieben die Test-Rows unauffindbar.
+    App::setLocale('de');
+
     foreach (PermissionName::all() as $permissionName) {
         Permission::firstOrCreate(['name' => $permissionName, 'guard_name' => 'web']);
     }
@@ -48,6 +56,24 @@ beforeEach(function () {
         ->syncPermissions([PermissionName::VIEW->value]);
 });
 
+/**
+ * Q4-Etappe 3 / C0-8a: Test-Helper, der eine Source-Zeile mit
+ * expliziter de-Uebersetzung anlegt — vermeidet die Locale-Abhaengigkeit
+ * von `Source::create(['name' => ...])`, die via HasTranslations
+ * die aktuelle App-Locale nutzt.
+ */
+function makeScopedSource(int $projectId, string $name, string $type): Source
+{
+    $source = new Source;
+    $source->project_id = $projectId;
+    $source->type = $type;
+    $source->is_translated = false;
+    $source->setTranslation('name', 'de', $name);
+    $source->save();
+
+    return $source;
+}
+
 it('filtert Vorschläge nach type und Substring', function () {
     /** @var TestCase $this */
     /** @var User $owner */
@@ -56,9 +82,13 @@ it('filtert Vorschläge nach type und Substring', function () {
     $project = makeProject($owner);
     $text = attachToProject($project, makeText());
 
-    Source::create(['name' => 'Deutsches Historisches Museum', 'type' => 'Copyright', 'is_translated' => false]);
-    Source::create(['name' => 'Deutsche Digitale Bibliothek', 'type' => 'Copyright', 'is_translated' => false]);
-    Source::create(['name' => 'Bundesarchiv', 'type' => 'Origin', 'is_translated' => false]);
+    // Q4-Etappe 3 / C0-8a (2026-09-07): Picker scopet auf project_id
+    // — die Test-Sources brauchen den Scope, damit sie im Autocomplete
+    // dieses Projekts erscheinen. Anlage ueber setTranslation, damit
+    // der Name locale-fest in `de` landet.
+    makeScopedSource($project->id, 'Deutsches Historisches Museum', 'Copyright');
+    makeScopedSource($project->id, 'Deutsche Digitale Bibliothek', 'Copyright');
+    makeScopedSource($project->id, 'Bundesarchiv', 'Origin');
 
     $component = Livewire::actingAs($owner)
         ->test('source-picker', [
@@ -138,7 +168,11 @@ it('erzeugt kein Duplikat bei case-insensitivem Match', function () {
     $project = makeProject($owner);
     $text = attachToProject($project, makeText());
 
-    $existing = Source::create(['name' => 'Bundesarchiv', 'type' => 'Copyright', 'is_translated' => false]);
+    // Q4-Etappe 3 / C0-8a (2026-09-07): Dedup-Check laeuft ab jetzt
+    // im Projekt-Scope — der bestehende Row muss dem selben Projekt
+    // gehoeren wie $text, damit createAndSelect ihn findet. Anlage
+    // ueber setTranslation, damit der Name locale-fest in `de` landet.
+    $existing = makeScopedSource($project->id, 'Bundesarchiv', 'Copyright');
 
     Livewire::actingAs($owner)
         ->test('source-picker', [

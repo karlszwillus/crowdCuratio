@@ -27,6 +27,7 @@ use App\Support\HasRevisions;
 use App\Support\TouchesEntryViaMediaContent;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Lang;
@@ -49,9 +50,36 @@ class Audiovisual extends Model implements HasComments
      *
      * @var list<string>
      */
-    protected $fillable = ['link', 'source', 'copyright', 'type', 'transcript', 'is_translated'];
+    /**
+     * Q4-Etappe 3 / C0-8a Erweiterung (2026-09-07): `copyright_id` und
+     * `origin_id` als FK auf `sources`. Die Legacy-Strings `copyright`
+     * und `source` (translatable JSON) bleiben bis der Backfill
+     * durchlaufen ist — der Reader zeigt aus dem FK, wenn gesetzt,
+     * sonst faellt er auf die alten Strings zurueck.
+     */
+    protected $fillable = ['link', 'source', 'copyright', 'copyright_id', 'origin_id', 'type', 'transcript', 'is_translated'];
 
     public $translatable = ['link', 'source', 'copyright', 'transcript'];
+
+    /**
+     * Q4-Etappe 3 / C0-8a Erweiterung: FK-basierte Copyright-Quelle.
+     */
+    public function copyrightSource(): BelongsTo
+    {
+        return $this->belongsTo(Source::class, 'copyright_id');
+    }
+
+    /**
+     * Q4-Etappe 3 / C0-8a Erweiterung: FK-basierte Herkunfts-Quelle.
+     * Achtung: die Legacy-Spalte heisst `source` (String), die neue
+     * FK-Spalte `origin_id` — Relation nennt sich `originSource`, um
+     * mit Text/Image (`originText`, `originImage`) semantisch zu
+     * fluchten.
+     */
+    public function originSource(): BelongsTo
+    {
+        return $this->belongsTo(Source::class, 'origin_id');
+    }
 
     /**
      * Get all comments
