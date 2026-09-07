@@ -72,7 +72,7 @@
   "sources_admin_field_holding": "Institution / publisher",
   "sources_admin_field_signature": "Signature / order number",
   "sources_admin_saved_flash": "Source saved.",
-  "sources_admin_referenced_n_times": "Not yet referenced.|Referenced :count time.|Referenced :count times.",
+  "sources_admin_referenced_n_times": "{0} Not yet referenced.|{1} Referenced :count time.|[2,*] Referenced :count times.",
   "sources_admin_merge": "Merge",
   "sources_admin_merge_title": "Merge sources",
   "sources_admin_merge_intro": "Pick the target source. All text, image and AV references from the active source will be re-wired to the target; the active source will be soft-deleted.",

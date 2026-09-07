@@ -72,7 +72,7 @@
   "sources_admin_field_holding": "Institution / Verlag",
   "sources_admin_field_signature": "Signatur / Bestellnummer",
   "sources_admin_saved_flash": "Quelle gespeichert.",
-  "sources_admin_referenced_n_times": "Noch nicht referenziert.|Wird :count mal referenziert.|Wird :count mal referenziert.",
+  "sources_admin_referenced_n_times": "{0} Noch nicht referenziert.|{1} Wird :count mal referenziert.|[2,*] Wird :count mal referenziert.",
   "sources_admin_merge": "Zusammenführen",
   "sources_admin_merge_title": "Quellen zusammenführen",
   "sources_admin_merge_intro": "Wähle die Ziel-Quelle. Alle Text-, Bild- und AV-Referenzen der aktiven Quelle werden auf die Ziel-Quelle umgehängt, die aktive Quelle wird anschließend soft-gelöscht.",

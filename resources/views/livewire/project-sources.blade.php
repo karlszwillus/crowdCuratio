@@ -91,46 +91,26 @@ new class extends Component
     }
 
     /**
-     * @return array<int, int>  source_id => Zahl der Referenzen (Text+Image+AV)
+     * Zaehlt die aktiven Referenzen (Text+Image+AV) fuer EINE Source.
+     *
+     * C0-8b Fix v2 (2026-09-07): Vorherige Version nutzte ein Cache-
+     * Array ueber alle Projekt-Sources — das lieferte inkonsistente
+     * Werte zwischen Liste und Detail-Bereich (vermutlich Livewire-
+     * Computed-Cache-Timing in Volt). Diese Version zaehlt direkt
+     * per Source, damit beide Zugriffe garantiert dieselbe Query-
+     * Semantik verwenden.
      */
-    #[Computed]
-    public function referenceCounts(): array
+    public function referenceCountFor(int $sourceId): int
     {
-        $ids = $this->sources->pluck('id')->all();
-        if ($ids === []) {
-            return [];
-        }
-
-        $counts = array_fill_keys($ids, 0);
-        $bump = function (int $sourceId) use (&$counts): void {
-            if (isset($counts[$sourceId])) {
-                $counts[$sourceId]++;
-            }
-        };
-
-        // Text-Referenzen (origin + copyright)
-        foreach (Text::query()->whereIn('origin', $ids)->pluck('origin') as $id) {
-            $bump((int) $id);
-        }
-        foreach (Text::query()->whereIn('copyright', $ids)->pluck('copyright') as $id) {
-            $bump((int) $id);
-        }
-        // Image-Referenzen
-        foreach (Image::query()->whereIn('origin', $ids)->pluck('origin') as $id) {
-            $bump((int) $id);
-        }
-        foreach (Image::query()->whereIn('copyright', $ids)->pluck('copyright') as $id) {
-            $bump((int) $id);
-        }
-        // Audiovisual-Referenzen
-        foreach (Audiovisual::query()->whereIn('origin_id', $ids)->pluck('origin_id') as $id) {
-            $bump((int) $id);
-        }
-        foreach (Audiovisual::query()->whereIn('copyright_id', $ids)->pluck('copyright_id') as $id) {
-            $bump((int) $id);
-        }
-
-        return $counts;
+        return Text::query()
+            ->where(fn ($q) => $q->where('origin', $sourceId)->orWhere('copyright', $sourceId))
+            ->count()
+            + Image::query()
+                ->where(fn ($q) => $q->where('origin', $sourceId)->orWhere('copyright', $sourceId))
+                ->count()
+            + Audiovisual::query()
+                ->where(fn ($q) => $q->where('origin_id', $sourceId)->orWhere('copyright_id', $sourceId))
+                ->count();
     }
 
     public function selectSource(int $sourceId): void
@@ -337,7 +317,7 @@ new class extends Component
                 <ul class="divide-y divide-line-100" role="list">
                     @foreach ($this->sources as $source)
                         @php
-                            $count = $this->referenceCounts[$source->id] ?? 0;
+                            $count = $this->referenceCountFor((int) $source->id);
                         @endphp
                         <li>
                             <button
@@ -370,7 +350,7 @@ new class extends Component
                     {{ __('sources_admin_no_selection') }}
                 </p>
             @else
-                @php $refCount = $this->referenceCounts[$selectedId] ?? 0; @endphp
+                @php $refCount = $this->referenceCountFor((int) $selectedId); @endphp
                 <form wire:submit.prevent="save" class="space-y-4">
                     <div>
                         <label for="src-name" class="mb-1 block text-caption font-medium text-ink-700">
@@ -468,7 +448,7 @@ new class extends Component
                 </header>
                 <div class="p-5 space-y-3">
                     <p class="text-body text-ink-900">{{ __('sources_admin_merge_intro') }}</p>
-                    <select wire:model="mergeTargetId"
+                    <select wire:model.live="mergeTargetId"
                             class="block w-full rounded-md border border-line-200 bg-paper-0 px-3 py-2 text-body">
                         <option value="">— {{ __('sources_admin_merge_target_placeholder') }} —</option>
                         @foreach ($this->mergeCandidates as $candidate)
@@ -509,7 +489,7 @@ new class extends Component
                 </header>
                 <div class="p-5 space-y-3">
                     <p class="text-body text-ink-900">{{ __('sources_admin_delete_confirm', ['name' => $name]) }}</p>
-                    @php $refCount = $this->referenceCounts[$selectedId] ?? 0; @endphp
+                    @php $refCount = $this->referenceCountFor((int) $selectedId); @endphp
                     @if ($refCount > 0)
                         <p class="rounded-md border border-warning-bg bg-warning-bg/40 px-3 py-2 text-caption text-ink-900">
                             {{ trans_choice('sources_admin_delete_reference_warning', $refCount, ['count' => $refCount]) }}
