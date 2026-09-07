@@ -173,11 +173,19 @@ Route::group(
         Route::patch('/profile', [ProfileController::class, 'updateProfile'])->name(
             'profile.update'
         );
-        // Phase 5ac.1: Sofort-Wirkung fuer Sprache und Theme.
-        Route::post('/profile/locale', [ProfileController::class, 'updateLocale'])->name('profile.locale');
-        Route::post('/profile/theme', [ProfileController::class, 'updateTheme'])->name('profile.theme');
-        // Q3-Politur G9 (2026-08-20) / UX-01: Live-Blur-Check fuers Kuerzel.
-        Route::post('/profile/check-initials', [ProfileController::class, 'checkInitials'])->name('profile.check_initials');
+        // Q4-Etappe 2 / I11 (2026-08-27): Interne AJAX-Endpunkte
+        // (JSON in / JSON out) unter dem Prefix `/api/internal/`
+        // gebuendelt. Route-Namen bleiben unveraendert — Blade-`route()`-
+        // Aufrufer generieren automatisch die neue URL. Weichenstellung
+        // fuer eine spaetere Phase-6-`/api/v1/`-Struktur mit
+        // ApiResource-Transformern und Versioning.
+        Route::prefix('api/internal')->group(function () {
+            // Phase 5ac.1: Sofort-Wirkung fuer Sprache und Theme.
+            Route::post('/profile/locale', [ProfileController::class, 'updateLocale'])->name('profile.locale');
+            Route::post('/profile/theme', [ProfileController::class, 'updateTheme'])->name('profile.theme');
+            // Q3-Politur G9 (2026-08-20) / UX-01: Live-Blur-Check fuers Kuerzel.
+            Route::post('/profile/check-initials', [ProfileController::class, 'checkInitials'])->name('profile.check_initials');
+        });
         // Phase 5ac.4: eigener Save fuer Passwort-Wechsel.
         Route::patch('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
         // B2 (2026-08-21) / DSGVO: Konto-Loeschung mit 30-Tage-Frist.
@@ -325,7 +333,9 @@ Route::group(
         )->name(
             'project.permission'
         );
-        Route::get('/autocomplete', [ContentController::class, 'autocomplete'])->name(
+        // Q4-Etappe 2 / I11 (2026-08-27): Source-Autocomplete unter dem
+        // Prefix `/api/internal/` (analog Locale/Theme/Initials).
+        Route::get('/api/internal/sources/autocomplete', [ContentController::class, 'autocomplete'])->name(
             'autocomplete'
         );
         Route::get(
