@@ -61,9 +61,39 @@ class Project extends Model implements HasComments
      *
      * @var list<string>
      */
-    protected $fillable = ['name', 'logo', 'imprint', 'terms', 'status', 'description'];
+    /**
+     * Q4-Etappe 3 / C0b (2026-09-07): `citation_depth` und
+     * `source_required` als projektweite Zitier-Settings ergaenzt.
+     */
+    protected $fillable = ['name', 'logo', 'imprint', 'terms', 'status', 'description', 'citation_depth', 'source_required'];
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'source_required' => 'boolean',
+        ];
+    }
 
     public $translatable = ['name', 'imprint', 'terms', 'description'];
+
+    /**
+     * Q4-Etappe 3 / C0b: Convenience-Helpers fuer die Zitier-Settings
+     * — werden von source-picker und Content-Bloecken gebraucht, damit
+     * die UI entscheiden kann, ob die Zitier-Tiefe-Felder sichtbar und
+     * die Copyright/Origin-Felder Pflicht sind.
+     */
+    public function usesFullCitationDepth(): bool
+    {
+        return ($this->citation_depth ?? 'simple') === 'full';
+    }
+
+    public function requiresSources(): bool
+    {
+        return (bool) ($this->source_required ?? true);
+    }
     /*
      * Get all of the chapters for the project
      */

@@ -87,7 +87,7 @@
             </div>
             <div data-history-field="copyright">
                 <label class="mb-1 block text-caption font-medium text-ink-700">
-                    {{ __('copyright') }} <span class="text-danger" aria-hidden="true">*</span>
+                    {{ __('copyright') }} @if ($project->requiresSources())<span class="text-danger" aria-hidden="true">*</span>@endif
                 </label>
                 <livewire:source-picker
                     :model="$image"
@@ -99,7 +99,7 @@
             </div>
             <div data-history-field="origin">
                 <label class="mb-1 block text-caption font-medium text-ink-700">
-                    {{ __('origin') }} <span class="text-danger" aria-hidden="true">*</span>
+                    {{ __('origin') }} @if ($project->requiresSources())<span class="text-danger" aria-hidden="true">*</span>@endif
                 </label>
                 <livewire:source-picker
                     :model="$image"
