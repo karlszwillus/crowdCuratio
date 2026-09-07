@@ -24,6 +24,7 @@ use App\Models\Source;
 use App\Models\User;
 use App\Support\PermissionName;
 use App\Support\RoleName;
+use Illuminate\Support\Facades\App;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -44,7 +45,7 @@ beforeEach(function () {
     // und HasTranslations::setAttribute schreibt sonst in eine andere
     // Locale als der Picker beim Read erwartet. Lokal war das ein
     // no-op, auf GitHub-Actions blieben die Test-Rows unauffindbar.
-    \Illuminate\Support\Facades\App::setLocale('de');
+    App::setLocale('de');
 
     foreach (PermissionName::all() as $permissionName) {
         Permission::firstOrCreate(['name' => $permissionName, 'guard_name' => 'web']);
@@ -61,9 +62,9 @@ beforeEach(function () {
  * von `Source::create(['name' => ...])`, die via HasTranslations
  * die aktuelle App-Locale nutzt.
  */
-function makeScopedSource(int $projectId, string $name, string $type): \App\Models\Source
+function makeScopedSource(int $projectId, string $name, string $type): Source
 {
-    $source = new \App\Models\Source;
+    $source = new Source;
     $source->project_id = $projectId;
     $source->type = $type;
     $source->is_translated = false;
