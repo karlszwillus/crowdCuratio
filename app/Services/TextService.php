@@ -52,8 +52,13 @@ class TextService
      */
     public function create(TextData $data, int $entryId): Text
     {
-        $copyright = $this->sources->findOrCreateId($data->copyrightName, 'Copyright');
-        $origin = $this->sources->findOrCreateId($data->originName, 'Origin');
+        // Q4-Etappe 3 / C0-8a (2026-09-07): Source-Rows sind ab jetzt
+        // projekt-scoped. Wir loesen die Project-ID ueber die
+        // Entry-Chain auf und geben sie an den Service weiter.
+        $projectId = $this->resolveProjectIdForEntry($entryId);
+
+        $copyright = $this->sources->findOrCreateId($data->copyrightName, 'Copyright', $projectId);
+        $origin = $this->sources->findOrCreateId($data->originName, 'Origin', $projectId);
 
         $cleanBody = $this->stripScriptTags($data->body);
 
@@ -78,8 +83,12 @@ class TextService
      */
     public function update(Text $text, TextData $data): Text
     {
-        $copyright = $this->sources->findOrCreateId($data->copyrightName, 'Copyright');
-        $origin = $this->sources->findOrCreateId($data->originName, 'Origin');
+        // Q4-Etappe 3 / C0-8a (2026-09-07): Project-ID aus dem Text-
+        // Model ueber die vorhandene `->project()`-Methode ziehen.
+        $projectId = $text->project()?->id;
+
+        $copyright = $this->sources->findOrCreateId($data->copyrightName, 'Copyright', $projectId);
+        $origin = $this->sources->findOrCreateId($data->originName, 'Origin', $projectId);
 
         $text->text = $this->stripScriptTags($data->body);
         $text->origin = $origin;
@@ -89,6 +98,24 @@ class TextService
         $text->save();
 
         return $text;
+    }
+
+    /**
+     * Q4-Etappe 3 / C0-8a: Project-ID fuer den Create-Pfad ueber
+     * die Entry-Chain (`Entry::project()`) aufloesen. Nullable,
+     * falls der Entry noch keine Chapter/Project-Bindung hat —
+     * dann bleibt der Source-Row `project_id = NULL` und der
+     * Migrations-Assistent (8b) zieht ihn spaeter nach.
+     */
+    private function resolveProjectIdForEntry(int $entryId): ?int
+    {
+        $entry = Entry::find($entryId);
+        if ($entry === null) {
+            return null;
+        }
+        $project = $entry->project();
+
+        return $project?->id;
     }
 
     /**

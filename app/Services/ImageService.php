@@ -24,6 +24,7 @@ namespace App\Services;
 
 use App\Data\ImageData;
 use App\Models\Comment;
+use App\Models\Gallery;
 use App\Models\Image;
 use App\Models\MediaContent;
 use App\Traits\UploadTrait;
@@ -62,8 +63,12 @@ class ImageService
             ->orderByDesc('position')
             ->value('position');
 
-        $copyright = $this->sources->findOrCreateId($data->copyrightName, 'Copyright');
-        $origin = $this->sources->findOrCreateId($data->originName, 'Origin');
+        // Q4-Etappe 3 / C0-8a (2026-09-07): Source-Rows sind projekt-
+        // scoped. Wir loesen die Project-ID ueber die Gallery-Chain.
+        $projectId = $this->resolveProjectIdForGallery($galleryId);
+
+        $copyright = $this->sources->findOrCreateId($data->copyrightName, 'Copyright', $projectId);
+        $origin = $this->sources->findOrCreateId($data->originName, 'Origin', $projectId);
 
         return Image::firstOrCreate([
             'gallery_id' => $galleryId,
@@ -110,8 +115,12 @@ class ImageService
      */
     public function update(Image $image, ImageData $data, ?UploadedFile $newFile = null): Image
     {
-        $copyright = $this->sources->findOrCreateId($data->copyrightName, 'Copyright');
-        $origin = $this->sources->findOrCreateId($data->originName, 'Origin');
+        // Q4-Etappe 3 / C0-8a (2026-09-07): Project-ID aus dem Image-
+        // Model ueber die vorhandene `->project()`-Methode ziehen.
+        $projectId = $image->project()?->id;
+
+        $copyright = $this->sources->findOrCreateId($data->copyrightName, 'Copyright', $projectId);
+        $origin = $this->sources->findOrCreateId($data->originName, 'Origin', $projectId);
 
         if ($newFile !== null) {
             $name = $this->uploadImageFile($newFile);
@@ -178,5 +187,23 @@ class ImageService
         MediaContent::where('content_id', $imageId)
             ->where('content_type', Image::class)
             ->delete();
+    }
+
+    /**
+     * Q4-Etappe 3 / C0-8a (2026-09-07): Project-ID fuer den Create-
+     * Pfad ueber die Gallery-Chain (`Gallery::project()`) aufloesen.
+     * Nullable, falls die Gallery noch keine MediaContent-Bindung
+     * zu einem Entry hat — dann bleibt der Source-Row `project_id
+     * = NULL` und der Migrations-Assistent (8b) zieht ihn spaeter
+     * nach.
+     */
+    private function resolveProjectIdForGallery(int $galleryId): ?int
+    {
+        $gallery = Gallery::find($galleryId);
+        if ($gallery === null) {
+            return null;
+        }
+
+        return $gallery->project()?->id;
     }
 }

@@ -733,6 +733,50 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Q4-Etappe 3 · C0 · Quellen-Datenmodell projekt-scopen (8a + 8b)**
+  (2026-09-07). Vorarbeit für den Zitat-Block und den Reader-Umbau
+  aus Phase 6. Zwei zusammengehörige Änderungen an derselben
+  Datenkette:
+  * **8a · Schema-Erweiterung.** Migration `add_project_scope_to_
+    sources_table` ergänzt `project_id` (FK auf `projects`,
+    nullable, `nullOnDelete`), `kind` (32-Zeichen-String für die
+    Verzeichnis-Klassifikation `archivalie/publikation/interview/
+    abbildung/sonstige`) sowie `title`, `holding`, `signature` als
+    nullable Strings. Der bisherige `type`-Wert (`Copyright` /
+    `Origin` = Rolle am Content-Block) bleibt unangetastet.
+    `SourceService::findOrCreateId($value, $type, ?int $projectId)`
+    schreibt Namen jetzt sauber über `HasTranslations::set
+    Translation` statt manuellem `json_encode`; die Suche scopet
+    auf `project_id`, wenn übergeben, sonst nur auf projektlose
+    Alt-Rows. Der tote `sources.content_id`-Eintrag im
+    `$fillable` des Source-Models ist raus. Aufrufer in
+    `TextService`, `ImageService` und `RevisionRevertService`
+    reichen die Projekt-ID via `Text::project()` / `Image::
+    project()` / `Entry::project()` bzw. `Gallery::project()`
+    durch.
+  * **8b · Migrations-Assistent.** Neue Tabellen `sources_backup`
+    (Rollback-Anker, gruppiert per `run_key`) und eine
+    `original_id`-Selbst-FK auf `sources` (Rückverweis alt→neu).
+    Neuer `SourceMigrationService` mit `candidatesFor`,
+    `dedupCandidates`, `classifyKind`, `looksLikeFreetext` und
+    `runFor($projectId, $dryRun)`. Artisan-Command `sources:migrate
+    --project=X [--dry-run]` ruft den Service, gibt Report zum
+    Terminal und schreibt bei Commit Backup, neue projekt-scoped
+    Zeilen mit `original_id`-Rückverweis, biegt Text- und
+    Image-Referenzen um und loggt `sources.migration.merged` pro
+    Aktion. Umsetzung ist idempotent (zweiter Lauf findet keine
+    Kandidaten mehr).
+  * Feature-Tests decken beide Ebenen ab: Projekt-Scope-Semantik
+    von `findOrCreateId` (vier Cases) und der volle Migrations-
+    Fluss (Kandidaten-Bildung, Dry-Run, Commit mit Backup und
+    Referenz-Umbiegung, Idempotenz, kind-Regel, Freitext-
+    Heuristik).
+  * **Backlog-Notizen** in `TODO.md`: **C0b** (Zitier-Tiefe und
+    Quellen-Pflicht pro Projekt konfigurierbar — aus Kunden-
+    Feedback 07.09.2026, blockt Zitat-Block) und **C0c** (GUI-
+    Wrapper für den Migrations-Assistenten, wenn Redaktion selbst
+    durchklicken soll).
+
 - **Q4-Etappe 2 · I5 · chapters/_canvas Sub-Extraktion + I11 · AJAX-
   Prefix** (2026-08-27). Die 1.377-LoC-`chapters/_canvas.blade.php` ist
   auf 414 LoC reduziert; die drei Content-Type-Zweige (Text /

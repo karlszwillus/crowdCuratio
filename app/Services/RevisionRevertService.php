@@ -97,10 +97,18 @@ final class RevisionRevertService
             $model->setAttribute('description', $payload['descriptionReset']);
         }
 
+        // Q4-Etappe 3 / C0-8a (2026-09-07): Project-ID fuer die
+        // Source-Anlage aufloesen — die Whitelist-Modelle
+        // (Chapter/Entry/Text/Image/Gallery/Audiovisual) haben
+        // alle eine `->project()`-Methode.
+        $projectId = method_exists($model, 'project')
+            ? $model->project()?->id
+            : null;
+
         if (isset($payload['copyrightReset'])) {
             $model->setAttribute(
                 'copyright',
-                $this->sources->findOrCreateId($payload['copyrightReset'], 'Copyright'),
+                $this->sources->findOrCreateId($payload['copyrightReset'], 'Copyright', $projectId),
             );
         }
 
@@ -116,6 +124,7 @@ final class RevisionRevertService
                 $this->sources->findOrCreateId(
                     $payload['copyrightReset'] ?? $payload['originReset'],
                     'Origin',
+                    $projectId,
                 ),
             );
         }
