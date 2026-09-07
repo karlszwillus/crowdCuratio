@@ -218,6 +218,64 @@ If not, see <https://www.gnu.org/licenses/>. -->
             <div id="termsId" class="rounded-md border border-line-200 bg-canvas-bg"></div>
         </section>
 
+        {{-- Q4-Etappe 3 / C0b (2026-09-07): Zitier-Settings — steuern
+             die Sichtbarkeit der Quellen-Detail-Felder (kind/title/
+             holding/signature) im Editor und ob Copyright/Origin an
+             Content-Blöcken Pflicht sind. Defaults für Bestand:
+             `full` + `required` (heutige Semantik). --}}
+        @isset($project->id)
+            <section class="mb-4 rounded-md border border-line-200 bg-paper-0 p-5">
+                <h2 class="mb-1 text-caption font-semibold text-ink-700">
+                    {{ __('project_citation_settings') }}
+                </h2>
+                <p class="mb-3 text-caption text-ink-500">
+                    {{ __('project_citation_settings_intro') }}
+                </p>
+
+                <fieldset class="mt-3">
+                    <legend class="mb-2 block text-caption font-medium text-ink-700">
+                        {{ __('project_citation_depth_label') }}
+                    </legend>
+                    <label class="flex items-start gap-3 rounded-md border border-line-200 p-3 hover:bg-canvas-bg has-checked:border-primary">
+                        <input type="radio"
+                               name="citation_depth"
+                               value="full"
+                               @checked($project->usesFullCitationDepth())
+                               class="mt-1"/>
+                        <span>
+                            <span class="block text-body font-medium text-ink-900">{{ __('project_citation_depth_full') }}</span>
+                            <span class="block text-caption text-ink-500">{{ __('project_citation_depth_full_desc') }}</span>
+                        </span>
+                    </label>
+                    <label class="mt-2 flex items-start gap-3 rounded-md border border-line-200 p-3 hover:bg-canvas-bg has-checked:border-primary">
+                        <input type="radio"
+                               name="citation_depth"
+                               value="simple"
+                               @checked(! $project->usesFullCitationDepth())
+                               class="mt-1"/>
+                        <span>
+                            <span class="block text-body font-medium text-ink-900">{{ __('project_citation_depth_simple') }}</span>
+                            <span class="block text-caption text-ink-500">{{ __('project_citation_depth_simple_desc') }}</span>
+                        </span>
+                    </label>
+                </fieldset>
+
+                <fieldset class="mt-4">
+                    <label class="flex items-start gap-3">
+                        <input type="checkbox"
+                               name="source_required"
+                               value="1"
+                               @checked($project->requiresSources())
+                               class="mt-1"/>
+                        <span>
+                            <span class="block text-body font-medium text-ink-900">{{ __('project_source_required_label') }}</span>
+                            <span class="block text-caption text-ink-500">{{ __('project_source_required_hint') }}</span>
+                        </span>
+                    </label>
+                </fieldset>
+            </section>
+        @endisset
+
         {{-- Klebende Speicher-Fußzeile am Seitenende — Design v6 § 3.
              Ein Primär-Button, ein sekundärer, Speicherstand links.
              Q3-Härtung F5 (2026-08-19): `z-20` gegen Quill-Toolbar-Überlappung,

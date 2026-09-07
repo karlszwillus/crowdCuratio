@@ -41,6 +41,9 @@ final readonly class ProjectData
         public ?string $terms = null,
         public ?string $description = null,
         public ?string $logo = null,
+        // Q4-Etappe 3 / C0b (2026-09-07): Zitier-Settings.
+        public ?string $citationDepth = null,
+        public ?bool $sourceRequired = null,
     ) {}
 
     /**
@@ -61,6 +64,10 @@ final readonly class ProjectData
             terms: $validated['terms'] ?? null,
             description: $validated['description'] ?? null,
             logo: $logo,
+            citationDepth: $validated['citation_depth'] ?? null,
+            sourceRequired: array_key_exists('source_required', $validated)
+                ? (bool) $validated['source_required']
+                : null,
         );
     }
 
@@ -80,6 +87,8 @@ final readonly class ProjectData
             'terms' => $this->terms,
             'description' => $this->description,
             'logo' => $this->logo,
+            'citation_depth' => $this->citationDepth,
+            'source_required' => $this->sourceRequired,
         ], fn ($value) => $value !== null);
     }
 }

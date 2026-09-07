@@ -108,7 +108,33 @@ final class SourceMigrationService
             ->get()
             ->flatMap(fn ($row) => [$row->origin, $row->copyright]);
 
-        $ids = $textSourceIds->concat($imageSourceIds)->filter()->unique()->values();
+        // C0-8b Fix (2026-09-07): AV-Referenzen (origin_id/copyright_id)
+        // muessen genauso Kandidaten liefern wie Text/Image — sonst
+        // bleiben Alt-Sources, die nur von einem AV benutzt werden,
+        // unsichtbar fuer den Assistenten und die Detail-Ansicht der
+        // Quellenverwaltung zeigt sie zu Recht als „Noch nicht
+        // referenziert" an, obwohl die Referenz noch existiert.
+        $avSourceIds = DB::table('audiovisuals')
+            ->join('media_content', function ($join) {
+                $join->on('media_content.content_id', '=', 'audiovisuals.id')
+                    ->where('media_content.content_type', '=', Audiovisual::class);
+            })
+            ->join('entries', function ($join) {
+                $join->on('entries.id', '=', 'media_content.parent_id')
+                    ->where('media_content.parent_type', '=', Entry::class);
+            })
+            ->join('chapters', 'chapters.id', '=', 'entries.chapter_id')
+            ->where('chapters.project_id', $projectId)
+            ->select(['audiovisuals.origin_id', 'audiovisuals.copyright_id'])
+            ->get()
+            ->flatMap(fn ($row) => [$row->origin_id, $row->copyright_id]);
+
+        $ids = $textSourceIds
+            ->concat($imageSourceIds)
+            ->concat($avSourceIds)
+            ->filter()
+            ->unique()
+            ->values();
         if ($ids->isEmpty()) {
             return collect();
         }
@@ -255,19 +281,34 @@ final class SourceMigrationService
                     $this->backup($source, $runKey);
                 }
 
-                // Neuen projekt-scoped Row aus der kanonischen
-                // Quelle anlegen. Kind kommt aus dem Regel-Vorschlag
-                // (null wenn keiner passt — Redaktion muss nachziehen).
-                $projectSource = new Source;
-                $projectSource->project_id = $projectId;
-                $projectSource->original_id = (int) $canonical->id;
-                $projectSource->type = (string) $canonical->type;
-                $projectSource->kind = $this->classifyKind((string) $canonical->name);
-                $projectSource->is_translated = (bool) $canonical->is_translated;
-                foreach ($canonical->getTranslations('name') as $locale => $value) {
-                    $projectSource->setTranslation('name', $locale, $value);
+                // C0-8b Fix (2026-09-07): Wenn im Projekt bereits eine
+                // gleichnamige, gleich-typisierte project-scoped Row
+                // existiert (z. B. vorher durch AV-Backfill oder einen
+                // Teil-Migrationslauf angelegt), auf DIESE mergen —
+                // statt eine dritte Row zu erzeugen. Sonst haengen
+                // zwei „Sammlung X" nebeneinander, eine referenziert,
+                // eine verwaist.
+                $projectSource = Source::query()
+                    ->where('project_id', $projectId)
+                    ->where('type', (string) $canonical->type)
+                    ->get()
+                    ->first(fn (Source $s) => (string) $s->name === (string) $canonical->name);
+
+                if ($projectSource === null) {
+                    // Neuen projekt-scoped Row aus der kanonischen
+                    // Quelle anlegen. Kind kommt aus dem Regel-Vorschlag
+                    // (null wenn keiner passt — Redaktion muss nachziehen).
+                    $projectSource = new Source;
+                    $projectSource->project_id = $projectId;
+                    $projectSource->original_id = (int) $canonical->id;
+                    $projectSource->type = (string) $canonical->type;
+                    $projectSource->kind = $this->classifyKind((string) $canonical->name);
+                    $projectSource->is_translated = (bool) $canonical->is_translated;
+                    foreach ($canonical->getTranslations('name') as $locale => $value) {
+                        $projectSource->setTranslation('name', $locale, $value);
+                    }
+                    $projectSource->save();
                 }
-                $projectSource->save();
 
                 // Alle Text- und Image-Referenzen auf die alten IDs
                 // dieser Gruppe auf die neue ID umbiegen — aber nur
@@ -289,6 +330,14 @@ final class SourceMigrationService
                 if ($imageIds !== []) {
                     Image::query()->whereIn('id', $imageIds)->whereIn('origin', $oldIds)->update(['origin' => $projectSource->id]);
                     Image::query()->whereIn('id', $imageIds)->whereIn('copyright', $oldIds)->update(['copyright' => $projectSource->id]);
+                }
+                // C0-8b Fix (2026-09-07): AV-FKs mit-migrieren, falls
+                // ein User die Alt-Source via source-picker an ein AV
+                // gehaengt hat, bevor der Assistent lief.
+                $avIds = $this->audiovisualIdsForProject($projectId);
+                if ($avIds !== []) {
+                    Audiovisual::query()->whereIn('id', $avIds)->whereIn('origin_id', $oldIds)->update(['origin_id' => $projectSource->id]);
+                    Audiovisual::query()->whereIn('id', $avIds)->whereIn('copyright_id', $oldIds)->update(['copyright_id' => $projectSource->id]);
                 }
 
                 Log::channel(config('logging.default'))->info('sources.migration.merged', [
@@ -312,6 +361,9 @@ final class SourceMigrationService
                         ->exists()
                         || Image::query()
                             ->where(fn ($q) => $q->where('origin', $source->id)->orWhere('copyright', $source->id))
+                            ->exists()
+                        || Audiovisual::query()
+                            ->where(fn ($q) => $q->where('origin_id', $source->id)->orWhere('copyright_id', $source->id))
                             ->exists();
 
                     if (! $referencedElsewhere) {
@@ -494,6 +546,27 @@ final class SourceMigrationService
             ->join('chapters', 'chapters.id', '=', 'entries.chapter_id')
             ->where('chapters.project_id', $projectId)
             ->pluck('texts.id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+    }
+
+    /**
+     * @return array<int, int>
+     */
+    private function audiovisualIdsForProject(int $projectId): array
+    {
+        return DB::table('audiovisuals')
+            ->join('media_content', function ($join) {
+                $join->on('media_content.content_id', '=', 'audiovisuals.id')
+                    ->where('media_content.content_type', '=', Audiovisual::class);
+            })
+            ->join('entries', function ($join) {
+                $join->on('entries.id', '=', 'media_content.parent_id')
+                    ->where('media_content.parent_type', '=', Entry::class);
+            })
+            ->join('chapters', 'chapters.id', '=', 'entries.chapter_id')
+            ->where('chapters.project_id', $projectId)
+            ->pluck('audiovisuals.id')
             ->map(fn ($id) => (int) $id)
             ->all();
     }

@@ -331,6 +331,16 @@ class ProjectController extends Controller
             $project->update(['logo' => $data->logo]);
         }
 
+        // Q4-Etappe 3 / C0b Fix (2026-09-07): Zitier-Settings kommen
+        // nur aus dem Edit-Screen (nicht bei Create), deshalb nur
+        // updaten wenn im Request tatsächlich mitgeschickt.
+        if ($data->citationDepth !== null) {
+            $project->update([
+                'citation_depth' => $data->citationDepth,
+                'source_required' => $data->sourceRequired ?? true,
+            ]);
+        }
+
         return redirect()->back()->with('success', __('message_edit_project_success'));
     }
 

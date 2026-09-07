@@ -733,6 +733,37 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Q4-Etappe 3 · C0d · Quellenverwaltung pro Projekt**
+  (2026-09-07). Neue Vollpage unter `/projects/{project}/sources`
+  (gated auf `update`, als „Quellen"-Tab in der Projekt-Chrome-Bar
+  verlinkt) mit Liste + Filter (Copyright/Origin) + Textsuche,
+  Referenz-Zähler pro Row (Text + Image + AV), Detail-Editor
+  (Name; plus `kind` / `title` / `holding` / `signature` nur bei
+  `citation_depth=full`), Merge zweier Sources (Referenz-Umbiegung
+  an Text/Image/AV in einer Transaktion, Alt-Row SoftDelete,
+  `Log::info('sources.admin.merged')`) und SoftDelete mit
+  pluralisierter Warnung bei bestehenden Referenzen
+  (`sources.admin.deleted`-Event). 30 neue Locale-Keys je Sprache.
+
+- **Q4-Etappe 3 · C0b · Zitier-Tiefe und Quellen-Pflicht pro
+  Projekt konfigurierbar** (2026-09-07). Zwei neue Projekt-Settings
+  aus dem AM-Meeting: `citation_depth` (`simple` — nur Name; `full`
+  — plus `kind`/`title`/`holding`/`signature` an Sources) und
+  `source_required` (Copyright/Origin an Content-Blöcken Pflicht
+  oder nicht). Default nach Karl-Entscheidung: `simple` + `required`
+  — die meisten Projekte brauchen keine strenge Zitier-Tiefe,
+  Copyright/Origin bleiben aber weiterhin Pflicht.
+  `Project::$fillable` + `casts` ergänzt, plus Helpers
+  `usesFullCitationDepth()` und `requiresSources()`.
+  `UpdateProjectRequest`/`StoreProjectRequest` und `ProjectData`
+  reichen die Werte durch. Neue Karte „Zitier-Einstellungen" im
+  Projekt-Metadaten-Editor (Radio-Buttons für die Tiefe, Checkbox
+  für die Pflicht). Die Copyright-/Origin-Sternchen in `text-block`,
+  `audiovisual-block` und `gallery/image-detail` sind jetzt bedingt
+  (`@if ($project->requiresSources())`). Die Wirkung von
+  `citation_depth=full` (Detail-Feld-Editor) landet in C0d. 9 neue
+  Locale-Keys pro Sprache.
+
 - **Q4-Etappe 3 · C0 · Erweiterung: Audiovisual auf Source-Rows +
   GUI-Wrapper + Picker-Scoping** (2026-09-07). Nachlauf zum
   C0-Kern-PR, im gleichen Branch. Drei Ergänzungen:

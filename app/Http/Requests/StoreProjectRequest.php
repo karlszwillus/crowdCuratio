@@ -56,6 +56,10 @@ class StoreProjectRequest extends FormRequest
             // ProjectController::update inline; hier jetzt systematisch
             // in beiden Pfaden.
             'project_image' => 'sometimes|nullable|file|mimes:jpeg,jpg,png,gif,webp|max:4096',
+            // Q4-Etappe 3 / C0b (2026-09-07): Zitier-Settings — Defaults
+            // greifen ueber die DB-Column, wenn nicht gesetzt.
+            'citation_depth' => 'sometimes|in:simple,full',
+            'source_required' => 'sometimes|boolean',
         ];
     }
 }
