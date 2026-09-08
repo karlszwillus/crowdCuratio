@@ -349,6 +349,10 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                                                                     @if (isset($item) && $item->content_type == 'App\Models\QuoteBlock')
                                                                         <x-content.quote-block :item="$item" :entry="$entry" :project="$project" :list-permissions="$listPermissions"/>
                                                                     @endif
+                                                                    {{-- Q4-Etappe 4 / G1 (2026-09-08): Daten-und-Fakten-Block. --}}
+                                                                    @if (isset($item) && $item->content_type == 'App\Models\DataFactBlock')
+                                                                        <x-content.data-facts-block :item="$item" :entry="$entry" :project="$project" :list-permissions="$listPermissions"/>
+                                                                    @endif
                                                                     @if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
                                                                         <li class="content-add-bar-slot">
                                                                             <livewire:content-add-bar

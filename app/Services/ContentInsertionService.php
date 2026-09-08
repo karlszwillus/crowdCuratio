@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Audiovisual;
+use App\Models\DataFactBlock;
 use App\Models\Entry;
 use App\Models\Gallery;
 use App\Models\MediaContent;
@@ -38,7 +39,7 @@ use InvalidArgumentException;
 final class ContentInsertionService
 {
     /** @var array<int, string> */
-    private const ALLOWED_TYPES = ['text', 'gallery', 'audiovisual', 'quote'];
+    private const ALLOWED_TYPES = ['text', 'gallery', 'audiovisual', 'quote', 'data-facts'];
 
     /**
      * Legt einen leeren Block an und hängt ihn per MediaContent an
@@ -110,7 +111,7 @@ final class ContentInsertionService
      * Source-Felder bleiben null — die C1c-Migration hat sie
      * nullable gemacht, damit dieser Insert-Weg sauber funktioniert.
      */
-    private function createBlankContent(string $type): Text|Gallery|Audiovisual|QuoteBlock
+    private function createBlankContent(string $type): Text|Gallery|Audiovisual|QuoteBlock|DataFactBlock
     {
         return match ($type) {
             'text' => tap(new Text, function (Text $t): void {
@@ -138,6 +139,17 @@ final class ContentInsertionService
                 $q->setTranslation('text', app()->getLocale(), '');
                 $q->is_translated = false;
                 $q->save();
+            }),
+            'data-facts' => tap(new DataFactBlock, function (DataFactBlock $b): void {
+                // Steckbrief-Layout als Default (Personen-/Orts-/
+                // Ereignis-Karte). Redakteur kann im Editor auf
+                // Tabelle umschalten. Leere Zeilen und leere
+                // Spalten — der Editor legt sie beim ersten Klick
+                // an.
+                $b->layout = DataFactBlock::LAYOUT_STECKBRIEF;
+                $b->columns = [];
+                $b->rows = [];
+                $b->save();
             }),
             // Unerreichbar wegen ALLOWED_TYPES-Prüfung in insertBlank();
             // PHPStan sieht das aber nicht ohne expliziten default-Arm.

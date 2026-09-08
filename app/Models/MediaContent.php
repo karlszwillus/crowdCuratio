@@ -204,6 +204,15 @@ class MediaContent extends Model implements HasComments
     }
 
     /**
+     * Q4-Etappe 4 / G1 (2026-09-08): DataFactBlock als fünfter
+     * Content-Type. Analog gebunden über `content_id`.
+     */
+    public function dataFactBlock()
+    {
+        return $this->belongsTo(DataFactBlock::class, 'content_id', 'id');
+    }
+
+    /**
      * Add language to log
      */
     public function tapActivity(Activity $activity)

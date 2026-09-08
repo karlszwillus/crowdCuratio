@@ -14,6 +14,7 @@ namespace App\Http\Controllers;
 use App\Contracts\HasComments;
 use App\Http\Requests\StoreCommentRequest;
 use App\Models\Comment;
+use App\Models\DataFactBlock;
 use App\Models\Gallery;
 use App\Models\Image;
 use App\Models\MediaContent;
@@ -142,6 +143,30 @@ class ContentCommentController extends Controller
     }
 
     public function setCommentStatusQuote(Request $request): JsonResponse
+    {
+        return $this->setStatus($request);
+    }
+
+    // ------------------------------------------------------------------
+    // Daten-und-Fakten — Q4-Etappe 4 / G1 (2026-09-08)
+    // ------------------------------------------------------------------
+
+    public function commentDataFacts(StoreCommentRequest $request): RedirectResponse
+    {
+        return $this->storeComment('data-facts', $request);
+    }
+
+    public function getDataFactsComment(int $id): JsonResponse
+    {
+        return $this->getComments('data-facts', $id);
+    }
+
+    public function saveCommentDataFacts(Request $request, DataFactBlock $block): RedirectResponse
+    {
+        return $this->saveCommentAction($block, $request, DataFactBlock::class);
+    }
+
+    public function setCommentStatusDataFacts(Request $request): JsonResponse
     {
         return $this->setStatus($request);
     }

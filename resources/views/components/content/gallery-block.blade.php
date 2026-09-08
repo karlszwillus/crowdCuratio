@@ -118,22 +118,103 @@
                  Utilities direkt am Element. --}}
             @if ($item->gallery->images->isEmpty())
                 @can('update', $project)
-                    {{-- 5y.4 § 7 leer: Drop-Zone ueber volle Blockbreite, kein leeres Raster. --}}
-                    <button type="button"
-                            class="addImage mt-4 flex w-full flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-line-200 bg-transparent px-4 py-8 text-body text-ink-500 hover:border-ink-400 hover:bg-line-100/40 hover:text-ink-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                            data-chapter="{{ $chapter->name }}"
-                            data-entry="{{ $entry->name }}"
-                            data-id="{{ $item->gallery->id }}"
-                            data-entryId="{{ $entry->id }}"
-                            data-toggle="modal"
-                            data-target="#imageModal">
-                        <x-icon name="image-plus" size="5"/>
-                        <span class="text-body font-medium text-ink-700">{{ __('gallery_dropzone_title') }}</span>
-                        <span class="text-caption text-ink-500">{{ __('gallery_dropzone_hint') }}</span>
-                        <span class="mt-1 inline-flex items-center gap-1 rounded-md border border-line-200 bg-paper-0 px-3 py-1 text-caption font-medium text-ink-900">
-                            {{ __('gallery_dropzone_button') }}
-                        </span>
-                    </button>
+                    {{-- 5y.4 § 7 leer: Drop-Zone ueber volle Blockbreite, kein leeres Raster.
+                         Q4-Etappe 4 / F-Nachreview (2026-09-08): früher Button mit
+                         data-target="#imageModal" — der öffnete das Legacy-Add-Image-Modal
+                         und akzeptierte kein Drop. Jetzt echte Dropzone mit direktem
+                         XHR-Upload gegen gallery.images.drop, identisch zur letzten Kachel
+                         im gefüllten Grid. --}}
+                    <div x-data="{
+                            dragging: false,
+                            uploads: [],
+                            rejected: [],
+                            dropUrl: '{{ route('gallery.images.drop', $item->gallery->id) }}',
+                            handleFiles(fileList) {
+                                if (!fileList || !fileList.length) return;
+                                const allowed = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                                const maxBytes = 4 * 1024 * 1024;
+                                const queue = [];
+                                for (const file of fileList) {
+                                    if (!allowed.includes(file.type)) { this.rejected.push({name: file.name, reason: '{{ __('gallery_rejected_reason_type') }}'}); continue; }
+                                    if (file.size > maxBytes) { this.rejected.push({name: file.name, reason: '{{ __('gallery_rejected_reason_size') }}'}); continue; }
+                                    queue.push(file);
+                                }
+                                if (!queue.length) return;
+                                let pending = queue.length;
+                                const totalAtStart = queue.length;
+                                const uploadedIds = [];
+                                for (const file of queue) {
+                                    const ghostId = 'ghost-' + Math.random().toString(36).slice(2, 9);
+                                    const entry = { id: ghostId, name: file.name, progress: 0, status: 'uploading' };
+                                    this.uploads.push(entry);
+                                    const token = document.querySelector('meta[name=csrf-token]')?.content;
+                                    const xhr = new XMLHttpRequest();
+                                    xhr.open('POST', this.dropUrl);
+                                    xhr.setRequestHeader('X-CSRF-TOKEN', token);
+                                    xhr.setRequestHeader('Accept', 'application/json');
+                                    xhr.upload.onprogress = (e) => { if (e.lengthComputable) entry.progress = Math.round((e.loaded / e.total) * 100); };
+                                    xhr.onload = () => {
+                                        if (xhr.status >= 200 && xhr.status < 300) {
+                                            entry.status = 'done';
+                                            try { const p = JSON.parse(xhr.responseText); if (p && p.image && p.image.id) uploadedIds.push(p.image.id); } catch (e) {}
+                                        } else {
+                                            entry.status = 'error';
+                                            this.rejected.push({name: entry.name, reason: '{{ __('gallery_rejected_reason_server') }}'});
+                                        }
+                                        pending -= 1;
+                                        if (pending <= 0) {
+                                            const url = new URL(window.location.href);
+                                            if (totalAtStart === 1 && uploadedIds.length === 1) url.searchParams.set('editImage', uploadedIds[0]);
+                                            // Q4-Etappe 4 / F-Nachreview (2026-09-08): Reload
+                                            // mit Fragment auf den Galerie-Block, damit der
+                                            // Browser nicht an den Seitenanfang scrollt.
+                                            url.hash = 'anchor_MediaContent_{{ $item->id }}';
+                                            setTimeout(() => { window.location.href = url.toString(); }, 600);
+                                        }
+                                    };
+                                    xhr.onerror = () => {
+                                        entry.status = 'error';
+                                        this.rejected.push({name: entry.name, reason: '{{ __('gallery_rejected_reason_server') }}'});
+                                        pending -= 1;
+                                        if (pending <= 0) setTimeout(() => {
+                                            const url = new URL(window.location.href);
+                                            url.hash = 'anchor_MediaContent_{{ $item->id }}';
+                                            window.location.href = url.toString();
+                                        }, 400);
+                                    };
+                                    const fd = new FormData();
+                                    fd.append('file', file);
+                                    xhr.send(fd);
+                                }
+                            }
+                         }"
+                         @dragover.prevent="dragging = true"
+                         @dragenter.prevent="dragging = true"
+                         @dragleave.prevent="dragging = false"
+                         @drop.prevent="dragging = false; handleFiles($event.dataTransfer.files)"
+                         :class="dragging ? 'border-primary bg-primary/10 text-primary' : 'border-line-200'"
+                         class="mt-4 rounded-md border-2 border-dashed bg-transparent text-body text-ink-500 hover:border-ink-400 hover:bg-line-100/40 hover:text-ink-700 focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary">
+                        <label class="flex w-full cursor-pointer flex-col items-center justify-center gap-2 px-4 py-8"
+                               aria-label="{{ __('gallery_header_add') }}">
+                            <x-icon name="image-plus" size="5"/>
+                            <span class="text-body font-medium text-ink-700">{{ __('gallery_dropzone_title') }}</span>
+                            <span class="text-caption text-ink-500">{{ __('gallery_dropzone_hint') }}</span>
+                            <span class="mt-1 inline-flex items-center gap-1 rounded-md border border-line-200 bg-paper-0 px-3 py-1 text-caption font-medium text-ink-900">
+                                {{ __('gallery_dropzone_button') }}
+                            </span>
+                            <input type="file" class="sr-only" multiple accept="image/jpeg,image/png,image/gif,image/webp"
+                                   @change="handleFiles($event.target.files); $event.target.value = ''"/>
+                        </label>
+                        {{-- Progress-Zeile pro Upload — kompakt, damit
+                             die leere-Galerie-Zone nicht plötzlich hoch springt. --}}
+                        <template x-for="entry in uploads" :key="entry.id">
+                            <div class="mx-4 mb-3 flex items-center gap-2 text-caption text-ink-500">
+                                <span x-text="entry.name" class="min-w-0 flex-1 truncate"></span>
+                                <span x-text="entry.status === 'done' ? '{{ __('gallery_upload_done') }}' : '{{ __('gallery_upload_progress') }}'"></span>
+                                <span x-text="entry.progress + '%'"></span>
+                            </div>
+                        </template>
+                    </div>
                 @else
                     <p class="mt-4 rounded-md border border-line-200 bg-paper-50 px-4 py-3 text-body text-ink-500">
                         {{ __('placeholder_gallery_hint') }}
@@ -191,6 +272,10 @@
                                 if (totalAtStart === 1 && uploadedIds.length === 1) {
                                     url.searchParams.set('editImage', uploadedIds[0]);
                                 }
+                                // Q4-Etappe 4 / F-Nachreview (2026-09-08): Fragment
+                                // auf den Galerie-Block, damit der Browser nicht an
+                                // den Seitenanfang scrollt.
+                                url.hash = 'anchor_MediaContent_{{ $item->id }}';
                                 setTimeout(() => { window.location.href = url.toString(); }, 600);
                             }
                         });
@@ -421,7 +506,7 @@
                             : Alpine.store('saveStatus')?.set?.('error'))
                         .catch(() => Alpine.store('saveStatus')?.set?.('error'));
                 },
-            }" x-init="initSortable(); window.addEventListener('saved', (e) => { if (e && e.detail && e.detail.model === 'Image') { hadEdits = true; } }); { const params = new URLSearchParams(window.location.search); const editParam = params.get('editImage'); if (editParam) { const parsed = parseInt(editParam, 10); if (!isNaN(parsed)) { $nextTick(() => { editingImageId = parsed; setTimeout(() => focusFirstField(parsed), 100); }); } params.delete('editImage'); const clean = window.location.pathname + (params.toString() ? '?' + params.toString() : ''); window.history.replaceState({}, '', clean); } }">
+            }" x-init="initSortable(); window.addEventListener('saved', (e) => { if (e && e.detail && e.detail.model === 'Image') { hadEdits = true; } }); { const params = new URLSearchParams(window.location.search); const editParam = params.get('editImage'); if (editParam) { const parsed = parseInt(editParam, 10); if (!isNaN(parsed)) { $nextTick(() => { editingImageId = parsed; setTimeout(() => focusFirstField(parsed), 100); /* Q4-Etappe 4 / F-Nachreview (2026-09-08): nach dem Umschalten auf die Detail-View verschiebt sich die Y-Position — der initiale Browser-Scroll zum #anchor_MediaContent trifft dann ins Leere. Deshalb hier ein zweites scrollIntoView, nachdem Alpine die Detail-View gerendert hat. */ requestAnimationFrame(() => { const anchor = document.getElementById('anchor_MediaContent_{{ $item->id }}'); if (anchor) anchor.scrollIntoView({ block: 'start', behavior: 'instant' }); }); }); } params.delete('editImage'); /* Fragment beim URL-Cleanup mit-erhalten, sonst verliert der Browser den Anchor bei späteren Aktionen. */ const clean = window.location.pathname + (params.toString() ? '?' + params.toString() : '') + window.location.hash; window.history.replaceState({}, '', clean); } }">
             <div
                 role="status"
                 aria-live="polite"

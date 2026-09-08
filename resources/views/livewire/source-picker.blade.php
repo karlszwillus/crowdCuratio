@@ -302,6 +302,7 @@ new class extends Component
     aria-label="{{ $label }}"
     x-data="{ open: @entangle('editing') }"
     @keydown.escape.window="if (open) $wire.call('cancelEdit')"
+    @click.outside="if (open) $wire.call('cancelEdit')"
 >
     @if (! $editing)
         @php

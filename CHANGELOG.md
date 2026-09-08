@@ -733,6 +733,50 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Q4-Etappe 4 · F · Daten-und-Fakten-Block als eigener Content-Type**
+  (2026-09-08). Neuer polymorpher Content-Type `App\Models\DataFactBlock`
+  (Tabelle `data_fact_blocks`) mit zwei Layouts: **Steckbrief**
+  (Default) rendert als semantische Definitionsliste
+  (`<dl><dt><dd>`) für Personen-, Ort- oder Ereignis-Karten;
+  **Tabelle** rendert als `<table>` mit `<thead>`+`<tbody>` und
+  frei definierbaren Spalten, für Aufzählungen wie „Judenhäuser"
+  (Jahr · Adresse · Ereignis). Der Redakteur schaltet inline
+  zwischen beiden Layouts um; das jeweils nicht sichtbare Layout
+  behält seine Daten (kein Datenverlust beim Vergleichen). Umschaltung
+  läuft ohne Server-Roundtrip auf UI-Seite (Alpine `x-show` gesteuert
+  von einem Livewire-Browser-Event aus dem Layout-Selector).
+  `title`, `subtitle` und alle Zellen-Inhalte sind translatable
+  (HasTranslations mit Locale-Maps in JSON). Titel und Untertitel
+  über den bestehenden inline-editor, die Zeilen über zwei
+  dedizierte Volt-Komponenten: `data-facts-rows-editor` für
+  Steckbrief (Label · Wert mit Reorder + Delete) und
+  `data-facts-table-editor` für Tabelle (Spalten-Definitionen
+  mit Add/Remove + N-Cell-Zeilen mit Reorder + Delete). Voll
+  angeschlossen: `DataFactBlockPolicy` (view/update/delete/comment),
+  `HasComments` mit vier `comment.data-facts[.show|.save|.status]`-
+  Routes, `HasRevisions` + `LogsActivity`, RevisionSubject-TYPES-
+  Whitelist, RevisionRevertService-Whitelist,
+  `MediaContent::dataFactBlock()`, Eager-Load in
+  `Project::scopeWithEditTree` und `scopeWithPreviewTree`. Add-Bar
+  bekommt eine fünfte Option „Fakten und Daten" mit dediziertem
+  Block-Card-Typ (Tabellen-Icon). Reader- und PDF-Rendering pro
+  Layout: DL für Steckbrief, HTML-Table für Tabelle; die
+  Feinschliff-Optik folgt mit dem Multi-Seiten-Reader-Umbau
+  (Etappe G). Test-Erweiterung: `data-facts`-Case in
+  `ContentInsertionServiceTest`. 20+ neue Locale-Keys je Sprache.
+
+  **Follow-ups mit dabei** (aus dem Smoke-Test aufgefallen): die
+  Bildergalerie-Dropzone für leere Galerien war noch ein
+  Legacy-Modal-Trigger — jetzt echte Drop+Klick-Zone mit direktem
+  XHR-Upload gegen `gallery.images.drop`, identisch zur letzten
+  Kachel im gefüllten Grid. Beide Dropzone-Reloads setzen
+  jetzt ein URL-Fragment auf den Galerie-Block, damit der
+  Browser nicht an den Seitenanfang scrollt; die Detail-View
+  scrollt nach dem Alpine-Umschalten ein zweites Mal exakt auf
+  den Block, weil die Y-Position sich zwischen Grid- und Detail-
+  Ansicht verschiebt. Der `source-picker` schließt beim
+  Außerhalb-Klick jetzt sauber (bisher nur ESC).
+
 - **Q4-Etappe 4 · F · Zitat-Block als eigener Content-Type**
   (2026-09-08). Neuer polymorpher Content-Type `App\Models\QuoteBlock`
   (Tabelle `quote_blocks`) mit Feldern `text` (translatable),

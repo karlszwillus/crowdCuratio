@@ -188,6 +188,8 @@ class Project extends Model implements HasComments
             // Comments für den Kommentar-Badge in der Blockkopf-Zeile.
             'chapters.entries.mediaContent.quoteBlock.source',
             'chapters.entries.mediaContent.quoteBlock.comments',
+            // Q4-Etappe 4 / G1 (2026-09-08): Daten-und-Fakten-Block.
+            'chapters.entries.mediaContent.dataFactBlock.comments',
         ]);
     }
 
@@ -207,6 +209,8 @@ class Project extends Model implements HasComments
             'chapters.entries.mediaContent.audiovisual',
             // Q4-Etappe 4 / F1 (2026-09-08): Zitat-Block.
             'chapters.entries.mediaContent.quoteBlock.source',
+            // Q4-Etappe 4 / G1 (2026-09-08): Daten-und-Fakten-Block.
+            'chapters.entries.mediaContent.dataFactBlock',
         ]);
     }
 

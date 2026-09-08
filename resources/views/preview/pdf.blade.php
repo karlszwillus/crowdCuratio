@@ -787,6 +787,62 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                                     </div>
                                                 @endif
                                             @endif
+                                            {{-- Q4-Etappe 4 / G1 (2026-09-08): Daten-und-Fakten-Block im PDF. --}}
+                                            @if($media->content_type == 'App\Models\DataFactBlock' && isset($media->dataFactBlock))
+                                                @php
+                                                    $b = $media->dataFactBlock;
+                                                    $locale = app()->getLocale();
+                                                    $factRows = $b->rows ?? [];
+                                                    $factColumns = $b->columns ?? [];
+                                                @endphp
+                                                <div class="einspaltig daten-fakten daten-fakten--{{ $b->layout ?? 'steckbrief' }}">
+                                                    @if(! empty($b->title))
+                                                        <h3>{{ $b->title }}</h3>
+                                                    @endif
+                                                    @if(! empty($b->subtitle))
+                                                        <p class="subtitle">{{ $b->subtitle }}</p>
+                                                    @endif
+                                                    @if($b->isTabellenLayout())
+                                                        @if(! empty($factColumns) && ! empty($factRows))
+                                                            <table>
+                                                                <thead>
+                                                                    <tr>
+                                                                        @foreach($factColumns as $col)
+                                                                            <th>{{ is_array($col['header'] ?? null) ? ($col['header'][$locale] ?? $col['header']['de'] ?? '') : (string) ($col['header'] ?? '') }}</th>
+                                                                        @endforeach
+                                                                    </tr>
+                                                                </thead>
+                                                                <tbody>
+                                                                    @foreach($factRows as $row)
+                                                                        <tr>
+                                                                            @php $cells = $row['cells'] ?? []; @endphp
+                                                                            @foreach($factColumns as $ci => $col)
+                                                                                @php $cell = $cells[$ci] ?? ''; @endphp
+                                                                                <td>{{ is_array($cell) ? ($cell[$locale] ?? $cell['de'] ?? '') : (string) $cell }}</td>
+                                                                            @endforeach
+                                                                        </tr>
+                                                                    @endforeach
+                                                                </tbody>
+                                                            </table>
+                                                        @endif
+                                                    @else
+                                                        @if(! empty($factRows))
+                                                            <dl>
+                                                                @foreach($factRows as $row)
+                                                                    @php
+                                                                        $label = is_array($row['label'] ?? null) ? ($row['label'][$locale] ?? $row['label']['de'] ?? '') : (string) ($row['label'] ?? '');
+                                                                        $value = is_array($row['value'] ?? null) ? ($row['value'][$locale] ?? $row['value']['de'] ?? '') : (string) ($row['value'] ?? '');
+                                                                    @endphp
+                                                                    @if($label !== '' || $value !== '')
+                                                                        <dt>{{ $label }}</dt>
+                                                                        <dd>{{ $value }}</dd>
+                                                                    @endif
+                                                                @endforeach
+                                                            </dl>
+                                                        @endif
+                                                    @endif
+                                                </div>
+                                            @endif
                                             {{-- Q4-Etappe 4 / F5 (2026-09-08): Zitat-Block im PDF.
                                                  Basis-Rendering — die richtige Politur folgt mit
                                                  Etappe G · PDF reduziert. --}}
