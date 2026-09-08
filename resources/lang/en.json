@@ -253,7 +253,7 @@
   "data_facts_column_add": "Add column",
   "data_facts_column_delete": "Delete column",
   "data_facts_column_delete_confirm": "Really delete this column? Its cells will be lost.",
-  "data_facts_rows_label": "Entries",
+  "data_facts_rows_label": "Rows",
   "data_facts_empty_hint": "No rows yet. Use the button below to add the first row.",
   "data_facts_row_label": "Label",
   "data_facts_row_value": "Value",

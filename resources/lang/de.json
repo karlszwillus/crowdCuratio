@@ -253,7 +253,7 @@
   "data_facts_column_add": "Spalte hinzufügen",
   "data_facts_column_delete": "Spalte löschen",
   "data_facts_column_delete_confirm": "Spalte wirklich löschen? Die zugehörigen Zellen gehen dabei verloren.",
-  "data_facts_rows_label": "Einträge",
+  "data_facts_rows_label": "Zeilen",
   "data_facts_empty_hint": "Noch keine Zeilen. Füge über den Button unten die erste Zeile hinzu.",
   "data_facts_row_label": "Bezeichnung",
   "data_facts_row_value": "Wert",

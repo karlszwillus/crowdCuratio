@@ -34,9 +34,11 @@ use Spatie\Translatable\HasTranslations;
  * ohne eigene Kommentare oder Revisions.
  *
  * @property int $id
+ * @property string $layout
  * @property string|null $title
  * @property string|null $subtitle
- * @property array<int, array{label: array<string, string>, value: array<string, string>}>|null $rows
+ * @property array<int, array{header: array<string, string>}>|null $columns
+ * @property array<int, array<string, mixed>>|null $rows
  */
 class DataFactBlock extends Model implements HasComments
 {
