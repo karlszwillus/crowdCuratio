@@ -52,6 +52,8 @@ class UpdateProjectRequest extends FormRequest
             // Q4-Etappe 3 / C0b (2026-09-07): Zitier-Settings.
             'citation_depth' => 'sometimes|in:simple,full',
             'source_required' => 'sometimes|boolean',
+            // Q4-Etappe 5 / G1 (2026-09-08): Reader-Layout.
+            'reader_layout' => 'sometimes|in:one-page,multi-page',
         ];
     }
 

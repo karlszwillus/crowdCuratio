@@ -341,6 +341,11 @@ class ProjectController extends Controller
             ]);
         }
 
+        // Q4-Etappe 5 / G1 (2026-09-08): Reader-Layout.
+        if ($data->readerLayout !== null) {
+            $project->update(['reader_layout' => $data->readerLayout]);
+        }
+
         return redirect()->back()->with('success', __('message_edit_project_success'));
     }
 

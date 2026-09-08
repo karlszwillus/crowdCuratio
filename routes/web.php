@@ -517,6 +517,13 @@ Route::group(
 
         // Q4-Etappe 2 / I6 (2026-08-27): Preview/PDF-Download im
         // ProjectPreviewController. Route-Namen bleiben.
+        // Q4-Etappe 5 / G3 (2026-09-08): Multi-Page-Reader-Route.
+        // Rendert genau ein Kapitel des Projekts mit Kapitel-
+        // Navigation. Wird nur bei reader_layout=multi-page
+        // aktiv genutzt; der /preview-Endpoint redirected je nach
+        // Setting auf das erste Kapitel.
+        Route::get('/preview/chapters/{chapter}', [ProjectPreviewController::class, 'previewChapter'])
+            ->name('preview.chapter');
         Route::get('/preview', [ProjectPreviewController::class, 'previewProject'])->name(
             'preview'
         );

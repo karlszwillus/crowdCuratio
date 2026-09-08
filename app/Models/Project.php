@@ -65,7 +65,7 @@ class Project extends Model implements HasComments
      * Q4-Etappe 3 / C0b (2026-09-07): `citation_depth` und
      * `source_required` als projektweite Zitier-Settings ergaenzt.
      */
-    protected $fillable = ['name', 'logo', 'imprint', 'terms', 'status', 'description', 'citation_depth', 'source_required'];
+    protected $fillable = ['name', 'logo', 'imprint', 'terms', 'status', 'description', 'citation_depth', 'source_required', 'reader_layout'];
 
     /**
      * @return array<string, string>
@@ -93,6 +93,27 @@ class Project extends Model implements HasComments
     public function requiresSources(): bool
     {
         return (bool) ($this->source_required ?? true);
+    }
+
+    public const READER_LAYOUT_ONE_PAGE = 'one-page';
+
+    public const READER_LAYOUT_MULTI_PAGE = 'multi-page';
+
+    /**
+     * Q4-Etappe 5 / G1 (2026-09-08): Reader-Layout pro Projekt.
+     * `one-page` (Default) — Long-Scroll für kleine Projekte;
+     * `multi-page` — Sidebar links, Deeplink pro Kapitel.
+     */
+    public function usesMultiPageReader(): bool
+    {
+        return ($this->reader_layout ?? self::READER_LAYOUT_ONE_PAGE) === self::READER_LAYOUT_MULTI_PAGE;
+    }
+
+    public function readerLayout(): string
+    {
+        return in_array($this->reader_layout ?? null, [self::READER_LAYOUT_ONE_PAGE, self::READER_LAYOUT_MULTI_PAGE], true)
+            ? (string) $this->reader_layout
+            : self::READER_LAYOUT_ONE_PAGE;
     }
     /*
      * Get all of the chapters for the project

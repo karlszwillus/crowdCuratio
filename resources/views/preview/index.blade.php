@@ -1,99 +1,27 @@
-<!--
+{{--
 crowdCuratio - Curating together virtually
-Copyright (C)2022 - berlinHistory e.V.
+Copyright (C) 2026 - berlinHistory e.V.
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+Q4-Etappe 5 / G4 (2026-09-08): One-Pager-Reader (Long-Scroll).
+Erbt Head/Header/Footer aus preview/layout.blade.php und füllt
+nur die view-spezifischen Slots: Chapter-Chips oben in der
+Header-Nav, Long-Scroll-Sections im Content.
+--}}
+@extends('preview.layout')
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program in the file LICENSE.
-
-If not, see <https://www.gnu.org/licenses/>. -->
-
-<!doctype html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>CrowdCuratio</title>
-
-    {{--<style type="text/css" media="all">
-        @include('preview.style')
-    </style>--}}
-
-    <link media="all" rel="stylesheet" type="text/css" href="{{ asset('css/index.css') }}"/>
-    <link rel="stylesheet" type="text/css" href="{{ asset('slick/slick.css') }}"/>
-    <link rel="stylesheet" type="text/css" href="{{ asset('slick/slick-theme.css') }}"/>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/ScrollToPlugin.min.js"></script>
-    <script type="text/javascript" src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/16327/gsap-latest-beta.min.js"></script>
-    <script type="text/javascript" src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/16327/ScrollTrigger.min.js?v=3.3.0-3"></script>
-    <script type="text/javascript" src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/16327/gsap-latest-beta.min.js"></script>
-    <style type="text/css">
-        /*accent color*/
-        .accent{
-            @if(isset($parameters['colorAccent'])) background-color: {{$parameters['colorAccent']}} @endif;
-        }
-        /*font color*/
-        h4,
-        .slick-dots li.slick-active button::before{
-            @if(isset($parameters['colorChapter'])) color: {{$parameters['colorChapter']}} !important @endif;
-        }
-    </style>
-</head>
-
-<body onresize="toggleback()">
-<div>
-    <div class="top-container accent">
-        <div id="hinweis">
-            <div class="top-inner">
-                <p id="hinweistext">erstellt mit dem OpenSource Projekt </p>
-                <img src="{{ asset('image/crowdCuratio.png') }}" id="logo2" width="1174" height="402" alt="crowdCuratio" /></div>
-        </div>
-    </div>
-
-    <header class="headerleiste accent remove-color" id="myHeader" >
-        <div class="header-inner mb-4">
-            <div>
-                <a href="#" ><img class="logo" src="@if(isset($project->logo)){{route('image', $project->logo)}}@endif" alt="" ></a>
-            </div>
-            <p id="untertitel">@rich($project->description )</p>
-            <p id="titel">
-                <a href="index.html"></a>@isset($project->name){{$project->name}}@endisset
-            </p>
-        </div>
-
-        <div id="burgermenu" onClick="toggle('sprachebtn')"> <span id="burgerbutton">
-        <i class="fa fa-language" id="spracheicon"></i></span></div>
-        <ul id="" class="accent">
-            @if(!in_array(Route::currentRouteName(),['translate']))
-                @foreach (Config::get('languages') as $lang => $language)
-                    <a href="{{ route('lang.switch', $lang) }}">
-                        <button class="sprache" id="sprachede">{{$language}}</button>
-                    </a>
+@section('header-nav')
+    <nav class="ankerleiste">
+        <div class="ankerpunkte">
+            @if(isset($project->chapters))
+                @foreach($project->chapters as $keyProject => $value)
+                    <a href="#section{{ $keyProject }}" id="anker{{ $keyProject }}" class="anker">{{ $value->name }}</a>
                 @endforeach
             @endif
-        </ul>
-        <nav class="ankerleiste">
-            <div class="ankerpunkte">
-                @if(isset($project->chapters))
-                    @foreach($project->chapters as $keyProject => $value)
-                        <a href="#section{{$keyProject}}" id="anker{{$keyProject}}" class="anker">{{$value->name}} </a>
-                    @endforeach
-                @endif
-            </div>
-        </nav>
-    </header>
+        </div>
+    </nav>
+@endsection
 
+@section('intro')
     <section class="einleitung">
         <div class="container">
             <div class="zweispaltig">
@@ -103,413 +31,48 @@ If not, see <https://www.gnu.org/licenses/>. -->
             </div>
         </div>
     </section>
+@endsection
 
-</div>
-
-<!---------------- DYNAMIC SECTIONS ------------------->
-
-@if(isset($project))
-    @if(isset($project->chapters))
+@section('content')
+    @if(isset($project) && isset($project->chapters))
         @foreach($project->chapters as $k => $chapter)
-            <h4 class="toggledown"> {{$chapter->name}} </h4>
+            <h4 class="toggledown">{{ $chapter->name }}</h4>
             @if(isset($parameters['collapse']))
-                <div class="plus" onclick="addText({{$k}})"></div>
+                <div class="plus" onclick="addText({{ $k }})"></div>
             @endif
-            <section id="section{{$k}}" class="section einleitung{{$k}}">
+            <section id="section{{ $k }}" class="section einleitung{{ $k }}">
                 <div class="hintergrundweiss">
                     <div class="container">
                         <div class="zweispaltig" id="text">
                             @isset($chapter->title)<h2>@rich($chapter->title )</h2>@endisset
-                            @isset($chapter->subtitle)<h3>{{$chapter->subtitle}}</h3>@endisset
+                            @isset($chapter->subtitle)<h3>{{ $chapter->subtitle }}</h3>@endisset
                             @isset($chapter->description)<p>@rich($chapter->description )</p>@endisset
                         </div>
-
                     </div>
                 </div>
 
                 @if(isset($chapter->entries))
                     @foreach($chapter->entries as $key => $entry)
-                        <div class="@if($key == 0 ) hintergrundweiss @elseif($key%2 == 0) hintergrundweiss @else {{$parameters['backgroundSecond']}} @endif">
+                        <div class="@if($key == 0) hintergrundweiss @elseif($key % 2 == 0) hintergrundweiss @else {{ $parameters['backgroundSecond'] }} @endif">
                             <div class="container">
-                               <!-- <h5 class="bereich-grau"></h5>-->
                                 <div class="zweispaltig">
-                                    @isset($entry->name)<h2>{{$entry->name}}</h2>@endisset
-                                    @isset($entry->subtitle)<p class="subtitle">{{$entry->subtitle}}</p>@endisset
+                                    @isset($entry->name)<h2>{{ $entry->name }}</h2>@endisset
+                                    @isset($entry->subtitle)<p class="subtitle">{{ $entry->subtitle }}</p>@endisset
                                     @isset($entry->description)<p>@rich($entry->description )</p>@endisset
                                 </div>
 
-                                {{-- Phase 4 / E.7b 4a (ADR-0022): media_contentable_type → content_type.
-                                     Gallery wurde historisch als 'App\Models\Image' getaggt; neue
-                                     Spalte führt sauber 'App\Models\Gallery'. --}}
+                                {{-- Q4-Etappe 5 / G2 (2026-09-08): Content-Loop
+                                     via Type-Dispatcher-Include. --}}
                                 @if(isset($entry->mediaContent))
                                     @foreach($entry->mediaContent as $media)
-                                        @if(isset($media->content_type))
-                                            @if($media->content_type == 'App\Models\Text' && isset($media->text->text))
-                                                <div class="einspaltig">
-                                                    <p>@rich($media->text->text )</p>
-                                                </div>
-                                            @endif
-                                            @if($media->content_type == 'App\Models\Gallery')
-                                <div class="einspaltig">
-                                    @isset($media->gallery->title)<h2>@rich($media->gallery->title )</h2>@endisset
-                                    @isset($media->gallery->subtitle)<p class="subtitle">@rich($media->gallery->subtitle )</p>@endisset
-                                    @isset($media->gallery->description)<p>@rich($media->gallery->description )</p>@endisset
-                                </div>
-								                <div class="variable-width gallery">
-                                                @if(isset($media->gallery->images))
-
-                                                    @foreach($media->gallery->images as $image)
-
-                                                            <div class="inhaltbildergalerie">
-                                                              <img alt="{{$image->alt}}" class="#" src="{{route('image', $image->image)}}">
-																<p class="caption">@rich($image->alt )</p>
-                                                           </div>
-                                                    @endforeach
-												@endif
-                                                 </div>
-                                            @endif
-                                            {{-- Q4-Etappe 4 / F5 (2026-09-08): Zitat-Block.
-                                                 Basis-Rendering — Blockquote + abgeleitete
-                                                 Nachweiszeile aus speaker/date_text/source/
-                                                 locator. Die Feinschliff-Optik kommt mit dem
-                                                 Multi-Seiten-Reader (Etappe G). --}}
-                                            @if($media->content_type == 'App\Models\QuoteBlock' && isset($media->quoteBlock))
-                                                @php
-                                                    $q = $media->quoteBlock;
-                                                    $attribution = collect([
-                                                        $q->speaker,
-                                                        $q->date_text,
-                                                    ])->filter()->implode(', ');
-                                                    $sourceLine = collect([
-                                                        $q->source?->name,
-                                                        $q->locator,
-                                                    ])->filter()->implode(', ');
-                                                @endphp
-                                                <div class="einspaltig zitat">
-                                                    <blockquote>
-                                                        @if(! empty(trim(strip_tags((string) $q->text))))
-                                                            @rich($q->text)
-                                                        @endif
-                                                        @if($attribution !== '' || $sourceLine !== '')
-                                                            <cite>
-                                                                @if($attribution !== ''){{ $attribution }}@endif
-                                                                @if($attribution !== '' && $sourceLine !== '') · @endif
-                                                                @if($sourceLine !== ''){{ $sourceLine }}@endif
-                                                            </cite>
-                                                        @endif
-                                                    </blockquote>
-                                                    @if(! empty(trim((string) $q->text_original)))
-                                                        <p class="zitat-original">
-                                                            <strong>{{ __('quote_original_label') }}:</strong>
-                                                            <span @if($q->lang_original) lang="{{ $q->lang_original }}" @endif>
-                                                                {{ $q->text_original }}
-                                                            </span>
-                                                        </p>
-                                                    @endif
-                                                </div>
-                                            @endif
-                                            {{-- Q4-Etappe 4 / G1 (2026-09-08): Daten-und-Fakten-Block.
-                                                 DL-Rendering für semantische Key-Value-Struktur. --}}
-                                            @if($media->content_type == 'App\Models\DataFactBlock' && isset($media->dataFactBlock))
-                                                @php
-                                                    $b = $media->dataFactBlock;
-                                                    $locale = app()->getLocale();
-                                                    $factRows = $b->rows ?? [];
-                                                    $factColumns = $b->columns ?? [];
-                                                @endphp
-                                                <div class="einspaltig daten-fakten daten-fakten--{{ $b->layout ?? 'steckbrief' }}">
-                                                    @if(! empty($b->title))
-                                                        <h3>{{ $b->title }}</h3>
-                                                    @endif
-                                                    @if(! empty($b->subtitle))
-                                                        <p class="subtitle">{{ $b->subtitle }}</p>
-                                                    @endif
-                                                    @if($b->isTabellenLayout())
-                                                        @if(! empty($factColumns) && ! empty($factRows))
-                                                            <table>
-                                                                <thead>
-                                                                    <tr>
-                                                                        @foreach($factColumns as $col)
-                                                                            <th>{{ is_array($col['header'] ?? null) ? ($col['header'][$locale] ?? $col['header']['de'] ?? '') : (string) ($col['header'] ?? '') }}</th>
-                                                                        @endforeach
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    @foreach($factRows as $row)
-                                                                        <tr>
-                                                                            @php $cells = $row['cells'] ?? []; @endphp
-                                                                            @foreach($factColumns as $ci => $col)
-                                                                                @php $cell = $cells[$ci] ?? ''; @endphp
-                                                                                <td>{{ is_array($cell) ? ($cell[$locale] ?? $cell['de'] ?? '') : (string) $cell }}</td>
-                                                                            @endforeach
-                                                                        </tr>
-                                                                    @endforeach
-                                                                </tbody>
-                                                            </table>
-                                                        @endif
-                                                    @else
-                                                        @if(! empty($factRows))
-                                                            <dl>
-                                                                @foreach($factRows as $row)
-                                                                    @php
-                                                                        $label = is_array($row['label'] ?? null) ? ($row['label'][$locale] ?? $row['label']['de'] ?? '') : (string) ($row['label'] ?? '');
-                                                                        $value = is_array($row['value'] ?? null) ? ($row['value'][$locale] ?? $row['value']['de'] ?? '') : (string) ($row['value'] ?? '');
-                                                                    @endphp
-                                                                    @if($label !== '' || $value !== '')
-                                                                        <dt>{{ $label }}</dt>
-                                                                        <dd>{{ $value }}</dd>
-                                                                    @endif
-                                                                @endforeach
-                                                            </dl>
-                                                        @endif
-                                                    @endif
-                                                </div>
-                                            @endif
-                                            @if($media->content_type == 'App\Models\Audiovisual')
-                                                @if($media->audiovisual->type == 'audio')
-                                                    <audio controls class="embed-responsive-item" id="audio" src="{{route('audio',$media->audiovisual->link)}}"  ></audio>
-                                                @endif
-                                                @if($media->audiovisual->type == 'video')
-                                                    <div class="variable-width">
-                                                        <div class="inhaltbildergalerie">
-                                                            <iframe width="960px" height="400px" src="@rich($media->audiovisual->link )" frameborder="0" allowfullscreen>
-                                                            </iframe>
-                                                        </div>
-                                                    </div>
-                                                @endif
-                                            @endif
-                                        @endif
+                                        @include('preview.content.dispatcher', ['media' => $media])
                                     @endforeach
                                 @endif
                             </div>
-
                         </div>
                     @endforeach
                 @endif
             </section>
         @endforeach
     @endif
-@endif
-@if(isset($parameters['pdf']))
-<div class="footer-background p-3 my-3 border">
-    <a href="@isset($parameters){{route('download', $parameters)}}@endisset" class="btn m-4" data-toggle="modal" data-target="#previewModal" target="_blank" >{{__('pdf')}} <x-icon name="file-earmark-pdf-fill" />
-    </a>
-</div>
-@endif
-<footer>
-    <div class="footerinner">
-
-        {{-- Stakeholder-Fix: Default-Adresse + Email entfernt; das
-             projektspezifische Impressum liegt im Project-Feld
-             `imprint` und ist über den Policy-Link im Footer
-             erreichbar. Wenn ein Projekt einen Kurz-Footer zeigen
-             möchte, kann das Impressum-Feld eine eigene
-             Anschrift-Zeile enthalten — wird hier ohne
-             HTML-Escape gerendert, weil der Translatable-Wert
-             vom Owner gepflegt wird. --}}
-        @php
-            // 5aa.2 Design v6 § 3: leeres Projekt-Impressum → Systemtext fällt durch.
-            $footerImprint = \App\Support\ProjectLegalText::imprintFor($project);
-        @endphp
-        @if(! empty(strip_tags((string) $footerImprint)))
-            <div id="footeradresse">@rich($footerImprint )</div>
-        @endif
-        <ul id="verlinkungslistefooter" >
-            <li class="footerverlinkung"><a class="verlinkung" href="{{route('preview.metadata', ['type' => 'copyright','parameters' => $parameters])}}">{{__('copyright')}}</a> </li>
-            <li class="footerverlinkung"> <a class="verlinkung" href="{{route('preview.metadata', ['type' => 'policy','parameters' => $parameters])}}">{{__('policy')}}</a> </li>
-        </ul>
-    </div>
-</footer>
-@section('footer')
-    @if(Auth::user()->can('publish', $project) || Auth::user()->can('preview'))
-        <div class="footer-background p-3 my-3 border">
-            <a href="#" class="m-4" data-toggle="modal" data-target="#previewModal" target="_blank" >{{__('pdf')}} <x-icon name="file-earmark-pdf-fill" />
-            </a>
-            <a href="#" class="m-4" data-toggle="modal" data-target="#previewModal" target="_blank" >{{__('preview')}} <x-icon name="globe" />
-            </a>
-            <span class="right">	<a href="https://app.crowdcurat.io/downloads/html.zip" class="m-4"  target="_blank" >{{__('download')}} <x-icon name="globe" />
-            </a></span>
-        </div>
-    @endif
 @endsection
-
-<script type="text/javascript" src="//code.jquery.com/jquery-1.11.0.min.js"></script>
-<script type="text/javascript" src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
-<script type="text/javascript" src="{{ URL::asset('slick/slick.min.js') }}"></script>
-<script type="text/javascript" src="{{ URL::asset('js/scrollmagic/uncompressed/ScrollMagic.js') }}"></script>
-{{--<script type="text/javascript">
-    document.write('<scr'+'ipt type="text/javascript" src="{{ URL::asset('js/scrollmagic/uncompressed/ScrollMagic.js') }}"></scr'+'ipt>');
-</script>--}}
-
-
-<script>
-    function toggle() {
-        x = document.getElementById('sprachebtn');
-
-        if (x.style.display === 'block') {
-            x.style.display = 'none';
-        } else {
-            x.style.display = 'block';
-        }
-    }
-
-
-
-    function toggleback() {
-        var w = window.innerWidth;
-
-        if (w >= 900) {
-            document.getElementById('sprachebtn').style.display ='block';
-        } else{
-            document.getElementById('sprachebtn').style.display ='none';
-        }
-    };
-
-</script>
-
-
-
-<!--Bildergalerie -->
-
-<script type="text/javascript">
-
-
-
-    $('.gallery').slick({
-        dots: true,
-        infinite: true,
-        speed: 200,
-        slidesToShow: 1,
-        centerMode: true,
-        variableWidth: true,
-        arrows: false
-    });
-
-
-
-</script>
-
-<!-- active Anchor -->
-
-<script>
-
-
-    //list as many as you'd like
-    gsap.registerPlugin(ScrollToPlugin);
-
-    var controller = new ScrollMagic.Controller({
-
-
-
-    });
-
-    $('.section').each(function (i, section){
-        var $section = $(section);
-
-        new ScrollMagic.Scene({
-            triggerElement: section,
-            triggerHook: 'onEnter',
-            duration: $section.outerHeight(true)
-        })
-    })
-
-</script>
-
-<!-- Anchor Link Scrolling -->
-
-
-
-<script>
-
-    // Detect if a link's href goes to the current page
-    function getSamePageAnchor (link) {
-        if (
-            link.protocol !== window.location.protocol ||
-            link.host !== window.location.host ||
-            link.pathname !== window.location.pathname ||
-            link.search !== window.location.search
-        ) {
-            return false;
-        }
-
-        return link.hash;
-    }
-
-    // Scroll to a given hash, preventing the event given if there is one
-    function scrollToHash(hash, e) {
-        const elem = hash ? document.querySelector(hash) : false;
-        if(elem) {
-            if(e) e.preventDefault();
-            gsap.to(window, 1, {scrollTo:{y:elem, offsetY:200}});
-        }
-    }
-
-    // If a link's href is within the current page, scroll to it instead
-    document.querySelectorAll('a[href]').forEach(a => {
-        a.addEventListener('click', e => {
-            scrollToHash(getSamePageAnchor(a), e);
-        });
-    });
-
-    // Scroll to the element in the URL's hash on load
-    scrollToHash(window.location.hash);
-
-
-</script>
-
-
-<!-- sticky Header -->
-
-
-<script>
-    window.onscroll = function() {myFunction()};
-
-    var header = document.getElementById("myHeader");
-    var sticky = header.offsetTop;
-
-    function myFunction() {
-        if (window.pageYOffset > sticky) {
-            header.classList.add("sticky");
-        } else {
-            header.classList.remove("sticky");
-        }
-    }
-</script>
-<script>
-
-    onload="noVis();"
-
-
-    function noVis() {
-        document.getElementsByClassName("section").style.display = "none";
-    }
-
-    function addText(i) {
-        var content = document.getElementById("section" + i);
-        if (content.style.display === "none") {
-            content.style.display = "initial";
-        }else{
-            content.style.display = "none";
-        }
-    }
-</script>
-<script>
-    var div = document.getElementById("sprachebtn");
-    var btns = header.getElementsByClassName("sprache");
-    for (var i = 0; i < btns.length; i++) {
-        btns[i].addEventListener("click", function() {
-            var current = document.getElementsByClassName("activesprache");
-            if (current.length > 0) {
-                current[0].className = current[0].className.replace(" activesprache", "");
-            }
-            this.className += " activesprache";
-        });
-    }
-</script>
-<script>
-    $('.plus').click(function () {
-        $(this).toggleClass('rotate')
-    })
-</script>
-</body>
-</html>

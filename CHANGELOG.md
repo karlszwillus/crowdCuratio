@@ -733,6 +733,47 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Q4-Etappe 5 · G1–G6 · Reader-Umbau (Multi-Page + Design-Handoff)**
+  (2026-09-09). Der öffentliche Reader lernt zwei Modi und übernimmt
+  das Design-Vokabular aus dem Handoff v4. Neues Projekt-Setting
+  `reader_layout` (`one-page` | `multi-page`, Default `one-page`)
+  mit UI-Karte im Metadaten-Tab entscheidet: **One-Pager** rendert
+  wie bisher als Long-Scroll mit Chapter-Chips oben; **Multi-Page**
+  redirected auf das erste Kapitel (`/preview/chapters/{chapter}`)
+  und zeigt links eine sticky Sidebar mit nummerierter Kapitel-
+  Liste — pro Kapitel ein eigener Deeplink. Beide Modi teilen ein
+  gemeinsames `preview/layout.blade.php` (Head, Header, Sprach-
+  Umschalter, Footer, Impressum-Kette einmal statt zweimal). Fünf
+  wiederverwendbare Content-Partials unter `preview/content/*`
+  (Text, Galerie, Audiovisual, Zitat, Daten-und-Fakten) plus ein
+  Type-Dispatcher; der Reader-Body nutzt nur noch einen einzigen
+  `@include` statt eines 130-Zeilen-Type-Switches. Die Copyright/
+  Policy-Seite erbt jetzt ebenfalls vom gemeinsamen Layout (129 LoC
+  Duplikation weg). Slick, Font-Awesome und GSAP-CDN-Includes im
+  Web-Reader entfernt — Slick war dort nur toter CSS-Ballast (kein
+  JS-Init im Web, nur im PDF), das FA-Sprach-Icon wird durch einen
+  schlichten Mono-Kürzel-Button ersetzt, GSAP war unbenutzt. Neues
+  responsives Gallery-Grid (`.cc-gallery-grid`, `<figure>` +
+  `<figcaption>`, `loading="lazy"`) passt sich sowohl an die
+  One-Pager- als auch an die schmalere Multi-Page-Content-Spalte an
+  ohne Overflow. Skip-Link „Zum Inhalt springen" (Handoff-A11y).
+  Reader-Body auf **Source Serif 4** (Bunny Fonts, DSGVO-freundlich,
+  kein npm-Package), Headlines auf IBM Plex Sans, Meta-Labels auf
+  IBM Plex Mono — alles über das neue statische
+  `public/css/reader.css`-Bundle mit inline-Design-Tokens.
+  Projekt-Farbe aus `?colorAccent` überschreibt die zentralen
+  CSS-Variablen (`--color-primary`, `--color-brand-bar`, das
+  Pastell-Band ableitet sich via `color-mix()`), Multi-Page-Sidebar
+  farbet mit. Legacy `public/css/index.css` wird vom Reader nicht
+  mehr geladen. PDF-Pipeline bleibt bis zum reduzierten Neubau in
+  Etappe G · Schritt 13 auf dem Alt-Stand — im Redirect-Fall bleibt
+  daher `?pdf=1` immer auf dem One-Pager. Neue Locale-Keys für
+  Reader-Layout-Setting, Skip-Link, Sprach-Umschalter, Chapter-
+  Navigation. Als Follow-ups notiert (in
+  `.werkbank/PLANS/Q4-ETAPPE-G-READER-UMBAU.md`): Detail-Design-
+  Abgleich durch den Designer und die Persistierung der Projekt-
+  Farben als Projekt-Setting statt GET-Params.
+
 - **Q4-Etappe 4 · F · Daten-und-Fakten-Block als eigener Content-Type**
   (2026-09-08). Neuer polymorpher Content-Type `App\Models\DataFactBlock`
   (Tabelle `data_fact_blocks`) mit zwei Layouts: **Steckbrief**

@@ -58,7 +58,14 @@ If not, see <https://www.gnu.org/licenses/>. -->
     @endif
     <p class="mb-4 text-caption text-ink-500">{{ __('metadata_page_hint') }}</p>
 
+    {{-- Q4-Etappe 5 / G1 Nachreview (2026-09-08): Rechte Sidebar
+         (Prüfung, Kennzahlen, Verlauf, Löschen) ist länger als die
+         Form. Ohne Puffer scrollt der Sticky-Footer aus seinem
+         Kontext raus, sobald man über das Form-Ende hinaus zur
+         Sidebar-Unterkante scrollt. `pb-32` puffert das ab, bis wir
+         den Sticky-Footer sauber auf Layout-Ebene positionieren. --}}
     <form id="frm_project" name="projectForm"
+          class="pb-32"
           action="@if(isset($project->id)) {{ route('projects.update',$project->id) }} @else {{ route('projects.store') }} @endif"
           method="POST"
           enctype="multipart/form-data"
@@ -270,6 +277,49 @@ If not, see <https://www.gnu.org/licenses/>. -->
                         <span>
                             <span class="block text-body font-medium text-ink-900">{{ __('project_source_required_label') }}</span>
                             <span class="block text-caption text-ink-500">{{ __('project_source_required_hint') }}</span>
+                        </span>
+                    </label>
+                </fieldset>
+            </section>
+
+            {{-- Q4-Etappe 5 / G1 (2026-09-08): Reader-Layout-Karte.
+                 Analog zur Zitier-Einstellungen-Karte darüber. Der
+                 Redakteur wählt, ob die öffentliche Ausstellung als
+                 Ein-Seiter mit Chapter-Chips oben (kleine Projekte)
+                 oder als Mehr-Seiten-Ansicht mit Sidebar links
+                 (größere Projekte) gerendert wird. --}}
+            <section class="mb-4 rounded-md border border-line-200 bg-paper-0 p-5">
+                <h2 class="mb-1 text-caption font-semibold text-ink-700">
+                    {{ __('project_reader_settings') }}
+                </h2>
+                <p class="mb-3 text-caption text-ink-500">
+                    {{ __('project_reader_settings_intro') }}
+                </p>
+
+                <fieldset class="mt-3">
+                    <legend class="mb-2 block text-caption font-medium text-ink-700">
+                        {{ __('project_reader_layout_label') }}
+                    </legend>
+                    <label class="flex items-start gap-3 rounded-md border border-line-200 p-3 hover:bg-canvas-bg has-checked:border-primary">
+                        <input type="radio"
+                               name="reader_layout"
+                               value="one-page"
+                               @checked(! $project->usesMultiPageReader())
+                               class="mt-1"/>
+                        <span>
+                            <span class="block text-body font-medium text-ink-900">{{ __('project_reader_layout_one_page') }}</span>
+                            <span class="block text-caption text-ink-500">{{ __('project_reader_layout_one_page_desc') }}</span>
+                        </span>
+                    </label>
+                    <label class="mt-2 flex items-start gap-3 rounded-md border border-line-200 p-3 hover:bg-canvas-bg has-checked:border-primary">
+                        <input type="radio"
+                               name="reader_layout"
+                               value="multi-page"
+                               @checked($project->usesMultiPageReader())
+                               class="mt-1"/>
+                        <span>
+                            <span class="block text-body font-medium text-ink-900">{{ __('project_reader_layout_multi_page') }}</span>
+                            <span class="block text-caption text-ink-500">{{ __('project_reader_layout_multi_page_desc') }}</span>
                         </span>
                     </label>
                 </fieldset>
