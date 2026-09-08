@@ -9,6 +9,7 @@ use App\Models\Audiovisual;
 use App\Models\Entry;
 use App\Models\Gallery;
 use App\Models\MediaContent;
+use App\Models\QuoteBlock;
 use App\Models\Text;
 use App\Models\User;
 use App\Services\ContentInsertionService;
@@ -55,6 +56,24 @@ it('legt einen leeren Gallery-Block an', function () {
     $media = MediaContent::findOrFail($mediaId);
     expect($media->content_type)->toBe(Gallery::class);
     expect(Gallery::find($media->content_id))->not->toBeNull();
+});
+
+it('legt einen leeren Zitat-Block an', function () {
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $project = makeProject($owner);
+    $entry = makeEntry(makeChapter($project));
+
+    $mediaId = insertBlank($entry->id, 'quote');
+
+    $media = MediaContent::findOrFail($mediaId);
+    expect($media->content_type)->toBe(QuoteBlock::class);
+    $quote = QuoteBlock::find($media->content_id);
+    expect($quote)->not->toBeNull();
+    expect((string) $quote->text)->toBe('');
+    expect($quote->speaker)->toBeNull();
+    expect($quote->kind)->toBeNull();
+    expect($quote->source_id)->toBeNull();
 });
 
 it('legt einen leeren Audiovisual-Block an', function () {

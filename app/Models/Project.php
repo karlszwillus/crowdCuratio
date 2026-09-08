@@ -184,6 +184,10 @@ class Project extends Model implements HasComments
             'chapters.entries.mediaContent.gallery.images.comments',
             'chapters.entries.mediaContent.gallery.images.copyrightImage',
             'chapters.entries.mediaContent.gallery.images.originImage',
+            // Q4-Etappe 4 / F1 (2026-09-08): Zitat-Block inkl.
+            // Comments für den Kommentar-Badge in der Blockkopf-Zeile.
+            'chapters.entries.mediaContent.quoteBlock.source',
+            'chapters.entries.mediaContent.quoteBlock.comments',
         ]);
     }
 
@@ -201,6 +205,8 @@ class Project extends Model implements HasComments
             'chapters.entries.mediaContent.text',
             'chapters.entries.mediaContent.gallery.images',
             'chapters.entries.mediaContent.audiovisual',
+            // Q4-Etappe 4 / F1 (2026-09-08): Zitat-Block.
+            'chapters.entries.mediaContent.quoteBlock.source',
         ]);
     }
 

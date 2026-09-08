@@ -25,6 +25,7 @@ use App\Models\Entry;
 use App\Models\Gallery;
 use App\Models\Image;
 use App\Models\Project;
+use App\Models\QuoteBlock;
 use App\Models\Text;
 
 /**
@@ -70,6 +71,11 @@ final class CommentableRoutes
         Text::class => [
             'save' => 'comment.text.save',
             'base' => 'comment.text',
+        ],
+        // Q4-Etappe 4 / F1 (2026-09-08): Zitat-Block.
+        QuoteBlock::class => [
+            'save' => 'comment.quote.save',
+            'base' => 'comment.quote',
         ],
     ];
 

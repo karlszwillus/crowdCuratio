@@ -16,6 +16,7 @@ use App\Models\Chapter;
 use App\Models\Entry;
 use App\Models\Gallery;
 use App\Models\Image;
+use App\Models\QuoteBlock;
 use App\Models\Text;
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
@@ -50,6 +51,8 @@ final class RevisionRevertService
         Image::class,
         Gallery::class,
         Audiovisual::class,
+        // Q4-Etappe 4 / F1 (2026-09-08): Zitat-Block.
+        QuoteBlock::class,
     ];
 
     public function __construct(

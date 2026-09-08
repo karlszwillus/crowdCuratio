@@ -193,6 +193,17 @@ class MediaContent extends Model implements HasComments
     }
 
     /**
+     * Q4-Etappe 4 / F1 (2026-09-08): QuoteBlock als vierter
+     * Content-Type. Analog zu text/gallery/audiovisual über
+     * `content_id` gebunden — greift nur wenn `content_type` auf
+     * QuoteBlock passt (Guard erfolgt im Blade beim Rendering).
+     */
+    public function quoteBlock()
+    {
+        return $this->belongsTo(QuoteBlock::class, 'content_id', 'id');
+    }
+
+    /**
      * Add language to log
      */
     public function tapActivity(Activity $activity)

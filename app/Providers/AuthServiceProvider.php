@@ -28,6 +28,7 @@ use App\Models\Entry;
 use App\Models\Gallery;
 use App\Models\Image;
 use App\Models\Project;
+use App\Models\QuoteBlock;
 use App\Models\Text;
 use App\Policies\AudiovisualPolicy;
 use App\Policies\ChapterPolicy;
@@ -35,6 +36,7 @@ use App\Policies\EntryPolicy;
 use App\Policies\GalleryPolicy;
 use App\Policies\ImagePolicy;
 use App\Policies\ProjectPolicy;
+use App\Policies\QuoteBlockPolicy;
 use App\Policies\TextPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
@@ -55,6 +57,8 @@ class AuthServiceProvider extends ServiceProvider
         Image::class => ImagePolicy::class,
         Gallery::class => GalleryPolicy::class,
         Audiovisual::class => AudiovisualPolicy::class,
+        // Q4-Etappe 4 / F1 (2026-09-08): Zitat-Block.
+        QuoteBlock::class => QuoteBlockPolicy::class,
     ];
 
     /**
