@@ -125,9 +125,13 @@ class ChapterController extends Controller
 
         $projectId = (int) $request->validated()['projectId'];
 
-        $this->chapters->create(ChapterData::fromRequest($request), $projectId);
+        // Q4-Etappe 4 / C1f (2026-09-08): Redirect mit Fragment auf
+        // den neu angelegten Chapter, damit der livewire:navigated-
+        // Scroll-Listener (components/layout.blade.php) direkt
+        // dorthin springt — analog zum Inline-Add-Flow.
+        $chapter = $this->chapters->create(ChapterData::fromRequest($request), $projectId);
 
-        return redirect()->route('projects.edit', $projectId)
+        return redirect(route('projects.edit', $projectId).'#anchor_Chapter_'.$chapter->id)
             ->with('success', __('message_add_chapter_success'));
     }
 

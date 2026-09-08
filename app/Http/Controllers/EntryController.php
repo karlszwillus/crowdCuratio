@@ -91,9 +91,14 @@ class EntryController extends Controller
 
         $chapterId = (int) $request->validated()['chapterId'];
 
-        $this->entries->create(EntryData::fromRequest($request), $chapterId);
+        // Q4-Etappe 4 / C1f (2026-09-08): Redirect mit Fragment auf
+        // den neu angelegten Entry — analog zum Inline-Add-Flow für
+        // Content-Blöcke.
+        $entry = $this->entries->create(EntryData::fromRequest($request), $chapterId);
 
-        return redirect()->back()->with('success', __('message_add_entry_success'));
+        return redirect(
+            route('projects.edit', $entry->chapter->project_id).'#anchor_Entry_'.$entry->id
+        )->with('success', __('message_add_entry_success'));
     }
 
     /**
