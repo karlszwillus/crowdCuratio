@@ -84,6 +84,8 @@ Slots:
         'quote'    => ['icon' => 'quote',           'label' => __('block_type_quote')],
         'document' => ['icon' => 'file-text',       'label' => __('block_type_document')],
         'map'      => ['icon' => 'map-pin',         'label' => __('block_type_map')],
+        // Q4-Etappe 4 / G1 (2026-09-08): Daten-und-Fakten-Block.
+        'data-facts' => ['icon' => 'table',         'label' => __('block_type_data_facts')],
     ];
 
     $meta = $typeMeta[$type] ?? ['icon' => 'file-text', 'label' => $type];

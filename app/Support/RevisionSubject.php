@@ -11,6 +11,7 @@ namespace App\Support;
 
 use App\Models\Audiovisual;
 use App\Models\Chapter;
+use App\Models\DataFactBlock;
 use App\Models\Entry;
 use App\Models\Gallery;
 use App\Models\Image;
@@ -51,6 +52,8 @@ final class RevisionSubject
         'Audiovisual' => Audiovisual::class,
         // Q4-Etappe 4 / F1 (2026-09-08): Zitat-Block.
         'QuoteBlock' => QuoteBlock::class,
+        // Q4-Etappe 4 / G1 (2026-09-08): Daten-und-Fakten-Block.
+        'DataFactBlock' => DataFactBlock::class,
     ];
 
     /**

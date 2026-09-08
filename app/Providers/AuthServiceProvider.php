@@ -24,6 +24,7 @@ namespace App\Providers;
 
 use App\Models\Audiovisual;
 use App\Models\Chapter;
+use App\Models\DataFactBlock;
 use App\Models\Entry;
 use App\Models\Gallery;
 use App\Models\Image;
@@ -32,6 +33,7 @@ use App\Models\QuoteBlock;
 use App\Models\Text;
 use App\Policies\AudiovisualPolicy;
 use App\Policies\ChapterPolicy;
+use App\Policies\DataFactBlockPolicy;
 use App\Policies\EntryPolicy;
 use App\Policies\GalleryPolicy;
 use App\Policies\ImagePolicy;
@@ -59,6 +61,8 @@ class AuthServiceProvider extends ServiceProvider
         Audiovisual::class => AudiovisualPolicy::class,
         // Q4-Etappe 4 / F1 (2026-09-08): Zitat-Block.
         QuoteBlock::class => QuoteBlockPolicy::class,
+        // Q4-Etappe 4 / G1 (2026-09-08): Daten-und-Fakten-Block.
+        DataFactBlock::class => DataFactBlockPolicy::class,
     ];
 
     /**

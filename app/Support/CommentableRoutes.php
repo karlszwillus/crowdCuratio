@@ -21,6 +21,7 @@ namespace App\Support;
 
 use App\Models\Audiovisual;
 use App\Models\Chapter;
+use App\Models\DataFactBlock;
 use App\Models\Entry;
 use App\Models\Gallery;
 use App\Models\Image;
@@ -76,6 +77,11 @@ final class CommentableRoutes
         QuoteBlock::class => [
             'save' => 'comment.quote.save',
             'base' => 'comment.quote',
+        ],
+        // Q4-Etappe 4 / G1 (2026-09-08): Daten-und-Fakten-Block.
+        DataFactBlock::class => [
+            'save' => 'comment.data-facts.save',
+            'base' => 'comment.data-facts',
         ],
     ];
 

@@ -21,6 +21,7 @@ namespace App\Support;
 
 use App\Models\Audiovisual;
 use App\Models\Chapter;
+use App\Models\DataFactBlock;
 use App\Models\Entry;
 use App\Models\Gallery;
 use App\Models\Image;
@@ -80,6 +81,14 @@ final class ContentTypeRegistry
             'model' => QuoteBlock::class,
             'table' => 'quote_blocks',
             'property' => 'text',
+        ],
+        // Q4-Etappe 4 / G1 (2026-09-08): Daten-und-Fakten-Block.
+        // `property` verweist auf den Titel — er ist meist gesetzt
+        // und im Log-Ausdruck aussagekräftiger als das rows-Array.
+        'data-facts' => [
+            'model' => DataFactBlock::class,
+            'table' => 'data_fact_blocks',
+            'property' => 'title',
         ],
     ];
 

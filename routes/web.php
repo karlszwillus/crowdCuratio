@@ -25,6 +25,7 @@ use App\Http\Controllers\ChapterController;
 use App\Http\Controllers\ContentCommentController;
 use App\Http\Controllers\ContentController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DataFactBlockController;
 use App\Http\Controllers\EntryController;
 use App\Http\Controllers\GalleryBlockController;
 use App\Http\Controllers\ImageBlockController;
@@ -142,6 +143,13 @@ Route::group(
         // nur für Delete und das Kind-Dropdown.
         Route::delete('/delete/{id}/quote', [QuoteBlockController::class, 'destroy'])
             ->name('quote.delete');
+
+        // Q4-Etappe 4 / G1 (2026-09-08): Daten-und-Fakten-Block-Endpunkte.
+        // Anlegen über ContentInsertionService, Bearbeiten inline
+        // via inline-editor + data-facts-rows-editor. Nur Delete
+        // klassisch.
+        Route::delete('/delete/{id}/data-facts', [DataFactBlockController::class, 'destroy'])
+            ->name('data-facts.delete');
         Route::post('/check/email', [ProjectPermissionController::class, 'checkEmail'])->name('check.email');
         // Q3-Härtung F2 (2026-08-19) / SEC-02: vorher GET ohne Auth-Guard,
         // jeder eingeloggte User konnte fuer beliebige User-IDs eine
@@ -292,6 +300,12 @@ Route::group(
         Route::get('/comment/quote/{id}/', [ContentCommentController::class, 'getQuoteComment'])->name('comment.quote.show');
         Route::post('/comment/quote/{id}/save', [ContentCommentController::class, 'saveCommentQuote'])->name('comment.quote.save');
         Route::post('/comment/quote/status', [ContentCommentController::class, 'setCommentStatusQuote'])->name('comment.quote.status');
+
+        // Q4-Etappe 4 / G1 (2026-09-08): Daten-und-Fakten-Block-Comments.
+        Route::post('/comment/data-facts', [ContentCommentController::class, 'commentDataFacts'])->name('comment.data-facts');
+        Route::get('/comment/data-facts/{id}/', [ContentCommentController::class, 'getDataFactsComment'])->name('comment.data-facts.show');
+        Route::post('/comment/data-facts/{id}/save', [ContentCommentController::class, 'saveCommentDataFacts'])->name('comment.data-facts.save');
+        Route::post('/comment/data-facts/status', [ContentCommentController::class, 'setCommentStatusDataFacts'])->name('comment.data-facts.status');
         Route::post(
             '/text/reset',
             [TextBlockController::class, 'resetText']

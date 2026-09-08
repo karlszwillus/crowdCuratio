@@ -6,6 +6,7 @@
  */
 
 use App\Models\Audiovisual;
+use App\Models\DataFactBlock;
 use App\Models\Entry;
 use App\Models\Gallery;
 use App\Models\MediaContent;
@@ -56,6 +57,22 @@ it('legt einen leeren Gallery-Block an', function () {
     $media = MediaContent::findOrFail($mediaId);
     expect($media->content_type)->toBe(Gallery::class);
     expect(Gallery::find($media->content_id))->not->toBeNull();
+});
+
+it('legt einen leeren Daten-und-Fakten-Block an', function () {
+    /** @var User $owner */
+    $owner = User::factory()->create();
+    $project = makeProject($owner);
+    $entry = makeEntry(makeChapter($project));
+
+    $mediaId = insertBlank($entry->id, 'data-facts');
+
+    $media = MediaContent::findOrFail($mediaId);
+    expect($media->content_type)->toBe(DataFactBlock::class);
+    $block = DataFactBlock::find($media->content_id);
+    expect($block)->not->toBeNull();
+    expect($block->title)->toBeNull();
+    expect($block->rows)->toBe([]);
 });
 
 it('legt einen leeren Zitat-Block an', function () {
