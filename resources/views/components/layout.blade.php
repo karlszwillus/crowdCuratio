@@ -216,6 +216,34 @@ und `main` sind gleichwertige Canvas-Slots.
 
     @livewireScripts
 
+    {{-- Q4-Etappe 4 / C1c (2026-09-08): Wenn Livewires wire:navigate
+         die Seite via SPA-Swap wechselt, wertet der Browser das
+         URL-Fragment nicht selbst aus — deshalb hier ein einmaliger
+         Listener, der nach dem Swap zum Anchor scrollt. `instant`
+         statt `smooth`, damit es nicht bei jedem Add sichtbar
+         durchscrollt. --}}
+    <script>
+        // Livewires eigene Scroll-Restoration läuft NACH dem
+        // `livewire:navigated`-Event und würde einen sofortigen
+        // scrollIntoView wieder überschreiben. Deshalb zwei
+        // requestAnimationFrame-Ticks Verzögerung: sicher nach
+        // dem Restore, aber vor dem ersten Paint des Users.
+        // Console-Log lässt uns im Verdachtsfall sehen, ob der
+        // Anchor fehlt.
+        document.addEventListener('livewire:navigated', () => {
+            const hash = window.location.hash;
+            if (!hash || hash.length <= 1) return;
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                const el = document.getElementById(hash.slice(1));
+                if (el) {
+                    el.scrollIntoView({ block: 'start', behavior: 'instant' });
+                } else {
+                    console.warn('[content-add-bar] Anchor nicht gefunden:', hash);
+                }
+            }));
+        });
+    </script>
+
     {{-- View-spezifische Scripts. --}}
     @stack('scripts')
 </body>

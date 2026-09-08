@@ -1215,6 +1215,13 @@ If not, see <https://www.gnu.org/licenses/>. -->
             $( ".sortable_list_content" ).sortable({
 				placeholder:"placeholder",
                 connectWith: ".connectedSortableContent",
+                // Q4-Etappe 4 / C1b (2026-09-08): Add-Bar-Slots
+                // (<li class="content-add-bar-slot">) sind KEINE
+                // sortierbaren Items. Ohne diese Restriktion würde
+                // sortable('toArray', {attribute:'data-content'}) sie
+                // mit-einsammeln und der reorder-Endpoint bekäme
+                // undefined-IDs.
+                items: '> li[data-content]',
                 update: function(event, ui) {
                     let data = {};
                     data['data'] = $(this).sortable('toArray', {attribute:'data-content'});
