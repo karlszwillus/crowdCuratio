@@ -26,6 +26,7 @@ use App\Data\EntryData;
 use App\Http\Requests\StoreCommentRequest;
 use App\Http\Requests\StoreEntryRequest;
 use App\Http\Requests\UpdateEntryRequest;
+use App\Models\Chapter;
 use App\Models\Comment;
 use App\Models\Entry;
 use App\Services\CommentRetrieve;
@@ -93,11 +94,14 @@ class EntryController extends Controller
 
         // Q4-Etappe 4 / C1f (2026-09-08): Redirect mit Fragment auf
         // den neu angelegten Entry — analog zum Inline-Add-Flow für
-        // Content-Blöcke.
+        // Content-Blöcke. project_id direkt aus Chapter-Query holen
+        // (kein $entry->chapter->..., weil das lazy-loaden würde und
+        // Model::shouldBeStrict() greift).
         $entry = $this->entries->create(EntryData::fromRequest($request), $chapterId);
+        $projectId = Chapter::query()->whereKey($chapterId)->value('project_id');
 
         return redirect(
-            route('projects.edit', $entry->chapter->project_id).'#anchor_Entry_'.$entry->id
+            route('projects.edit', $projectId).'#anchor_Entry_'.$entry->id
         )->with('success', __('message_add_entry_success'));
     }
 

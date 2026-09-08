@@ -77,12 +77,16 @@ it('store legt das erste Chapter mit position 1 an', function () {
         'chapterDescription' => null,
     ]);
 
-    $response->assertRedirect(route('projects.edit', $project->id));
-
     $chapter = Chapter::where('project_id', $project->id)->first();
     expect($chapter)->not->toBeNull();
     expect($chapter->name)->toBe('Erstes Kapitel');
     expect($chapter->position)->toBe(1);
+
+    // Q4-Etappe 4 / C1f (2026-09-08): Store-Redirect enthält jetzt
+    // ein Anchor-Fragment auf den neuen Chapter.
+    $response->assertRedirect(
+        route('projects.edit', $project->id).'#anchor_Chapter_'.$chapter->id
+    );
 });
 
 it('store erhöht die position auf max+1, wenn das Project schon Kapitel hat', function () {

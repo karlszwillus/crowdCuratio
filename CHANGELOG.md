@@ -733,6 +733,43 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Q4-Etappe 4 · C1 · Inline-Add-Flow für Content-Blöcke**
+  (2026-09-08). Ersetzt die Bootstrap-3-Modal-Kette (contentModal,
+  galleryModal, audiovisualModal + jQuery-Verkabelung `.addContent` /
+  `.add-Text` / `.add-Image` / `.add-audio` / `.add-video`) durch
+  eine inline sichtbare Add-Bar im Editor. Zwischen jedem
+  Content-Block liegt ein schmaler Trenner („Hier neuen Inhalt
+  einfügen"), am Ende leerer Entries eine dominante Anlege-Bar
+  („Neuen Inhalt hinzufügen"); Klick öffnet ein Popover mit den
+  drei Optionen **Text / Galerie / Audio-Video** (Bilder bleiben
+  Sache der Gallery-Dropzone). Volt-Component
+  `<livewire:content-add-bar>` mit Tastatur-Navigation, Focus-Trap,
+  ARIA-Menu-Semantik und weicher Slide-Fade-Transition (350 ms
+  cubic-bezier), reagiert auf `prefers-reduced-motion`. Persistiert
+  über `ContentInsertionService::insertBlank(entryId, type,
+  afterMediaContentId)` — legt einen leeren Block an und shiftet
+  `media_content.position` transaktional, damit Insert-Between
+  sauber möglich ist. Nach dem Anlegen scrollt die Seite direkt zum
+  neuen Block (`#anchor_MediaContent_{id}` plus livewire:navigated-
+  Listener im Layout, der zwei rAF-Ticks nach Livewires Scroll-
+  Restoration greift). Analog dazu redirecten Chapter- und Entry-
+  Anlage mit Fragment `#anchor_Chapter_{id}` bzw.
+  `#anchor_Entry_{id}` — die zugehörigen Anker sind bereits im DOM.
+  Legacy-Aufräumen: `contents/index|gallery|audiovisual.blade.php`,
+  `projects/element.blade.php` (verwaister Bootstrap-3-Chapter/Entry-
+  Anlege-Screen ohne Save-Backend) plus Route `/element` und
+  `ProjectController::element` sowie die zugehörigen jQuery-Handler
+  und `resetValues()` entfernt (netto ~430 LoC weniger). Migrations:
+  `texts.text/origin/copyright` und `audiovisuals.link` nullable,
+  damit Blanko-Blöcke sauber persistiert werden. Neue Tests:
+  `ContentInsertionServiceTest` (6 Fälle inkl. Insert-Between und
+  Insert-Before-First), `ChapterEntryAnchorRedirectTest`. 5 neue
+  Locale-Keys je Sprache. Als Follow-up ausdrücklich offen und in
+  einer Werkbank-Notiz dokumentiert: die Gutter-Handle-Affordanz
+  aus Design-Briefing v4 Screen 05·5 (drei mögliche Deutungen —
+  nur Add, Add+Move-Cluster, Move-Only) wartet auf Klärung mit
+  dem Designer.
+
 - **Q4-Etappe 3 · C0d · Quellenverwaltung pro Projekt**
   (2026-09-07). Neue Vollpage unter `/projects/{project}/sources`
   (gated auf `update`, als „Quellen"-Tab in der Projekt-Chrome-Bar
@@ -2365,6 +2402,36 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
   in der ehemaligen `CommentTrait::commentAsUser`.
 
 ### Behoben
+
+- **Quellenverwaltung: Zähler-Divergenz, Pluralisierung, Merge-
+  Button, Zitier-Settings** (Q4-Etappe 3 · C0-Nachreview ·
+  2026-09-07). Fünf Follow-ups aus dem Smoke-Test der neuen
+  Quellenverwaltung: (a) Der Referenz-Zähler wurde vorher als
+  Cache-Array über die aktuell gefilterte Sources-Liste berechnet
+  und lieferte in Detail und Liste unterschiedliche Werte;
+  ersetzt durch die dedizierte Methode
+  `referenceCountFor(int $sourceId)`, die Text/Image/AV pro Source
+  frisch zählt und damit garantiert konsistent bleibt. (b) Der
+  Detail-Text zeigte fälschlich „Noch nicht referenziert" auch bei
+  count=1, weil der Pluralisierungs-String
+  `sources_admin_referenced_n_times` keine expliziten Range-Marker
+  hatte und Laravel bei Deutsch die 0-Form als „singular" wählte;
+  Fix: `{0}|{1}|[2,*]`-Ranges in de.json und en.json. (c) Der
+  Merge-Assistent lief immer in eine neue project-scoped Row, statt
+  auf eine bereits vorhandene (z. B. per AV-Backfill entstandene)
+  Zieltabelle-Row zu merged; `SourceMigrationService::runFor`
+  sucht jetzt vor dem `new Source` nach gleichnamigen scoped Rows.
+  (d) AV-Referenzen (`copyright_id`/`origin_id`) werden beim Merge
+  mit-umgebogen, `candidatesFor` findet auch AV-referenzierte
+  Alt-Sources, `referencedElsewhere`-Check inkludiert AV. (e) Der
+  Bestätigen-Button im Merge-Modal wurde nie aktiv, weil
+  `wire:model` ohne `.live` das Ziel-Select serverseitig nicht
+  aktualisierte. Zusätzlich: `ProjectController::update`
+  persistiert jetzt tatsächlich `citation_depth` und
+  `source_required` — die Radio-Auswahl im Edit-Screen sprang
+  vorher nach dem Speichern immer wieder zurück. Zwei neue
+  Feature-Test-Suites: `CitationSettingsUpdateTest` (2 Fälle) und
+  `ReferenceCountPluralizationTest` (6 Fälle über de + en).
 
 - **`wire:model.blur` in Livewire 4 feuerte keinen Commit** (A7 ·
   2026-08-21). Das Blur-Sync im `inline-editor.blade.php` synced

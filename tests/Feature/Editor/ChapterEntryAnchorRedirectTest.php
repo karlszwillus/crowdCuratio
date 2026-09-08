@@ -8,6 +8,7 @@
 use App\Models\Chapter;
 use App\Models\Entry;
 use App\Models\User;
+use Tests\TestCase;
 
 /**
  * Q4-Etappe 4 / C1f (2026-09-08): Chapter- und Entry-Anlage
@@ -17,6 +18,7 @@ use App\Models\User;
  * Flow für Content-Blöcke.
  */
 it('Chapter-Add redirected mit Fragment auf den neuen Chapter', function () {
+    /** @var TestCase $this */
     /** @var User $owner */
     $owner = User::factory()->create();
     $project = makeProject($owner);
@@ -24,7 +26,7 @@ it('Chapter-Add redirected mit Fragment auf den neuen Chapter', function () {
     $response = $this->actingAs($owner)
         ->from(route('projects.edit', $project->id))
         ->post(route('chapters.store'), [
-            'name' => 'Neues Kapitel',
+            'chapterTitle' => 'Neues Kapitel',
             'projectId' => $project->id,
         ]);
 
@@ -37,6 +39,7 @@ it('Chapter-Add redirected mit Fragment auf den neuen Chapter', function () {
 });
 
 it('Entry-Add redirected mit Fragment auf den neuen Entry', function () {
+    /** @var TestCase $this */
     /** @var User $owner */
     $owner = User::factory()->create();
     $project = makeProject($owner);
@@ -45,7 +48,7 @@ it('Entry-Add redirected mit Fragment auf den neuen Entry', function () {
     $response = $this->actingAs($owner)
         ->from(route('projects.edit', $project->id))
         ->post(route('entries.store'), [
-            'name' => 'Neuer Abschnitt',
+            'entryTitle' => 'Neuer Abschnitt',
             'chapterId' => $chapter->id,
         ]);
 
