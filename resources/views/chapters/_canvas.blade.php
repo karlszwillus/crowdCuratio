@@ -316,6 +316,22 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                                                     @if(isset($entry->mediaContent) && count($entry->mediaContent) > 0)
                                                         <div id="entry_{{$entry->id}}">
                                                             <ul class="list-group  ui-sortable-content sortable_list_content connectedSortableContent" data-entry="{{$entry->id}}" id="{{$entry->id}}" data-reorder-element="content" data-reorder-url="{{ route('chapter.drag') }}">
+                                                                {{-- Q4-Etappe 4 / C1b (2026-09-08): Add-Bar vor dem
+                                                                     ersten Content-Block. Sortable ignoriert diese
+                                                                     Slot-<li>s über die `items: '> li[data-content]'`-
+                                                                     Restriktion in chapters/index.blade.php. --}}
+                                                                @if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
+                                                                    <li class="content-add-bar-slot">
+                                                                        <livewire:content-add-bar
+                                                                            :entry-id="$entry->id"
+                                                                            :after-media-content-id="null"
+                                                                            variant="between"
+                                                                            :entry-name="$entry->name"
+                                                                            :position="1"
+                                                                            :key="'add-bar-'.$entry->id.'-top'"
+                                                                        />
+                                                                    </li>
+                                                                @endif
                                                                 @foreach($entry->mediaContent as $item)
                                                                     @if ($item->content_type == 'App\Models\Text')
                                                                         <x-content.text-block :item="$item" :entry="$entry" :project="$project" :list-permissions="$listPermissions"/>
@@ -329,6 +345,18 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                                                                     @if (isset($item) && $item->content_type == 'App\Models\Gallery')
                                                                         <x-content.gallery-block :item="$item" :entry="$entry" :chapter="$chapter" :project="$project" :list-permissions="$listPermissions"/>
                                                                     @endif
+                                                                    @if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
+                                                                        <li class="content-add-bar-slot">
+                                                                            <livewire:content-add-bar
+                                                                                :entry-id="$entry->id"
+                                                                                :after-media-content-id="$item->id"
+                                                                                variant="between"
+                                                                                :entry-name="$entry->name"
+                                                                                :position="$loop->iteration + 1"
+                                                                                :key="'add-bar-'.$entry->id.'-after-'.$item->id"
+                                                                            />
+                                                                        </li>
+                                                                    @endif
                                                                 @endforeach
                                                             </ul>
                                                         </div>
@@ -338,25 +366,24 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                                                     </li> --}}
                                                 </ul>
                                             @endif
-                                            <div class="mb-4">
-                                                @if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
-                                                    <span data-toggle="tooltip"
-                                                          data-placement="top"
-                                                          title="{{__('add_content')}}"> <button
-                                                                type="button"
-                                                                class="addContent btn btn-secondary add_item"
-                                                                data-chapter="{{$chapter->name}}"
-                                                                data-entry="{{$entry->name}}"
-                                                                data-id="{{$entry->id}}"
-                                                                data-toggle="modal"
-                                                                data-target="#contentModal"
-                                                                class="addContent inline-flex w-full items-center justify-center gap-2 rounded-md
-                                                                       border-2 border-dashed border-line-200 bg-transparent
-                                                                       px-4 py-3 text-body text-ink-500
-                                                                       hover:border-ink-400 hover:bg-line-100/40 hover:text-ink-700"
-                                                                ><x-icon name="plus" size="4"/> <span>{{__('new_element')}}</span></button></span>
-                                                @endif
-                                            </div>
+                                            {{-- Q4-Etappe 4 / C1d (2026-09-08): Bei nicht-leerem Entry
+                                                 stehen die Zwischen-Trenner (variant="between") schon
+                                                 nach jedem Block, inklusive nach dem letzten — die
+                                                 empty-Bar wäre doppelt. Nur bei leerem Entry (kein
+                                                 Content) rendert die empty-Bar als dominante
+                                                 Anlege-Fläche. --}}
+                                            @if((in_array('add', $listPermissions) || Auth::user()->can('update', $project))
+                                                && (! isset($entry->mediaContent) || count($entry->mediaContent) === 0))
+                                                <div class="mb-4">
+                                                    <livewire:content-add-bar
+                                                        :entry-id="$entry->id"
+                                                        variant="empty"
+                                                        :entry-name="$entry->name"
+                                                        :position="1"
+                                                        :key="'add-bar-empty-'.$entry->id"
+                                                    />
+                                                </div>
+                                            @endif
                                         </li>
                                     @endforeach
                                 </ul>

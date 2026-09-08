@@ -189,17 +189,9 @@ it('checkEmail kehrt mit einem Redirect zur vorherigen Seite zurück und gibt er
     expect($response->status())->toBe(302);
 });
 
-it('element liefert die element-View zurück', function () {
-    /** @var TestCase $this */
-    /** @var User $owner */
-    $owner = User::factory()->create();
-    $owner->assignRole('Admin');
-    $this->actingAs($owner);
-
-    $response = $this->get(route('element'));
-
-    $response->assertStatus(200);
-});
+// Q4-Etappe 4 / C1d (2026-09-08): Der element()-Charakterisierungstest
+// entfällt — Route und Controller-Method sind mit dem Inline-Add-Flow
+// zurückgebaut (verwaister Bootstrap-3-Chapter/Entry-Anlege-Screen).
 
 it('editMetaData rendert die Metadata-View für ein eigenes Project', function () {
     /** @var TestCase $this */

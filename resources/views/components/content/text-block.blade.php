@@ -13,7 +13,10 @@
     - $listPermissions  array<string> (Rechte des eingeloggten Users)
 --}}
 
-@isset($item->text->text)
+{{-- Q4-Etappe 4 / C1c (2026-09-08): früher `@isset($item->text->text)` — nach
+     der C1c-Migration werden leere Text-Blöcke angelegt (text kann null sein),
+     müssen aber trotzdem rendern damit der Editor sie befüllen kann. --}}
+@isset($item->text)
     <li class="item text content"
         data-content="{{ $item->id }}"
         data-entry="{{ $entry->id }}"

@@ -5,7 +5,11 @@
     resources/views/chapters/_canvas.blade.php extrahiert (~125 LoC).
 --}}
 
-@isset($item->audiovisual->link)
+{{-- Q4-Etappe 4 / C1c (2026-09-08): früher `@isset($item->audiovisual->link)` —
+     nach der link-nullable-Migration werden leere AV-Blöcke mit link=null angelegt
+     und müssen trotzdem rendern (leerer Player + Edit-Felder), sonst sind sie
+     unsichtbar für den Editor. --}}
+@isset($item->audiovisual)
     <li class="item audiovisual content"
         data-content="{{ $item->id }}"
         data-entry="{{ $entry->id }}"

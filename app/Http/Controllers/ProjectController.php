@@ -371,15 +371,10 @@ class ProjectController extends Controller
         return view('projects.move', compact('data'));
     }
 
-    /**
-     * create the specified resource from storage.
-     *
-     * @return Response
-     */
-    public function element()
-    {
-        return view('projects.element');
-    }
+    // Q4-Etappe 4 / C1d (2026-09-08): `element()` und die zugehörige
+    // View `projects/element.blade.php` waren ein verwaister Chapter/
+    // Entry-Anlege-Screen aus der Bootstrap-3-Zeit — nirgends verlinkt,
+    // kein Save-Backend. Mit dem C1-Aufräumen entfernt.
 
     // Q4-Etappe 2 / I6 (2026-08-27): Kommentar-Endpunkte
     // (`commentProject`, `getProjectComment`, `saveCommentProject`,
