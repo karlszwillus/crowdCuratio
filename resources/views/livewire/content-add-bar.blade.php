@@ -76,7 +76,7 @@ new class extends Component
      */
     public function requestAdd(string $type): void
     {
-        if (! in_array($type, ['text', 'gallery', 'audiovisual'], true)) {
+        if (! in_array($type, ['text', 'gallery', 'audiovisual', 'quote'], true)) {
             return;
         }
 
@@ -114,7 +114,7 @@ new class extends Component
     class="content-add-bar {{ $variant === 'empty' ? 'my-2' : 'my-1' }}"
     x-data="{
         open: false,
-        options: ['text', 'gallery', 'audiovisual'],
+        options: ['text', 'gallery', 'audiovisual', 'quote'],
         activeIndex: 0,
         toggle() { this.open ? this.close() : this.openMenu(); },
         openMenu() {
@@ -257,6 +257,21 @@ new class extends Component
         >
             <x-icon name="camera-video" size="5"/>
             <span>{{ __('add_bar_option_audiovisual') }}</span>
+        </button>
+        <button
+            type="button"
+            role="menuitem"
+            wire:click="requestAdd('quote')"
+            @click="close()"
+            class="flex min-w-[7rem] flex-col items-center gap-1 rounded-md
+                   border border-line-200 bg-canvas-bg px-3 py-2
+                   text-caption text-ink-900
+                   hover:border-primary hover:bg-primary/5
+                   focus-visible:outline focus-visible:outline-2
+                   focus-visible:outline-offset-2 focus-visible:outline-primary"
+        >
+            <x-icon name="quote" size="5"/>
+            <span>{{ __('add_bar_option_quote') }}</span>
         </button>
         </div>
         </div>

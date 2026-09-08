@@ -15,6 +15,7 @@ use App\Models\Audiovisual;
 use App\Models\Entry;
 use App\Models\Gallery;
 use App\Models\MediaContent;
+use App\Models\QuoteBlock;
 use App\Models\Text;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -37,7 +38,7 @@ use InvalidArgumentException;
 final class ContentInsertionService
 {
     /** @var array<int, string> */
-    private const ALLOWED_TYPES = ['text', 'gallery', 'audiovisual'];
+    private const ALLOWED_TYPES = ['text', 'gallery', 'audiovisual', 'quote'];
 
     /**
      * Legt einen leeren Block an und hängt ihn per MediaContent an
@@ -109,7 +110,7 @@ final class ContentInsertionService
      * Source-Felder bleiben null — die C1c-Migration hat sie
      * nullable gemacht, damit dieser Insert-Weg sauber funktioniert.
      */
-    private function createBlankContent(string $type): Text|Gallery|Audiovisual
+    private function createBlankContent(string $type): Text|Gallery|Audiovisual|QuoteBlock
     {
         return match ($type) {
             'text' => tap(new Text, function (Text $t): void {
@@ -129,6 +130,14 @@ final class ContentInsertionService
                 // Editor durch Link-Erkennung überschrieben.
                 $a->type = 'video';
                 $a->save();
+            }),
+            'quote' => tap(new QuoteBlock, function (QuoteBlock $q): void {
+                // Zitat-Text ist HasTranslations — leerer Locale-Wert
+                // statt null, damit Spatie beim ersten Editor-Zugriff
+                // sauber serialisiert.
+                $q->setTranslation('text', app()->getLocale(), '');
+                $q->is_translated = false;
+                $q->save();
             }),
             // Unerreichbar wegen ALLOWED_TYPES-Prüfung in insertBlank();
             // PHPStan sieht das aber nicht ohne expliziten default-Arm.

@@ -71,7 +71,10 @@ new class extends Component
         // wir die Sources einmalig ins Cache.
         $sourceIdsInSnapshot = [];
         foreach ($changes as $field => $delta) {
-            if (in_array($field, ['origin', 'copyright'], true)) {
+            // Q4-Etappe 4 / F1 (2026-09-08): `source_id` am Zitat-Block
+            // ist auch ein Source-FK und soll im Diff als Name statt
+            // ID erscheinen.
+            if (in_array($field, ['origin', 'copyright', 'source_id'], true)) {
                 foreach (['old', 'new'] as $side) {
                     if (isset($delta[$side]) && is_numeric($delta[$side])) {
                         $sourceIdsInSnapshot[] = (int) $delta[$side];
@@ -85,7 +88,7 @@ new class extends Component
 
         $fields = [];
         foreach ($changes as $field => $delta) {
-            $isSourceRef = in_array($field, ['origin', 'copyright'], true);
+            $isSourceRef = in_array($field, ['origin', 'copyright', 'source_id'], true);
             $old = $isSourceRef
                 ? self::resolveSourceLabel($delta['old'] ?? null, $sourceLabels)
                 : self::stringifyDelta($delta['old'] ?? null);

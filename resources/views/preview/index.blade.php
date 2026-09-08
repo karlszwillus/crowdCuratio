@@ -168,6 +168,46 @@ If not, see <https://www.gnu.org/licenses/>. -->
 												@endif
                                                  </div>
                                             @endif
+                                            {{-- Q4-Etappe 4 / F5 (2026-09-08): Zitat-Block.
+                                                 Basis-Rendering — Blockquote + abgeleitete
+                                                 Nachweiszeile aus speaker/date_text/source/
+                                                 locator. Die Feinschliff-Optik kommt mit dem
+                                                 Multi-Seiten-Reader (Etappe G). --}}
+                                            @if($media->content_type == 'App\Models\QuoteBlock' && isset($media->quoteBlock))
+                                                @php
+                                                    $q = $media->quoteBlock;
+                                                    $attribution = collect([
+                                                        $q->speaker,
+                                                        $q->date_text,
+                                                    ])->filter()->implode(', ');
+                                                    $sourceLine = collect([
+                                                        $q->source?->name,
+                                                        $q->locator,
+                                                    ])->filter()->implode(', ');
+                                                @endphp
+                                                <div class="einspaltig zitat">
+                                                    <blockquote>
+                                                        @if(! empty(trim(strip_tags((string) $q->text))))
+                                                            @rich($q->text)
+                                                        @endif
+                                                        @if($attribution !== '' || $sourceLine !== '')
+                                                            <cite>
+                                                                @if($attribution !== ''){{ $attribution }}@endif
+                                                                @if($attribution !== '' && $sourceLine !== '') · @endif
+                                                                @if($sourceLine !== ''){{ $sourceLine }}@endif
+                                                            </cite>
+                                                        @endif
+                                                    </blockquote>
+                                                    @if(! empty(trim((string) $q->text_original)))
+                                                        <p class="zitat-original">
+                                                            <strong>{{ __('quote_original_label') }}:</strong>
+                                                            <span @if($q->lang_original) lang="{{ $q->lang_original }}" @endif>
+                                                                {{ $q->text_original }}
+                                                            </span>
+                                                        </p>
+                                                    @endif
+                                                </div>
+                                            @endif
                                             @if($media->content_type == 'App\Models\Audiovisual')
                                                 @if($media->audiovisual->type == 'audio')
                                                     <audio controls class="embed-responsive-item" id="audio" src="{{route('audio',$media->audiovisual->link)}}"  ></audio>

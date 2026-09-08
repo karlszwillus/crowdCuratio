@@ -36,6 +36,7 @@ use App\Http\Controllers\ProjectPermissionController;
 use App\Http\Controllers\ProjectPreviewController;
 use App\Http\Controllers\ProjectTranslationController;
 use App\Http\Controllers\PublicController;
+use App\Http\Controllers\QuoteBlockController;
 use App\Http\Controllers\RevisionController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SettingController;
@@ -133,6 +134,14 @@ Route::group(
         Route::delete('/delete/{id}/text', [TextBlockController::class, 'destroyText'])->name(
             'text.delete'
         );
+
+        // Q4-Etappe 4 / F1 (2026-09-08): Zitat-Block-Endpunkte.
+        // Anlegen läuft über den ContentInsertionService (Inline-
+        // Add-Bar), Speichern läuft inline über rich-text-editor /
+        // inline-editor / source-picker. Direkt-Endpunkte gibt es
+        // nur für Delete und das Kind-Dropdown.
+        Route::delete('/delete/{id}/quote', [QuoteBlockController::class, 'destroy'])
+            ->name('quote.delete');
         Route::post('/check/email', [ProjectPermissionController::class, 'checkEmail'])->name('check.email');
         // Q3-Härtung F2 (2026-08-19) / SEC-02: vorher GET ohne Auth-Guard,
         // jeder eingeloggte User konnte fuer beliebige User-IDs eine
@@ -276,6 +285,13 @@ Route::group(
         )->name(
             'comment.text.status'
         );
+
+        // Q4-Etappe 4 / F1 (2026-09-08): Zitat-Block-Comments —
+        // analog zur Text-Kette, alle vier Endpunkte.
+        Route::post('/comment/quote', [ContentCommentController::class, 'commentQuote'])->name('comment.quote');
+        Route::get('/comment/quote/{id}/', [ContentCommentController::class, 'getQuoteComment'])->name('comment.quote.show');
+        Route::post('/comment/quote/{id}/save', [ContentCommentController::class, 'saveCommentQuote'])->name('comment.quote.save');
+        Route::post('/comment/quote/status', [ContentCommentController::class, 'setCommentStatusQuote'])->name('comment.quote.status');
         Route::post(
             '/text/reset',
             [TextBlockController::class, 'resetText']

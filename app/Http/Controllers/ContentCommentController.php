@@ -18,6 +18,7 @@ use App\Models\Gallery;
 use App\Models\Image;
 use App\Models\MediaContent;
 use App\Models\Project;
+use App\Models\QuoteBlock;
 use App\Models\Text;
 use App\Services\CommentRetrieve;
 use App\Services\CommentService;
@@ -119,6 +120,30 @@ class ContentCommentController extends Controller
     public function saveCommentGallery(Request $request, Gallery $gallery): RedirectResponse
     {
         return $this->saveCommentAction($gallery, $request, Gallery::class);
+    }
+
+    // ------------------------------------------------------------------
+    // Quote — Q4-Etappe 4 / F1 (2026-09-08)
+    // ------------------------------------------------------------------
+
+    public function commentQuote(StoreCommentRequest $request): RedirectResponse
+    {
+        return $this->storeComment('quote', $request);
+    }
+
+    public function getQuoteComment(int $id): JsonResponse
+    {
+        return $this->getComments('quote', $id);
+    }
+
+    public function saveCommentQuote(Request $request, QuoteBlock $quote): RedirectResponse
+    {
+        return $this->saveCommentAction($quote, $request, QuoteBlock::class);
+    }
+
+    public function setCommentStatusQuote(Request $request): JsonResponse
+    {
+        return $this->setStatus($request);
     }
 
     // ------------------------------------------------------------------

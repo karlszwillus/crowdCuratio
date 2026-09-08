@@ -345,6 +345,10 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                                                                     @if (isset($item) && $item->content_type == 'App\Models\Gallery')
                                                                         <x-content.gallery-block :item="$item" :entry="$entry" :chapter="$chapter" :project="$project" :list-permissions="$listPermissions"/>
                                                                     @endif
+                                                                    {{-- Q4-Etappe 4 / F4 (2026-09-08): Zitat-Block. --}}
+                                                                    @if (isset($item) && $item->content_type == 'App\Models\QuoteBlock')
+                                                                        <x-content.quote-block :item="$item" :entry="$entry" :project="$project" :list-permissions="$listPermissions"/>
+                                                                    @endif
                                                                     @if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
                                                                         <li class="content-add-bar-slot">
                                                                             <livewire:content-add-bar

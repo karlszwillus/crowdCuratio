@@ -24,6 +24,7 @@ use App\Models\Chapter;
 use App\Models\Entry;
 use App\Models\Gallery;
 use App\Models\Image;
+use App\Models\QuoteBlock;
 use App\Models\Text;
 
 /**
@@ -71,6 +72,13 @@ final class ContentTypeRegistry
         'audiovisual' => [
             'model' => Audiovisual::class,
             'table' => 'audiovisuals',
+            'property' => 'text',
+        ],
+        // Q4-Etappe 4 / F1 (2026-09-08): Zitat-Block. `property`
+        // ist der translatable Body für Log/Diff.
+        'quote' => [
+            'model' => QuoteBlock::class,
+            'table' => 'quote_blocks',
             'property' => 'text',
         ],
     ];

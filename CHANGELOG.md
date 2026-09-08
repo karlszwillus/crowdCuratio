@@ -733,6 +733,41 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Q4-Etappe 4 · F · Zitat-Block als eigener Content-Type**
+  (2026-09-08). Neuer polymorpher Content-Type `App\Models\QuoteBlock`
+  (Tabelle `quote_blocks`) mit Feldern `text` (translatable),
+  `speaker`, `date_text`, `kind` (`archivalie`/`interview`/
+  `publikation`, nullable), `lang_original`, `text_original` (beide
+  nullable, für übersetzte Zitate), `source_id` (nullable FK auf
+  `sources`) und `locator` (Freitext-Fundstelle). Hängt polymorph
+  über `media_content.content_type` am Entry und lässt sich per
+  Inline-Add-Flow (Add-Bar bekommt vierte Option „Zitat") an
+  jeder Position eines Entries einfügen — der neu angelegte
+  Block ist leer und wird direkt im Editor über die bestehenden
+  Volt-Kompomenten (rich-text-editor, inline-editor, source-picker)
+  befüllt. Für das `kind`-Dropdown eine dezidierte Livewire-Volt-
+  Komponente `quote-kind-selector`, damit der Wechsel inline ohne
+  Redirect + Page-Scroll läuft. Aktionen (Verlauf, Kommentar,
+  Löschen) sitzen wie bei den anderen Content-Blöcken in der
+  Kopfzeile der Block-Card, Angaben-Status-Chip in der Fußzeile.
+  Reader- und PDF-Rendering als Blockquote mit abgeleiteter
+  Nachweiszeile (`{speaker}, {date_text} · {source.name}{,
+  locator}`) — der Redakteur pflegt die Bausteine, die Zeile ist
+  kein Eingabefeld. Optional erscheint darunter „Originaltext:
+  …" mit `lang`-Attribut, wenn `text_original` gefüllt ist. Voll
+  angeschlossen: Policy (`QuoteBlockPolicy` project-scoped über
+  `OwnerScopedPolicy`), Comment-Kette (`HasComments`-Interface,
+  `comments()`-MorphMany, 4 Routes `comment.quote[.show/.save/
+  .status]`, ContentCommentController-Methoden, CommentableRoutes-
+  Registry), Verlauf (`HasRevisions`-Trait, `LogsActivity`,
+  RevisionSubject-TYPES-Whitelist, RevisionRevertService-
+  Whitelist, `source_id` im Diff-Renderer als Source-Referenz
+  aufgelöst), Eager-Load in Project::withEditTree und
+  withPreviewTree. Neue Migrations: `create_quote_blocks_table`
+  plus `data-history-field`-Wrapper an allen Editor-Feldern für
+  den Diff-Overlay. Test-Erweiterung: `quote`-Case in
+  `ContentInsertionServiceTest`. 15 neue Locale-Keys je Sprache.
+
 - **Q4-Etappe 4 · C1 · Inline-Add-Flow für Content-Blöcke**
   (2026-09-08). Ersetzt die Bootstrap-3-Modal-Kette (contentModal,
   galleryModal, audiovisualModal + jQuery-Verkabelung `.addContent` /
