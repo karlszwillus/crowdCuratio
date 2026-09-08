@@ -157,7 +157,6 @@ Route::group(
         Route::delete('/delete/{id}/image', [ImageBlockController::class, 'destroyImage'])->name(
             'image.delete'
         );
-        Route::get('/element', [ProjectController::class, 'element'])->name('element');
         // B12 (2026-08-20): User-Anlage laeuft jetzt ueber
         // `UserController::create`/`store` unter `/users/create` und
         // `POST /users`. Die alten Register-Pfade bleiben als 301-

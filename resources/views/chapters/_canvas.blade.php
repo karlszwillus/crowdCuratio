@@ -366,18 +366,20 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                                                     </li> --}}
                                                 </ul>
                                             @endif
-                                            {{-- Q4-Etappe 4 / C1c (2026-09-08): Inline-Add-Bar am
-                                                 Ende der Content-Liste (variant="empty"). Trenner-
-                                                 Zwischen-Bars stehen bereits innerhalb der <ul> nach
-                                                 jedem Content-Block. Der alte .addContent-Modal-
-                                                 Trigger ist mit C1c entfernt. --}}
-                                            @if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
+                                            {{-- Q4-Etappe 4 / C1d (2026-09-08): Bei nicht-leerem Entry
+                                                 stehen die Zwischen-Trenner (variant="between") schon
+                                                 nach jedem Block, inklusive nach dem letzten — die
+                                                 empty-Bar wäre doppelt. Nur bei leerem Entry (kein
+                                                 Content) rendert die empty-Bar als dominante
+                                                 Anlege-Fläche. --}}
+                                            @if((in_array('add', $listPermissions) || Auth::user()->can('update', $project))
+                                                && (! isset($entry->mediaContent) || count($entry->mediaContent) === 0))
                                                 <div class="mb-4">
                                                     <livewire:content-add-bar
                                                         :entry-id="$entry->id"
                                                         variant="empty"
                                                         :entry-name="$entry->name"
-                                                        :position="count($entry->mediaContent ?? []) + 1"
+                                                        :position="1"
                                                         :key="'add-bar-empty-'.$entry->id"
                                                     />
                                                 </div>

@@ -432,16 +432,13 @@ If not, see <https://www.gnu.org/licenses/>. -->
         </div>
     </x-ui.modal>
     @include('entries._add-modal')
-    @include('contents.index')
-    {{-- Stakeholder-Fix Juni 2026: `@include('contents.gallery')` war
-         hier ein Doppel-Include — `contents.index` (Z. 86) lädt das
-         Gallery-Modal bereits transitiv. Folge: galleryModal + Form +
-         alle Hidden Inputs (galleryId, title, …) waren DOM-doppelt,
-         was den Submit unzuverlässig machte (POST /save-gallery → 404).
-         Image-/Audiovisual-Modal kommen weiter direkt rein — die
-         haben keine eigenen Sub-Includes. --}}
+    {{-- Q4-Etappe 4 / C1d (2026-09-08): Die Add-Content-Modal-Kette
+         (contents.index/gallery/audiovisual) ist mit dem Inline-Add-
+         Flow (livewire:content-add-bar) abgelöst. Nur contents.image
+         bleibt: es wird vom Gallery-Block als Add-Image-Weg innerhalb
+         einer Galerie weiterverwendet, ist NICHT Teil des Entry-Add-
+         Flows. --}}
     @include('contents.image')
-    @include('contents.audiovisual')
 @endsection
 {{-- Export-Buttons (PDF/Preview/Download) wandern seit Phase
      5-D.6b-P3.15 ins ⋮-Menue neben 'Veroeffentlichen' in der
@@ -701,14 +698,14 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
         // Modify-Text-Handler entfaellt seit Phase 5c.6.c.4 —
         // Text-Content wird ueber die rich-text-editor-Volt-
-        // Komponente direkt im Content-Card editiert. Der
-        // contentModal + der Quill (quill) bleiben fuer den
-        // Add-Text-Fall bestehen (neuer Textblock hinzufuegen).
+        // Komponente direkt im Content-Card editiert.
+        // Q4-Etappe 4 / C1d (2026-09-08): Der Add-Text-Fluss ueber
+        // contentModal + Quill ist mit dem Inline-Add-Flow abgeloest.
 
         // Modify-Image-Handler entfaellt seit Phase 5c.6.c.4-Followup —
         // Copyright/Quelle werden ueber die source-picker-Volt-Komponente
         // in den Bild-Details editiert, das Alt-Feld ueber inline-editor.
-        // imageModal bleibt bestehen fuer den Add-Image-Fall.
+        // imageModal bleibt bestehen fuer den Add-Image-in-Galerie-Fall.
 
         // Modify-Gallery-Handler entfaellt seit Phase 5c.6.c.1 —
         // Title, Subtitle und Description werden direkt im Gallery-
@@ -716,21 +713,15 @@ If not, see <https://www.gnu.org/licenses/>. -->
         // Add-Image-Modal (imageModal) bleibt fuer neue Bilder in
         // der Galerie.
 
-        //Add Content
-        $('.addContent').click(function () {
-            let id = $(this).attr("data-id");
-            let chapter = $(this).attr("data-chapter");
-            let entry = $(this).attr("data-entry");
-            $('input[name="entryId"]').val(id);
-            $('#contentType').show();
-            $('#addText').hide();
-            $('#addImage').hide();
-            $('#chapterLbl').text(chapter);
-            $('#entryLbl').text(entry);
-            initialize();
-        })
-
-        //Add Content
+        // Q4-Etappe 4 / C1d (2026-09-08): Alter Add-Content-Modal-
+        // Fluss (.addContent → #contentType → .add-Text/.add-Image/
+        // .add-audio/.add-video → #contentModal / #galleryModal /
+        // #audiovisualModal) ist mit C1c durch den Inline-Add-Flow
+        // (livewire:content-add-bar → ContentInsertionService)
+        // ersetzt. Handler und Trigger entfallen.
+        //
+        // .addImage bleibt bestehen — er hängt am Gallery-Block als
+        // Add-Image-innerhalb-Galerie und öffnet weiterhin #imageModal.
         $('.addImage').click(function () {
             let id = $(this).attr("data-id");
             let chapter = $(this).attr("data-chapter");
@@ -762,40 +753,6 @@ If not, see <https://www.gnu.org/licenses/>. -->
                 window.__ccDroppedImageFiles = null;
             }
             initialize();
-        })
-
-        //Toggle Text Block
-        $('.add-Text').click(function (e) {
-            e.preventDefault();
-            $('#addText').toggle();
-            $('#contentType').toggle();
-            $('#addImage').hide();
-        })
-
-        //Toggle Image Block
-        $('.add-Image').click(function (e) {
-            $('#galleryModal').modal('show');
-            e.preventDefault();
-        })
-
-        //Toggle video Block
-        $('.add-video').click(function (e) {
-            resetValues();
-            $('#savedAudio').hide();
-            $('#link').show();
-            $('#type').val('video');
-            $('#audiovisualModal').modal('show');
-            e.preventDefault();
-        })
-
-        //Toggle video Block
-        $('.add-audio').click(function (e) {
-            resetValues();
-            $('#savedAudio').show();
-            $('#link').hide();
-            $('#type').val('audio');
-            $('#audiovisualModal').modal('show');
-            e.preventDefault();
         })
 
         // Autocomplete-Felder. In $(document).ready(...) gewrappt, weil
@@ -1135,16 +1092,9 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
         // Audiovisual-Modify-Handler entfaellt seit Phase 5c.6.c.3 —
         // link/type/copyright/source werden ueber die inline-editor-
-        // Volt-Komponente direkt unter dem Player editiert. Die
-        // resetValues()-Hilfsfunktion wird vom Add-Handler weiter
-        // unten noch benoetigt.
-
-        function resetValues(){
-            $('#link').val('');
-            $('#copyright').val('');
-            $('#source').val('');
-            $('#type').val('');
-        }
+        // Volt-Komponente direkt unter dem Player editiert.
+        // Q4-Etappe 4 / C1d (2026-09-08): resetValues() ist mit den
+        // .add-audio/.add-video-Handlern weg — der einzige Aufrufer.
 
         //Drag and drop
         // Reader-Frontend-Härtung Juni 2026: jQuery-Sortable-Inits
