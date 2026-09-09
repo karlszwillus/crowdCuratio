@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Carbon;
 
 /**
  * Q4-Etappe 5 / G-Fund-5 (2026-09-09): Credit pro Abschnitt.
@@ -23,7 +24,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int $entry_id
  * @property string $role
  * @property string $name
- * @property \Illuminate\Support\Carbon|null $date
+ * @property Carbon|null $date
  * @property int $position
  */
 class EntryCredit extends Model

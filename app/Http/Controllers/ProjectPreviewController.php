@@ -11,11 +11,14 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\Chapter;
 use App\Models\Project;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 
 /**
  * Q4-Etappe 2 / I6 (2026-08-27): Vorschau- und PDF-Download-Endpunkte
@@ -30,7 +33,7 @@ class ProjectPreviewController extends Controller
         $this->middleware('auth');
     }
 
-    public function previewProject(Request $request): \Illuminate\Http\Response|View|\Illuminate\Http\RedirectResponse
+    public function previewProject(Request $request): Response|View|RedirectResponse
     {
         $project = Project::withPreviewTree()->findOrFail($request['project']);
 
@@ -45,7 +48,7 @@ class ProjectPreviewController extends Controller
         // PDF-/Print-Kontexte (?pdf=1) bleiben immer beim One-Pager,
         // damit die PDF-Pipeline nichts umschreiben muss.
         if ($project->usesMultiPageReader() && ! $request->has('pdf')) {
-            /** @var \App\Models\Chapter|null $firstChapter */
+            /** @var Chapter|null $firstChapter */
             $firstChapter = $project->chapters->sortBy('position')->first();
             if ($firstChapter !== null) {
                 // Q4-Etappe 5 / G6 Nachreview (2026-09-09): Farb-
@@ -86,7 +89,7 @@ class ProjectPreviewController extends Controller
         $projectModel = Project::withPreviewTree()->findOrFail($projectId);
         $this->authorize('view', $projectModel);
 
-        /** @var \App\Models\Chapter|null $chapterModel */
+        /** @var Chapter|null $chapterModel */
         $chapterModel = $projectModel->chapters->firstWhere('id', $chapter);
         abort_if($chapterModel === null, 404);
 
