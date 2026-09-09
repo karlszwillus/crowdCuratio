@@ -49,6 +49,8 @@ class UpdateProjectRequest extends FormRequest
             'terms' => 'nullable|string',
             'description' => 'nullable|string',
             'project_image' => 'sometimes|nullable|file|mimes:jpeg,jpg,png,gif,webp|max:4096',
+            // Q4-Etappe 5 / E1a (2026-09-09): Leitbild-Upload.
+            'cover_image' => 'sometimes|nullable|file|mimes:jpeg,jpg,png,gif,webp|max:8192',
             // Q4-Etappe 3 / C0b (2026-09-07): Zitier-Settings.
             'citation_depth' => 'sometimes|in:simple,full',
             'source_required' => 'sometimes|boolean',
