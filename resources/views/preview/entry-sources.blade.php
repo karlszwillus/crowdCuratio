@@ -2,9 +2,9 @@
 crowdCuratio - Curating together virtually
 Copyright (C) 2026 - berlinHistory e.V.
 
-Q4-Etappe 5 / G-Fund-5 (2026-09-09): Quellenblock am Eintragsende.
+Q4-Etappe 5 / G-Fund-5 (2026-09-09): Quellenblock am Abschnittsende.
 Sammelt alle referenzierten Sources aus den Content-Blöcken des
-Eintrags (Text.copyright/origin, Gallery-Image.copyright/origin,
+Abschnitts (Text.copyright/origin, Gallery-Image.copyright/origin,
 Audiovisual.copyright_id/origin_id, QuoteBlock.source_id) und
 rendert sie als deduplizierte Liste im Handoff-v4-Stil.
 

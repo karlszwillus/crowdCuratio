@@ -65,7 +65,7 @@ class Project extends Model implements HasComments
      * Q4-Etappe 3 / C0b (2026-09-07): `citation_depth` und
      * `source_required` als projektweite Zitier-Settings ergaenzt.
      */
-    protected $fillable = ['name', 'logo', 'imprint', 'terms', 'status', 'description', 'citation_depth', 'source_required', 'reader_layout', 'character', 'accent_color'];
+    protected $fillable = ['name', 'logo', 'cover_image', 'imprint', 'terms', 'status', 'description', 'citation_depth', 'source_required', 'reader_layout', 'character', 'accent_color'];
 
     /**
      * @return array<string, string>

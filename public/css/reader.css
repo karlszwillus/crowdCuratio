@@ -13,7 +13,7 @@
  * NICHT — der Export hat ein eigenes Vokabular.
  *
  * Rules aus dem Handoff:
- *   Regel 1 · Drei Ebenen, drei Formen (Kapitel/Eintrag/Block)
+ *   Regel 1 · Drei Ebenen, drei Formen (Kapitel/Abschnitt/Inhalt)
  *   Regel 2 · Abbildungen führen (vollbreit, Unterschrift unter)
  *   Regel 3 · Redaktionelle Leistung ist Inhalt
  *   Regel 5 · Farbe ist nie der einzige Kanal (Mono-Marker „· hier")
@@ -165,16 +165,48 @@ p  { margin: 0 0 1rem; }
     .cc-measure { padding-left: 20px; padding-right: 20px; }
 }
 
-/* Auto-Wrap für Legacy-Container aus dem alten Blade (bleibt bis
-   die Templates komplett umgezogen sind). */
-.container, .zweispaltig, .einspaltig {
-    max-width: var(--measure);
+/* Handoff § Maße: „Lesemaß 660 px, gilt für alle Textblöcke,
+   auf jeder Breite". Aber Bilder dürfen bis Content-Rand
+   ausbrechen. Deshalb ZWEI Container-Klassen:
+    - .container: weiter Content-Wrapper (max 1400 px), enthält
+      Bilder in voller Breite und Text-Blöcke, die sich selbst
+      auf Lesemaß begrenzen.
+    - .zweispaltig / .einspaltig: schmale Lesemaß-Wrapper (660 px
+      + 120 Padding), für Text/Absätze/Zitate.
+   Im Multi-Page-Body linksbündig am Sidebar-Rand. */
+.container {
+    max-width: 1400px;
     margin-left: auto; margin-right: auto;
     padding-left: 60px; padding-right: 60px;
+}
+.zweispaltig, .einspaltig {
+    max-width: calc(var(--measure) + 120px);
+    margin-left: auto; margin-right: auto;
+    padding-left: 60px; padding-right: 60px;
+}
+body.cc-reader-multipage .container,
+body.cc-reader-multipage .zweispaltig,
+body.cc-reader-multipage .einspaltig {
+    margin-left: 0;
+    margin-right: auto;
+}
+/* Wenn .zweispaltig/.einspaltig innerhalb von .container liegen,
+   Padding raus — sonst doppelter Rand. */
+.container .zweispaltig, .container .einspaltig {
+    padding-left: 0; padding-right: 0;
+    margin-left: 0;
 }
 @media (max-width: 720px) {
     .container, .zweispaltig, .einspaltig {
         padding-left: 20px; padding-right: 20px;
+    }
+    .container .zweispaltig, .container .einspaltig {
+        padding-left: 0; padding-right: 0;
+    }
+    body.cc-reader-multipage .container,
+    body.cc-reader-multipage .zweispaltig,
+    body.cc-reader-multipage .einspaltig {
+        margin-left: auto;
     }
 }
 
@@ -264,6 +296,206 @@ p  { margin: 0 0 1rem; }
     text-decoration: none;
 }
 .cc-header__contribute:hover { filter: brightness(0.95); color: var(--accent-on); }
+
+/* ==================================================================
+ * Leitbild (Handoff E1a).
+ * Vollbreites Bild 430 px hoch, Titelpanel in --paper überlappt
+ * die Unterkante (linker Rand 34 px, Breite 640 px). Ohne Bild
+ * kollabiert der Bildbereich, das Panel steht direkt auf --paper-2.
+ * ================================================================== */
+.cc-leitbild { position: relative; margin-bottom: 4rem; }
+.cc-leitbild__image {
+    width: 100%; height: 430px;
+    background: var(--paper-2);
+    overflow: hidden;
+}
+.cc-leitbild__image img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cc-leitbild__panel {
+    background: var(--paper);
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    padding: 2rem 60px 2.5rem;
+    max-width: 640px;
+    margin-left: 34px;
+    margin-top: -80px;     /* überlappt die Unterkante des Leitbilds */
+    position: relative;
+    z-index: 1;
+}
+.cc-leitbild__panel h1 {
+    font-size: var(--t-project-title);
+    line-height: 1.1;
+    letter-spacing: -0.8px;
+    margin: 0 0 0.75rem;
+}
+.cc-leitbild__panel .cc-lead {
+    font-size: var(--t-subtitle);
+    line-height: 1.35;
+    color: var(--ink-mid);
+    margin: 0;
+}
+/* Ohne Bild — Handoff-Regel 2: kein leerer Container. Panel
+   erscheint direkt auf --paper-2 als Textfläche, kein Überlappen. */
+.cc-leitbild--no-image {
+    background: var(--paper-2);
+    padding: 2rem 0;
+}
+.cc-leitbild--no-image .cc-leitbild__panel {
+    background: transparent;
+    border: 0;
+    margin: 0 auto;
+    padding: 0 60px;
+    max-width: 660px;
+}
+@media (max-width: 720px) {
+    .cc-leitbild__image { height: 240px; }
+    .cc-leitbild__panel {
+        margin-left: 0; margin-top: -40px;
+        padding: 1.25rem 20px 1.5rem;
+        max-width: 100%;
+    }
+    .cc-leitbild--no-image .cc-leitbild__panel { padding-left: 20px; padding-right: 20px; }
+}
+
+/* ==================================================================
+ * Startseite · Einleitung + Umfangsspalte + Kapitel-Karten (E1a).
+ * ================================================================== */
+.cc-start-summary {
+    max-width: 1400px;
+    margin: 3rem auto 3.5rem;
+    padding: 0 60px;
+}
+.cc-start-summary__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 660px) minmax(0, 330px);
+    column-gap: 52px;
+    align-items: start;
+}
+.cc-start-summary__scope {
+    border-left: 1px solid var(--rule);
+    padding-left: 22px;
+}
+.cc-start-summary__scope dl {
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 1rem;
+    column-gap: 1rem;
+}
+.cc-start-summary__scope dl > div { min-width: 0; }
+.cc-start-summary__scope dt {
+    font-family: var(--font-mono);
+    font-size: var(--t-mono-caps);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    margin-bottom: 0.25rem;
+}
+.cc-start-summary__scope dd {
+    margin: 0;
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 28px;
+    line-height: 1;
+    color: var(--ink);
+}
+.cc-start-summary__updated {
+    margin: 1.25rem 0 0;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--rule-soft);
+    font-family: var(--font-mono);
+    font-size: var(--t-mono-small);
+    letter-spacing: 0.06em;
+    color: var(--ink-dim);
+}
+@media (max-width: 900px) {
+    .cc-start-summary__grid { grid-template-columns: 1fr; row-gap: 2rem; }
+    .cc-start-summary__scope { border-left: 0; border-top: 1px solid var(--rule); padding: 1rem 0 0; }
+}
+
+/* Kapitel-Karten 2×2. */
+.cc-start-chapters {
+    max-width: 1400px;
+    margin: 0 auto 4rem;
+    padding: 0 60px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+}
+.cc-chapter-card {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    color: inherit;
+    text-decoration: none;
+    transition: border-color 150ms ease-out;
+}
+.cc-chapter-card:hover { border-color: var(--accent); }
+.cc-chapter-card__band {
+    height: 180px;
+    background: var(--paper-3);
+    display: flex; align-items: flex-end; justify-content: flex-start;
+    padding: 1rem 1.25rem;
+}
+.cc-chapter-card__number {
+    font-family: var(--font-mono);
+    font-size: 34px;
+    line-height: 1;
+    letter-spacing: 0.04em;
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+/* Bei Dokumentation/Archiv (helle Charaktere) haben wir kein
+   Bild — Mono-Nummer in Ink statt weiß. */
+[data-char="dokumentation"] .cc-chapter-card__number,
+[data-char="archiv"] .cc-chapter-card__number {
+    color: var(--ink-mid);
+    text-shadow: none;
+}
+.cc-chapter-card__body {
+    padding: 1.25rem;
+    /* Kapitelkarten sollen gleich hoch stehen, Meta-Zeile immer unten:
+       Body füllt die Kachelhöhe, Lead nimmt den Rest, Meta klebt am
+       unteren Rand. */
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+.cc-chapter-card__body h3 {
+    font-size: 23px;
+    font-weight: 600;
+    line-height: 1.25;
+    margin: 0 0 0.5rem;
+    color: var(--ink);
+}
+.cc-chapter-card__lead {
+    font-family: var(--serif);
+    font-size: 16.5px;
+    line-height: 1.55;
+    color: var(--ink-mid);
+    margin: 0 0 1rem;
+    flex: 1;
+    /* Beschreibung deckeln — vier Zeilen reichen für die Kachel,
+       lange Leads schlagen sonst die Kachel-Höhe unnötig auf. */
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.cc-chapter-card__meta {
+    font-family: var(--font-mono);
+    font-size: var(--t-mono-small);
+    letter-spacing: 0.06em;
+    color: var(--ink-dim);
+    margin: 0;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--rule-soft);
+}
+@media (max-width: 720px) {
+    .cc-start-chapters { grid-template-columns: 1fr; padding: 0 20px; }
+    .cc-start-summary { padding: 0 20px; }
+}
 
 /* Fortschrittslinie unter Header (E1b). */
 .cc-progress {
@@ -393,25 +625,104 @@ blockquote cite {
     border-bottom-color: var(--rule);
 }
 
-/* Gallery-Grid. */
+/* Bild-Rendering (Handoff Regel 2 „Bild führt"). */
+
+/* Vollbreit: einzelnes Bild dehnt sich über die volle Content-
+   Breite, bündig zum Randabstand 60 px. Bildhöhe 470 px im Ideal,
+   object-cover für ungleiche Formate. */
+.cc-fig--full {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 60px;
+}
+/* Wenn im .container-Wrapper — dann kein doppeltes Padding, das
+   liefert der Container schon. Und die Vollbreite darf bis zur
+   Container-Innenbreite gehen. */
+.container .cc-fig--full,
+.container .cc-fig-pair,
+.container .cc-gallery-grid,
+.container .variable-width,
+.container .cc-entry-credit,
+.container .cc-entry-sources,
+.container .cc-chapter-opener,
+.container .daten-fakten,
+.container .zitat-original,
+.container blockquote {
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 0;
+    padding-right: 0;
+}
+/* Blockquote und Fakten-Tabelle brauchen sichtbaren Text-Rand
+   damit sie zum Lesemaß passen — wir begrenzen sie hier auf
+   Lesemaß-Breite (statt Container-voll). */
+.container blockquote,
+.container .zitat-original,
+.container .daten-fakten {
+    max-width: var(--measure);
+}
+.container blockquote { margin-left: 0; padding-left: 1.25rem; }
+.cc-fig--full img {
+    /* Handoff § „Eine Satzkante": Bild sitzt links auf derselben
+       Linie wie Text, Unterschrift und Quellenblock. Portraits
+       nicht abschneiden — object-fit: contain hält die Ratio.
+       Bild-object-position: left, damit ein Portrait in einem
+       breiten Container ebenfalls linksbündig sitzt. */
+    display: block;
+    width: 100%;
+    max-height: 620px;
+    max-width: 100%;
+    height: auto;
+    margin: 0;
+    object-fit: contain;
+    object-position: left center;
+}
+
+/* Bildpaar: zwei Bilder 1:1 zweispaltig, gleiche Höhe, Caption
+   je Bild darunter. */
+.cc-fig-pair {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 60px;
+}
+.cc-fig-pair .cc-fig img {
+    width: 100%; aspect-ratio: 1/1;
+    object-fit: cover;
+    display: block;
+}
+.cc-fig { margin: 0; }
+
+/* Grid (3+ Bilder). */
 .cc-gallery-grid {
     display: grid; gap: 1rem;
-    grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
     max-width: 1200px;
-    margin: 1.5rem auto;
+    margin: 2rem auto;
     padding: 0 60px;
 }
 .cc-gallery-grid figure { margin: 0; }
-.cc-gallery-grid img { width: 100%; height: auto; object-fit: cover; }
-.cc-gallery-grid figcaption {
-    margin-top: 0.5rem;
-    font-family: var(--font-sans);
-    font-size: var(--t-caption);
-    line-height: 1.6;
-    color: var(--ink-mid);
+.cc-gallery-grid img { width: 100%; aspect-ratio: 4/3; object-fit: cover; }
+
+/* Im Multi-Page-Body brechen die Bilder aus dem 660-px-Textmaß
+   heraus zur vollen Content-Spalten-Breite. */
+body.cc-reader-multipage .cc-fig--full,
+body.cc-reader-multipage .cc-fig-pair,
+body.cc-reader-multipage .cc-gallery-grid {
+    margin-left: 0;
+    margin-right: auto;
+    max-width: 100%;
 }
 
-/* Credit-Zeile am Eintragskopf (Handoff E1b · G-Fund-5). */
+@media (max-width: 720px) {
+    .cc-fig--full, .cc-fig-pair, .cc-gallery-grid { padding: 0 20px; }
+    .cc-fig-pair { grid-template-columns: 1fr; }
+}
+
+/* Credit-Zeile am Abschnittskopf (Handoff E1b · G-Fund-5). */
 .cc-entry-credit {
     max-width: var(--measure);
     margin: 0.5rem auto 1.5rem;
@@ -450,7 +761,7 @@ blockquote cite {
     .cc-project-credits { padding-left: 20px; padding-right: 20px; }
 }
 
-/* Quellenblock am Eintragsende (Handoff Regel 3 · G-Fund-5). */
+/* Quellenblock am Abschnittsende (Handoff Regel 3 · G-Fund-5). */
 .cc-entry-sources {
     max-width: var(--measure);
     margin: 2rem auto 1rem;
@@ -497,24 +808,38 @@ blockquote cite {
 }
 
 /* Nachweiszeile: Bildunterschrift links, Signatur/Rechte rechts
-   in Mono — Handoff E1b Bildpaar/Vollbreite. */
+   in Mono — Handoff E1b: Grid `--measure 1fr`, links max 660 px
+   für die Beschreibung, rechts der Rest für Credit rechtsbündig.
+   Gilt für alle drei Bild-Cases (cc-fig--full, cc-fig-pair figure,
+   cc-gallery-grid). */
 .cc-figcaption {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    column-gap: 1rem;
+    grid-template-columns: minmax(0, var(--measure)) minmax(0, 1fr);
+    column-gap: 1.5rem;
     align-items: baseline;
+    margin-top: 0.75rem;
+    font-family: var(--font-sans);
+    font-size: var(--t-caption);
+    line-height: 1.6;
 }
-.cc-figcaption__caption { color: var(--ink); }
+.cc-figcaption__caption { color: var(--ink); min-width: 0; }
 .cc-figcaption__credit {
     font-family: var(--font-mono);
     font-size: var(--t-mono-small);
     letter-spacing: 0.06em;
     color: var(--ink-dim);
     text-align: right;
-    white-space: nowrap;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
+/* Bei Grid-Cases (mehrere Bilder) kollabiert die Nachweisspalte
+   unter das Bild — keine Nebenspalte. */
+.cc-gallery-grid .cc-figcaption { grid-template-columns: 1fr; }
+.cc-gallery-grid .cc-figcaption__credit { text-align: left; }
+
 @media (max-width: 720px) {
-    .cc-figcaption { grid-template-columns: 1fr; }
+    .cc-figcaption { grid-template-columns: 1fr; row-gap: 0.25rem; }
     .cc-figcaption__credit { text-align: left; }
 }
 
@@ -535,7 +860,7 @@ audio, iframe { max-width: 100%; }
 .cc-footer__grid {
     max-width: 1400px; margin: 0 auto;
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 2rem;
     font-family: var(--font-sans); font-size: var(--t-caption);
     line-height: 1.6;
@@ -545,6 +870,14 @@ audio, iframe { max-width: 100%; }
 .cc-footer__grid li { margin-bottom: 0.35rem; }
 .cc-footer__grid a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--rule); }
 .cc-footer__grid a:hover { border-bottom-color: var(--accent); }
+/* Review 3 · P-Fußzeile: Adressspalte mit Zeilenabständen statt
+   Absatzabständen — der Träger-Rich-Text rendert `<p>`, sonst
+   zerfällt die Adresse in Einzelzeilen. */
+.cc-footer__addr p {
+    margin: 0;
+    line-height: 1.5;
+}
+.cc-footer__addr p + p { margin-top: 0.25rem; }
 .cc-footer__cite {
     max-width: 1400px; margin: 2rem auto 0;
     padding-top: 1.25rem;
@@ -561,15 +894,27 @@ audio, iframe { max-width: 100%; }
     color: var(--ink-dim);
 }
 
+@media (max-width: 960px) {
+    .cc-footer__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 @media (max-width: 720px) {
     .cc-footer__grid { grid-template-columns: 1fr; }
     .cc-footer, .cc-header, .ankerleiste { padding-left: 20px; padding-right: 20px; }
 }
 
 /* ==================================================================
- * Multi-Page-Reader (Sidebar + Content).
+ * Multi-Page-Reader (Rail + Content + Marginalspalte).
+ *
+ * Dreispaltiges Layout aus dem Handoff v4: Kapitel-Rail links
+ * (--nav-rail), Content-Bereich in der Mitte (min 0, 1fr), rechts
+ * die Marginalspalte (--side-col). Die rechte Spalte bekommt eine
+ * Aufgabe (Entry-TOC, Fortschritt, später Quellen-Marginalien),
+ * damit der Satzspiegel nicht nach links kippt (Review 3 · P11).
  * ================================================================== */
-body.cc-reader-multipage .cc-multipage { display: grid; grid-template-columns: var(--nav-rail) 1fr; }
+body.cc-reader-multipage .cc-multipage {
+    display: grid;
+    grid-template-columns: var(--nav-rail) minmax(0, 1fr) var(--side-col);
+}
 body.cc-reader-multipage .cc-multipage__nav {
     position: sticky; top: 0; align-self: start;
     padding: 1.5rem 1.25rem;
@@ -587,7 +932,13 @@ body.cc-reader-multipage .cc-multipage__nav h2 {
 body.cc-reader-multipage .cc-multipage__nav ol { list-style: none; padding: 0; margin: 0; counter-reset: chapter; }
 body.cc-reader-multipage .cc-multipage__nav li { counter-increment: chapter; margin-bottom: 0.25rem; }
 body.cc-reader-multipage .cc-multipage__nav a {
-    display: block;
+    /* P12 · „HIER" gehört rechtsbündig auf die Titelzeile, nicht in
+       eine eigene Zeile. Flex mit space-between hält den Marker auf
+       Höhe der Kapitelnummer, egal wie kurz oder lang der Titel ist. */
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
     padding: 0.5rem 0.75rem;
     color: var(--ink-mid);
     text-decoration: none;
@@ -596,7 +947,12 @@ body.cc-reader-multipage .cc-multipage__nav a {
     font-size: 14px;
     border-left: 3px solid transparent;
 }
-body.cc-reader-multipage .cc-multipage__nav a::before {
+body.cc-reader-multipage .cc-multipage__nav-label {
+    display: block;
+    min-width: 0;
+    flex: 1;
+}
+body.cc-reader-multipage .cc-multipage__nav-label::before {
     content: counter(chapter, decimal-leading-zero) ' · ';
     font-family: var(--font-mono);
     color: var(--ink-dim);
@@ -610,16 +966,173 @@ body.cc-reader-multipage .cc-multipage__nav a.is-active {
     font-weight: 600;
 }
 body.cc-reader-multipage .cc-multipage__nav a.is-active::after {
-    content: ' · hier';
+    content: 'hier';
     color: var(--accent);
     font-family: var(--font-mono);
     font-size: var(--t-mono-caps);
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    margin-left: 0.35rem;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 body.cc-reader-multipage .cc-multipage__content { min-width: 0; }
 
+/* ------------------------------------------------------------------
+ * Marginalspalte (Aside) · Handoff Regel 3.
+ * Sticky-Kopf mit Entry-TOC des aktiven Kapitels, dünner senkrechter
+ * Trennstrich zum Content links. Höhe = Viewport minus Kopfleiste.
+ * ------------------------------------------------------------------ */
+body.cc-reader-multipage .cc-multipage__aside {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    max-height: 100vh;
+    overflow-y: auto;
+    padding: 1.5rem 1.25rem 2rem;
+    border-left: 1px solid var(--rule);
+    background: var(--paper);
+    min-width: 0;
+}
+body.cc-reader-multipage .cc-entry-toc h4 {
+    margin: 0 0 0.75rem;
+}
+body.cc-reader-multipage .cc-entry-toc ol {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    counter-reset: entry;
+    /* Fortschritts-Rail: dünner senkrechter Strich am linken Rand
+       der Liste. Der aktive Abschnitt bekommt einen Akzent-Punkt. */
+    border-left: 1px solid var(--rule);
+    padding-left: 0;
+}
+body.cc-reader-multipage .cc-entry-toc li {
+    counter-increment: entry;
+    margin: 0;
+}
+body.cc-reader-multipage .cc-entry-toc a {
+    position: relative;
+    display: block;
+    padding: 0.5rem 0.5rem 0.5rem 1rem;
+    margin-left: -1px;
+    border-left: 2px solid transparent;
+    color: var(--ink-mid);
+    text-decoration: none;
+    font-family: var(--font-sans);
+    font-size: 13.5px;
+    line-height: 1.4;
+}
+body.cc-reader-multipage .cc-entry-toc a::before {
+    content: counter(entry, decimal-leading-zero);
+    display: inline-block;
+    width: 1.6rem;
+    font-family: var(--font-mono);
+    font-size: var(--t-mono-small);
+    letter-spacing: 0.06em;
+    color: var(--ink-dim);
+    margin-right: 0.4rem;
+}
+body.cc-reader-multipage .cc-entry-toc a:hover {
+    color: var(--ink);
+    background: var(--paper-2);
+}
+body.cc-reader-multipage .cc-entry-toc a.is-active {
+    color: var(--ink);
+    border-left-color: var(--accent);
+    background: var(--paper-2);
+    font-weight: 600;
+}
+body.cc-reader-multipage .cc-entry-toc a.is-active::after {
+    content: 'hier';
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: var(--t-mono-caps);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+/* ------------------------------------------------------------------
+ * Kapitel-Outro (P13) · Weitergang am Kapitel-Ende.
+ * Beitragen-Pille + „Nächstes Kapitel"-Card verhindern die
+ * „fünf Sackgassen"-Wirkung aus dem Review.
+ * ------------------------------------------------------------------ */
+.cc-chapter-outro {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+}
+.cc-chapter-outro__inner {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    align-items: flex-start;
+    max-width: calc(var(--measure) + 120px);
+    padding: 0;
+}
+.cc-chapter-outro__contribute {
+    display: inline-flex;
+    align-items: center;
+    background: var(--accent);
+    color: var(--accent-on);
+    padding: 0 1.25rem;
+    height: 44px;
+    border-radius: 999px;
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+}
+.cc-chapter-outro__contribute:hover {
+    filter: brightness(0.95);
+    color: var(--accent-on);
+}
+.cc-chapter-next {
+    display: block;
+    width: 100%;
+    padding: 1.25rem 1.5rem;
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    color: var(--ink);
+    text-decoration: none;
+    transition: border-color 150ms ease-out;
+}
+.cc-chapter-next:hover { border-color: var(--accent); color: var(--ink); }
+.cc-chapter-next__label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: var(--t-mono-caps);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.35rem;
+}
+.cc-chapter-next__title {
+    display: block;
+    font-family: var(--serif);
+    font-size: 22px;
+    line-height: 1.25;
+    font-weight: 600;
+}
+.cc-chapter-next__number {
+    font-family: var(--font-mono);
+    font-size: 16px;
+    color: var(--ink-mid);
+    margin-right: 0.5rem;
+}
+
+/* Zwischenstufe: unter 1100 px kollabiert die Marginalspalte —
+   der Content-Bereich braucht dann die volle Restbreite. */
+@media (max-width: 1100px) {
+    body.cc-reader-multipage .cc-multipage {
+        grid-template-columns: var(--nav-rail) minmax(0, 1fr);
+    }
+    body.cc-reader-multipage .cc-multipage__aside {
+        display: none;
+    }
+}
 @media (max-width: 720px) {
     body.cc-reader-multipage .cc-multipage { grid-template-columns: 1fr; }
     body.cc-reader-multipage .cc-multipage__nav {

@@ -174,6 +174,61 @@ If not, see <https://www.gnu.org/licenses/>. -->
             </div>
         </section>
 
+        {{-- Q4-Etappe 5 / E1a (2026-09-09): Leitbild — vollbreites
+             Bild oben auf der Startseite, überlappendes Titelpanel.
+             Getrennt vom kleinen Logo. Ohne Leitbild entfällt das
+             Bildfeld ganz — Handoff-Regel 2 (kein leerer Container). --}}
+        <section class="mb-4 rounded-md border border-line-200 bg-paper-0 p-5"
+             x-data="{
+                 preview: @js(isset($project->cover_image) && $project->cover_image ? '/uploads/images/'.$project->cover_image : null),
+                 fileName: @js($project->cover_image ?? null),
+                 removed: false,
+                 pickFile(e) {
+                     const file = e.target.files[0]; if (! file) return;
+                     this.fileName = file.name; this.removed = false;
+                     const reader = new FileReader();
+                     reader.onload = (ev) => { this.preview = ev.target.result; };
+                     reader.readAsDataURL(file);
+                 },
+                 remove() {
+                     this.preview = null; this.fileName = null; this.removed = true;
+                     this.$refs.input.value = '';
+                 },
+             }">
+            <h2 class="mb-1 text-caption font-semibold text-ink-700">
+                {{ __('project_cover_image') }}
+                <span class="text-caption font-normal text-ink-500">{{ __('label_optional') }}</span>
+            </h2>
+            <p class="mb-3 text-caption text-ink-500">{{ __('metadata_field_cover_image_hint') }}</p>
+
+            <div class="flex flex-col gap-3">
+                <div class="relative flex items-center justify-center overflow-hidden rounded-md bg-line-100"
+                     style="aspect-ratio: 16/6; max-height: 260px;">
+                    <template x-if="preview">
+                        <img :src="preview" alt="" class="h-full w-full object-cover"/>
+                    </template>
+                    <template x-if="! preview">
+                        <x-icon name="image" size="6"/>
+                    </template>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <label class="cursor-pointer rounded-md border border-line-200 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-chrome-active focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary">
+                        <span x-text="fileName ? '{{ __('metadata_field_cover_image_replace') }}' : '{{ __('metadata_field_cover_image_choose') }}'"></span>
+                        <input x-ref="input" type="file" name="cover_image" accept="image/*"
+                               @change="pickFile($event)"
+                               class="sr-only"/>
+                    </label>
+                    <button type="button" x-show="fileName" @click="remove()"
+                            class="inline-flex items-center gap-1 rounded-md px-2 py-1.5 text-caption text-danger hover:bg-danger-bg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger">
+                        <x-icon name="trash-2" size="3"/>
+                        <span>{{ __('metadata_field_cover_image_remove') }}</span>
+                    </button>
+                    <p class="text-caption text-ink-900" x-text="fileName || ''"></p>
+                </div>
+            </div>
+        </section>
+
         {{-- Beschreibung — Quill-Editor bleibt im bestehenden #descriptionId. --}}
         <section class="mb-4 rounded-md border border-line-200 bg-paper-0 p-5">
             <h2 class="mb-1 text-caption font-semibold text-ink-700">{{ __('description') }}</h2>

@@ -331,6 +331,14 @@ class ProjectController extends Controller
             $project->update(['logo' => $data->logo]);
         }
 
+        // Q4-Etappe 5 / E1a (2026-09-09): Leitbild-Upload getrennt
+        // vom Logo. Nur updaten wenn tatsächlich neu hochgeladen —
+        // sonst bleibt der bestehende Filename stehen.
+        $coverImage = $this->images->store($request->file('cover_image'));
+        if ($coverImage !== null) {
+            $project->update(['cover_image' => $coverImage]);
+        }
+
         // Q4-Etappe 3 / C0b Fix (2026-09-07): Zitier-Settings kommen
         // nur aus dem Edit-Screen (nicht bei Create), deshalb nur
         // updaten wenn im Request tatsächlich mitgeschickt.
