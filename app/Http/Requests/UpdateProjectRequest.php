@@ -54,6 +54,9 @@ class UpdateProjectRequest extends FormRequest
             'source_required' => 'sometimes|boolean',
             // Q4-Etappe 5 / G1 (2026-09-08): Reader-Layout.
             'reader_layout' => 'sometimes|in:one-page,multi-page',
+            // Q4-Etappe 5 / G-Fund-1 (2026-09-09): Reader-Charakter + Akzent.
+            'character' => 'sometimes|in:dokumentation,archiv,erzaehlung',
+            'accent_color' => 'sometimes|nullable|regex:/^#(?:[0-9a-fA-F]{3}){1,2}$/',
         ];
     }
 

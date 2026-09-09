@@ -15,48 +15,13 @@ Erwartet zusätzlich zum Layout: $chapter (Chapter) im Kontext.
 
 @section('body-classes', 'cc-reader-multipage')
 
-@push('preview-head')
-<style type="text/css">
-    /* Q4-Etappe 5 / G4: Multi-Page-Reader-Grid. Sidebar links,
-       Content rechts. Optik ist erste Iteration — Feinschliff mit
-       Design-Rücksprache. */
-    body.cc-reader-multipage .cc-multipage { display: grid; grid-template-columns: 260px 1fr; }
-    body.cc-reader-multipage .cc-multipage__nav {
-        position: sticky; top: 0; align-self: start;
-        padding: 1.5rem 1.25rem;
-        max-height: 100vh; overflow-y: auto;
-        border-right: 1px solid rgba(0, 0, 0, 0.08);
-        background: rgba(255, 255, 255, 0.9);
-        backdrop-filter: saturate(140%) blur(8px);
-    }
-    body.cc-reader-multipage .cc-multipage__nav h2 {
-        font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase;
-        color: #6b7280; margin: 0 0 0.75rem;
-    }
-    body.cc-reader-multipage .cc-multipage__nav ol { list-style: none; padding: 0; margin: 0; counter-reset: chapter; }
-    body.cc-reader-multipage .cc-multipage__nav li { counter-increment: chapter; margin-bottom: 0.25rem; }
-    body.cc-reader-multipage .cc-multipage__nav a {
-        display: block; padding: 0.5rem 0.75rem; border-radius: 0.375rem;
-        color: inherit; text-decoration: none; line-height: 1.35;
-    }
-    body.cc-reader-multipage .cc-multipage__nav a::before {
-        content: counter(chapter) '. '; color: #9ca3af; margin-right: 0.25rem;
-    }
-    body.cc-reader-multipage .cc-multipage__nav a:hover { background: rgba(0, 0, 0, 0.04); }
-    body.cc-reader-multipage .cc-multipage__nav a.is-active {
-        background: rgba(0, 0, 0, 0.06); font-weight: 600; color: #111;
-    }
-    body.cc-reader-multipage .cc-multipage__content { min-width: 0; }
+@section('header-nav')
+    <a href="{{ route('preview', ['project' => $project->id] + request()->query()) }}">{{ __('reader_header_chapters') }}</a>
+    <a href="#about">{{ __('reader_header_about') }}</a>
+@endsection
 
-    @media (max-width: 720px) {
-        body.cc-reader-multipage .cc-multipage { grid-template-columns: 1fr; }
-        body.cc-reader-multipage .cc-multipage__nav {
-            position: static; max-height: none;
-            border-right: 0; border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-        }
-    }
-</style>
-@endpush
+{{-- Multi-Page-Styles kommen jetzt aus public/css/reader.css
+     (G-Fund-2), keine inline-Blöcke mehr. --}}
 
 @section('content')
     <div class="cc-multipage">
@@ -94,14 +59,18 @@ Erwartet zusätzlich zum Layout: $chapter (Chapter) im Kontext.
                                 <div class="zweispaltig">
                                     @isset($entry->name)<h2>{{ $entry->name }}</h2>@endisset
                                     @isset($entry->subtitle)<p class="subtitle">{{ $entry->subtitle }}</p>@endisset
-                                    @isset($entry->description)<p>@rich($entry->description )</p>@endisset
                                 </div>
+                                @include('preview.entry-credits', ['entry' => $entry])
+                                @isset($entry->description)
+                                    <div class="zweispaltig"><p>@rich($entry->description )</p></div>
+                                @endisset
 
                                 @if(isset($entry->mediaContent))
                                     @foreach($entry->mediaContent as $media)
                                         @include('preview.content.dispatcher', ['media' => $media])
                                     @endforeach
                                 @endif
+                                @include('preview.entry-sources', ['entry' => $entry])
                             </div>
                         </div>
                     @endforeach

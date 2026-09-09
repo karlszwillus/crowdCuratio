@@ -8,8 +8,19 @@ Multi-Page-View wiederverwendet.
 
 Erwartet: $media (MediaContent mit ->text) im Kontext.
 --}}
-@if(isset($media->text->text))
+@if(isset($media->text))
+    @php
+        $textCredit = trim(collect([
+            optional($media->text->copyrightText)->name,
+            optional($media->text->originText)->name,
+        ])->filter()->implode(' · '));
+    @endphp
     <div class="einspaltig">
-        <p>@rich($media->text->text)</p>
+        <div class="cc-text-body">@rich($media->text->text)</div>
+        @if($textCredit !== '')
+            {{-- Handoff Regel 3: redaktionelle Leistung sichtbar
+                 machen — Quelle/Copyright unter jedem Textblock. --}}
+            <p class="cc-text-credit">{{ $textCredit }}</p>
+        @endif
     </div>
 @endif

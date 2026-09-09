@@ -168,6 +168,16 @@ class Entry extends Model implements HasComments
     }
 
     /**
+     * Q4-Etappe 5 / G-Fund-5 (2026-09-09): Credits pro Abschnitt.
+     * Speist Credit-Zeile am Eintragskopf und aggregiertes
+     * „Erarbeitet von" am Projektende.
+     */
+    public function credits()
+    {
+        return $this->hasMany(EntryCredit::class)->orderBy('position');
+    }
+
+    /**
      * Get media attributes as Eloquent-Collection.
      *
      * Laravel-11-Sprung: vorher iterierte die Methode über den

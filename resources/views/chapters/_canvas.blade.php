@@ -312,6 +312,25 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                                                         <p data-history-field="description" class="text-body text-ink-700">{!! $entry->description !!}</p>
                                                     @endif
                                                 @endcan
+
+                                                {{-- Q4-Etappe 5 / G-Fund-5 (2026-09-09): Credit-Editor
+                                                     am Abschnitt. Aufklappbar, damit er den Editor nicht
+                                                     dominiert — der Standardfall ist „keine Credits". --}}
+                                                @can('update', $project)
+                                                    <details class="mt-3 rounded-md border border-line-200 bg-paper-0/50 px-3 py-2">
+                                                        <summary class="cursor-pointer text-caption font-medium text-ink-700">
+                                                            {{ __('entry_credits_heading') }}
+                                                            @if($entry->credits && $entry->credits->isNotEmpty())
+                                                                <span class="ml-2 rounded-full bg-line-100 px-2 py-0.5 text-caption text-ink-700">{{ $entry->credits->count() }}</span>
+                                                            @endif
+                                                        </summary>
+                                                        <div class="mt-2">
+                                                            <livewire:entry-credits-editor
+                                                                :entry-id="$entry->id"
+                                                                :key="'entry-credits-'.$entry->id" />
+                                                        </div>
+                                                    </details>
+                                                @endcan
                                             </div>
                                                     @if(isset($entry->mediaContent) && count($entry->mediaContent) > 0)
                                                         <div id="entry_{{$entry->id}}">

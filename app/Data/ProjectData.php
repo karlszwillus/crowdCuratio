@@ -46,6 +46,9 @@ final readonly class ProjectData
         public ?bool $sourceRequired = null,
         // Q4-Etappe 5 / G1 (2026-09-08): Reader-Layout.
         public ?string $readerLayout = null,
+        // Q4-Etappe 5 / G-Fund-1 (2026-09-09): Reader-Charakter + Akzent.
+        public ?string $character = null,
+        public ?string $accentColor = null,
     ) {}
 
     /**
@@ -71,6 +74,8 @@ final readonly class ProjectData
                 ? (bool) $validated['source_required']
                 : null,
             readerLayout: $validated['reader_layout'] ?? null,
+            character: $validated['character'] ?? null,
+            accentColor: $validated['accent_color'] ?? null,
         );
     }
 
@@ -93,6 +98,8 @@ final readonly class ProjectData
             'citation_depth' => $this->citationDepth,
             'source_required' => $this->sourceRequired,
             'reader_layout' => $this->readerLayout,
+            'character' => $this->character,
+            'accent_color' => $this->accentColor,
         ], fn ($value) => $value !== null);
     }
 }

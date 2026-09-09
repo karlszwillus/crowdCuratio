@@ -18,10 +18,24 @@ Erwartet: $media (MediaContent mit ->gallery + ->gallery->images) im Kontext.
     <div class="einspaltig">
         <div class="cc-gallery-grid">
             @foreach($media->gallery->images as $image)
+                @php
+                    $imgCredit = trim(collect([
+                        optional($image->copyrightImage)->name,
+                        optional($image->originImage)->name,
+                    ])->filter()->implode(' · '));
+                @endphp
                 <figure>
                     <img alt="{{ $image->alt }}" src="{{ route('image', $image->image) }}" loading="lazy">
-                    @if(! empty(trim(strip_tags((string) $image->alt))))
-                        <figcaption>@rich($image->alt)</figcaption>
+                    {{-- Handoff Regel 3: Bildunterschrift + Signatur/
+                         Rechte im Grid nebeneinander. Ohne Credit
+                         bleibt es bei der Unterschrift. --}}
+                    @if(! empty(trim(strip_tags((string) $image->alt))) || $imgCredit !== '')
+                        <figcaption class="cc-figcaption">
+                            <span class="cc-figcaption__caption">@rich($image->alt)</span>
+                            @if($imgCredit !== '')
+                                <span class="cc-figcaption__credit">{{ $imgCredit }}</span>
+                            @endif
+                        </figcaption>
                     @endif
                 </figure>
             @endforeach

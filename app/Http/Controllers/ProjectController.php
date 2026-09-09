@@ -346,6 +346,17 @@ class ProjectController extends Controller
             $project->update(['reader_layout' => $data->readerLayout]);
         }
 
+        // Q4-Etappe 5 / G-Fund-1 (2026-09-09): Reader-Charakter +
+        // optionale Akzent-Farbe. `accent_color` darf explizit auf
+        // null gesetzt werden (Redakteur will Charakter-Default
+        // zurück), deshalb Update immer wenn `character` mitkommt.
+        if ($data->character !== null) {
+            $project->update([
+                'character' => $data->character,
+                'accent_color' => $data->accentColor,
+            ]);
+        }
+
         return redirect()->back()->with('success', __('message_edit_project_success'));
     }
 

@@ -2,354 +2,629 @@
  * crowdCuratio - Reader Stylesheet
  * Copyright (C) 2026 - berlinHistory e.V.
  *
- * Q4-Etappe 5 / G6 (2026-09-09): Statisches Reader-CSS für die
- * öffentliche Ausstellung. Enthält die Design-Tokens aus
- * resources/css/tokens.css inline (kein Vite-Bundling), damit der
- * Reader ohne Build-Kette funktioniert und wir uns nicht an
- * Manifest-Timing verheben.
+ * Q4-Etappe 5 / G-Fund-2 (2026-09-09): Reader-Tokens nach dem
+ * Export-Handoff v4. Drei Charaktere (Dokumentation · Archiv ·
+ * Erzählung) mit je neun Tokens (Papier, Tinte, Rules, Akzent)
+ * und einer Lesefamilie. Umschaltung über `data-char="..."` am
+ * `<html>`. Layout, Maße und Reihenfolge sind in allen drei
+ * Charakteren identisch.
  *
- * Wenn Tokens sich ändern, muss diese Datei nachgezogen werden —
- * bewusst schmerzhaft, damit klar bleibt dass tokens.md die
- * Source of Truth ist.
+ * Editor-Tokens (--chrome-*, --ink-*, --primary) gelten hier
+ * NICHT — der Export hat ein eigenes Vokabular.
+ *
+ * Rules aus dem Handoff:
+ *   Regel 1 · Drei Ebenen, drei Formen (Kapitel/Eintrag/Block)
+ *   Regel 2 · Abbildungen führen (vollbreit, Unterschrift unter)
+ *   Regel 3 · Redaktionelle Leistung ist Inhalt
+ *   Regel 5 · Farbe ist nie der einzige Kanal (Mono-Marker „· hier")
+ *   Regel 6 · Kein Lesetext unter 19.5 px (mobil 18 px)
+ *   Fläche: kantig, keine Kartenradien/Schatten (nur Pillen 999px)
  */
 
-:root {
-    /* Farben (Handoff v4 § 1). */
-    --color-primary: #c23934;
-    --color-primary-on: #ffffff;
-    --color-brand-bar: #c23934;
-    --color-brand-band: #f7e7e6;
-
-    --color-ink-900: #1b2330;
-    --color-ink-800: #232c3a;
-    --color-ink-700: #374151;
-    --color-ink-600: #4b5563;
-    --color-ink-500: #6b7280;
-
-    --color-line-200: #e5e7eb;
-    --color-line-100: #eef0f2;
-    --color-paper-0:  #ffffff;
-    --color-canvas-bg: #f4f5f6;
-
-    /* Typografie (Handoff v4 § 3). */
-    --font-sans:  "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
-    --font-mono:  "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
-    --font-serif: "Source Serif 4", "Source Serif Pro", ui-serif, Georgia, serif;
-
-    --text-display:   46px;
-    --text-title:     26px;
-    --text-heading:   18px;
-    --text-body:      17px;
-    --text-caption:   13px;
-    --text-mono-caps: 11px;
-
-    --radius-sm: 6px;
-    --radius-md: 9px;
-    --radius-lg: 14px;
-    --radius-pill: 999px;
+/* ==================================================================
+ * Charakter · Dokumentation (Default)
+ * ================================================================== */
+:root, :root[data-char="dokumentation"] {
+    --paper:       #faf8f4;
+    --paper-2:     #f1ede4;
+    --paper-3:     #e7e1d4;
+    --ink:         #23201c;
+    --ink-mid:     #55504a;
+    --ink-dim:     #736c62;
+    --rule:        #ddd6c9;
+    --rule-soft:   #ebe6db;
+    --accent:      #a8392f;
+    --accent-soft: #f3e3e0;
+    --accent-on:   #ffffff;
+    --serif:       "Source Serif 4", "Source Serif Pro", ui-serif, Georgia, serif;
 }
 
-/* Reset — minimal, damit die Legacy-Marken (index.css) sauber weg sind. */
+/* ==================================================================
+ * Charakter · Archiv
+ * ================================================================== */
+:root[data-char="archiv"] {
+    --paper:       #f6f6f5;
+    --paper-2:     #eeeeec;
+    --paper-3:     #e4e4e1;
+    --ink:         #1d1f21;
+    --ink-mid:     #4e5155;
+    --ink-dim:     #6e7278;
+    --rule:        #d8d9d6;
+    --rule-soft:   #e7e8e5;
+    --accent:      #2f4a63;
+    --accent-soft: #e4ebf2;
+    --accent-on:   #ffffff;
+    --serif:       "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* ==================================================================
+ * Charakter · Erzählung — dunkles Papier, helle Tinte.
+ * Handoff: der Knopf trägt dunkle Tinte auf gelber Fläche (analog
+ * zum Aktives-Museum-Gelb-Regel im Editor).
+ * ================================================================== */
+:root[data-char="erzaehlung"] {
+    --paper:       #16140f;
+    --paper-2:     #201d16;
+    --paper-3:     #2b271e;
+    --ink:         #f5f1e8;
+    --ink-mid:     #cbc3b4;
+    --ink-dim:     #a49b8b;
+    --rule:        #3a3529;
+    --rule-soft:   #2b271e;
+    --accent:      #e0b04a;
+    --accent-soft: #2e2718;
+    --accent-on:   #16140f;
+    --serif:       "Source Serif 4", "Source Serif Pro", ui-serif, Georgia, serif;
+}
+
+/* ==================================================================
+ * Sekundäre Familien und Größen (Handoff-Tabelle § Typografie).
+ * Größen bewusst als Custom Properties, damit mobile Overrides in
+ * einer Regel greifen.
+ * ================================================================== */
+:root {
+    --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+
+    --measure: 660px;     /* Lesemaß */
+    --nav-rail: 236px;
+    --side-col: 330px;
+    --header-h: 62px;
+
+    --t-project-title:  44px;
+    --t-subtitle:       22px;
+    --t-chapter-title:  40px;
+    --t-chapter-lead:   20px;
+    --t-entry-title:    29px;
+    --t-body:         19.5px;
+    --t-lead:           22px;
+    --t-quote:          23px;
+    --t-caption:      14.5px;
+    --t-mono-small:     11px;
+    --t-mono-caps:    10.5px;
+}
+
+/* ==================================================================
+ * Reset (minimal, damit Legacy-Rules keine Rolle mehr spielen).
+ * ================================================================== */
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body {
     margin: 0;
-    font-family: var(--font-serif);
-    font-size: var(--text-body);
-    line-height: 1.7;
-    color: var(--color-ink-900);
-    background: var(--color-canvas-bg);
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: var(--t-body);
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
 }
-
 img { max-width: 100%; height: auto; display: block; }
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+a:hover { color: var(--ink); }
 
-/* Skip-Link (Handoff v4 · A11y). */
+/* Fokus: 2px solid var(--accent), Offset 2 — Handoff § Verhalten. */
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Skip-Link (A11y). */
 .cc-skip-link {
     position: absolute; top: 0; left: 0;
     padding: 0.5rem 1rem;
-    background: var(--color-primary); color: var(--color-primary-on);
+    background: var(--accent); color: var(--accent-on);
     font-family: var(--font-sans); font-weight: 600;
     text-decoration: none;
-    transform: translateY(-100%);
+    transform: translateY(-120%);
     transition: transform 150ms ease-out;
     z-index: 1000;
 }
-.cc-skip-link:focus { transform: translateY(0); outline: 2px solid #fff; outline-offset: 2px; }
+.cc-skip-link:focus { transform: translateY(0); }
 
-/* Headlines — IBM Plex Sans. */
-h1, h2, h3 {
-    font-family: var(--font-sans);
-    font-weight: 600;
-    color: var(--color-ink-900);
-    letter-spacing: -0.01em;
-    margin: 0;
-}
-h1 { font-size: var(--text-display); line-height: 1.1; margin-bottom: 1rem; }
-h2 { font-size: var(--text-title);   line-height: 1.2; margin: 1.5rem 0 0.75rem; }
-h3 { font-size: var(--text-heading); line-height: 1.3; margin: 1rem 0 0.5rem; }
+/* ==================================================================
+ * Typo-Skala.
+ * ================================================================== */
+h1, h2, h3 { font-family: var(--serif); font-weight: 600; color: var(--ink); margin: 0; letter-spacing: -0.02em; }
 h4 {
     font-family: var(--font-mono);
-    font-size: var(--text-mono-caps);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--color-ink-500);
-    margin: 1rem 0 0.25rem;
+    font-size: var(--t-mono-caps);
+    text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--ink-dim);
+    margin: 0 0 0.5rem;
+}
+p  { margin: 0 0 1rem; }
+
+.cc-lead      { font-size: var(--t-lead); line-height: 1.55; }
+.cc-mono      { font-family: var(--font-mono); font-size: var(--t-mono-small); letter-spacing: 0.06em; color: var(--ink-dim); }
+.cc-mono-caps { font-family: var(--font-mono); font-size: var(--t-mono-caps); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-dim); }
+
+/* Lesemaß-Container. */
+.cc-measure {
+    max-width: var(--measure);
+    margin-left: auto; margin-right: auto;
+    padding-left: 60px; padding-right: 60px;
+}
+@media (max-width: 720px) {
+    .cc-measure { padding-left: 20px; padding-right: 20px; }
 }
 
-/* Fließtext. */
-p { margin: 0 0 1rem; max-width: 68ch; }
-a { color: var(--color-primary); }
-a:hover { color: var(--color-ink-900); }
+/* Auto-Wrap für Legacy-Container aus dem alten Blade (bleibt bis
+   die Templates komplett umgezogen sind). */
+.container, .zweispaltig, .einspaltig {
+    max-width: var(--measure);
+    margin-left: auto; margin-right: auto;
+    padding-left: 60px; padding-right: 60px;
+}
+@media (max-width: 720px) {
+    .container, .zweispaltig, .einspaltig {
+        padding-left: 20px; padding-right: 20px;
+    }
+}
 
-/* Container. */
-.container { max-width: 78ch; margin: 0 auto; padding: 0 1.25rem; }
+.hintergrundweiss { background: var(--paper); padding: 2rem 0; }
+.hintergrundgrau  { background: var(--paper-2); padding: 2rem 0; }
 
-/* Top-Streifen mit crowdCuratio-Hinweis. */
-.top-container {
-    background: var(--color-ink-900);
-    color: var(--color-ink-500);
+/* ==================================================================
+ * Kopfleiste (G-Fund-3 · Handoff E1a).
+ * 62 px auf Startseite / 54 px sonst. In dieser Iteration einheitlich
+ * 62 px; die Kapitel-Höhe kann später via Modifier reduziert werden.
+ * ================================================================== */
+.cc-topbar-hint {
+    background: var(--paper-2);
+    color: var(--ink-dim);
+    font-family: var(--font-mono);
+    font-size: var(--t-mono-small);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
     padding: 0.25rem 1rem;
-    font-family: var(--font-mono);
-    font-size: var(--text-mono-caps);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+    text-align: right;
+    border-bottom: 1px solid var(--rule-soft);
 }
-.top-container .top-inner { display: flex; align-items: center; gap: 0.5rem; max-width: 78ch; margin: 0 auto; }
-.top-container #hinweistext { margin: 0; }
-.top-container #logo2 { display: none; }
+.cc-topbar-hint img { display: inline-block; height: 12px; width: auto; vertical-align: middle; margin-left: 0.5rem; }
 
-/* Header (Pastell-Band). */
-.headerleiste {
-    background: var(--color-brand-band);
-    padding: 1.75rem 1.25rem 1.25rem;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+.cc-header {
+    background: var(--paper);
+    border-bottom: 1px solid var(--rule);
+    padding: 0 60px;
 }
-.header-inner {
-    max-width: 78ch;
-    margin: 0 auto;
+.cc-header__row {
     display: grid;
-    grid-template-columns: auto 1fr;
-    grid-template-areas: "logo title" "logo subtitle";
-    column-gap: 1rem;
+    grid-template-columns: auto 1fr auto;
     align-items: center;
+    gap: 1rem;
+    height: var(--header-h);
+    max-width: 1400px;
+    margin: 0 auto;
 }
-.header-inner > div:first-child { grid-area: logo; }
-.header-inner .logo { max-height: 3rem; width: auto; }
-.header-inner #titel {
-    grid-area: title;
-    font-family: var(--font-sans);
-    font-weight: 700;
-    font-size: var(--text-title);
-    letter-spacing: -0.02em;
-    color: var(--color-ink-900);
-    margin: 0;
+.cc-header__project {
+    display: flex; align-items: center; gap: 0.75rem;
+    text-decoration: none; color: inherit;
 }
-.header-inner #titel a { color: inherit; text-decoration: none; }
-.header-inner #untertitel {
-    grid-area: subtitle;
-    font-family: var(--font-sans);
-    font-size: var(--text-caption);
-    color: var(--color-ink-500);
-    margin: 0.25rem 0 0;
+.cc-header__logo {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 26px; height: 26px;
+    background: var(--accent);
+    color: var(--accent-on);
+    font-family: var(--font-sans); font-weight: 700; font-size: 14px;
+    overflow: hidden;
 }
-
-/* Sprach-Umschalter (Text-Kürzel statt FA-Icon). */
-#burgermenu {
-    display: inline-block;
-    margin: 0.5rem 0 0;
-    cursor: pointer;
+.cc-header__logo img { width: 100%; height: 100%; object-fit: cover; }
+.cc-header__title {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 17px;
+    line-height: 1.1;
+    color: var(--ink);
+}
+.cc-header__subtitle {
+    display: block;
     font-family: var(--font-mono);
-    font-size: var(--text-mono-caps);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--color-ink-700);
+    font-size: var(--t-mono-small);
+    letter-spacing: 0.06em;
+    color: var(--ink-dim);
+    margin-top: 2px;
 }
-#burgermenu abbr { text-decoration: none; }
-.headerleiste ul {
-    list-style: none; padding: 0; margin: 0.5rem 0 0;
-    display: flex; flex-wrap: wrap; gap: 0.4rem;
+.cc-header__nav {
+    display: flex; align-items: center; gap: 1.25rem;
+    font-family: var(--font-sans); font-size: 14px;
 }
-.headerleiste .sprache {
-    background: rgba(0, 0, 0, 0.05);
-    border: 0;
-    padding: 0.3rem 0.7rem;
-    border-radius: var(--radius-pill);
-    font-family: var(--font-sans);
-    font-size: var(--text-caption);
-    color: var(--color-ink-700);
-    cursor: pointer;
+.cc-header__nav a {
+    color: var(--ink-mid);
+    text-decoration: none;
+    padding: 0.5rem 0;
 }
-.headerleiste .sprache:hover { background: rgba(0, 0, 0, 0.1); }
+.cc-header__nav a:hover { color: var(--ink); }
+.cc-header__lang { display: inline-flex; gap: 0.25rem; font-family: var(--font-mono); font-size: var(--t-mono-small); letter-spacing: 0.06em; }
+.cc-header__lang a { padding: 0.25rem 0.4rem; color: var(--ink-dim); }
+.cc-header__lang a.is-active { color: var(--ink); font-weight: 600; }
+.cc-header__contribute {
+    display: inline-flex; align-items: center;
+    background: var(--accent); color: var(--accent-on);
+    padding: 0 1rem;
+    height: 38px;
+    border-radius: 999px;
+    font-family: var(--font-sans); font-weight: 600; font-size: 14px;
+    text-decoration: none;
+}
+.cc-header__contribute:hover { filter: brightness(0.95); color: var(--accent-on); }
 
-/* Anchor-Nav (Chapter-Chips beim One-Pager). */
-.ankerleiste { max-width: 78ch; margin: 1rem auto 0; }
+/* Fortschrittslinie unter Header (E1b). */
+.cc-progress {
+    height: 3px;
+    background: var(--rule-soft);
+    position: relative;
+}
+.cc-progress__fill { position: absolute; inset: 0 auto 0 0; background: var(--accent); width: 0%; }
+
+/* Chapter-Anchor-Nav (One-Pager, E2b). */
+.ankerleiste {
+    max-width: 1400px; margin: 1rem auto 0;
+    padding: 0 60px;
+}
 .ankerpunkte { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .ankerpunkte .anker {
-    padding: 0.35rem 0.85rem;
-    border-radius: var(--radius-pill);
-    background: rgba(0, 0, 0, 0.04);
-    color: var(--color-ink-700);
+    padding: 0.4rem 0.9rem;
+    background: var(--paper-2);
+    color: var(--ink-mid);
     text-decoration: none;
-    font-family: var(--font-sans);
-    font-size: var(--text-caption);
-    font-weight: 500;
+    font-family: var(--font-sans); font-size: 14px;
+    border-bottom: 2px solid transparent;
 }
-.ankerpunkte .anker:hover { background: rgba(0, 0, 0, 0.08); color: var(--color-ink-900); }
+.ankerpunkte .anker:hover { color: var(--ink); }
+.ankerpunkte .anker.is-active { color: var(--ink); border-bottom-color: var(--accent); }
 
-/* Einleitung + Sections. */
+/* ==================================================================
+ * Sections.
+ * ================================================================== */
 .einleitung { padding: 2rem 0; }
-.hintergrundweiss { background: var(--color-paper-0); }
-.hintergrundgrau  { background: rgba(0, 0, 0, 0.025); }
-.hintergrundweiss, .hintergrundgrau { padding: 2rem 0; }
-.zweispaltig, .einspaltig { max-width: 68ch; margin: 0 auto; padding: 0 1.25rem; }
+.section .container { padding-top: 1rem; padding-bottom: 1rem; }
 
-/* Zitate. */
+h2 { font-size: var(--t-entry-title); line-height: 1.2; margin: 1.5rem 0 0.5rem; letter-spacing: -0.4px; }
+h3 { font-size: var(--t-chapter-lead); line-height: 1.3; margin: 1rem 0 0.5rem; letter-spacing: -0.2px; }
+
+/* Kapitel-Opener (Handoff E1b). */
+.cc-chapter-opener {
+    max-width: var(--measure);
+    margin: 3rem auto 1.5rem;
+    padding: 0 60px;
+    border-bottom: 1px solid var(--rule);
+}
+.cc-chapter-opener__meta {
+    display: flex; justify-content: space-between; align-items: baseline;
+    font-family: var(--font-mono); font-size: var(--t-mono-caps);
+    letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--accent);
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 1.25rem;
+}
+.cc-chapter-opener__meta > span:last-child { color: var(--ink-dim); }
+.cc-chapter-opener h2 {
+    font-size: var(--t-chapter-title);
+    line-height: 1.12;
+    letter-spacing: -0.8px;
+    margin: 0 0 0.75rem;
+}
+.cc-chapter-opener__lead {
+    font-size: var(--t-chapter-lead);
+    line-height: 1.6;
+    color: var(--ink-mid);
+    margin: 0 0 1.5rem;
+}
+
+/* ==================================================================
+ * Content-Blöcke.
+ * ================================================================== */
+
+/* Zitat (Handoff § Zitat). */
 blockquote {
-    border-left: 3px solid var(--color-primary);
-    padding: 0.5rem 0 0.5rem 1.25rem;
-    margin: 1.5rem 0;
-    font-style: italic;
-    color: var(--color-ink-800);
+    max-width: var(--measure);
+    margin: 2rem auto;
+    padding: 0.25rem 0 0.25rem 1.25rem;
+    border-left: 3px solid var(--accent);
+    font-family: var(--serif);
+    font-size: var(--t-quote);
+    line-height: 1.5;
+    font-style: normal;
+    color: var(--ink);
 }
 blockquote cite {
     display: block;
     margin-top: 0.75rem;
     font-style: normal;
-    font-family: var(--font-sans);
-    font-size: var(--text-caption);
-    color: var(--color-ink-500);
+    font-family: var(--font-mono);
+    font-size: var(--t-mono-small);
+    letter-spacing: 0.06em;
+    color: var(--ink-dim);
 }
 .zitat-original {
+    max-width: var(--measure);
+    margin: -1rem auto 2rem;
+    padding: 0 60px 0 calc(60px + 1.25rem);
     font-family: var(--font-sans);
-    font-size: var(--text-caption);
-    color: var(--color-ink-600);
-    margin: -0.5rem 0 1.5rem 1.25rem;
+    font-size: var(--t-caption);
+    color: var(--ink-mid);
 }
 
 /* Daten-und-Fakten-Block. */
-.daten-fakten { max-width: 68ch; margin: 1.5rem auto; padding: 0 1.25rem; }
+.daten-fakten { max-width: var(--measure); margin: 2rem auto; padding: 0 60px; }
 .daten-fakten dl {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
-    column-gap: 1rem; row-gap: 0.35rem;
+    column-gap: 1.5rem; row-gap: 0.4rem;
     margin: 1rem 0;
+    padding: 0.75rem 0;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
 }
-.daten-fakten dt { font-family: var(--font-sans); font-weight: 600; color: var(--color-ink-700); }
-.daten-fakten dd { margin: 0; }
-.daten-fakten table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+.daten-fakten dt { font-family: var(--font-sans); font-weight: 600; color: var(--ink-mid); }
+.daten-fakten dd { margin: 0; color: var(--ink); }
+.daten-fakten table {
+    width: 100%; border-collapse: collapse; margin: 1rem 0;
+    font-family: var(--serif); font-size: var(--t-body);
+}
 .daten-fakten th, .daten-fakten td {
-    text-align: left; padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid var(--color-line-100);
+    text-align: left; padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--rule-soft);
+    color: var(--ink);
 }
 .daten-fakten th {
-    font-family: var(--font-sans);
-    font-size: var(--text-mono-caps);
-    text-transform: uppercase; letter-spacing: 0.08em;
-    color: var(--color-ink-500);
-    border-bottom-color: var(--color-line-200);
+    font-family: var(--font-mono);
+    font-size: var(--t-mono-caps);
+    text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--ink-dim);
+    border-bottom-color: var(--rule);
 }
 
-/* Gallery-Grid (Slick-Ersatz). */
+/* Gallery-Grid. */
 .cc-gallery-grid {
     display: grid; gap: 1rem;
-    grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
-    max-width: 78ch;
-    margin: 1.25rem auto;
-    padding: 0 1.25rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+    max-width: 1200px;
+    margin: 1.5rem auto;
+    padding: 0 60px;
 }
 .cc-gallery-grid figure { margin: 0; }
-.cc-gallery-grid img {
-    width: 100%; height: auto; object-fit: cover;
-    border-radius: var(--radius-sm);
-}
+.cc-gallery-grid img { width: 100%; height: auto; object-fit: cover; }
 .cc-gallery-grid figcaption {
-    margin-top: 0.35rem;
+    margin-top: 0.5rem;
     font-family: var(--font-sans);
-    font-size: var(--text-caption);
-    color: var(--color-ink-500);
-    line-height: 1.4;
+    font-size: var(--t-caption);
+    line-height: 1.6;
+    color: var(--ink-mid);
+}
+
+/* Credit-Zeile am Eintragskopf (Handoff E1b · G-Fund-5). */
+.cc-entry-credit {
+    max-width: var(--measure);
+    margin: 0.5rem auto 1.5rem;
+    padding: 0 60px;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    letter-spacing: 0.04em;
+    color: var(--ink-dim);
+    line-height: 1.5;
+}
+
+/* „Erarbeitet von" am Projektende (Handoff E1a · G-Fund-5). */
+.cc-project-credits {
+    background: var(--paper-2);
+    border-top: 2px solid var(--ink);
+    margin-top: 3rem;
+    padding: 2rem 60px;
+}
+.cc-project-credits__inner { max-width: 1400px; margin: 0 auto; }
+.cc-project-credits h4 { margin-bottom: 1rem; }
+.cc-project-credits__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 2rem;
+}
+.cc-project-credits__grid h5 { margin: 0 0 0.5rem; }
+.cc-project-credits__grid ul {
+    list-style: none; padding: 0; margin: 0;
+    font-family: var(--font-sans);
+    font-size: var(--t-caption);
+    color: var(--ink);
+    line-height: 1.7;
+}
+@media (max-width: 720px) {
+    .cc-project-credits__grid { grid-template-columns: 1fr; gap: 1.25rem; }
+    .cc-project-credits { padding-left: 20px; padding-right: 20px; }
+}
+
+/* Quellenblock am Eintragsende (Handoff Regel 3 · G-Fund-5). */
+.cc-entry-sources {
+    max-width: var(--measure);
+    margin: 2rem auto 1rem;
+    padding: 1.25rem 60px;
+    background: var(--paper-2);
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+}
+.cc-entry-sources h4 {
+    color: var(--ink-mid);
+    margin-bottom: 0.75rem;
+}
+.cc-entry-sources ul { list-style: none; padding: 0; margin: 0; }
+.cc-entry-sources li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--rule-soft);
+    font-family: var(--font-sans);
+    font-size: var(--t-caption);
+    line-height: 1.5;
+}
+.cc-entry-sources li:last-child { border-bottom: 0; }
+.cc-entry-sources__name { display: block; font-weight: 600; color: var(--ink); }
+.cc-entry-sources__title { display: block; font-style: italic; color: var(--ink-mid); }
+.cc-entry-sources__meta {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: var(--t-mono-small);
+    letter-spacing: 0.06em;
+    color: var(--ink-dim);
+}
+
+/* Textblock-Credit: schmale Mono-Zeile rechts unter dem Absatz —
+   Regel 3 (redaktionelle Leistung sichtbar). */
+.cc-text-credit {
+    max-width: var(--measure);
+    margin: -0.5rem 0 1.5rem;
+    padding-top: 0.35rem;
+    border-top: 1px solid var(--rule-soft);
+    font-family: var(--font-mono);
+    font-size: var(--t-mono-small);
+    letter-spacing: 0.06em;
+    color: var(--ink-dim);
+    text-align: right;
+}
+
+/* Nachweiszeile: Bildunterschrift links, Signatur/Rechte rechts
+   in Mono — Handoff E1b Bildpaar/Vollbreite. */
+.cc-figcaption {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    column-gap: 1rem;
+    align-items: baseline;
+}
+.cc-figcaption__caption { color: var(--ink); }
+.cc-figcaption__credit {
+    font-family: var(--font-mono);
+    font-size: var(--t-mono-small);
+    letter-spacing: 0.06em;
+    color: var(--ink-dim);
+    text-align: right;
+    white-space: nowrap;
+}
+@media (max-width: 720px) {
+    .cc-figcaption { grid-template-columns: 1fr; }
+    .cc-figcaption__credit { text-align: left; }
 }
 
 /* Audio/Video. */
 audio, iframe { max-width: 100%; }
-.variable-width { max-width: 78ch; margin: 1.25rem auto; padding: 0 1.25rem; }
+.variable-width { max-width: 1200px; margin: 1.5rem auto; padding: 0 60px; }
 
-/* Footer. */
-footer {
-    margin-top: 3rem;
-    padding: 2rem 1.25rem;
-    border-top: 1px solid var(--color-line-100);
-    background: var(--color-paper-0);
+/* ==================================================================
+ * Fußzeile (G-Fund-4 · Handoff E1a).
+ * ================================================================== */
+.cc-footer {
+    background: var(--paper-3);
+    border-top: 2px solid var(--ink);
+    color: var(--ink-mid);
+    margin-top: 4rem;
+    padding: 2.5rem 60px 1.5rem;
 }
-.footerinner {
-    max-width: 78ch; margin: 0 auto;
-    font-family: var(--font-sans);
-    font-size: var(--text-caption);
-    color: var(--color-ink-500);
-}
-#verlinkungslistefooter {
-    list-style: none; padding: 0; margin: 1rem 0 0;
-    display: flex; flex-wrap: wrap; gap: 1rem;
-}
-#verlinkungslistefooter a { color: inherit; text-decoration: underline; }
-
-/* Multi-Page-Reader (Sidebar + Content). */
-body.cc-reader-multipage .cc-multipage {
+.cc-footer__grid {
+    max-width: 1400px; margin: 0 auto;
     display: grid;
-    grid-template-columns: 260px 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 2rem;
+    font-family: var(--font-sans); font-size: var(--t-caption);
+    line-height: 1.6;
 }
+.cc-footer__grid h4 { color: var(--ink-mid); margin-bottom: 0.75rem; }
+.cc-footer__grid ul { list-style: none; padding: 0; margin: 0; }
+.cc-footer__grid li { margin-bottom: 0.35rem; }
+.cc-footer__grid a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--rule); }
+.cc-footer__grid a:hover { border-bottom-color: var(--accent); }
+.cc-footer__cite {
+    max-width: 1400px; margin: 2rem auto 0;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--rule);
+    font-family: var(--font-sans); font-size: var(--t-caption);
+    color: var(--ink-mid);
+}
+.cc-footer__cite code { font-family: var(--font-mono); background: var(--paper-2); padding: 0.1rem 0.35rem; }
+.cc-footer__closing {
+    max-width: 1400px; margin: 1rem auto 0;
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: var(--font-mono); font-size: var(--t-mono-small);
+    letter-spacing: 0.06em;
+    color: var(--ink-dim);
+}
+
+@media (max-width: 720px) {
+    .cc-footer__grid { grid-template-columns: 1fr; }
+    .cc-footer, .cc-header, .ankerleiste { padding-left: 20px; padding-right: 20px; }
+}
+
+/* ==================================================================
+ * Multi-Page-Reader (Sidebar + Content).
+ * ================================================================== */
+body.cc-reader-multipage .cc-multipage { display: grid; grid-template-columns: var(--nav-rail) 1fr; }
 body.cc-reader-multipage .cc-multipage__nav {
     position: sticky; top: 0; align-self: start;
     padding: 1.5rem 1.25rem;
     max-height: 100vh; overflow-y: auto;
-    border-right: 1px solid var(--color-line-100);
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: saturate(140%) blur(8px);
+    border-right: 1px solid var(--rule);
+    background: var(--paper);
 }
 body.cc-reader-multipage .cc-multipage__nav h2 {
     font-family: var(--font-mono);
-    font-size: var(--text-mono-caps);
-    text-transform: uppercase; letter-spacing: 0.08em;
-    color: var(--color-ink-500);
+    font-size: var(--t-mono-caps);
+    text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--ink-dim);
     margin: 0 0 0.75rem;
 }
-body.cc-reader-multipage .cc-multipage__nav ol {
-    list-style: none; padding: 0; margin: 0; counter-reset: chapter;
-}
-body.cc-reader-multipage .cc-multipage__nav li {
-    counter-increment: chapter; margin-bottom: 0.25rem;
-}
+body.cc-reader-multipage .cc-multipage__nav ol { list-style: none; padding: 0; margin: 0; counter-reset: chapter; }
+body.cc-reader-multipage .cc-multipage__nav li { counter-increment: chapter; margin-bottom: 0.25rem; }
 body.cc-reader-multipage .cc-multipage__nav a {
     display: block;
     padding: 0.5rem 0.75rem;
-    border-radius: var(--radius-sm);
-    color: var(--color-ink-700);
+    color: var(--ink-mid);
     text-decoration: none;
     line-height: 1.35;
     font-family: var(--font-sans);
+    font-size: 14px;
+    border-left: 3px solid transparent;
 }
 body.cc-reader-multipage .cc-multipage__nav a::before {
-    content: counter(chapter) '. ';
-    color: var(--color-ink-500);
-    margin-right: 0.25rem;
+    content: counter(chapter, decimal-leading-zero) ' · ';
+    font-family: var(--font-mono);
+    color: var(--ink-dim);
+    margin-right: 0.35rem;
 }
-body.cc-reader-multipage .cc-multipage__nav a:hover { background: rgba(0, 0, 0, 0.04); }
+body.cc-reader-multipage .cc-multipage__nav a:hover { color: var(--ink); background: var(--paper-2); }
 body.cc-reader-multipage .cc-multipage__nav a.is-active {
-    /* Q4-Etappe 5 / G6 (2026-09-09): Aktiv-Fläche aus der
-       Projekt-Farbe abgeleitet (nicht hardcoded). color-mix in
-       allen Ever-green-Browsern seit 2023 verfügbar. */
-    background: color-mix(in srgb, var(--color-primary) 12%, transparent);
-    color: var(--color-primary);
+    color: var(--ink);
+    border-left-color: var(--accent);
+    background: var(--paper-2);
     font-weight: 600;
 }
-body.cc-reader-multipage .cc-multipage__nav a.is-active::before { color: var(--color-primary); }
+body.cc-reader-multipage .cc-multipage__nav a.is-active::after {
+    content: ' · hier';
+    color: var(--accent);
+    font-family: var(--font-mono);
+    font-size: var(--t-mono-caps);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    margin-left: 0.35rem;
+}
 body.cc-reader-multipage .cc-multipage__content { min-width: 0; }
 
 @media (max-width: 720px) {
     body.cc-reader-multipage .cc-multipage { grid-template-columns: 1fr; }
     body.cc-reader-multipage .cc-multipage__nav {
         position: static; max-height: none;
-        border-right: 0; border-bottom: 1px solid var(--color-line-100);
+        border-right: 0; border-bottom: 1px solid var(--rule);
     }
-    .header-inner { grid-template-columns: 1fr; grid-template-areas: "logo" "title" "subtitle"; }
+    :root { --t-body: 18px; --t-entry-title: 21px; --t-chapter-title: 27px; }
 }

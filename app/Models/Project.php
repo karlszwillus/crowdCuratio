@@ -65,7 +65,7 @@ class Project extends Model implements HasComments
      * Q4-Etappe 3 / C0b (2026-09-07): `citation_depth` und
      * `source_required` als projektweite Zitier-Settings ergaenzt.
      */
-    protected $fillable = ['name', 'logo', 'imprint', 'terms', 'status', 'description', 'citation_depth', 'source_required', 'reader_layout'];
+    protected $fillable = ['name', 'logo', 'imprint', 'terms', 'status', 'description', 'citation_depth', 'source_required', 'reader_layout', 'character', 'accent_color'];
 
     /**
      * @return array<string, string>
@@ -114,6 +114,27 @@ class Project extends Model implements HasComments
         return in_array($this->reader_layout ?? null, [self::READER_LAYOUT_ONE_PAGE, self::READER_LAYOUT_MULTI_PAGE], true)
             ? (string) $this->reader_layout
             : self::READER_LAYOUT_ONE_PAGE;
+    }
+
+    public const CHARACTER_DOKUMENTATION = 'dokumentation';
+
+    public const CHARACTER_ARCHIV = 'archiv';
+
+    public const CHARACTER_ERZAEHLUNG = 'erzaehlung';
+
+    /**
+     * Q4-Etappe 5 / G-Fund-1 (2026-09-09): Reader-Charakter (Handoff
+     * v4-Export). Default `dokumentation` (Handoff-Empfehlung).
+     */
+    public function character(): string
+    {
+        return in_array($this->character ?? null, [
+            self::CHARACTER_DOKUMENTATION,
+            self::CHARACTER_ARCHIV,
+            self::CHARACTER_ERZAEHLUNG,
+        ], true)
+            ? (string) $this->character
+            : self::CHARACTER_DOKUMENTATION;
     }
     /*
      * Get all of the chapters for the project
@@ -211,6 +232,8 @@ class Project extends Model implements HasComments
             'chapters.entries.mediaContent.quoteBlock.comments',
             // Q4-Etappe 4 / G1 (2026-09-08): Daten-und-Fakten-Block.
             'chapters.entries.mediaContent.dataFactBlock.comments',
+            // Q4-Etappe 5 / G-Fund-5 (2026-09-09): Credits pro Abschnitt.
+            'chapters.entries.credits',
         ]);
     }
 
@@ -232,6 +255,16 @@ class Project extends Model implements HasComments
             'chapters.entries.mediaContent.quoteBlock.source',
             // Q4-Etappe 4 / G1 (2026-09-08): Daten-und-Fakten-Block.
             'chapters.entries.mediaContent.dataFactBlock',
+            // Q4-Etappe 5 / G-Fund-5 (2026-09-09): Credits pro Abschnitt.
+            'chapters.entries.credits',
+            // Bild- und Text-Sources fürs Nachweiszeilen-/Quellenblock-
+            // Rendering im Reader (G-Fund-5).
+            'chapters.entries.mediaContent.text.copyrightText',
+            'chapters.entries.mediaContent.text.originText',
+            'chapters.entries.mediaContent.gallery.images.copyrightImage',
+            'chapters.entries.mediaContent.gallery.images.originImage',
+            'chapters.entries.mediaContent.audiovisual.copyrightSource',
+            'chapters.entries.mediaContent.audiovisual.originSource',
         ]);
     }
 

@@ -733,6 +733,69 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Q4-Etappe 5 · G-Fund · Reader-Fundament nach Design-Handoff v4**
+  (2026-09-09). Antwort auf den Design-Review vom 09.09.: der Reader
+  bekommt das im Handoff v4-Export vorgesehene Vokabular, und die
+  redaktionelle Leistung wird sichtbar. Neues Projekt-Setting
+  **Charakter** (`dokumentation` / `archiv` / `erzaehlung`, Default
+  `dokumentation`) mit UI-Karte im Metadaten-Tab, drei Preview-Tiles
+  je Charakter (Papier · Tinte · Akzent). Zusätzlich optionale
+  **Akzent-Farbe** pro Projekt, die nur den Charakter-Primärton
+  überschreibt (Logo-Kachel, „Etwas beitragen"-Pille, Zitat-Kante,
+  aktiver Kapitel-Marker, Fokus-Ring) — Papier, Tinte und Rules
+  bleiben vom Charakter. `public/css/reader.css` komplett auf die
+  neun Handoff-Tokens pro Charakter umgestellt (via `data-char`),
+  Typo-Skala 1:1 aus der Handoff-Tabelle (Source Serif 4 als Lese-
+  familie im Default, IBM Plex Sans für Archiv, IBM Plex Mono für
+  Meta-Labels), Lesemaß 660 px, kantig (keine Kartenradien, keine
+  Schatten). Neue Kopfleiste 62 px nach Handoff E1a: Akzent-Kachel
+  26 px + Projektname + Nav-Slots („Kapitel", „Über das Projekt")
+  + Sprachwahl DE/EN + dauerhafte Pille „Etwas beitragen" im
+  Akzent. Neue Fußzeile auf `--paper-3` mit 2-px-Oberkante: drei
+  Spalten (Träger · Ausstellung · Rechtliches), Zitierhinweis für
+  das Gesamtwerk mit generierter URL, Abschlusszeile „Erstellt mit
+  crowdCuratio · Letzte Änderung". Fokus-Ring `2px solid
+  var(--accent)`, Skip-Link. Alter `?colorAccent`-Query-Param-Weg
+  entfällt.
+
+  **Vier abgeleitete Ausgaben nachgezogen** (Design-Review Blocker
+  2 — die redaktionelle Leistung wird sichtbar):
+  - **Nachweiszeile am Bild**: Bildunterschrift links, Signatur/
+    Rechte (Copyright · Origin) rechts in Mono. Mobil untereinander.
+  - **Textblock-Credit**: schmale Mono-Zeile unter dem Absatz mit
+    Copyright · Origin.
+  - **Quellenblock am Eintragsende**: sammelt und dedupliziert alle
+    Sources aus Text/Gallery/AV/QuoteBlock, mit Name/Titel/Bestand/
+    Signatur, auf `--paper-2` gerahmt.
+  - **Credit-Zeile am Eintragskopf**: `Recherche: … · Redaktion: … ·
+    Stand MM/JJJJ · N Abbildungen · N Quellen`. Die Namen aus dem
+    neuen `entry_credits`-Model, die zwei Zähler abgeleitet aus
+    MediaContent-Aggregation.
+  - **„Erarbeitet von" am Projektende** (nur One-Pager): drei
+    Spalten (Recherche · Redaktion · Hinweise beigetragen), Namen
+    projektweit aggregiert und dedupliziert.
+
+  Neues Model `App\Models\EntryCredit` (`entry_id`, `role` als
+  Enum `recherche`/`redaktion`/`hinweis`, `name`, `date`,
+  `position`), Policy, Volt-Editor am Entry-Header (aufklappbare
+  Karte mit Rolle-Dropdown, Namensfeld, Month-Picker, Reorder-
+  gewichtiges Live-Save). Eager-Load in `Project::scopeWithEditTree`
+  und `scopeWithPreviewTree` erweitert.
+
+  Zwei weitere Reader-Umbauten mit dabei: der `<main>`-Wrapper
+  bekommt ein `#cc-reader-main` als Skip-Link-Ziel; nested
+  `<main>`-Elemente in der Multi-Page-View auf `<div>` bereinigt.
+  Die Gallery-Blade rendert jetzt als CSS-Grid (`.cc-gallery-grid`),
+  Slick/FA/GSAP-Includes waren im vorigen Zug schon raus.
+  Reader-CSS als statisches `public/css/reader.css` mit
+  inline-Design-Tokens (kein Vite-Manifest-Timing-Risiko).
+
+  Folgezüge in `.werkbank/PLANS/Q4-ETAPPE-G-READER-UMBAU.md`:
+  Detail-Design-Abgleich mit dem Designer, Leitbild + Startseiten-
+  Sequenz (E1a), Kapitel-Opener + Rail-Fortschritt (E1b),
+  Lightbox mit Metadaten (E1c), Eintrag als eigene Adresse (E1d),
+  PDF reduziert (G7).
+
 - **Q4-Etappe 5 · G1–G6 · Reader-Umbau (Multi-Page + Design-Handoff)**
   (2026-09-09). Der öffentliche Reader lernt zwei Modi und übernimmt
   das Design-Vokabular aus dem Handoff v4. Neues Projekt-Setting
