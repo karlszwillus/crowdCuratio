@@ -106,10 +106,13 @@ Erwartet: $project (Project), $parameters (array) im Kontext.
     </div>
 @endif
 
-{{-- Fußzeile (Handoff E1a). Drei Spalten + Zitierhinweis + Abschluss. --}}
+{{-- Fußzeile (Handoff E1a). Vier Spalten + Zitierhinweis + Abschluss.
+     Review 3 / P-Fußzeile: Sammelspalte „Weiteres" ergänzt
+     (Bildnachweise, Barrierefreiheit, PDF); Adressspalte mit
+     Zeilenabständen statt Absatzabständen (siehe reader.css). --}}
 <footer class="cc-footer" role="contentinfo">
     <div class="cc-footer__grid">
-        <div>
+        <div class="cc-footer__addr">
             <h4>{{ __('reader_footer_carrier') }}</h4>
             @php $footerImprint = \App\Support\ProjectLegalText::imprintFor($project); @endphp
             @if(! empty(strip_tags((string) $footerImprint)))
@@ -133,11 +136,28 @@ Erwartet: $project (Project), $parameters (array) im Kontext.
                 <li><a href="{{ route('preview.metadata', ['type' => 'policy', 'parameters' => $parameters]) }}">{{ __('policy') }}</a></li>
             </ul>
         </div>
+        <div>
+            {{-- Review 3 · P-Fußzeile: Sammelspalte. Ziel-Routen für
+                 Bildnachweise und Barrierefreiheitserklärung folgen
+                 (Backlog); PDF-Größe wird bei On-Demand-Generierung
+                 nicht mitgeliefert und bleibt vorerst unbeziffert. --}}
+            <h4>{{ __('reader_footer_more') }}</h4>
+            <ul>
+                <li><a href="#bildnachweise">{{ __('reader_footer_credits_link') }}</a></li>
+                <li><a href="#barrierefreiheit">{{ __('reader_footer_a11y_link') }}</a></li>
+                @if(isset($parameters))
+                    <li><a href="{{ route('download', $parameters) }}" target="_blank" rel="noopener">{{ __('reader_footer_pdf_link') }}</a></li>
+                @endif
+            </ul>
+        </div>
     </div>
 
     <div class="cc-footer__cite">
         <strong>{{ __('reader_footer_cite_label') }}:</strong>
-        <code>{{ $project->name ?? 'crowdCuratio' }} — {{ url('/') }}/preview?project={{ $project->id }} · {{ __('reader_footer_cite_retrieved') }} {{ now()->format('d.m.Y') }}</code>
+        {{ __('reader_footer_cite_publisher') }} (Hg.):
+        <em>{{ $project->name ?? 'crowdCuratio' }}</em>.
+        <code>{{ route('preview', ['project' => $project->id]) }}</code>
+        · {{ __('reader_footer_cite_retrieved') }} {{ now()->format('d.m.Y') }}
     </div>
 
     <div class="cc-footer__closing">

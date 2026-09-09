@@ -2,7 +2,7 @@
 crowdCuratio - Curating together virtually
 Copyright (C) 2026 - berlinHistory e.V.
 
-Q4-Etappe 5 / G-Fund-5 (2026-09-09): Credit-Zeile am Eintragskopf.
+Q4-Etappe 5 / G-Fund-5 (2026-09-09): Credit-Zeile am Abschnittskopf.
 Aggregation der Namen pro Rolle, ergänzt um die zwei abgeleiteten
 Zähler (n Abbildungen · n Quellen).
 
