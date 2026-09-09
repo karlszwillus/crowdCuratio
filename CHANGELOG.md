@@ -733,6 +733,31 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Q4-Etappe 5 · Reader-Polish nach Design-Review 3** (2026-09-09).
+  Der Multi-Page-Reader bekommt eine rechte Marginalspalte
+  (`--side-col`, 330 px, sticky) mit einer Kapitel-TOC über die
+  Abschnitte der aktiven Seite; ein IntersectionObserver markiert
+  den Abschnitt am oberen Viewport-Drittel und rendert einen
+  „HIER"-Marker sowie eine Fortschritts-Rail am linken Rand der
+  Liste. Das dreispaltige Grid (Rail · Content · Marginalspalte)
+  löst den kippenden Satzspiegel des Zwei-Spalten-Zwischenstands
+  auf und aktiviert das im Handoff v4 vorgesehene Layout. Am
+  Kapitel-Ende ergänzt ein Weitergang-Block Beitragen-Pille und
+  „Nächstes Kapitel"-Card; das letzte Kapitel eines Projekts blendet
+  zusätzlich „Erarbeitet von" ein (Aggregation aller
+  `entry_credits`, drei Rollen-Spalten), damit der Editor:innen-
+  Nachweis auch im Multi-Page dort landet, wo Leser:innen
+  aussteigen. Fußzeile um eine vierte Spalte „Weiteres" erweitert
+  (Bildnachweise · Barrierefreiheit · PDF-Download); die
+  Ziel-Seiten Bildnachweise/Barrierefreiheitserklärung stehen als
+  Backlog-Ticket in der Werkbank. Neue Locale-Keys:
+  `reader_aside_label`, `reader_entry_toc_label`,
+  `reader_next_chapter_label`, `reader_footer_more`,
+  `reader_footer_credits_link`, `reader_footer_a11y_link`,
+  `reader_footer_pdf_link`, `reader_footer_cite_publisher`. Mobile-
+  Fallback: Marginalspalte kollabiert unter 1100 px, Fußzeile
+  bricht auf zwei Spalten unter 960 px.
+
 - **Q4-Etappe 5 · G-Fund · Reader-Fundament nach Design-Handoff v4**
   (2026-09-09). Antwort auf den Design-Review vom 09.09.: der Reader
   bekommt das im Handoff v4-Export vorgesehene Vokabular, und die
@@ -2585,6 +2610,34 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
   in der ehemaligen `CommentTrait::commentAsUser`.
 
 ### Behoben
+
+- **Reader-Vokabular konsequent auf Kapitel · Abschnitt · Inhalt**
+  (2026-09-09). Ein Zwischenstand hatte die Vokabelachse
+  „Kapitel · Abschnitt · Inhalt" auf mehreren Reader-Locale-Keys
+  gegen „Kapitel · Eintrag · Inhalt" ausgetauscht — der
+  `VocabularySweepTest` hat den Rückfall gefangen. Zurück auf das
+  Firmen-Glossar: `reader_entry_sources_heading`,
+  `reader_scope_entries`, `reader_chapter_card_entries` und
+  `reader_chapter_entries_count` in de.json/en.json sowie Blade-
+  und CSS-Kommentare wieder auf „Abschnitt / Sections".
+
+- **Reader-Feinschliff aus dem Design-Review 3** (2026-09-09).
+  Kapitel-Karten auf der Startseite standen ungleich hoch, weil
+  Beschreibungstexte unterschiedlicher Länge die Kachelhöhe
+  aufschlugen; Body jetzt als Flex-Column, Beschreibung per
+  `line-clamp: 4` gedeckelt, Meta-Zeile klebt am unteren Rand.
+  Portrait-Bilder im Multi-Page-Reader saßen zentriert im breiten
+  Container und lösten die vom Handoff geforderte gemeinsame linke
+  Satzkante auf; `object-position: left center` bringt sie
+  bündig zurück. Der aktive Kapitel-Marker in der Rail brach
+  „HIER" in eine eigene Zeile — Link jetzt als
+  `flex: space-between`, Marker rechtsbündig auf der Titelzeile.
+  Fußzeilen-Adressspalte zerfiel durch die `<p>`-Standardmargins
+  des Rich-Text-Renderings in Einzelzeilen; Absatzabstände auf
+  Zeilenabstände reduziert. Zitierhinweis nennt jetzt den
+  Herausgeber (`reader_footer_cite_publisher`, Default
+  „berlinHistory e.V. und Aktives Museum e.V.") und nutzt die
+  Route-basierte URL statt einer Handbau-String-Konkatenation.
 
 - **Quellenverwaltung: Zähler-Divergenz, Pluralisierung, Merge-
   Button, Zitier-Settings** (Q4-Etappe 3 · C0-Nachreview ·
