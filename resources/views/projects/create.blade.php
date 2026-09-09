@@ -346,7 +346,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                 <input type="radio"
                                        name="character"
                                        value="{{ $ch }}"
-                                       @checked($project->character() === $ch)
+                                       @checked($project->characterName() === $ch)
                                        class="mt-1"/>
                                 <span class="flex-1">
                                     <span class="mb-2 flex h-8 overflow-hidden rounded border border-line-200">

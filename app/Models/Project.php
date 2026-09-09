@@ -125,8 +125,13 @@ class Project extends Model implements HasComments
     /**
      * Q4-Etappe 5 / G-Fund-1 (2026-09-09): Reader-Charakter (Handoff
      * v4-Export). Default `dokumentation` (Handoff-Empfehlung).
+     *
+     * Absichtlich NICHT `character()` genannt — das würde mit der
+     * DB-Spalte `character` kollidieren (Laravel probiert Methoden
+     * mit gleichem Namen als Eloquent-Relation zu resolven und wirft
+     * eine LogicException, wenn keine Relation zurückkommt).
      */
-    public function character(): string
+    public function characterName(): string
     {
         return in_array($this->character ?? null, [
             self::CHARACTER_DOKUMENTATION,

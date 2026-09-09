@@ -13,6 +13,7 @@ namespace App\Policies;
 
 use App\Models\Entry;
 use App\Models\EntryCredit;
+use App\Models\Project;
 use App\Models\User;
 use App\Support\PermissionName;
 
@@ -42,7 +43,7 @@ class EntryCreditPolicy extends OwnerScopedPolicy
      * BelongsTo nur `Model`, deshalb hier ein expliziter Cast auf
      * Entry, um den `project()`-Method-Call type-sauber zu halten.
      */
-    private function projectOf(EntryCredit $credit): ?\App\Models\Project
+    private function projectOf(EntryCredit $credit): ?Project
     {
         /** @var Entry|null $entry */
         $entry = $credit->entry;

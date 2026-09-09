@@ -13,7 +13,7 @@ Erwartet: $project (Project), $parameters (array) im Kontext.
 --}}
 <!doctype html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}"
-      data-char="{{ $project->character() }}">
+      data-char="{{ $project->characterName() }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
