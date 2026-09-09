@@ -44,6 +44,11 @@ final readonly class ProjectData
         // Q4-Etappe 3 / C0b (2026-09-07): Zitier-Settings.
         public ?string $citationDepth = null,
         public ?bool $sourceRequired = null,
+        // Q4-Etappe 5 / G1 (2026-09-08): Reader-Layout.
+        public ?string $readerLayout = null,
+        // Q4-Etappe 5 / G-Fund-1 (2026-09-09): Reader-Charakter + Akzent.
+        public ?string $character = null,
+        public ?string $accentColor = null,
     ) {}
 
     /**
@@ -68,6 +73,9 @@ final readonly class ProjectData
             sourceRequired: array_key_exists('source_required', $validated)
                 ? (bool) $validated['source_required']
                 : null,
+            readerLayout: $validated['reader_layout'] ?? null,
+            character: $validated['character'] ?? null,
+            accentColor: $validated['accent_color'] ?? null,
         );
     }
 
@@ -89,6 +97,9 @@ final readonly class ProjectData
             'logo' => $this->logo,
             'citation_depth' => $this->citationDepth,
             'source_required' => $this->sourceRequired,
+            'reader_layout' => $this->readerLayout,
+            'character' => $this->character,
+            'accent_color' => $this->accentColor,
         ], fn ($value) => $value !== null);
     }
 }

@@ -2,54 +2,46 @@
 crowdCuratio - Curating together virtually
 Copyright (C) 2026 - berlinHistory e.V.
 
-Q4-Etappe 5 / G4 (2026-09-08): One-Pager-Reader (Long-Scroll).
-Erbt Head/Header/Footer aus preview/layout.blade.php und füllt
-nur die view-spezifischen Slots: Chapter-Chips oben in der
-Header-Nav, Long-Scroll-Sections im Content.
+Q4-Etappe 5 / G4 (2026-09-08): Multi-Page-Reader — genau ein
+Kapitel mit Sidebar-Kapitel-Navigation links. Erbt Head/Header/
+Footer aus preview/layout.blade.php und rendert im Content-Slot
+das Grid (Sidebar + Chapter-Content).
+
+Erwartet zusätzlich zum Layout: $chapter (Chapter) im Kontext.
 --}}
 @extends('preview.layout')
 
+@section('title-suffix', $chapter->title ?? $chapter->name)
+
+@section('body-classes', 'cc-reader-multipage')
+
 @section('header-nav')
-    {{-- Handoff E1a: Header-Slots „Kapitel" und „Über das Projekt".
-         Kapitel klappt via Anker im One-Pager weiter, „Über" ist
-         Platzhalter für die Info-Seite (E2a-Zulieferung). --}}
-    <a href="#kapitel">{{ __('reader_header_chapters') }}</a>
+    <a href="{{ route('preview', ['project' => $project->id] + request()->query()) }}">{{ __('reader_header_chapters') }}</a>
     <a href="#about">{{ __('reader_header_about') }}</a>
 @endsection
 
-@section('intro')
-    <section class="einleitung">
-        <div class="container">
-            <h1 style="font-size: var(--t-project-title); line-height: 1.1; letter-spacing: -0.8px; margin-bottom: 1rem;">
-                {{ $project->name }}
-            </h1>
-            @if(isset($project->description))
-                <p class="cc-lead">@rich($project->description )</p>
-            @endif
-        </div>
-    </section>
-
-    {{-- Chapter-Chips als eigener Streifen, Handoff E2b-Muster.
-         Sticky beim Scroll wäre ein Followup. --}}
-    <div id="kapitel" class="ankerleiste">
-        <div class="ankerpunkte">
-            @if(isset($project->chapters))
-                @foreach($project->chapters as $keyProject => $value)
-                    <a href="#section{{ $keyProject }}" id="anker{{ $keyProject }}" class="anker">{{ $value->name }}</a>
-                @endforeach
-            @endif
-        </div>
-    </div>
-@endsection
+{{-- Multi-Page-Styles kommen jetzt aus public/css/reader.css
+     (G-Fund-2), keine inline-Blöcke mehr. --}}
 
 @section('content')
-    @if(isset($project) && isset($project->chapters))
-        @foreach($project->chapters as $k => $chapter)
-            <h4 class="toggledown">{{ $chapter->name }}</h4>
-            @if(isset($parameters['collapse']))
-                <div class="plus" onclick="addText({{ $k }})"></div>
-            @endif
-            <section id="section{{ $k }}" class="section einleitung{{ $k }}">
+    <div class="cc-multipage">
+        <nav class="cc-multipage__nav" aria-label="{{ __('reader_chapter_nav_label') }}">
+            <h2>{{ __('reader_chapter_nav_label') }}</h2>
+            <ol>
+                @foreach($project->chapters->sortBy('position') as $navChapter)
+                    <li>
+                        <a href="{{ route('preview.chapter', ['project' => $project->id, 'chapter' => $navChapter->id]) }}"
+                           @class(['is-active' => $navChapter->id === $chapter->id])
+                           @if($navChapter->id === $chapter->id) aria-current="page" @endif>
+                            {{ $navChapter->name }}
+                        </a>
+                    </li>
+                @endforeach
+            </ol>
+        </nav>
+
+        <div class="cc-multipage__content">
+            <section class="section">
                 <div class="hintergrundweiss">
                     <div class="container">
                         <div class="zweispaltig" id="text">
@@ -73,8 +65,6 @@ Header-Nav, Long-Scroll-Sections im Content.
                                     <div class="zweispaltig"><p>@rich($entry->description )</p></div>
                                 @endisset
 
-                                {{-- Q4-Etappe 5 / G2 (2026-09-08): Content-Loop
-                                     via Type-Dispatcher-Include. --}}
                                 @if(isset($entry->mediaContent))
                                     @foreach($entry->mediaContent as $media)
                                         @include('preview.content.dispatcher', ['media' => $media])
@@ -86,7 +76,6 @@ Header-Nav, Long-Scroll-Sections im Content.
                     @endforeach
                 @endif
             </section>
-        @endforeach
-        @include('preview.project-credits', ['project' => $project])
-    @endif
+        </div>
+    </div>
 @endsection

@@ -58,7 +58,14 @@ If not, see <https://www.gnu.org/licenses/>. -->
     @endif
     <p class="mb-4 text-caption text-ink-500">{{ __('metadata_page_hint') }}</p>
 
+    {{-- Q4-Etappe 5 / G1 Nachreview (2026-09-08): Rechte Sidebar
+         (Prüfung, Kennzahlen, Verlauf, Löschen) ist länger als die
+         Form. Ohne Puffer scrollt der Sticky-Footer aus seinem
+         Kontext raus, sobald man über das Form-Ende hinaus zur
+         Sidebar-Unterkante scrollt. `pb-32` puffert das ab, bis wir
+         den Sticky-Footer sauber auf Layout-Ebene positionieren. --}}
     <form id="frm_project" name="projectForm"
+          class="pb-32"
           action="@if(isset($project->id)) {{ route('projects.update',$project->id) }} @else {{ route('projects.store') }} @endif"
           method="POST"
           enctype="multipart/form-data"
@@ -273,6 +280,113 @@ If not, see <https://www.gnu.org/licenses/>. -->
                         </span>
                     </label>
                 </fieldset>
+            </section>
+
+            {{-- Q4-Etappe 5 / G1 (2026-09-08): Reader-Layout-Karte.
+                 Analog zur Zitier-Einstellungen-Karte darüber. Der
+                 Redakteur wählt, ob die öffentliche Ausstellung als
+                 Ein-Seiter mit Chapter-Chips oben (kleine Projekte)
+                 oder als Mehr-Seiten-Ansicht mit Sidebar links
+                 (größere Projekte) gerendert wird. --}}
+            <section class="mb-4 rounded-md border border-line-200 bg-paper-0 p-5">
+                <h2 class="mb-1 text-caption font-semibold text-ink-700">
+                    {{ __('project_reader_settings') }}
+                </h2>
+                <p class="mb-3 text-caption text-ink-500">
+                    {{ __('project_reader_settings_intro') }}
+                </p>
+
+                <fieldset class="mt-3">
+                    <legend class="mb-2 block text-caption font-medium text-ink-700">
+                        {{ __('project_reader_layout_label') }}
+                    </legend>
+                    <label class="flex items-start gap-3 rounded-md border border-line-200 p-3 hover:bg-canvas-bg has-checked:border-primary">
+                        <input type="radio"
+                               name="reader_layout"
+                               value="one-page"
+                               @checked(! $project->usesMultiPageReader())
+                               class="mt-1"/>
+                        <span>
+                            <span class="block text-body font-medium text-ink-900">{{ __('project_reader_layout_one_page') }}</span>
+                            <span class="block text-caption text-ink-500">{{ __('project_reader_layout_one_page_desc') }}</span>
+                        </span>
+                    </label>
+                    <label class="mt-2 flex items-start gap-3 rounded-md border border-line-200 p-3 hover:bg-canvas-bg has-checked:border-primary">
+                        <input type="radio"
+                               name="reader_layout"
+                               value="multi-page"
+                               @checked($project->usesMultiPageReader())
+                               class="mt-1"/>
+                        <span>
+                            <span class="block text-body font-medium text-ink-900">{{ __('project_reader_layout_multi_page') }}</span>
+                            <span class="block text-caption text-ink-500">{{ __('project_reader_layout_multi_page_desc') }}</span>
+                        </span>
+                    </label>
+                </fieldset>
+            </section>
+
+            {{-- Q4-Etappe 5 / G-Fund-1 (2026-09-09): Charakter- und
+                 Akzent-Karte. Der Charakter legt Papier, Tinte, Rules
+                 und Lesefamilie fest (drei Presets aus dem Handoff v4).
+                 Die Akzent-Farbe darf optional den Charakter-Primärton
+                 überschreiben — leer lassen für den Charakter-Default. --}}
+            <section class="mb-4 rounded-md border border-line-200 bg-paper-0 p-5">
+                <h2 class="mb-1 text-caption font-semibold text-ink-700">
+                    {{ __('project_character_settings') }}
+                </h2>
+                <p class="mb-3 text-caption text-ink-500">
+                    {{ __('project_character_settings_intro') }}
+                </p>
+
+                <fieldset class="mt-3">
+                    <legend class="sr-only">{{ __('project_character_label') }}</legend>
+                    <div class="grid grid-cols-1 gap-2 md:grid-cols-3">
+                        @foreach (['dokumentation' => ['#faf8f4', '#23201c', '#a8392f'], 'archiv' => ['#f6f6f5', '#1d1f21', '#2f4a63'], 'erzaehlung' => ['#16140f', '#f5f1e8', '#e0b04a']] as $ch => $swatch)
+                            <label class="flex cursor-pointer items-start gap-3 rounded-md border border-line-200 p-3 hover:bg-canvas-bg has-checked:border-primary">
+                                <input type="radio"
+                                       name="character"
+                                       value="{{ $ch }}"
+                                       @checked($project->characterName() === $ch)
+                                       class="mt-1"/>
+                                <span class="flex-1">
+                                    <span class="mb-2 flex h-8 overflow-hidden rounded border border-line-200">
+                                        <span style="background: {{ $swatch[0] }}" class="flex-1"></span>
+                                        <span style="background: {{ $swatch[1] }}" class="w-6"></span>
+                                        <span style="background: {{ $swatch[2] }}" class="w-6"></span>
+                                    </span>
+                                    <span class="block text-body font-medium text-ink-900">{{ __('project_character_'.$ch) }}</span>
+                                    <span class="block text-caption text-ink-500">{{ __('project_character_'.$ch.'_desc') }}</span>
+                                </span>
+                            </label>
+                        @endforeach
+                    </div>
+                </fieldset>
+
+                <div class="mt-4">
+                    <label for="accent_color" class="mb-1 block text-caption font-medium text-ink-700">
+                        {{ __('project_accent_color_label') }}
+                    </label>
+                    <p class="mb-2 text-caption text-ink-500">{{ __('project_accent_color_hint') }}</p>
+                    <div class="flex items-center gap-2">
+                        <input type="color"
+                               id="accent_color"
+                               name="accent_color"
+                               value="{{ $project->accent_color ?? '#a8392f' }}"
+                               class="h-9 w-16 cursor-pointer rounded border border-line-200"/>
+                        <input type="text"
+                               name="accent_color_text"
+                               oninput="document.getElementById('accent_color').value = this.value; document.getElementsByName('accent_color')[0].value = this.value;"
+                               value="{{ $project->accent_color ?? '' }}"
+                               placeholder="{{ __('project_accent_color_placeholder') }}"
+                               pattern="^#(?:[0-9a-fA-F]{3}){1,2}$"
+                               class="w-32 rounded-md border border-line-200 bg-canvas-bg px-3 py-2 font-mono text-caption"/>
+                        <button type="button"
+                                onclick="document.getElementById('accent_color').value = ''; document.getElementsByName('accent_color_text')[0].value = ''; document.getElementsByName('accent_color')[0].value = '';"
+                                class="text-caption text-ink-500 underline hover:text-ink-900">
+                            {{ __('project_accent_color_reset') }}
+                        </button>
+                    </div>
+                </div>
             </section>
         @endisset
 
