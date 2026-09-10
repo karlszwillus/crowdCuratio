@@ -733,6 +733,23 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Q4-Etappe 6 · G6-7 · Lightbox** (2026-09-10). Klick auf jede
+  Kachel im Band, Kontaktbogen und in der Sequenz öffnet dieselbe
+  Großansicht — dunkler Overlay, großes Bild links, Metadaten-
+  Spalte rechts (Bildunterschrift + Nachweis), Prev/Next per
+  Buttons oder Pfeiltasten, Escape zum Schließen. Ein globaler
+  Alpine-Store `lightbox` verwaltet Zustand und Bildliste; jedes
+  Galerie-Blade übergibt beim Öffnen ein `imagesMeta`-Array mit
+  allen Bildern der Gallery in Dokumentreihenfolge. Damit sind
+  die Einzelnachweise im Kontaktbogen wieder erreichbar — der
+  Designer-Punkt „Bogen darf ohne Einzelunterschriften auskommen,
+  wenn die Nachweise einen Klick entfernt sind" ist damit
+  bedient. Ohne JavaScript bleibt das Overlay komplett unsichtbar
+  (`x-cloak` + `[x-cloak]` in reader.css) — Band und Sequenz
+  tragen ihre Nachweise ohnehin unter dem Bild. Neue Locale-
+  Keys: `lightbox_close`, `lightbox_meta_label` / `_caption` /
+  `_credit`, `gallery_open_lightbox`.
+
 - **Q4-Etappe 6 · G6-5 · Kapitel-Titelbild** (2026-09-10). Statt
   eines eigenen Upload-Feldes am Kapitel — das Bilder ohne Nachweis
   produzieren würde — wählt der Redakteur das Titelbild jetzt am
