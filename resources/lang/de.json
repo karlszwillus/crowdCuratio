@@ -498,7 +498,7 @@
   "image_chapter_cover_label_with_chapter": "Als Titelbild für „:chapter\" verwenden",
   "image_chapter_cover_hint": "Erscheint auf der Kapitelkarte und der Kapitel-Trennseite. Urheber und Rechte werden mitgeführt.",
   "chapter_cover_slot_label": "Titelbild dieses Kapitels",
-  "chapter_cover_slot_empty": "Kein Titelbild gewählt. Setz das Häkchen an einem Bild in einem Eintrag dieses Kapitels.",
+  "chapter_cover_slot_empty": "Kein Titelbild gewählt. Setz das Häkchen an einem Bild in einem Abschnitt dieses Kapitels.",
   "chapter_cover_slot_open": "Zum Bild springen",
   "chapter_cover_slot_change": "Anderes Bild wählen",
   "chapter_cover_from_entry": "aus :entry",

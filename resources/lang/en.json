@@ -498,7 +498,7 @@
   "image_chapter_cover_label_with_chapter": "Use as title image for \":chapter\"",
   "image_chapter_cover_hint": "Appears on the chapter card and the chapter divider. Author and rights are carried over.",
   "chapter_cover_slot_label": "Title image for this chapter",
-  "chapter_cover_slot_empty": "No title image chosen. Tick the checkbox on any image inside an entry of this chapter.",
+  "chapter_cover_slot_empty": "No title image chosen. Tick the checkbox on any image inside a section of this chapter.",
   "chapter_cover_slot_open": "Jump to image",
   "chapter_cover_slot_change": "Choose another image",
   "chapter_cover_from_entry": "from :entry",
