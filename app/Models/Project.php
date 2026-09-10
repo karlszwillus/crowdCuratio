@@ -270,6 +270,13 @@ class Project extends Model implements HasComments
             'chapters.entries.mediaContent.gallery.images.originImage',
             'chapters.entries.mediaContent.audiovisual.copyrightSource',
             'chapters.entries.mediaContent.audiovisual.originSource',
+            // Q4-Etappe 6 · G6-5 (2026-09-10): Kapitel-Titelbild.
+            // Wird in preview/index.blade.php für die Kapitelkarten
+            // gerendert und im chapter-cover-slot des Editors; ohne
+            // Eager-Load würde `chapter->coverImage` unter Strict-
+            // Mode LazyLoadingViolationException werfen.
+            'chapters.coverImage.copyrightImage',
+            'chapters.coverImage.originImage',
         ]);
     }
 
