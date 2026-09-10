@@ -60,10 +60,15 @@ class GalleryBlockController extends Controller
     /**
      * Phase 5y.9: Optimistischer Drop-Upload einer einzelnen Datei in
      * eine Galerie. Nimmt genau ein File, ohne Copyright/Quelle, und
-     * gibt die neue Bild-ID plus URL als JSON zurueck. Frontend zieht
-     * daraus die Ghost-Kachel zu einer echten und laedt am Ende einmal
-     * die Seite neu, damit alle Blade-Bereiche (Angaben-Status,
-     * Publish-Check, Header-Anzahl) konsistent sind.
+     * gibt die neue Bild-ID plus URL als JSON zurueck.
+     *
+     * Q4-Etappe 6 (2026-09-10): Response enthaelt zusaetzlich ein
+     * fertig gerendertes `x-content.gallery.image-tile`-Fragment.
+     * Das Frontend ersetzt damit die Ghost-Kachel durch die echte
+     * Kachel (mit Grip-Handle, Angaben-Bearbeiten und Delete-Overlay),
+     * ohne die Seite neu laden zu muessen — Karl-Feedback beim
+     * G6-2-Test: „nach Fertig sollten die Elemente zum Schieben und
+     * editieren direkt eingeblendet werden".
      */
     public function dropImage(Request $request, Gallery $gallery): JsonResponse
     {
@@ -75,6 +80,25 @@ class GalleryBlockController extends Controller
 
         $image = $this->images->createFromDrop($request->file('file'), $gallery->id);
 
+        // Fragment-Rendering — das image-tile-Blade erwartet zusaetzlich
+        // zum Image das umgebende MediaContent (fuer Anker-IDs im Grid),
+        // das Projekt (fuer die project-scoped Gates) und die Position.
+        // `listPermissions` bekommt einen minimalen Fallback — die
+        // Comment-/Delete-Overlays greifen dann via `Auth::user()->can(...)`
+        // auf project-scoped Policies, der Legacy-Array-Check faellt still
+        // durch (was fuer den Drop-Fall passt: der Uploader hat sowieso
+        // update-Rechte).
+        $mediaContent = $gallery->mediaContents()->first();
+        $project = $gallery->project();
+
+        $tileHtml = view('components.content.gallery.image-tile', [
+            'image' => $image,
+            'item' => $mediaContent,
+            'project' => $project,
+            'listPermissions' => [],
+            'position' => $image->position,
+        ])->render();
+
         return response()->json([
             'ok' => true,
             'image' => [
@@ -82,6 +106,7 @@ class GalleryBlockController extends Controller
                 'position' => $image->position,
                 'url' => route('image', $image->image),
             ],
+            'html' => $tileHtml,
         ]);
     }
 
