@@ -55,12 +55,11 @@ Erwartet: $media (MediaContent mit ->gallery + ->gallery->images) im Kontext.
              aria-label="{{ $gallery->title ?? __('gallery_form_sequenz') }}">
             <div class="cc-gal-stage__frame">
                 @foreach($imgs as $img)
-                    <figure class="cc-gal-stage__slide" x-show="i === {{ $loop->index }}" x-cloak>
+                    <div class="cc-gal-stage__slide" x-show="i === {{ $loop->index }}" x-cloak>
                         <img alt="{{ $img->alt }}"
                              src="{{ route('image', $img->image) }}"
                              loading="lazy">
-                        @include('preview.content.gallery-caption', ['image' => $img])
-                    </figure>
+                    </div>
                 @endforeach
                 <button type="button"
                         class="cc-gal-stage__nav cc-gal-stage__nav--prev"
@@ -83,6 +82,16 @@ Erwartet: $media (MediaContent mit ->gallery + ->gallery->images) im Kontext.
                             role="tab"
                             :aria-selected="i === {{ $loop->index }} ? 'true' : 'false'"
                             aria-label="{{ __('gallery_sequence_goto', ['n' => $loop->iteration]) }}"></button>
+                @endforeach
+            </div>
+            {{-- Design-Review-Nachreview 2026-09-10 · Blocker 4:
+                 Nachweiszeile pro aktivem Slide, unter der Bühne
+                 auf ruhigem Papier. Alpine schaltet sichtbar. --}}
+            <div class="cc-gal-stage__caption">
+                @foreach($imgs as $img)
+                    <div x-show="i === {{ $loop->index }}" x-cloak>
+                        @include('preview.content.gallery-caption', ['image' => $img])
+                    </div>
                 @endforeach
             </div>
         </div>

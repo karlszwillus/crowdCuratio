@@ -91,6 +91,14 @@
     --side-col: 330px;
     --header-h: 62px;
 
+    /* Q4-Etappe 6 · G6-4/G6-5-Nachreview: gemeinsame Höhe für
+       Band (n1–n4) und Sequenz-Bühne. Der Handoff verlangt EINE
+       Zahl für alle Formen, damit der Bildrhythmus über die
+       ganze Seite ruhig bleibt. Das Einzelbild ist der Sonderfall
+       des Bandes mit n=1, keine eigene Darstellung. */
+    --gal-band-h: 380px;
+    --gal-caption-min-h: 44px;
+
     --t-project-title:  44px;
     --t-subtitle:       22px;
     --t-chapter-title:  40px;
@@ -726,6 +734,13 @@ body.cc-reader-multipage .cc-gal-stage {
     display: flex;
     flex-direction: column;
 }
+/* Feste Mindesthöhe für die Nachweiszeile — auch wenn Caption
+   und Credit leer sind, bleibt die Zeile reserviert. Sonst
+   klebt die Unterschrift der einen Zelle unter dem Bild wie
+   eine Beschreibung der ganzen Reihe (Design-Review Blocker 4). */
+.cc-gal-band__item .cc-figcaption {
+    min-height: var(--gal-caption-min-h);
+}
 .cc-gal-band__frame {
     /* Fester Bild-Frame — Höhe kommt aus .cc-gal-band--n{n} unten.
        overflow: hidden greift NUR am Frame, damit das Bild beschnitten
@@ -751,15 +766,17 @@ body.cc-reader-multipage .cc-gal-stage {
    Die Höhe sitzt am Bild-Frame, nicht an der Grid-Zeile —
    grid-auto-rows bleibt auto, damit die Captions unter den
    Bildern nicht abgeschnitten werden. */
+/* Design-Review-Nachreview 2026-09-10: EINE Höhe für alle
+   Band-Varianten. n1 (Einzelbild) ist der Sonderfall n=1, keine
+   eigene Höhen-Regel. Portraits werden im Band schmal — laut
+   Designer explizit OK, sie sind der Prüffall der Bandhöhe. */
+.cc-gal-band__frame { height: var(--gal-band-h); }
 .cc-gal-band--n1 { grid-template-columns: 1fr; }
-.cc-gal-band--n1 .cc-gal-band__frame { height: 470px; background: transparent; }
+.cc-gal-band--n1 .cc-gal-band__frame { background: transparent; }
 .cc-gal-band--n1 .cc-gal-band__frame img { object-fit: contain; object-position: left center; }
 .cc-gal-band--n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.cc-gal-band--n2 .cc-gal-band__frame { height: 380px; }
 .cc-gal-band--n3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.cc-gal-band--n3 .cc-gal-band__frame { height: 320px; }
 .cc-gal-band--n4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.cc-gal-band--n4 .cc-gal-band__frame { height: 320px; }
 
 /* Q4-Etappe 6 (2026-09-10): In den Multi-Bild-Bändern (n2/n3/n4)
    ist die Zelle zu schmal für die zweispaltige Nachweiszeile —
@@ -837,21 +854,20 @@ body.cc-reader-multipage .cc-gal-stage {
     .cc-gal-bogen { grid-template-columns: repeat(2, 1fr); padding: 0 20px; }
 }
 
-/* Sequenz-Bühne · dunkles Paper, feste Höhe 500 px, Pager-Buttons
-   als Overlay, Striche unten als Fortschritt (nicht Punkte, per
-   Handoff). Handoff-Farbe #17140f — das dunkle Erzaehlung-Papier.
-   Q4-Etappe 6 (2026-09-10): Höhe fixiert statt aspect-ratio, sonst
-   wird die Bühne bei 1200 px Breite 800 px hoch — zu groß fuer
-   die Lesezeile. */
+/* Sequenz-Bühne · dunkles Paper, gleiche Höhe wie das Band
+   (var(--gal-band-h) = 380 px), linksbündig — die Bühne wächst
+   nach rechts wie das Band, nicht mittig zentriert. Pager-Buttons
+   als Overlay, Striche unten als Fortschritt (Handoff), Caption
+   unter der Bühne (nicht mehr über dem Bild). */
 .cc-gal-stage {
     max-width: 900px;
-    margin: 2rem auto;
+    margin: 2rem 0;
     padding: 0 60px;
 }
 .cc-gal-stage__frame {
     position: relative;
     background: #17140f;
-    height: 500px;
+    height: var(--gal-band-h);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -875,18 +891,16 @@ body.cc-reader-multipage .cc-gal-stage {
     height: 100%;
     object-fit: contain;
 }
-.cc-gal-stage__slide .cc-figcaption {
-    position: absolute;
-    left: 16px;
-    right: 16px;
-    bottom: 16px;
-    color: #f5f1e8;
-    padding: 8px 12px;
-    background: rgba(23, 20, 15, 0.65);
-}
-.cc-gal-stage__slide .cc-figcaption__caption,
-.cc-gal-stage__slide .cc-figcaption__credit {
-    color: inherit;
+/* Design-Review-Nachreview 2026-09-10 · Blocker 4: die
+   Slide-Caption stand vorher als Overlay im Bild (weißer Text
+   auf Granit). Jetzt sitzt sie außerhalb des Frames, unter der
+   Bühne, wie im Band — auf ruhigem Papier, feste Mindesthöhe.
+   Positioniert außerhalb des Slide-Absolute-Wrappers geht nicht,
+   also rendert der neue Blade-Code die Caption des aktuellen
+   Slides einmal separat unter dem Frame. */
+.cc-gal-stage__caption {
+    margin-top: 12px;
+    min-height: var(--gal-caption-min-h);
 }
 .cc-gal-stage__nav {
     position: absolute;
