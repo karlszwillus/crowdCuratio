@@ -159,7 +159,12 @@ class ProjectPreviewController extends Controller
         // PDF-Download fremder Projekte ohne Gate war erreichbar.
         $this->authorize('view', $project);
 
-        $html = view('preview.pdf', compact('project', 'parameters'))->render();
+        // Q4-Etappe 6 · G7 (2026-09-10): PDF-Neubau. Das alte
+        // preview/pdf.blade.php (~1.100 LoC, Duplikat des Web-Readers
+        // mit dompdf-Anpassungen) ist ersetzt durch preview/pdf/layout
+        // plus reduzierte Content-Partials — sw/w-Ausgabe mit Charakter-
+        // Akzent, Audio/Video als Hinweiszeile statt Player-Frame.
+        $html = view('preview.pdf.layout', compact('project', 'parameters'))->render();
 
         $options = new Options;
         $options->setChroot(['/var/www/html/public/']);
