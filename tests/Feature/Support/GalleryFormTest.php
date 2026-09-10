@@ -74,14 +74,19 @@ it('nextFormIfDecrement liefert null bei count=0', function () {
 
 it('label liefert eine übersetzte Beschriftung pro Form', function () {
     // Die Locale-Keys müssen existieren, sonst gibt trans() den Key zurück
-    // — mit einem `str_contains(':')`-Check würden wir den Fallback erkennen.
+    // — der `str_contains`-Check erkennt den Fallback und macht die
+    // Test-Assertion für Larastan sauber (kein Pest-Expectation<string|null>).
     foreach (GalleryForm::cases() as $form) {
-        expect($form->label())->toBeString()->not->toContain('gallery_form_');
+        $label = $form->label();
+        expect($label)->toBeString();
+        expect(str_contains($label, 'gallery_form_'))->toBeFalse();
     }
 });
 
 it('scopeHint liefert einen übersetzten Kontext pro Form', function () {
     foreach (GalleryForm::cases() as $form) {
-        expect($form->scopeHint())->toBeString()->not->toContain('gallery_form_');
+        $hint = $form->scopeHint();
+        expect($hint)->toBeString();
+        expect(str_contains($hint, 'gallery_form_'))->toBeFalse();
     }
 });

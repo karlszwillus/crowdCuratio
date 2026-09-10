@@ -25,7 +25,9 @@ use App\Models\Image;
 */
 
 it('kann ein Kapitelbild via coverImage-Relation lesen', function () {
-    $project = makeProject();
+    /** @var \App\Models\User $owner */
+    $owner = \App\Models\User::factory()->create();
+    $project = makeProject($owner);
     $chapter = makeChapter($project);
     $image = makeImage();
 
@@ -40,7 +42,9 @@ it('kann ein Kapitelbild via coverImage-Relation lesen', function () {
 });
 
 it('coverImage liefert null, wenn das Bild soft-deleted wurde', function () {
-    $project = makeProject();
+    /** @var \App\Models\User $owner */
+    $owner = \App\Models\User::factory()->create();
+    $project = makeProject($owner);
     $chapter = makeChapter($project);
     $image = makeImage();
 
@@ -57,7 +61,9 @@ it('coverImage liefert null, wenn das Bild soft-deleted wurde', function () {
 });
 
 it('cover_image_id wird via ON DELETE SET NULL geleert, wenn das Bild hart gelöscht wird', function () {
-    $project = makeProject();
+    /** @var \App\Models\User $owner */
+    $owner = \App\Models\User::factory()->create();
+    $project = makeProject($owner);
     $chapter = makeChapter($project);
     $image = makeImage();
 
