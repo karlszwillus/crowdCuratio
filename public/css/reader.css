@@ -741,6 +741,24 @@ body.cc-reader-multipage .cc-gal-stage {
 .cc-gal-band--n4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .cc-gal-band--n4 .cc-gal-band__frame { height: 320px; }
 
+/* Q4-Etappe 6 (2026-09-10): In den Multi-Bild-Bändern (n2/n3/n4)
+   ist die Zelle zu schmal für die zweispaltige Nachweiszeile —
+   die Credit-Spalte rechts bricht sonst Zeichen für Zeichen um.
+   Caption und Credit stapeln sich hier untereinander, analog zum
+   Mobile-Fall. Beim Vollbreit-Band (n1) bleibt der zweispaltige
+   Grid-Fall aus .cc-figcaption. */
+.cc-gal-band--n2 .cc-figcaption,
+.cc-gal-band--n3 .cc-figcaption,
+.cc-gal-band--n4 .cc-figcaption {
+    grid-template-columns: 1fr;
+    row-gap: 0.25rem;
+}
+.cc-gal-band--n2 .cc-figcaption__credit,
+.cc-gal-band--n3 .cc-figcaption__credit,
+.cc-gal-band--n4 .cc-figcaption__credit {
+    text-align: left;
+}
+
 @media (max-width: 720px) {
     .cc-gal-band { padding: 0 20px; }
     .cc-gal-band--n2,
