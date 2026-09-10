@@ -122,12 +122,14 @@ Erwartet: $media (MediaContent mit ->gallery + ->gallery->images) im Kontext.
         <div class="cc-gal-band cc-gal-band--n{{ min($imgCount, 4) }}">
             @foreach($imgs as $img)
                 <figure class="cc-gal-band__item{{ $img->no_crop ? ' cc-gal-band__item--fit' : '' }}">
-                    <img alt="{{ $img->alt }}"
-                         src="{{ route('image', $img->image) }}"
-                         loading="lazy"
-                         @if(! $img->no_crop && ($img->focus_x !== null || $img->focus_y !== null))
-                             style="object-position: {{ $img->focus_x ?? 50 }}% {{ $img->focus_y ?? 50 }}%;"
-                         @endif>
+                    <div class="cc-gal-band__frame">
+                        <img alt="{{ $img->alt }}"
+                             src="{{ route('image', $img->image) }}"
+                             loading="lazy"
+                             @if(! $img->no_crop && ($img->focus_x !== null || $img->focus_y !== null))
+                                 style="object-position: {{ $img->focus_x ?? 50 }}% {{ $img->focus_y ?? 50 }}%;"
+                             @endif>
+                    </div>
                     @include('preview.content.gallery-caption', ['image' => $img])
                 </figure>
             @endforeach

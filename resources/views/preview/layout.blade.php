@@ -39,6 +39,13 @@ Erwartet: $project (Project), $parameters (array) im Kontext.
         </style>
     @endif
 
+    {{-- Q4-Etappe 6 · G6-4 (2026-09-10): Alpine.js für den Reader.
+         Der Reader-Layout lädt bewusst kein Vite-Bundle (siehe
+         reader.css-Kommentare), deshalb Alpine hier direkt aus
+         public/js/. `defer` sorgt dafür, dass Alpine erst nach dem
+         DOM-Parse startet — Reihenfolge zu `x-cloak` bleibt sauber. --}}
+    <script defer src="{{ asset('js/alpine.min.js') }}"></script>
+
     @stack('preview-head')
 </head>
 

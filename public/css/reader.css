@@ -695,51 +695,59 @@ body.cc-reader-multipage .cc-gal-stage {
     margin: 2rem auto;
     padding: 0 60px;
     display: grid;
-    gap: 14px;
+    gap: 14px 14px;
+    /* align-items: start — figure haengt am oberen Zellrand, damit
+       die Bilder in einer Reihe alle auf gleicher Linie beginnen,
+       auch wenn die Captions unterschiedlich lang sind. */
+    align-items: start;
 }
 .cc-gal-band__item {
     margin: 0;
+    display: flex;
+    flex-direction: column;
+}
+.cc-gal-band__frame {
+    /* Fester Bild-Frame — Höhe kommt aus .cc-gal-band--n{n} unten.
+       overflow: hidden greift NUR am Frame, damit das Bild beschnitten
+       wird, die Caption darunter aber unbeschnitten sichtbar bleibt. */
     background: var(--paper-2);
     overflow: hidden;
 }
-.cc-gal-band__item img {
+.cc-gal-band__frame img {
     display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
     object-position: center center;
 }
-.cc-gal-band__item--fit {
+.cc-gal-band__item--fit .cc-gal-band__frame {
     background: var(--paper);
 }
-.cc-gal-band__item--fit img {
+.cc-gal-band__item--fit .cc-gal-band__frame img {
     object-fit: contain;
 }
-/* Modifier nach Bildanzahl — 1 breit, 2 in zwei Spalten, 3 in
-   drei Spalten, 4 als 2×2. Alle Zellen bekommen die gleiche
-   Zeilenhöhe über grid-auto-rows, damit die Kacheln fluchten. */
-.cc-gal-band--n1 { grid-template-columns: 1fr; grid-auto-rows: 470px; }
-.cc-gal-band--n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 380px; }
-.cc-gal-band--n3 { grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 320px; }
-.cc-gal-band--n4 { grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 320px; }
-/* n1: einzelne Kachel darf ohne Rahmen ausbrechen — der Handoff
-   sieht sie als „Band einzeln" mit `object-position: left center`.
-   Bei einer Kachel greift no_crop schon per Default (nichts wird
-   beschnitten, wenn nur ein Bild da ist). */
-.cc-gal-band--n1 .cc-gal-band__item {
-    background: transparent;
-}
-.cc-gal-band--n1 .cc-gal-band__item img {
-    object-fit: contain;
-    object-position: left center;
-}
+/* Modifier nach Bildanzahl — 1 breit (470 px Bildhöhe), 2 in zwei
+   Spalten (380 px), 3 in drei Spalten (320 px), 4 als 2×2 (320 px).
+   Die Höhe sitzt am Bild-Frame, nicht an der Grid-Zeile —
+   grid-auto-rows bleibt auto, damit die Captions unter den
+   Bildern nicht abgeschnitten werden. */
+.cc-gal-band--n1 { grid-template-columns: 1fr; }
+.cc-gal-band--n1 .cc-gal-band__frame { height: 470px; background: transparent; }
+.cc-gal-band--n1 .cc-gal-band__frame img { object-fit: contain; object-position: left center; }
+.cc-gal-band--n2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.cc-gal-band--n2 .cc-gal-band__frame { height: 380px; }
+.cc-gal-band--n3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.cc-gal-band--n3 .cc-gal-band__frame { height: 320px; }
+.cc-gal-band--n4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.cc-gal-band--n4 .cc-gal-band__frame { height: 320px; }
+
 @media (max-width: 720px) {
-    .cc-gal-band { padding: 0 20px; grid-auto-rows: auto !important; }
+    .cc-gal-band { padding: 0 20px; }
     .cc-gal-band--n2,
     .cc-gal-band--n3,
     .cc-gal-band--n4 { grid-template-columns: 1fr; }
-    .cc-gal-band__item img { height: auto; width: 100%; }
-    .cc-gal-band--n1 .cc-gal-band__item img { height: auto; }
+    .cc-gal-band__frame { height: auto !important; aspect-ratio: 4 / 3; }
+    .cc-gal-band--n1 .cc-gal-band__frame { aspect-ratio: 3 / 2; }
 }
 
 /* Kontaktbogen · 3 Spalten, 4:3-Zellen mit 6-px-Fuge, +n-Overflow
