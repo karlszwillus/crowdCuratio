@@ -114,15 +114,20 @@ Erwartet: $media (MediaContent mit ->gallery + ->gallery->images) im Kontext.
             @endif
         </div>
     @else
-        {{-- Band: 1 Bild einzeln, 2–4 gestapelt. Alle 380 px hoch,
-             Breite folgt Format (Handoff-Empfehlung). `no_crop` ist
-             hier bereits Default — im Band wird nie beschnitten. --}}
-        <div class="cc-gal-band">
+        {{-- Band: 1 Bild einzeln, 2–4 nebeneinander in 1 Reihe
+             (2 → 2 Spalten, 3 → 3 Spalten, 4 → 2×2). Alle Kacheln
+             gleich hoch, `object-fit: cover` mit optionalem
+             `focus_x/y`; `no_crop`-Bilder wechseln auf `contain`,
+             damit Dokumente/Scans nicht beschnitten werden. --}}
+        <div class="cc-gal-band cc-gal-band--n{{ min($imgCount, 4) }}">
             @foreach($imgs as $img)
-                <figure class="cc-gal-band__item">
+                <figure class="cc-gal-band__item{{ $img->no_crop ? ' cc-gal-band__item--fit' : '' }}">
                     <img alt="{{ $img->alt }}"
                          src="{{ route('image', $img->image) }}"
-                         loading="lazy">
+                         loading="lazy"
+                         @if(! $img->no_crop && ($img->focus_x !== null || $img->focus_y !== null))
+                             style="object-position: {{ $img->focus_x ?? 50 }}% {{ $img->focus_y ?? 50 }}%;"
+                         @endif>
                     @include('preview.content.gallery-caption', ['image' => $img])
                 </figure>
             @endforeach
