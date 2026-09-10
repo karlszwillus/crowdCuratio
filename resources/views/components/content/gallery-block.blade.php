@@ -154,8 +154,11 @@
                                 const uploadedIds = [];
                                 for (const file of queue) {
                                     const ghostId = 'ghost-' + Math.random().toString(36).slice(2, 9);
-                                    const entry = { id: ghostId, name: file.name, progress: 0, status: 'uploading' };
-                                    this.uploads.push(entry);
+                                    this.uploads.push({ id: ghostId, name: file.name, progress: 0, status: 'uploading' });
+                                    // Q4-Etappe 6 (2026-09-10): reactive-proxied
+                                    // Objekt aus dem Array holen, siehe Kommentar
+                                    // im gefuellten Uploader unten.
+                                    const entry = this.uploads[this.uploads.length - 1];
                                     const token = document.querySelector('meta[name=csrf-token]')?.content;
                                     const xhr = new XMLHttpRequest();
                                     xhr.open('POST', this.dropUrl);
@@ -274,8 +277,16 @@
                     for (const file of queue) {
                         const ghostId = 'ghost-' + Math.random().toString(36).slice(2, 9);
                         const previewUrl = URL.createObjectURL(file);
-                        const entry = { id: ghostId, name: file.name, previewUrl, progress: 0, status: 'uploading', xhr: null };
-                        this.uploads.push(entry);
+                        this.uploads.push({ id: ghostId, name: file.name, previewUrl, progress: 0, status: 'uploading', xhr: null });
+                        // Q4-Etappe 6 (2026-09-10): Nach push das reactive-
+                        // proxied Objekt aus dem Array holen und dieses
+                        // an uploadOne uebergeben. Alpine wickelt Array-
+                        // Elemente in Proxies; wer am originalen JS-Object
+                        // schreibt, umgeht die Reactivity. Symptom vor dem
+                        // Fix: Progress-Balken und status-Label blieben
+                        // auf uploading haengen, obwohl der XHR laengst
+                        // 200 zurueckgab.
+                        const entry = this.uploads[this.uploads.length - 1];
                         this.uploadOne(entry, file, (newId) => {
                             if (newId) uploadedIds.push(newId);
                             pending -= 1;
