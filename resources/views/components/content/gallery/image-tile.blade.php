@@ -49,6 +49,19 @@
             <span data-image-position>{{ $position }}</span>
         </span>
 
+        {{-- Q4-Etappe 6 · G6-2: no_crop-Marker. Kleines Mono-Kürzel
+             oben rechts an der Kachel, damit im Editor sichtbar ist,
+             welche Bilder eingepasst statt gefüllt gerendert werden
+             (relevant im Kontaktbogen ab 5 Bildern). --}}
+        @if ($image->no_crop)
+            <span class="absolute right-1.5 top-1.5 inline-flex items-center rounded px-1.5 py-0.5 font-mono text-white"
+                  style="background-color: rgba(27,35,48,.78); font-size: 10px; letter-spacing: 0.06em;"
+                  title="{{ __('gallery_no_crop_marker') }}"
+                  aria-label="{{ __('gallery_no_crop_marker') }}">
+                NC
+            </span>
+        @endif
+
         @can('update', $project)
             {{-- Overlay-Aktionen unten: Angaben bearbeiten + Entfernen.
                  Erscheint bei hover ODER focus-within — auf Touch-Geraeten

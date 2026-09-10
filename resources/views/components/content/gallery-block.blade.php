@@ -111,6 +111,15 @@
                     @endif
                 @endcan
             </div>
+
+            {{-- Q4-Etappe 6 · G6-2: Kopfpanel „So erscheint diese Galerie".
+                 Status-Pille (Band/Kontaktbogen/Sequenz), Formwechsel-Hint
+                 und Sequenz-Toggle. Nur einblenden, wenn schon Bilder da
+                 sind — bei leerer Galerie ist die Aussage sinnlos. --}}
+            @if($item->gallery->images->isNotEmpty())
+                <x-content.gallery-form-panel :gallery="$item->gallery" :project="$project"/>
+            @endif
+
             {{-- public/css/crowdcuratio.css wird seit dem
                  Vite-Umbau nicht mehr geladen — die alten
                  .gallery_container-Grid-Regeln greifen nicht.
@@ -169,7 +178,12 @@
                                             // mit Fragment auf den Galerie-Block, damit der
                                             // Browser nicht an den Seitenanfang scrollt.
                                             url.hash = 'anchor_MediaContent_{{ $item->id }}';
-                                            setTimeout(() => { window.location.href = url.toString(); }, 600);
+                                            // Q4-Etappe 6 (2026-09-10): Reload-Delay von 600 auf 2500 ms
+// hochgesetzt. Auf Localhost/Sail sind die Uploads so schnell,
+// dass die „✓ Fertig"-Meldung sonst nicht sichtbar wird —
+// Karl-Feedback beim G6-2-Test: „Progress oder Abschluss sehe
+// ich nicht".
+setTimeout(() => { window.location.href = url.toString(); }, 2500);
                                         }
                                     };
                                     xhr.onerror = () => {
@@ -276,7 +290,12 @@
                                 // auf den Galerie-Block, damit der Browser nicht an
                                 // den Seitenanfang scrollt.
                                 url.hash = 'anchor_MediaContent_{{ $item->id }}';
-                                setTimeout(() => { window.location.href = url.toString(); }, 600);
+                                // Q4-Etappe 6 (2026-09-10): Reload-Delay von 600 auf 2500 ms
+// hochgesetzt. Auf Localhost/Sail sind die Uploads so schnell,
+// dass die „✓ Fertig"-Meldung sonst nicht sichtbar wird —
+// Karl-Feedback beim G6-2-Test: „Progress oder Abschluss sehe
+// ich nicht".
+setTimeout(() => { window.location.href = url.toString(); }, 2500);
                             }
                         });
                     }
