@@ -733,6 +733,39 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Q4-Etappe 6 · G6-4 · Reader-Galerie nach Anzahl-Regel**
+  (2026-09-10). Der Reader rendert Galerien jetzt in einer der
+  drei Formen, die die Anzahl-Regel aus `App\Support\GalleryForm`
+  vorgibt — dieselbe Methode, die auch das Editor-Kopfpanel
+  entscheidet, sodass Anzeige und Ausspiel nicht divergieren.
+
+  - **Band** (`.cc-gal-band`) bei 1–4 Bildern: alle Bilder gleich
+    hoch (380 px auf Desktop, volle Breite auf Mobile), linksbündig
+    auf der Textkante, mit `object-position: left center`. Kein
+    Beschnitt, alle Bilder bleiben komplett sichtbar.
+  - **Kontaktbogen** (`.cc-gal-bogen`) ab 5 Bildern: 3-Spalten-Grid
+    (mobil 2), 4:3-Zellen mit 6 px Fuge, `object-fit: cover` plus
+    `object-position` aus `focus_x/y`. `no_crop`-Bilder wechseln
+    auf `contain` und liegen auf `--paper`, damit Dokumente und
+    Scans nicht beschnitten werden. Ab dem 10. Bild ersetzt eine
+    dunkle „+n"-Overflow-Kachel den Rest — Einzelnachweise wandern
+    laut Handoff in die Lightbox (E1c), unter dem Bogen bleibt
+    Platz für eine Gruppenbeschreibung.
+  - **Sequenz-Bühne** (`.cc-gal-stage`) auf redaktionelle Ansage:
+    dunkles Papier (`#17140f`) im 3:2-Format, Alpine-Pager mit
+    Prev/Next-Buttons, Positions-Counter „02 / 06" oben links,
+    Fortschritts-Striche unten (Handoff-Regel: Striche statt
+    Punkte, 3 px hoch). Nachweiszeile pro Slide als überlagerte
+    Zeile am unteren Bildrand.
+
+  Alte Klassen (`cc-fig--full`, `cc-fig-pair`, `cc-gallery-grid`)
+  bleiben in der CSS als Legacy-Reste stehen — aktuell verwendet
+  sie niemand mehr, aber der Cleanup wandert zum nächsten
+  Reader-Sweep. Neue Locale-Keys: `gallery_sequence_aria` /
+  `_prev` / `_next` / `_goto`, `gallery_bogen_more`. Reader-
+  Rendering greift auf die G6-1-Felder (`no_crop`, `focus_x/y`)
+  und den G6-2-Schalter (`sequence`) zurück.
+
 - **Q4-Etappe 6 · G6-3 · Beschnitt-Steuerung im Bild-Detail**
   (2026-09-10). Die Bild-Detail-Zeile bekommt zwei neue Elemente
   in der Vorschau-Spalte: einen Livewire-Volt-Toggle „Nicht
