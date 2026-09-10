@@ -733,6 +733,39 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Q4-Etappe 6 · G7 · PDF-Neubau** (2026-09-10). Der PDF-
+  Renderer im Preview-Export ist grundlegend reduziert und
+  ersetzt den bisherigen ~1.100 LoC starken Monolithen
+  (`preview/pdf.blade.php`) durch einen schlanken, thematisch
+  aufgeteilten Stack unter `preview/pdf/`:
+
+  - `layout.blade.php` als dompdf-Wrapper mit inline Print-CSS,
+    `@page`-Rändern und Charakter-Akzent aus dem Projekt
+    (`dokumentation` → Ziegel, `archiv` → Blaugrau,
+    `erzaehlung` → Ocker; überschreibbar per Projekt-
+    Akzent-Farbe).
+  - `content/dispatcher.blade.php` mit fünf reduzierten Content-
+    Partials (`text`, `gallery`, `audiovisual`, `quote`,
+    `data-facts`) sowie `entry-sources.blade.php` als Quellen-
+    Block am Abschnittsende.
+  - Audio/Video wird bewusst als Hinweiszeile mit Icon-Character
+    und URL gerendert — kein Player-Ersatz-Frame auf Papier
+    (Handoff für die Print-Ausgabe).
+  - Gallery ohne Anzahl-Regel, Sequenz-Modus oder Lightbox: alle
+    Bilder in einem simplen Zwei-Spalten-Table-Grid (dompdf
+    versteht Tabellen zuverlässiger als Grid oder Flex),
+    Nachweiszeile immer unter jedem Bild.
+  - Kapitel-Trennung per `page-break-before: always`.
+
+  Gesamt-LoC nach dem Umbau: 477 statt 1.092.
+  `preview/pdf.blade.php` (Legacy) und `mpdf/mpdf` (nie im Code
+  benutztes Cargo-Paket aus `composer.json`) sind entfernt — der
+  Vendor-Footprint sinkt spürbar. Realisiert damit ADR-0019
+  („PDF-Lib-Wahl") vollständig; die dort geplante
+  `ProjectPdfService`-Extraktion bleibt bewusst offen, weil der
+  dompdf-Aufruf im Controller mit drei Zeilen kurz und
+  überschaubar bleibt.
+
 - **Q4-Etappe 6 · G6-7 · Lightbox** (2026-09-10). Klick auf jede
   Kachel im Band, Kontaktbogen und in der Sequenz öffnet dieselbe
   Großansicht — dunkler Overlay, großes Bild links, Metadaten-
