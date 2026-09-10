@@ -711,10 +711,192 @@ blockquote cite {
    heraus zur vollen Content-Spalten-Breite. */
 body.cc-reader-multipage .cc-fig--full,
 body.cc-reader-multipage .cc-fig-pair,
-body.cc-reader-multipage .cc-gallery-grid {
+body.cc-reader-multipage .cc-gallery-grid,
+body.cc-reader-multipage .cc-gal-band,
+body.cc-reader-multipage .cc-gal-bogen,
+body.cc-reader-multipage .cc-gal-stage {
     margin-left: 0;
     margin-right: auto;
     max-width: 100%;
+}
+
+/* ==================================================================
+ * Galerie · drei Formen aus der Anzahl-Regel
+ * (Q4-Etappe 6 · G6-4 · Design-Briefing Arbeitspaket 5).
+ *
+ *   .cc-gal-band   · 1 Bild einzeln oder 2–4 gestapelt
+ *   .cc-gal-bogen  · Kontaktbogen ab 5 Bildern
+ *   .cc-gal-stage  · Sequenz-Bühne mit Pager
+ *
+ * Alle drei nutzen `.cc-figcaption` fuer die Nachweiszeile.
+ * ================================================================== */
+
+/* Band · alle Bilder 380 px hoch, Breite folgt Format, max Lesemaß.
+   Handoff: „gleiche Höhe heißt gleicher Abstand von Absatz zu Absatz". */
+.cc-gal-band {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 60px;
+    display: flex;
+    flex-direction: column;
+    gap: 34px;
+}
+.cc-gal-band__item { margin: 0; }
+.cc-gal-band__item img {
+    display: block;
+    height: 380px;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+    object-position: left center;
+}
+@media (max-width: 720px) {
+    .cc-gal-band { padding: 0 20px; gap: 24px; }
+    .cc-gal-band__item img { height: auto; width: 100%; }
+}
+
+/* Kontaktbogen · 3 Spalten, 4:3-Zellen mit 6-px-Fuge, +n-Overflow
+   als letzte Zelle. Beschnitt via object-cover; `no_crop`-Bilder
+   werden per --fit-Modifier eingepasst statt gefüllt. */
+.cc-gal-bogen {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 60px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+}
+.cc-gal-bogen__cell {
+    margin: 0;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    background: var(--paper-2);
+    position: relative;
+}
+.cc-gal-bogen__cell img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+}
+.cc-gal-bogen__cell--fit img {
+    object-fit: contain;
+    background: var(--paper);
+}
+/* Nachweiszeile hier absichtlich unter den Bogen — der Designer
+   schreibt: „Unterschriften je Bild leben in der Lightbox; unter
+   dem Bogen steht eine Beschreibung der Gruppe". Im Bogen-Kontext
+   wird die figcaption pro Zelle deshalb ausgeblendet. */
+.cc-gal-bogen__cell .cc-figcaption { display: none; }
+.cc-gal-bogen__more {
+    aspect-ratio: 4 / 3;
+    background: var(--ink);
+    color: var(--paper);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 22px;
+    letter-spacing: 0.06em;
+}
+@media (max-width: 720px) {
+    .cc-gal-bogen { grid-template-columns: repeat(2, 1fr); padding: 0 20px; }
+}
+
+/* Sequenz-Bühne · dunkles Paper 3:2, Pager-Buttons als Overlay,
+   Striche unten als Fortschritt (nicht Punkte, per Handoff).
+   Handoff-Farbe #17140f — das dunkle Erzaehlung-Papier. */
+.cc-gal-stage {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 60px;
+}
+.cc-gal-stage__frame {
+    position: relative;
+    background: #17140f;
+    aspect-ratio: 3 / 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.cc-gal-stage__slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+}
+.cc-gal-stage__slide img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: 100%;
+    object-fit: contain;
+}
+.cc-gal-stage__slide .cc-figcaption {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    color: #f5f1e8;
+    padding: 8px 12px;
+    background: rgba(23, 20, 15, 0.65);
+}
+.cc-gal-stage__slide .cc-figcaption__caption,
+.cc-gal-stage__slide .cc-figcaption__credit {
+    color: inherit;
+}
+.cc-gal-stage__nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 46px;
+    height: 46px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    border: 0;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+.cc-gal-stage__nav:hover { background: rgba(255, 255, 255, 0.24); }
+.cc-gal-stage__nav--prev { left: 14px; }
+.cc-gal-stage__nav--next { right: 14px; }
+.cc-gal-stage__counter {
+    position: absolute;
+    left: 16px;
+    top: 14px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    color: #ffffff;
+}
+.cc-gal-stage__ticks {
+    display: flex;
+    gap: 6px;
+    margin-top: 10px;
+}
+.cc-gal-stage__tick {
+    height: 3px;
+    width: 34px;
+    background: var(--rule);
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    transition: background 120ms ease-out;
+}
+.cc-gal-stage__tick.is-active { background: var(--accent); }
+.cc-gal-stage__tick:hover { background: var(--ink-mid); }
+.cc-gal-stage__tick.is-active:hover { background: var(--accent); }
+
+@media (max-width: 720px) {
+    .cc-gal-stage { padding: 0 20px; }
+    .cc-gal-stage__frame { aspect-ratio: 4 / 3; }
 }
 
 @media (max-width: 720px) {
