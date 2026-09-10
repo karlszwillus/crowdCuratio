@@ -733,6 +733,45 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Q4-Etappe 6 · G6-5 · Kapitel-Titelbild** (2026-09-10). Statt
+  eines eigenen Upload-Feldes am Kapitel — das Bilder ohne Nachweis
+  produzieren würde — wählt der Redakteur das Titelbild jetzt am
+  Bild selbst per Häkchen. Neue Chapter-Spalte `cover_image_id`
+  (Migration `add_cover_image_to_chapters_table`, FK auf `images`
+  mit `nullOnDelete`), `Chapter::coverImage()`-Relation.
+  Editor-Seite:
+  - Bild-Detail bekommt eine dritte Zeile in der Vorschau-Spalte:
+    Volt-Toggle „Als Titelbild für <Kapitel> verwenden".
+    Setzt sich der Redakteur beim zweiten Bild desselben Kapitels,
+    wandert die Zuordnung auf das neue Bild; die Komponente
+    dispatched dann `image-chapter-cover-swapped` mit dem Namen
+    des vorher gesetzten Bildes.
+  - Kapitel-Header trägt ein neues Fach `chapter-cover-slot`:
+    Vorschau des aktuellen Titelbilds, Herkunfts-Eintrag,
+    Nachweis, „Zum Bild springen" (Anker `#anchor_Image_<id>`).
+    Ohne Häkchen: Placeholder-Kachel mit Hinweis, wo das Häkchen
+    zu setzen ist.
+
+  Reader-Seite:
+  - Kapitelkarten auf der Startseite zeigen das Titelbild als
+    volle Band-Kachel, mit `focus_x/y` als `object-position`
+    (Portraits werden nicht mittig beschnitten). Kapitelnummer
+    weiß als Overlay unten links.
+  - **Ohne** Titelbild entfällt das Band **komplett** — die
+    Kapitelkarte startet direkt mit der Body-Kachel und trägt die
+    Kapitelnummer als Mono-Chip. Damit fällt der leere Beige-
+    Kasten aus Design-Review 3 (Punkt 5) endgültig weg.
+
+  Kapitel-Konsistenz: Bei Soft-Delete des Bildes filtert die
+  Relation stumm heraus (SoftDeletes greift auf BelongsTo), bei
+  Hard-Delete setzt der FK die Chapter-Spalte via
+  ON DELETE SET NULL zurück. Neuer Anker `#anchor_Image_<id>` an
+  jeder Bild-Kachel im Editor-Galerie-Block, damit das Fach genau
+  auf das gemeinte Bild springt. Locale-Keys:
+  `image_chapter_cover_label` / `_label_with_chapter` / `_hint`,
+  `chapter_cover_slot_label` / `_empty` / `_open` / `_change`,
+  `chapter_cover_from_entry`, `reader_chapter_card_number`.
+
 - **Q4-Etappe 6 · G6-4 · Reader-Galerie nach Anzahl-Regel**
   (2026-09-10). Der Reader rendert Galerien jetzt in einer der
   drei Formen, die die Anzahl-Regel aus `App\Support\GalleryForm`
