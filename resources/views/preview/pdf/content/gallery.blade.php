@@ -28,6 +28,30 @@ Erwartet: $media (MediaContent mit ->gallery + ->gallery->images).
     @endif
 
     @if($imgs->isNotEmpty())
+        @php
+            // Q4-Etappe 6 · G7 (2026-09-10): Bilder werden als
+            // data-URI eingebettet — public_path()/setChroot()
+            // sind mit Symlinks und Docker-Bind-Mounts unzuverlässig
+            // (Karl-Befund: „Platzhalter statt Bild"). Base64 ist
+            // langsam, aber deterministisch.
+            $imageToDataUri = function ($filename) {
+                if (empty($filename)) {
+                    return null;
+                }
+                $path = storage_path('app/public/uploads/images/'.$filename);
+                if (! is_file($path)) {
+                    return null;
+                }
+                $mime = match (strtolower(pathinfo($filename, PATHINFO_EXTENSION))) {
+                    'png' => 'image/png',
+                    'gif' => 'image/gif',
+                    'webp' => 'image/webp',
+                    default => 'image/jpeg',
+                };
+
+                return 'data:'.$mime.';base64,'.base64_encode((string) file_get_contents($path));
+            };
+        @endphp
         <table style="width:100%; border-collapse:separate; border-spacing:4mm 6mm; margin: 3mm 0;">
             @foreach($imgs->chunk(2) as $row)
                 <tr>
@@ -37,11 +61,18 @@ Erwartet: $media (MediaContent mit ->gallery + ->gallery->images).
                                 optional($img->copyrightImage)->name,
                                 optional($img->originImage)->name,
                             ])->filter()->implode(' · ');
+                            $dataUri = $imageToDataUri($img->image);
                         @endphp
                         <td style="width:50%; vertical-align:top; padding:0;">
-                            <img src="{{ public_path('storage/uploads/images/'.$img->image) }}"
-                                 alt="{{ $img->alt }}"
-                                 style="width:100%; max-height:80mm; display:block;">
+                            @if($dataUri !== null)
+                                {{-- Feste max-Dimensionen in mm; dompdf respektiert
+                                     Prozent-Breiten in Table-Cells bei grossen
+                                     Original-Bildern nicht zuverlaessig und laesst
+                                     die Zelle nach rechts rauslaufen. --}}
+                                <img src="{{ $dataUri }}"
+                                     alt="{{ $img->alt }}"
+                                     style="max-width:80mm; max-height:55mm; width:auto; height:auto; display:block;">
+                            @endif
                             @if(! empty(trim(strip_tags((string) $img->alt))))
                                 <div style="font-size:8.5pt; color:#23201c; margin-top:1.5mm; line-height:1.4;">
                                     {{ strip_tags((string) $img->alt) }}
