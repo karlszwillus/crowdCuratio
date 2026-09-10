@@ -52,13 +52,45 @@
     </header>
 
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-        {{-- Vorschau --}}
-        <div>
-            <div class="gallery-detail-preview relative flex aspect-video items-center justify-center overflow-hidden rounded-md bg-line-100" data-image-id="{{ $image->id }}">
-                <img src="{{ route('image', $image->image) }}"
-                     alt="{{ $image->alt }}"
-                     class="max-h-full max-w-full object-contain"/>
-            </div>
+        {{-- Vorschau + Beschnitt-Steuerung (Q4-Etappe 6 · G6-3).
+             Der Focus-Picker liefert das Vorschaubild und den
+             Klick-Handler für den Beschnitt-Fokus; der no_crop-
+             Toggle darunter setzt „Nicht beschneiden" (deaktiviert
+             den Fokus-Klick, weil das Bild dann ohnehin komplett
+             gezeigt wird). --}}
+        <div class="space-y-4">
+            @livewire('image-focus-picker', [
+                'imageId' => $image->id,
+                'focusX' => $image->focus_x,
+                'focusY' => $image->focus_y,
+                'noCrop' => (bool) $image->no_crop,
+                'imageUrl' => route('image', $image->image),
+                'imageAlt' => (string) ($image->alt ?? ''),
+            ], key('image-focus-picker-'.$image->id))
+
+            @livewire('image-no-crop-toggle', [
+                'imageId' => $image->id,
+                'value' => (bool) $image->no_crop,
+            ], key('image-no-crop-toggle-'.$image->id))
+
+            {{-- Q4-Etappe 6 · G6-5: Häkchen „Als Titelbild für
+                 Kapitel X verwenden". Ohne Häkchen bleibt die
+                 Kapitelkarte ohne Bildfläche.
+
+                 Wir vermeiden hier bewusst `$image->gallery` und
+                 andere Lazy-Chain-Zugriffe — unter Strict-Mode
+                 (Model::shouldBeStrict) knallt jede nicht eager-
+                 geladene Relation. Stattdessen eine einzige Query
+                 gegen chapters.cover_image_id, die den aktuellen
+                 Status liefert. Die Volt-Komponente selbst löst
+                 das Kapitel für die Beschriftung neu auf. --}}
+            @php
+                $isCoverForChapter = \App\Models\Chapter::where('cover_image_id', $image->id)->exists();
+            @endphp
+            @livewire('image-chapter-cover-toggle', [
+                'imageId' => $image->id,
+                'value' => $isCoverForChapter,
+            ], key('image-chapter-cover-toggle-'.$image->id))
         </div>
 
         {{-- Vier Felder: Titel · Bildbeschreibung · Urheberrecht · Quelle. --}}

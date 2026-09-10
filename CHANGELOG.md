@@ -733,6 +733,177 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Q4-Etappe 6 · G6-7 · Lightbox** (2026-09-10). Klick auf jede
+  Kachel im Band, Kontaktbogen und in der Sequenz öffnet dieselbe
+  Großansicht — dunkler Overlay, großes Bild links, Metadaten-
+  Spalte rechts (Bildunterschrift + Nachweis), Prev/Next per
+  Buttons oder Pfeiltasten, Escape zum Schließen. Ein globaler
+  Alpine-Store `lightbox` verwaltet Zustand und Bildliste; jedes
+  Galerie-Blade übergibt beim Öffnen ein `imagesMeta`-Array mit
+  allen Bildern der Gallery in Dokumentreihenfolge. Damit sind
+  die Einzelnachweise im Kontaktbogen wieder erreichbar — der
+  Designer-Punkt „Bogen darf ohne Einzelunterschriften auskommen,
+  wenn die Nachweise einen Klick entfernt sind" ist damit
+  bedient. Ohne JavaScript bleibt das Overlay komplett unsichtbar
+  (`x-cloak` + `[x-cloak]` in reader.css) — Band und Sequenz
+  tragen ihre Nachweise ohnehin unter dem Bild. Neue Locale-
+  Keys: `lightbox_close`, `lightbox_meta_label` / `_caption` /
+  `_credit`, `gallery_open_lightbox`.
+
+- **Q4-Etappe 6 · G6-5 · Kapitel-Titelbild** (2026-09-10). Statt
+  eines eigenen Upload-Feldes am Kapitel — das Bilder ohne Nachweis
+  produzieren würde — wählt der Redakteur das Titelbild jetzt am
+  Bild selbst per Häkchen. Neue Chapter-Spalte `cover_image_id`
+  (Migration `add_cover_image_to_chapters_table`, FK auf `images`
+  mit `nullOnDelete`), `Chapter::coverImage()`-Relation.
+  Editor-Seite:
+  - Bild-Detail bekommt eine dritte Zeile in der Vorschau-Spalte:
+    Volt-Toggle „Als Titelbild für <Kapitel> verwenden".
+    Setzt sich der Redakteur beim zweiten Bild desselben Kapitels,
+    wandert die Zuordnung auf das neue Bild; die Komponente
+    dispatched dann `image-chapter-cover-swapped` mit dem Namen
+    des vorher gesetzten Bildes.
+  - Kapitel-Header trägt ein neues Fach `chapter-cover-slot`:
+    Vorschau des aktuellen Titelbilds, Herkunfts-Eintrag,
+    Nachweis, „Zum Bild springen" (Anker `#anchor_Image_<id>`).
+    Ohne Häkchen: Placeholder-Kachel mit Hinweis, wo das Häkchen
+    zu setzen ist.
+
+  Reader-Seite:
+  - Kapitelkarten auf der Startseite zeigen das Titelbild als
+    volle Band-Kachel, mit `focus_x/y` als `object-position`
+    (Portraits werden nicht mittig beschnitten). Kapitelnummer
+    weiß als Overlay unten links.
+  - **Ohne** Titelbild entfällt das Band **komplett** — die
+    Kapitelkarte startet direkt mit der Body-Kachel und trägt die
+    Kapitelnummer als Mono-Chip. Damit fällt der leere Beige-
+    Kasten aus Design-Review 3 (Punkt 5) endgültig weg.
+
+  Kapitel-Konsistenz: Bei Soft-Delete des Bildes filtert die
+  Relation stumm heraus (SoftDeletes greift auf BelongsTo), bei
+  Hard-Delete setzt der FK die Chapter-Spalte via
+  ON DELETE SET NULL zurück. Neuer Anker `#anchor_Image_<id>` an
+  jeder Bild-Kachel im Editor-Galerie-Block, damit das Fach genau
+  auf das gemeinte Bild springt. Locale-Keys:
+  `image_chapter_cover_label` / `_label_with_chapter` / `_hint`,
+  `chapter_cover_slot_label` / `_empty` / `_open` / `_change`,
+  `chapter_cover_from_entry`, `reader_chapter_card_number`.
+
+- **Q4-Etappe 6 · G6-4 · Reader-Galerie nach Anzahl-Regel**
+  (2026-09-10). Der Reader rendert Galerien jetzt in einer der
+  drei Formen, die die Anzahl-Regel aus `App\Support\GalleryForm`
+  vorgibt — dieselbe Methode, die auch das Editor-Kopfpanel
+  entscheidet, sodass Anzeige und Ausspiel nicht divergieren.
+
+  - **Band** (`.cc-gal-band`) bei 1–4 Bildern: alle Bilder gleich
+    hoch (380 px auf Desktop, volle Breite auf Mobile), linksbündig
+    auf der Textkante, mit `object-position: left center`. Kein
+    Beschnitt, alle Bilder bleiben komplett sichtbar.
+  - **Kontaktbogen** (`.cc-gal-bogen`) ab 5 Bildern: 3-Spalten-Grid
+    (mobil 2), 4:3-Zellen mit 6 px Fuge, `object-fit: cover` plus
+    `object-position` aus `focus_x/y`. `no_crop`-Bilder wechseln
+    auf `contain` und liegen auf `--paper`, damit Dokumente und
+    Scans nicht beschnitten werden. Ab dem 10. Bild ersetzt eine
+    dunkle „+n"-Overflow-Kachel den Rest — Einzelnachweise wandern
+    laut Handoff in die Lightbox (E1c), unter dem Bogen bleibt
+    Platz für eine Gruppenbeschreibung.
+  - **Sequenz-Bühne** (`.cc-gal-stage`) auf redaktionelle Ansage:
+    dunkles Papier (`#17140f`) im 3:2-Format, Alpine-Pager mit
+    Prev/Next-Buttons, Positions-Counter „02 / 06" oben links,
+    Fortschritts-Striche unten (Handoff-Regel: Striche statt
+    Punkte, 3 px hoch). Nachweiszeile pro Slide als überlagerte
+    Zeile am unteren Bildrand.
+
+  Alte Klassen (`cc-fig--full`, `cc-fig-pair`, `cc-gallery-grid`)
+  bleiben in der CSS als Legacy-Reste stehen — aktuell verwendet
+  sie niemand mehr, aber der Cleanup wandert zum nächsten
+  Reader-Sweep. Neue Locale-Keys: `gallery_sequence_aria` /
+  `_prev` / `_next` / `_goto`, `gallery_bogen_more`. Reader-
+  Rendering greift auf die G6-1-Felder (`no_crop`, `focus_x/y`)
+  und den G6-2-Schalter (`sequence`) zurück.
+
+- **Q4-Etappe 6 · G6-3 · Beschnitt-Steuerung im Bild-Detail**
+  (2026-09-10). Die Bild-Detail-Zeile bekommt zwei neue Elemente
+  in der Vorschau-Spalte: einen Livewire-Volt-Toggle „Nicht
+  beschneiden" für Dokumente, Scans und Karten sowie einen
+  Fokus-Picker, der per Klick auf das Vorschaubild `focus_x` /
+  `focus_y` in Prozent setzt. Ein kleiner Marker im
+  Kontrast-Farbring zeigt den aktuellen Fokus-Punkt auf dem Bild,
+  der Cursor wird zum Fadenkreuz, sobald der Picker aktiv ist.
+  Setzt der Redakteur „Nicht beschneiden", deaktiviert sich der
+  Fokus-Picker automatisch (Alpine hört auf das
+  `image-no-crop-changed`-Event des Toggles) — ein Fokus wäre
+  bedeutungslos, wenn das Bild ohnehin komplett gezeigt wird.
+  Beide Werte werden inline gespeichert (kein Redirect,
+  konsistent zu den anderen Content-Volt-Komponenten). Der
+  Reader nutzt die Felder im Kontaktbogen-Rendering ab G6-4 als
+  `object-fit` und `object-position` — bis dahin sammeln die
+  Redakteur:innen die Angaben schon einmal.
+
+  Neue Livewire-Komponenten: `image-no-crop-toggle` und
+  `image-focus-picker`. Locale-Keys: `image_no_crop_label` /
+  `_hint`, `image_focus_picker_hint_click` / `_set` / `_inactive`,
+  `image_focus_picker_clear`, `image_focus_picker_aria_active`
+  / `_inactive`. Klick-Handler klemmt den Wert auf 0–100 (Alpine
+  vor dem Senden, Backend als Sicherheitsnetz).
+
+- **Q4-Etappe 6 · G6-2 · Galerie-Kopfpanel im Editor** (2026-09-10).
+  Der Galerie-Block trägt jetzt sichtbar in seinem Kopf, als was er
+  in der Ausstellung erscheinen wird — nicht als wählbare Option,
+  sondern als Statusanzeige, damit die Anzahl-Regel jederzeit
+  ablesbar ist. Neuer Enum `App\Support\GalleryForm` (`BAND`,
+  `KONTAKTBOGEN`, `SEQUENZ`) mit einer `resolve(count, sequence)`-
+  Methode, die den Regel-Kern kapselt: 1–4 Bilder → Band, ab 5 →
+  Kontaktbogen; `sequence=true` überschreibt beides. Editor-
+  Kopfpanel und Reader-Rendering rufen dieselbe Methode, damit
+  Anzeige und Ausspiel niemals divergieren. Der Kopf zeigt eine
+  Status-Pille „Erscheint als …", einen Scope-Hint („1–4 Bilder"
+  bzw. „ab 5 Bildern") und einen Formwechsel-Hinweis, wenn das
+  nächste Bild oder das Löschen eines Bildes die Darstellung
+  ändern würde („Ein weiteres Bild wechselt den Block auf
+  Kontaktbogen — Einzelnachweise wandern in die Großansicht").
+  Die Sequenz-Bühne bleibt eine redaktionelle Aussage und
+  bekommt einen eigenen Livewire-Volt-Toggle
+  („Die Reihenfolge ist die Aussage") mit inline-Save; alle
+  anderen Formen sind Status, kein Knopf. `no_crop`-Bilder tragen
+  im Editor-Raster ein Mono-Kürzel „NC" oben rechts an der
+  Kachel, damit im Kontaktbogen sichtbar bleibt, welche Bilder
+  eingepasst statt gefüllt gerendert werden. Locale-Keys:
+  `gallery_form_panel_label`, `gallery_form_band`,
+  `gallery_form_kontaktbogen`, `gallery_form_sequenz` (jeweils
+  mit `_scope`-Kontext), `gallery_form_hint_next_kontaktbogen`,
+  `gallery_form_hint_next_band`, `gallery_form_hint_stable`,
+  `gallery_sequence_toggle_label`/`_hint`,
+  `gallery_no_crop_marker`.
+
+- **Q4-Etappe 6 · G6-1 · Darstellungs-Hinweise am Bild und am
+  Galerie-Block** (2026-09-10). Fundament für den nach dem
+  Galerie-Briefing gebauten Reader-Umbau (Band / Kontaktbogen /
+  Sequenz nach Anzahl-Regel). Fünf neue Felder am `Image`-Model,
+  ein Feld am `Gallery`-Model:
+  - `images.no_crop` — Dokument, Scan, Karte: nie in eine Zelle
+    beschneiden, immer einpassen. Opt-out für den Kontaktbogen.
+  - `images.focus_x` / `focus_y` — Beschnitt-Fokus in Prozent
+    (0–100), Null = Mitte. Wird im CMS per Klick auf das Vorschau-
+    bild gesetzt, kein Zahlenfeld.
+  - `images.intrinsic_width` / `intrinsic_height` — Original-
+    Dimensionen in Pixel, beim Upload aus dem Bild gelesen. Der
+    Reader kann damit die Bildfläche vor dem Laden reservieren
+    (kein Cumulative Layout Shift).
+  - `galleries.sequence` — redaktionelle Ansage, dass die Bilder
+    als Pager-Bühne statt als Kontaktbogen gerendert werden sollen.
+    Nur eine Richtung — gesetzt oder nicht.
+
+  Migration `add_display_hints_to_images_and_galleries` mit
+  sauberem `down()`. Bestandsdaten laufen mit den Defaults
+  (`no_crop` = false, `focus_*` = null, `intrinsic_*` = null,
+  `sequence` = false); der Reader-Renderer fällt zurück auf sein
+  bestehendes Verhalten, solange die neuen Felder leer sind. Der
+  `ImageService` liest die Dimensionen jetzt beim Upload aus
+  (`getimagesize()`, mit `[null, null]`-Fallback für defekte oder
+  nicht-Bild-Formate) und persistiert sie in allen drei Schreib-
+  pfaden (`create`, `createFromDrop`, `update` mit neuem File).
+
 - **Q4-Etappe 5 · Reader-Polish nach Design-Review 3** (2026-09-09).
   Der Multi-Page-Reader bekommt eine rechte Marginalspalte
   (`--side-col`, 330 px, sticky) mit einer Kapitel-TOC über die
@@ -2610,6 +2781,38 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
   in der ehemaligen `CommentTrait::commentAsUser`.
 
 ### Behoben
+
+- **Multi-Upload · Upload-Progress war auf Sail nicht sichtbar**
+  (2026-09-10). Nach Abschluss aller Uploads lief ein Reload nach
+  600 ms — auf Localhost sind Uploads schnell genug durch, dass
+  die „Wird hochgeladen …"- und „✓ Fertig"-Meldungen in den
+  Ghost-Kacheln kaum wahrnehmbar wurden. Reload-Delay auf 2500 ms
+  hochgezogen (beide Upload-Pfade in `gallery-block.blade.php`),
+  damit der Zustand vor dem Reload sichtbar bleibt.
+
+- **Multi-Upload überschrieb Dateien im selben Sekundenfenster**
+  (2026-09-10). `ImageService::uploadImageFile` (und
+  `ProjectImageService::store`) generierten den Filename aus
+  `date('Ymd').'_'.time()` — bei paralleler Multi-Upload landeten
+  mehrere Dateien in derselben Sekunde und teilten sich denselben
+  Namen. `storeAs` überschrieb, alle Image-Rows zeigten am Ende
+  auf dasselbe File, und im Editor erschien N-mal dasselbe Bild
+  statt der N tatsächlich hochgeladenen. Der Fix ersetzt den
+  `time()`-Suffix durch `Str::random(10)` (~5.9·10¹⁷ Kombinationen),
+  ohne die datumsbasierte Verzeichnis-Sortierung zu opfern.
+  Latenter Prod-Bug, den G6-2 beim Testen aufgedeckt hat.
+
+- **Bild aus Galerie löschen führte auf 404**
+  (2026-09-10). Das Delete-Formular am Bild-Overlay in
+  `image-tile.blade.php` sendet nur CSRF-Token und Method-Override,
+  kein `project`-Feld. `ImageBlockController::destroyImage`
+  redirected aber auf `'projects/'.$request->project.'/edit'` —
+  bei fehlendem `project`-Payload landete der Redirect auf
+  `/projects//edit` und damit im 404. Die Projekt-ID wird jetzt
+  vor dem Soft-Delete aus dem Image selbst gelesen
+  (`Image::project()` navigiert über Gallery-Chain zum Projekt),
+  mit Request-Fallback und Back-Fallback für den seltenen
+  Waisen-Fall.
 
 - **Reader-Vokabular konsequent auf Kapitel · Abschnitt · Inhalt**
   (2026-09-09). Ein Zwischenstand hatte die Vokabelachse

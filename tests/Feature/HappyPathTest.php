@@ -279,7 +279,9 @@ test('Happy-Path: Owner kann ein Bild in eine Gallery hochladen', function () {
     $response->assertRedirect();
     $image = Image::firstOrFail();
     expect($image->gallery_id)->toBe($gallery->id);
-    expect($image->image)->toMatch('/^[0-9]{8}_[0-9]+\.(jpg|jpeg)$/');
+    // Q4-Etappe 6 (2026-09-10): Filename-Suffix ist jetzt Str::random(10)
+    // statt time() — kollisionssicher bei parallel-Multi-Upload.
+    expect($image->image)->toMatch('/^[0-9]{8}_[A-Za-z0-9]{10}\.(jpg|jpeg)$/');
 });
 
 // ----------------------------------------------------------------------

@@ -40,6 +40,7 @@ use Spatie\Translatable\HasTranslations;
 /**
  * @property int $id
  * @property bool $is_translated
+ * @property bool $sequence Redaktioneller Schalter: Serie/Vorher-Nachher als Pager-Bühne statt Bogen zeigen.
  * @property int|null $media_id Runtime-Zuweisung im ProjectController, nicht DB-Spalte.
  * @property Collection<int, Image> $images
  * @property Collection<int, Image>|null $image_list Runtime-Snapshot der images-Relation für den Preview-Render.
@@ -69,11 +70,24 @@ class Gallery extends Model implements HasComments
     /**
      * The attributes that are mass assignable.
      *
+     * Q4-Etappe 6 · G6-1 (2026-09-10): `sequence` — redaktionelle
+     * Ansage, dass die Bilder als Pager-Bühne (Sequenz) statt als
+     * Kontaktbogen gerendert werden sollen.
+     *
      * @var list<string>
      */
-    protected $fillable = ['title', 'subtitle', 'description'];
+    protected $fillable = ['title', 'subtitle', 'description', 'sequence'];
 
     public $translatable = ['title', 'subtitle', 'description'];
+
+    /**
+     * `Model::shouldBeStrict()` verlangt explizite Casts.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'sequence' => 'boolean',
+    ];
 
     /**
      * Get all images

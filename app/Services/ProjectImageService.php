@@ -24,6 +24,7 @@ namespace App\Services;
 
 use App\Traits\UploadTrait;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Str;
 
 /**
  * Kapselt das Upload-Handling für Project-Logos.
@@ -55,7 +56,13 @@ class ProjectImageService
             return null;
         }
 
-        $filename = date('Ymd').'_'.time().'.'.$image->extension();
+        // Q4-Etappe 6 (2026-09-10): kollisionssicherer Filename mit
+        // Str::random-Suffix — siehe ImageService::uploadImageFile.
+        // Cover-Bilder werden zwar seltener parallel hochgeladen als
+        // Galerie-Bilder, aber wenn eine Nutzer:in mehrere Projekte
+        // gleichzeitig anlegt (oder das Cover in derselben Sekunde
+        // wie ein anderes Bild wechselt), war der Kollisionspfad da.
+        $filename = date('Ymd').'_'.Str::random(10).'.'.$image->extension();
         $folder = '/uploads/images/';
 
         $this->uploadOne($image, $folder, 'public', $filename);

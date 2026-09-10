@@ -175,6 +175,15 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                             @endif
                         @endcan
 
+                        {{-- Q4-Etappe 6 · G6-5: Kapitel-Titelbild-Fach.
+                             Zeigt das aktuell gesetzte Titelbild oder eine
+                             Placeholder-Kachel mit Hinweis. Kein Upload —
+                             das Bild wird am Bild selbst per Häkchen im
+                             Bild-Detail gewählt (Design-Briefing). --}}
+                        @can('update', $project)
+                            <x-content.chapter-cover-slot :chapter="$chapter"/>
+                        @endcan
+
                         {{-- Grosser Vertikalspace zwischen Kapitel-Zone
                              und den enthaltenen Entry-Karten, damit die
                              Ebenen visuell nicht in einen 'Kapitel-

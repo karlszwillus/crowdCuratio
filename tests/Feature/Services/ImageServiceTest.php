@@ -120,3 +120,95 @@ it('destroy soft-deleted das Image', function () {
     expect(Image::find($image->id))->toBeNull();
     expect(Image::withTrashed()->find($image->id))->not->toBeNull();
 });
+
+/*
+|--------------------------------------------------------------------------
+| Q4-Etappe 6 · G6-1: intrinsic_width / intrinsic_height
+|--------------------------------------------------------------------------
+|
+| Die neuen Darstellungs-Hinweise werden beim Upload aus dem Bild
+| gelesen und persistiert. `UploadedFile::fake()->image($name, $w, $h)`
+| erzeugt ein synthetisches Bild mit exakten Dimensionen; damit können
+| wir prüfen, dass der Reader hinterher die Fläche vor dem Laden
+| reservieren kann.
+*/
+
+it('create persistiert intrinsic_width und intrinsic_height aus dem Upload', function () {
+    $gallery = makeGallery();
+    $file = UploadedFile::fake()->image('test.jpg', 800, 600);
+
+    $data = new ImageData(originName: 'O', copyrightName: 'C');
+
+    $image = imageService()->create($data, $file, $gallery->id);
+
+    expect($image->intrinsic_width)->toBe(800);
+    expect($image->intrinsic_height)->toBe(600);
+});
+
+it('createFromDrop persistiert intrinsic_width und intrinsic_height', function () {
+    $gallery = makeGallery();
+    $file = UploadedFile::fake()->image('drop.jpg', 1200, 900);
+
+    $image = imageService()->createFromDrop($file, $gallery->id);
+
+    expect($image->intrinsic_width)->toBe(1200);
+    expect($image->intrinsic_height)->toBe(900);
+});
+
+it('update aktualisiert intrinsic_width und intrinsic_height, wenn ein neuer File übergeben wird', function () {
+    $image = makeImage([
+        'image' => 'original.jpg',
+        'intrinsic_width' => 100,
+        'intrinsic_height' => 100,
+    ]);
+
+    $newFile = UploadedFile::fake()->image('new.png', 640, 480);
+    $data = new ImageData(originName: 'O', copyrightName: 'C');
+
+    $updated = imageService()->update($image, $data, $newFile);
+    $updated->refresh();
+
+    expect($updated->intrinsic_width)->toBe(640);
+    expect($updated->intrinsic_height)->toBe(480);
+});
+
+it('update lässt intrinsic_width und intrinsic_height unverändert ohne neuen File', function () {
+    $image = makeImage([
+        'intrinsic_width' => 800,
+        'intrinsic_height' => 600,
+    ]);
+
+    $data = new ImageData(originName: 'X', copyrightName: 'Y');
+
+    $updated = imageService()->update($image, $data);
+    $updated->refresh();
+
+    expect($updated->intrinsic_width)->toBe(800);
+    expect($updated->intrinsic_height)->toBe(600);
+});
+
+it('Image castet no_crop als bool, focus_x/y und intrinsic_* als int', function () {
+    $image = makeImage([
+        'no_crop' => 1,
+        'focus_x' => 42,
+        'focus_y' => 58,
+        'intrinsic_width' => 1024,
+        'intrinsic_height' => 768,
+    ]);
+    $image->refresh();
+
+    expect($image->no_crop)->toBeBool()->toBeTrue();
+    expect($image->focus_x)->toBeInt()->toBe(42);
+    expect($image->focus_y)->toBeInt()->toBe(58);
+    expect($image->intrinsic_width)->toBeInt()->toBe(1024);
+    expect($image->intrinsic_height)->toBeInt()->toBe(768);
+});
+
+it('Image no_crop ist per Default false', function () {
+    $image = makeImage();
+    $image->refresh();
+
+    expect($image->no_crop)->toBeFalse();
+    expect($image->focus_x)->toBeNull();
+    expect($image->focus_y)->toBeNull();
+});

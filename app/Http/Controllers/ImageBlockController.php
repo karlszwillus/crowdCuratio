@@ -156,15 +156,35 @@ class ImageBlockController extends Controller
 
     /**
      * Delete Image.
+     *
+     * Q4-Etappe 6 (2026-09-10): Projekt-Ziel für den Redirect kommt
+     * jetzt aus dem Image selbst (`Image::project()` navigiert über
+     * gallery → mediaContent → entry → chapter → project), nicht
+     * mehr aus dem Request-Payload. Das Frontend-Delete-Form aus
+     * `image-tile.blade.php` sendet kein `project`-Feld — vorher
+     * landete jeder Delete auf `/projects//edit` und damit im 404.
      */
     public function destroyImage(Request $request, int $id): RedirectResponse
     {
         $image = Image::findOrFail($id);
         // Block E.7b Sub-Welle 3 (ADR-0022): ImagePolicy::delete.
         $this->authorize('delete', $image);
+
+        // Projekt-Ziel VOR dem Delete auslesen — nach dem Soft-Delete
+        // greift die project()-Navigation über die Gallery evtl. nicht
+        // mehr sauber. Zwischenvariable statt `?->`-Kaskade, damit
+        // Larastan die Never-Null-Inferenz beim `?->`-Operator nicht
+        // beklagt (nullsafe.neverNull).
+        $project = $image->project();
+        $projectId = $project !== null ? $project->id : $request->input('project');
+
         $this->images->destroy($image);
 
-        return redirect('projects/'.$request->project.'/edit')
+        if ($projectId === null) {
+            return redirect()->back()->with('success', __('message_delete_image_success'));
+        }
+
+        return redirect('projects/'.$projectId.'/edit')
             ->with('success', __('message_delete_image_success'));
     }
 }

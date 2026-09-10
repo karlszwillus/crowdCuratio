@@ -15,6 +15,11 @@
 --}}
 
 <div class="gallery_item group relative" id="gallery_items_{{$item->gallery->id}}" data-image-id="{{ $image->id }}">
+    {{-- Q4-Etappe 6 · G6-5: Zusaetzlicher Anker mit der Image-ID,
+         damit der Kapitel-Titelbild-Slot direkt aufs Bild springen
+         kann (Fach → „Zum Bild springen"). Der bestehende
+         anchor_MediaContent bleibt fuer den Galerie-Block-Sprung. --}}
+    <span id="anchor_Image_{{ $image->id }}" class="sr-only" aria-hidden="true"></span>
     <div id="anchor_MediaContent_{{$item->id}}"
          data-image-id="{{ $image->id }}"
          class="gallery-tile-frame relative flex aspect-video items-center justify-center overflow-hidden rounded-md bg-line-100">
@@ -48,6 +53,19 @@
             @endcan
             <span data-image-position>{{ $position }}</span>
         </span>
+
+        {{-- Q4-Etappe 6 · G6-2: no_crop-Marker. Kleines Mono-Kürzel
+             oben rechts an der Kachel, damit im Editor sichtbar ist,
+             welche Bilder eingepasst statt gefüllt gerendert werden
+             (relevant im Kontaktbogen ab 5 Bildern). --}}
+        @if ($image->no_crop)
+            <span class="absolute right-1.5 top-1.5 inline-flex items-center rounded px-1.5 py-0.5 font-mono text-white"
+                  style="background-color: rgba(27,35,48,.78); font-size: 10px; letter-spacing: 0.06em;"
+                  title="{{ __('gallery_no_crop_marker') }}"
+                  aria-label="{{ __('gallery_no_crop_marker') }}">
+                NC
+            </span>
+        @endif
 
         @can('update', $project)
             {{-- Overlay-Aktionen unten: Angaben bearbeiten + Entfernen.

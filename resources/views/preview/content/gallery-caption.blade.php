@@ -16,13 +16,17 @@ Erwartet: $image (Image) im Kontext.
     $hasCaption = ! empty(trim(strip_tags((string) $image->alt)));
     $hasCredit = $creditParts !== '';
 @endphp
-@if($hasCaption || $hasCredit)
-    <figcaption class="cc-figcaption">
-        <span class="cc-figcaption__caption">
-            @if($hasCaption)@rich($image->alt)@endif
-        </span>
-        @if($hasCredit)
-            <span class="cc-figcaption__credit">{{ $creditParts }}</span>
-        @endif
-    </figcaption>
-@endif
+{{-- Q4-Etappe 6 · G6-4-Nachreview: figcaption immer rendern —
+     auch wenn Caption und Credit fehlen. Die feste Mindesthöhe
+     (siehe .cc-gal-band__item .cc-figcaption min-height) sorgt
+     dafür, dass eine leere Zeile sichtbar reserviert bleibt und
+     die Unterschrift der einen Kachel nicht wie eine Beschreibung
+     der ganzen Reihe wirkt (Design-Review Blocker 4). --}}
+<figcaption class="cc-figcaption">
+    <span class="cc-figcaption__caption">
+        @if($hasCaption)@rich($image->alt)@endif
+    </span>
+    @if($hasCredit)
+        <span class="cc-figcaption__credit">{{ $creditParts }}</span>
+    @endif
+</figcaption>

@@ -111,6 +111,15 @@
                     @endif
                 @endcan
             </div>
+
+            {{-- Q4-Etappe 6 · G6-2: Kopfpanel „So erscheint diese Galerie".
+                 Status-Pille (Band/Kontaktbogen/Sequenz), Formwechsel-Hint
+                 und Sequenz-Toggle. Nur einblenden, wenn schon Bilder da
+                 sind — bei leerer Galerie ist die Aussage sinnlos. --}}
+            @if($item->gallery->images->isNotEmpty())
+                <x-content.gallery-form-panel :gallery="$item->gallery" :project="$project"/>
+            @endif
+
             {{-- public/css/crowdcuratio.css wird seit dem
                  Vite-Umbau nicht mehr geladen — die alten
                  .gallery_container-Grid-Regeln greifen nicht.
@@ -145,8 +154,11 @@
                                 const uploadedIds = [];
                                 for (const file of queue) {
                                     const ghostId = 'ghost-' + Math.random().toString(36).slice(2, 9);
-                                    const entry = { id: ghostId, name: file.name, progress: 0, status: 'uploading' };
-                                    this.uploads.push(entry);
+                                    this.uploads.push({ id: ghostId, name: file.name, progress: 0, status: 'uploading' });
+                                    // Q4-Etappe 6 (2026-09-10): reactive-proxied
+                                    // Objekt aus dem Array holen, siehe Kommentar
+                                    // im gefuellten Uploader unten.
+                                    const entry = this.uploads[this.uploads.length - 1];
                                     const token = document.querySelector('meta[name=csrf-token]')?.content;
                                     const xhr = new XMLHttpRequest();
                                     xhr.open('POST', this.dropUrl);
@@ -169,7 +181,13 @@
                                             // mit Fragment auf den Galerie-Block, damit der
                                             // Browser nicht an den Seitenanfang scrollt.
                                             url.hash = 'anchor_MediaContent_{{ $item->id }}';
-                                            setTimeout(() => { window.location.href = url.toString(); }, 600);
+                                            // Q4-Etappe 6 (2026-09-10): Reload-Delay von 600 auf
+                                            // 2500 ms hochgezogen. Auf Localhost/Sail sind die
+                                            // Uploads so schnell, dass die Progress- und
+                                            // Fertig-Meldungen in den Ghost-Kacheln sonst nicht
+                                            // sichtbar wurden. Zeichen ohne ASCII-Quotes, das
+                                            // x-data-Attribut wuerde sonst mittendrin schliessen.
+                                            setTimeout(() => { window.location.href = url.toString(); }, 2500);
                                         }
                                     };
                                     xhr.onerror = () => {
@@ -259,26 +277,61 @@
                     for (const file of queue) {
                         const ghostId = 'ghost-' + Math.random().toString(36).slice(2, 9);
                         const previewUrl = URL.createObjectURL(file);
-                        const entry = { id: ghostId, name: file.name, previewUrl, progress: 0, status: 'uploading', xhr: null };
-                        this.uploads.push(entry);
-                        this.uploadOne(entry, file, (newId) => {
+                        this.uploads.push({ id: ghostId, name: file.name, previewUrl, progress: 0, status: 'uploading', xhr: null });
+                        // Q4-Etappe 6 (2026-09-10): Nach push das reactive-
+                        // proxied Objekt aus dem Array holen und dieses
+                        // an uploadOne uebergeben. Alpine wickelt Array-
+                        // Elemente in Proxies; wer am originalen JS-Object
+                        // schreibt, umgeht die Reactivity. Symptom vor dem
+                        // Fix: Progress-Balken und status-Label blieben
+                        // auf uploading haengen, obwohl der XHR laengst
+                        // 200 zurueckgab.
+                        const entry = this.uploads[this.uploads.length - 1];
+                        this.uploadOne(entry, file, (newId, html) => {
                             if (newId) uploadedIds.push(newId);
+                            // Q4-Etappe 6 (2026-09-10): das server-gerenderte
+                            // Kachel-Fragment ersetzt die Ghost-Kachel im Grid.
+                            // Kein Reload mehr im Regelfall — der Grid uebernimmt
+                            // die neue Kachel live, Grip-Handle und Overlays
+                            // sind sofort da.
+                            if (html) {
+                                this.insertUploadedTile(entry, html);
+                            }
                             pending -= 1;
                             if (pending <= 0) {
-                                const url = new URL(window.location.href);
-                                // 5y.9: bei genau einer erfolgreich hochgeladenen Datei
-                                // die Detailzeile direkt oeffnen, damit der Nutzer
-                                // Copyright/Quelle in einem Rutsch nachpflegt.
+                                // Einzelfall behaelt Reload: 1 Upload + Detail
+                                // direkt oeffnen (Copyright/Quelle nachpflegen).
                                 if (totalAtStart === 1 && uploadedIds.length === 1) {
+                                    const url = new URL(window.location.href);
                                     url.searchParams.set('editImage', uploadedIds[0]);
+                                    url.hash = 'anchor_MediaContent_{{ $item->id }}';
+                                    setTimeout(() => { window.location.href = url.toString(); }, 800);
                                 }
-                                // Q4-Etappe 4 / F-Nachreview (2026-09-08): Fragment
-                                // auf den Galerie-Block, damit der Browser nicht an
-                                // den Seitenanfang scrollt.
-                                url.hash = 'anchor_MediaContent_{{ $item->id }}';
-                                setTimeout(() => { window.location.href = url.toString(); }, 600);
                             }
                         });
+                    }
+                },
+                insertUploadedTile(entry, html) {
+                    const grid = this.$refs.grid;
+                    if (!grid) return;
+                    const wrap = document.createElement('div');
+                    wrap.innerHTML = html.trim();
+                    const tile = wrap.firstElementChild;
+                    if (!tile) return;
+                    // Vor der Drop-Zone einfuegen: die Drop-Zone ist die
+                    // letzte Kachel, ihr div hat kein data-image-id.
+                    const dropZone = Array.from(grid.children).find(el => !el.dataset.imageId && el.querySelector('input[type=file]'));
+                    if (dropZone) {
+                        grid.insertBefore(tile, dropZone);
+                    } else {
+                        grid.appendChild(tile);
+                    }
+                    this.renumberPositions();
+                    // Ghost-Kachel aus uploads entfernen (das <template
+                    // x-for>-Kind verschwindet automatisch).
+                    this.uploads = this.uploads.filter(u => u.id !== entry.id);
+                    if (entry.previewUrl) {
+                        try { URL.revokeObjectURL(entry.previewUrl); } catch (e) { /* ignore */ }
                     }
                 },
                 uploadOne(entry, file, done) {
@@ -298,23 +351,25 @@
                             entry.status = 'done';
                             entry.progress = 100;
                             let newId = null;
+                            let html = null;
                             try {
                                 const payload = JSON.parse(xhr.responseText);
                                 newId = payload && payload.image && payload.image.id ? payload.image.id : null;
+                                html = payload && payload.html ? payload.html : null;
                             } catch (e) { /* ignore */ }
-                            done(newId);
+                            done(newId, html);
                         } else {
                             entry.status = 'error';
                             this.rejected.push({ name: entry.name, reason: '{{ __('gallery_rejected_reason_server') }}' });
                             this.uploads = this.uploads.filter(u => u.id !== entry.id);
-                            done(null);
+                            done(null, null);
                         }
                     };
                     xhr.onerror = () => {
                         entry.status = 'error';
                         this.rejected.push({ name: entry.name, reason: '{{ __('gallery_rejected_reason_server') }}' });
                         this.uploads = this.uploads.filter(u => u.id !== entry.id);
-                        done(null);
+                        done(null, null);
                     };
                     const fd = new FormData();
                     fd.append('file', file);
