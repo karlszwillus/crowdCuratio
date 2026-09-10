@@ -75,11 +75,17 @@
 
             {{-- Q4-Etappe 6 · G6-5: Häkchen „Als Titelbild für
                  Kapitel X verwenden". Ohne Häkchen bleibt die
-                 Kapitelkarte ohne Bildfläche. --}}
+                 Kapitelkarte ohne Bildfläche.
+
+                 Wir vermeiden hier bewusst `$image->gallery` und
+                 andere Lazy-Chain-Zugriffe — unter Strict-Mode
+                 (Model::shouldBeStrict) knallt jede nicht eager-
+                 geladene Relation. Stattdessen eine einzige Query
+                 gegen chapters.cover_image_id, die den aktuellen
+                 Status liefert. Die Volt-Komponente selbst löst
+                 das Kapitel für die Beschriftung neu auf. --}}
             @php
-                /** @var \App\Models\Chapter|null $imageChapter */
-                $imageChapter = optional(optional(optional($image->gallery)->mediaContents()->first())->parent()->first())->chapter ?? null;
-                $isCoverForChapter = $imageChapter !== null && (int) $imageChapter->cover_image_id === (int) $image->id;
+                $isCoverForChapter = \App\Models\Chapter::where('cover_image_id', $image->id)->exists();
             @endphp
             @livewire('image-chapter-cover-toggle', [
                 'imageId' => $image->id,
