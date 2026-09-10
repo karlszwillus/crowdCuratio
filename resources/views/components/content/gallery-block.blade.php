@@ -178,12 +178,13 @@
                                             // mit Fragment auf den Galerie-Block, damit der
                                             // Browser nicht an den Seitenanfang scrollt.
                                             url.hash = 'anchor_MediaContent_{{ $item->id }}';
-                                            // Q4-Etappe 6 (2026-09-10): Reload-Delay von 600 auf 2500 ms
-// hochgesetzt. Auf Localhost/Sail sind die Uploads so schnell,
-// dass die „✓ Fertig"-Meldung sonst nicht sichtbar wird —
-// Karl-Feedback beim G6-2-Test: „Progress oder Abschluss sehe
-// ich nicht".
-setTimeout(() => { window.location.href = url.toString(); }, 2500);
+                                            // Q4-Etappe 6 (2026-09-10): Reload-Delay von 600 auf
+                                            // 2500 ms hochgezogen. Auf Localhost/Sail sind die
+                                            // Uploads so schnell, dass die Progress- und
+                                            // Fertig-Meldungen in den Ghost-Kacheln sonst nicht
+                                            // sichtbar wurden. Zeichen ohne ASCII-Quotes, das
+                                            // x-data-Attribut wuerde sonst mittendrin schliessen.
+                                            setTimeout(() => { window.location.href = url.toString(); }, 2500);
                                         }
                                     };
                                     xhr.onerror = () => {
@@ -290,12 +291,13 @@ setTimeout(() => { window.location.href = url.toString(); }, 2500);
                                 // auf den Galerie-Block, damit der Browser nicht an
                                 // den Seitenanfang scrollt.
                                 url.hash = 'anchor_MediaContent_{{ $item->id }}';
-                                // Q4-Etappe 6 (2026-09-10): Reload-Delay von 600 auf 2500 ms
-// hochgesetzt. Auf Localhost/Sail sind die Uploads so schnell,
-// dass die „✓ Fertig"-Meldung sonst nicht sichtbar wird —
-// Karl-Feedback beim G6-2-Test: „Progress oder Abschluss sehe
-// ich nicht".
-setTimeout(() => { window.location.href = url.toString(); }, 2500);
+                                // Q4-Etappe 6 (2026-09-10): Reload-Delay von 600 auf
+                                // 2500 ms hochgezogen. Auf Localhost/Sail sind die
+                                // Uploads so schnell, dass die Progress- und
+                                // Fertig-Meldungen in den Ghost-Kacheln sonst nicht
+                                // sichtbar wurden. Zeichen ohne ASCII-Quotes, das
+                                // x-data-Attribut wuerde sonst mittendrin schliessen.
+                                setTimeout(() => { window.location.href = url.toString(); }, 2500);
                             }
                         });
                     }
