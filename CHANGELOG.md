@@ -733,6 +733,34 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Q4-Etappe 6 · G6-1 · Darstellungs-Hinweise am Bild und am
+  Galerie-Block** (2026-09-10). Fundament für den nach dem
+  Galerie-Briefing gebauten Reader-Umbau (Band / Kontaktbogen /
+  Sequenz nach Anzahl-Regel). Fünf neue Felder am `Image`-Model,
+  ein Feld am `Gallery`-Model:
+  - `images.no_crop` — Dokument, Scan, Karte: nie in eine Zelle
+    beschneiden, immer einpassen. Opt-out für den Kontaktbogen.
+  - `images.focus_x` / `focus_y` — Beschnitt-Fokus in Prozent
+    (0–100), Null = Mitte. Wird im CMS per Klick auf das Vorschau-
+    bild gesetzt, kein Zahlenfeld.
+  - `images.intrinsic_width` / `intrinsic_height` — Original-
+    Dimensionen in Pixel, beim Upload aus dem Bild gelesen. Der
+    Reader kann damit die Bildfläche vor dem Laden reservieren
+    (kein Cumulative Layout Shift).
+  - `galleries.sequence` — redaktionelle Ansage, dass die Bilder
+    als Pager-Bühne statt als Kontaktbogen gerendert werden sollen.
+    Nur eine Richtung — gesetzt oder nicht.
+
+  Migration `add_display_hints_to_images_and_galleries` mit
+  sauberem `down()`. Bestandsdaten laufen mit den Defaults
+  (`no_crop` = false, `focus_*` = null, `intrinsic_*` = null,
+  `sequence` = false); der Reader-Renderer fällt zurück auf sein
+  bestehendes Verhalten, solange die neuen Felder leer sind. Der
+  `ImageService` liest die Dimensionen jetzt beim Upload aus
+  (`getimagesize()`, mit `[null, null]`-Fallback für defekte oder
+  nicht-Bild-Formate) und persistiert sie in allen drei Schreib-
+  pfaden (`create`, `createFromDrop`, `update` mit neuem File).
+
 - **Q4-Etappe 5 · Reader-Polish nach Design-Review 3** (2026-09-09).
   Der Multi-Page-Reader bekommt eine rechte Marginalspalte
   (`--side-col`, 330 px, sticky) mit einer Kapitel-TOC über die
