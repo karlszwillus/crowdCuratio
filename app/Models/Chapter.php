@@ -27,6 +27,7 @@ use App\Support\HasRevisions;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -38,7 +39,9 @@ use Spatie\Translatable\HasTranslations;
 
 /**
  * @property int $id
+ * @property int|null $cover_image_id
  * @property Project|null $project
+ * @property Image|null $coverImage
  * @property Collection<int, Entry> $entries
  * @property mixed $entry Runtime-Zuweisung in ProjectController::allData (Entry-Snapshot je Chapter), nicht DB-Spalte.
  */
@@ -49,9 +52,13 @@ class Chapter extends Model implements HasComments
     /**
      * The attributes that are mass assignable.
      *
+     * Q4-Etappe 6 · G6-5 (2026-09-10): `cover_image_id` fuer das
+     * Kapitel-Titelbild — siehe Migration
+     * `add_cover_image_to_chapters_table`.
+     *
      * @var list<string>
      */
-    protected $fillable = ['project_id', 'name', 'subtitle', 'description', 'is_translated', 'position'];
+    protected $fillable = ['project_id', 'name', 'subtitle', 'description', 'is_translated', 'position', 'cover_image_id'];
 
     /**
      * Attribute-Casts.
@@ -113,6 +120,19 @@ class Chapter extends Model implements HasComments
     public function entries()
     {
         return $this->hasMany(Entry::class)->orderBy('position', 'asc');
+    }
+
+    /**
+     * Q4-Etappe 6 · G6-5 (2026-09-10): Kapitel-Titelbild.
+     *
+     * Nur ein Bild pro Kapitel, gewaehlt am Bild selbst per
+     * Haekchen. Wird das Bild oder sein Eintrag geloescht, greift
+     * ON DELETE SET NULL aus der Migration — cover_image_id wird
+     * null und die Kapitelkarte erscheint wieder ohne Bildflaeche.
+     */
+    public function coverImage(): BelongsTo
+    {
+        return $this->belongsTo(Image::class, 'cover_image_id');
     }
 
     /**

@@ -72,6 +72,19 @@
                 'imageId' => $image->id,
                 'value' => (bool) $image->no_crop,
             ], key('image-no-crop-toggle-'.$image->id))
+
+            {{-- Q4-Etappe 6 · G6-5: Häkchen „Als Titelbild für
+                 Kapitel X verwenden". Ohne Häkchen bleibt die
+                 Kapitelkarte ohne Bildfläche. --}}
+            @php
+                /** @var \App\Models\Chapter|null $imageChapter */
+                $imageChapter = optional(optional(optional($image->gallery)->mediaContents()->first())->parent()->first())->chapter ?? null;
+                $isCoverForChapter = $imageChapter !== null && (int) $imageChapter->cover_image_id === (int) $image->id;
+            @endphp
+            @livewire('image-chapter-cover-toggle', [
+                'imageId' => $image->id,
+                'value' => $isCoverForChapter,
+            ], key('image-chapter-cover-toggle-'.$image->id))
         </div>
 
         {{-- Vier Felder: Titel · Bildbeschreibung · Urheberrecht · Quelle. --}}

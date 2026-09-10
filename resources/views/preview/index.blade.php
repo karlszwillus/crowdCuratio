@@ -111,11 +111,26 @@ Header-Nav, Long-Scroll-Sections im Content.
                         }
                     }
                 @endphp
-                <a href="#section{{ $keyProject }}" class="cc-chapter-card">
-                    <div class="cc-chapter-card__band">
-                        <span class="cc-chapter-card__number">{{ str_pad((string) ($keyProject + 1), 2, '0', STR_PAD_LEFT) }}</span>
-                    </div>
-                    <div class="cc-chapter-card__body">
+                @php
+                    /** @var \App\Models\Image|null $chapterCover */
+                    $chapterCover = $chapter->coverImage;
+                @endphp
+                <a href="#section{{ $keyProject }}" class="cc-chapter-card{{ $chapterCover ? ' cc-chapter-card--with-cover' : ' cc-chapter-card--no-cover' }}">
+                    @if($chapterCover)
+                        {{-- Q4-Etappe 6 · G6-5: Titelbild aus dem
+                             Kapitel-Fach. Nummer bleibt lesbar über
+                             halbtransparentem Overlay. --}}
+                        <div class="cc-chapter-card__band cc-chapter-card__band--image">
+                            <img src="{{ route('image', $chapterCover->image) }}"
+                                 alt="{{ $chapterCover->alt }}"
+                                 loading="lazy"
+                                 @if(! $chapterCover->no_crop && ($chapterCover->focus_x !== null || $chapterCover->focus_y !== null))
+                                     style="object-position: {{ $chapterCover->focus_x ?? 50 }}% {{ $chapterCover->focus_y ?? 50 }}%;"
+                                 @endif/>
+                            <span class="cc-chapter-card__number">{{ str_pad((string) ($keyProject + 1), 2, '0', STR_PAD_LEFT) }}</span>
+                        </div>
+                    @endif
+                    <div class="cc-chapter-card__body" data-chapter-number="{{ __('reader_chapter_card_number', ['n' => str_pad((string) ($keyProject + 1), 2, '0', STR_PAD_LEFT)]) }}">
                         <h3>{{ $chapter->name }}</h3>
                         @if(! empty(trim(strip_tags((string) $chapter->description))))
                             <p class="cc-chapter-card__lead">{{ Str::limit(strip_tags((string) $chapter->description), 180) }}</p>

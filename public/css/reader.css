@@ -440,26 +440,46 @@ body.cc-reader-multipage .einspaltig {
     transition: border-color 150ms ease-out;
 }
 .cc-chapter-card:hover { border-color: var(--accent); }
+/* Q4-Etappe 6 · G6-5: Kapitelkarten. Mit Titelbild trägt das
+   Band ein <img> als Cover; ohne Titelbild entfällt die Bildfläche
+   komplett (statt beige Leerfläche mit Ziffer — Design-Review 3
+   Punkt 5). Die Nummer bleibt in beiden Fällen sichtbar: im
+   Bild-Case als weisses Overlay unten links, im no-cover-Case
+   als Mono-Chip im Body. */
 .cc-chapter-card__band {
+    position: relative;
     height: 180px;
+    overflow: hidden;
     background: var(--paper-3);
-    display: flex; align-items: flex-end; justify-content: flex-start;
-    padding: 1rem 1.25rem;
 }
-.cc-chapter-card__number {
+.cc-chapter-card__band--image img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+}
+.cc-chapter-card__band .cc-chapter-card__number {
+    position: absolute;
+    left: 1.25rem;
+    bottom: 1rem;
     font-family: var(--font-mono);
     font-size: 34px;
     line-height: 1;
     letter-spacing: 0.04em;
-    color: rgba(255, 255, 255, 0.9);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    color: rgba(255, 255, 255, 0.95);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
 }
-/* Bei Dokumentation/Archiv (helle Charaktere) haben wir kein
-   Bild — Mono-Nummer in Ink statt weiß. */
-[data-char="dokumentation"] .cc-chapter-card__number,
-[data-char="archiv"] .cc-chapter-card__number {
-    color: var(--ink-mid);
-    text-shadow: none;
+/* Ohne Bild sitzt die Nummer in der Body-Kachel als Mono-Chip. */
+.cc-chapter-card--no-cover .cc-chapter-card__body::before {
+    content: attr(data-chapter-number);
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    margin-bottom: 0.5rem;
 }
 .cc-chapter-card__body {
     padding: 1.25rem;

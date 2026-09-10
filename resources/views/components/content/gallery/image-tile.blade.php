@@ -15,6 +15,11 @@
 --}}
 
 <div class="gallery_item group relative" id="gallery_items_{{$item->gallery->id}}" data-image-id="{{ $image->id }}">
+    {{-- Q4-Etappe 6 · G6-5: Zusaetzlicher Anker mit der Image-ID,
+         damit der Kapitel-Titelbild-Slot direkt aufs Bild springen
+         kann (Fach → „Zum Bild springen"). Der bestehende
+         anchor_MediaContent bleibt fuer den Galerie-Block-Sprung. --}}
+    <span id="anchor_Image_{{ $image->id }}" class="sr-only" aria-hidden="true"></span>
     <div id="anchor_MediaContent_{{$item->id}}"
          data-image-id="{{ $image->id }}"
          class="gallery-tile-frame relative flex aspect-video items-center justify-center overflow-hidden rounded-md bg-line-100">
