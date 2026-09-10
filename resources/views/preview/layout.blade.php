@@ -46,6 +46,40 @@ Erwartet: $project (Project), $parameters (array) im Kontext.
          DOM-Parse startet — Reihenfolge zu `x-cloak` bleibt sauber. --}}
     <script defer src="{{ asset('js/alpine.min.js') }}"></script>
 
+    {{-- Q4-Etappe 6 · G6-7 (2026-09-10): Lightbox-Store.
+         Ein globaler Alpine-Store, den jede Galerie zum Öffnen
+         der Großansicht ruft — Band, Kontaktbogen und Sequenz
+         teilen sich denselben Overlay im Reader-Body. --}}
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.store('lightbox', {
+                open: false,
+                items: [],
+                index: 0,
+                show(items, startIndex) {
+                    if (! Array.isArray(items) || items.length === 0) return;
+                    this.items = items;
+                    this.index = Math.max(0, Math.min(items.length - 1, startIndex | 0));
+                    this.open = true;
+                    document.body.style.overflow = 'hidden';
+                },
+                close() {
+                    this.open = false;
+                    document.body.style.overflow = '';
+                },
+                prev() {
+                    if (! this.items.length) return;
+                    this.index = (this.index - 1 + this.items.length) % this.items.length;
+                },
+                next() {
+                    if (! this.items.length) return;
+                    this.index = (this.index + 1) % this.items.length;
+                },
+                get current() { return this.items[this.index] || null; },
+            });
+        });
+    </script>
+
     @stack('preview-head')
 </head>
 
@@ -103,6 +137,11 @@ Erwartet: $project (Project), $parameters (array) im Kontext.
 <main id="cc-reader-main">
     @yield('content')
 </main>
+
+{{-- Q4-Etappe 6 · G6-7: Lightbox-Overlay einmal am Ende des
+     Main-Bereichs. Alle Galerien öffnen sie über den Alpine-
+     Store `lightbox` (siehe oben im <head>). --}}
+@include('preview.lightbox')
 
 @if(isset($parameters['pdf']))
     <div class="footer-background p-3 my-3 border">

@@ -31,6 +31,24 @@ Erwartet: $media (MediaContent mit ->gallery + ->gallery->images) im Kontext.
         $imgs = $gallery->images ?? collect();
         $imgCount = $imgs->count();
         $form = GalleryForm::resolve($imgCount, (bool) $gallery->sequence);
+
+        // Q4-Etappe 6 · G6-7 (2026-09-10): Meta-Array für die
+        // Lightbox — pro Bild {src, alt, caption, credit}. Der
+        // Alpine-Store liest daraus, egal aus welcher Form die
+        // Lightbox geöffnet wurde (Band, Bogen oder Sequenz).
+        $lightboxItems = $imgs->map(function ($img) {
+            $creditParts = collect([
+                optional($img->copyrightImage)->name,
+                optional($img->originImage)->name,
+            ])->filter()->implode(' · ');
+
+            return [
+                'src' => route('image', $img->image),
+                'alt' => (string) ($img->alt ?? ''),
+                'caption' => trim(strip_tags((string) $img->alt)),
+                'credit' => $creditParts,
+            ];
+        })->values()->all();
     @endphp
 
     @if(! empty($gallery->title) || ! empty($gallery->subtitle) || ! empty($gallery->description))
@@ -55,7 +73,13 @@ Erwartet: $media (MediaContent mit ->gallery + ->gallery->images) im Kontext.
              aria-label="{{ $gallery->title ?? __('gallery_form_sequenz') }}">
             <div class="cc-gal-stage__frame">
                 @foreach($imgs as $img)
-                    <div class="cc-gal-stage__slide" x-show="i === {{ $loop->index }}" x-cloak>
+                    <div class="cc-gal-stage__slide" x-show="i === {{ $loop->index }}" x-cloak
+                         @click="$store.lightbox.show(@js($lightboxItems), i)"
+                         role="button"
+                         tabindex="0"
+                         aria-label="{{ __('gallery_open_lightbox') }}"
+                         @keydown.enter.prevent="$store.lightbox.show(@js($lightboxItems), i)"
+                         @keydown.space.prevent="$store.lightbox.show(@js($lightboxItems), i)">
                         <img alt="{{ $img->alt }}"
                              src="{{ route('image', $img->image) }}"
                              loading="lazy">
@@ -104,9 +128,15 @@ Erwartet: $media (MediaContent mit ->gallery + ->gallery->images) im Kontext.
             $shown = $imgs->take($bogenCap);
             $overflow = max(0, $imgCount - $bogenCap);
         @endphp
-        <div class="cc-gal-bogen">
+        <div class="cc-gal-bogen" x-data>
             @foreach($shown as $img)
-                <figure class="cc-gal-bogen__cell{{ $img->no_crop ? ' cc-gal-bogen__cell--fit' : '' }}">
+                <figure class="cc-gal-bogen__cell{{ $img->no_crop ? ' cc-gal-bogen__cell--fit' : '' }}"
+                        @click="$store.lightbox.show(@js($lightboxItems), {{ $loop->index }})"
+                        role="button"
+                        tabindex="0"
+                        aria-label="{{ __('gallery_open_lightbox') }}"
+                        @keydown.enter.prevent="$store.lightbox.show(@js($lightboxItems), {{ $loop->index }})"
+                        @keydown.space.prevent="$store.lightbox.show(@js($lightboxItems), {{ $loop->index }})">
                     <img alt="{{ $img->alt }}"
                          src="{{ route('image', $img->image) }}"
                          loading="lazy"
@@ -117,9 +147,12 @@ Erwartet: $media (MediaContent mit ->gallery + ->gallery->images) im Kontext.
                 </figure>
             @endforeach
             @if($overflow > 0)
-                <div class="cc-gal-bogen__more" aria-label="{{ __('gallery_bogen_more', ['count' => $overflow]) }}">
+                <button type="button"
+                        class="cc-gal-bogen__more"
+                        @click="$store.lightbox.show(@js($lightboxItems), {{ $bogenCap }})"
+                        aria-label="{{ __('gallery_bogen_more', ['count' => $overflow]) }}">
                     + {{ $overflow }}
-                </div>
+                </button>
             @endif
         </div>
     @else
@@ -128,10 +161,16 @@ Erwartet: $media (MediaContent mit ->gallery + ->gallery->images) im Kontext.
              gleich hoch, `object-fit: cover` mit optionalem
              `focus_x/y`; `no_crop`-Bilder wechseln auf `contain`,
              damit Dokumente/Scans nicht beschnitten werden. --}}
-        <div class="cc-gal-band cc-gal-band--n{{ min($imgCount, 4) }}">
+        <div class="cc-gal-band cc-gal-band--n{{ min($imgCount, 4) }}" x-data>
             @foreach($imgs as $img)
                 <figure class="cc-gal-band__item{{ $img->no_crop ? ' cc-gal-band__item--fit' : '' }}">
-                    <div class="cc-gal-band__frame">
+                    <div class="cc-gal-band__frame"
+                         @click="$store.lightbox.show(@js($lightboxItems), {{ $loop->index }})"
+                         role="button"
+                         tabindex="0"
+                         aria-label="{{ __('gallery_open_lightbox') }}"
+                         @keydown.enter.prevent="$store.lightbox.show(@js($lightboxItems), {{ $loop->index }})"
+                         @keydown.space.prevent="$store.lightbox.show(@js($lightboxItems), {{ $loop->index }})">
                         <img alt="{{ $img->alt }}"
                              src="{{ route('image', $img->image) }}"
                              loading="lazy"

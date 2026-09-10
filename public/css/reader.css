@@ -951,6 +951,157 @@ body.cc-reader-multipage .cc-gal-stage {
     .cc-gal-stage__frame { height: 320px; }
 }
 
+/* ==================================================================
+ * Lightbox (Q4-Etappe 6 · G6-7).
+ * Ein globales Overlay, das aus Band, Kontaktbogen und Sequenz mit
+ * derselben Bildmenge geöffnet wird. Metadaten-Spalte rechts.
+ * ================================================================== */
+.cc-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+}
+.cc-lightbox__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 12, 9, 0.9);
+}
+.cc-lightbox__body {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 32px;
+    max-width: 1400px;
+    max-height: calc(100vh - 80px);
+    width: 100%;
+    background: transparent;
+}
+.cc-lightbox__figure {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #17140f;
+    overflow: hidden;
+    min-height: 0;
+}
+.cc-lightbox__image {
+    max-width: 100%;
+    max-height: calc(100vh - 80px);
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: block;
+}
+.cc-lightbox__meta {
+    background: var(--paper);
+    color: var(--ink);
+    padding: 24px 26px;
+    overflow-y: auto;
+    max-height: calc(100vh - 80px);
+}
+.cc-lightbox__meta-counter {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    color: var(--ink-dim);
+    margin-bottom: 16px;
+}
+.cc-lightbox__meta-heading {
+    font-family: var(--font-mono);
+    font-size: var(--t-mono-caps);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--ink-dim);
+    margin: 16px 0 6px;
+}
+.cc-lightbox__meta-heading:first-of-type { margin-top: 0; }
+.cc-lightbox__meta-caption {
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.5;
+    color: var(--ink);
+    margin: 0;
+}
+.cc-lightbox__meta-credit {
+    font-family: var(--font-mono);
+    font-size: var(--t-mono-small);
+    letter-spacing: 0.06em;
+    color: var(--ink-mid);
+    margin: 0;
+}
+.cc-lightbox__close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 2;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: 4px;
+}
+.cc-lightbox__close:hover { background: rgba(255, 255, 255, 0.24); }
+.cc-lightbox__nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+    width: 52px;
+    height: 52px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+    color: #ffffff;
+    border: 0;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+}
+.cc-lightbox__nav:hover:not(:disabled) { background: rgba(255, 255, 255, 0.28); }
+.cc-lightbox__nav:disabled { opacity: 0.3; cursor: not-allowed; }
+.cc-lightbox__nav--prev { left: 12px; }
+.cc-lightbox__nav--next { right: 12px; }
+
+/* Klickbare Kacheln im Reader: sichtbarer Fokus, cursor-pointer. */
+.cc-gal-band__frame[role="button"],
+.cc-gal-bogen__cell[role="button"],
+.cc-gal-stage__slide[role="button"],
+.cc-gal-bogen__more {
+    cursor: pointer;
+}
+.cc-gal-band__frame:focus-visible,
+.cc-gal-bogen__cell:focus-visible,
+.cc-gal-stage__slide:focus-visible,
+.cc-gal-bogen__more:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+.cc-gal-bogen__more {
+    border: 0;
+    font-family: var(--font-mono);
+    padding: 0;
+}
+
+@media (max-width: 960px) {
+    .cc-lightbox { padding: 20px; }
+    .cc-lightbox__body {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(0, 1fr) auto;
+        gap: 16px;
+        max-height: calc(100vh - 40px);
+    }
+    .cc-lightbox__meta { max-height: 40vh; }
+}
+
 /* Credit-Zeile am Abschnittskopf (Handoff E1b · G-Fund-5). */
 .cc-entry-credit {
     max-width: var(--measure);
