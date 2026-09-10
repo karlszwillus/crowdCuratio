@@ -172,8 +172,11 @@ class ImageBlockController extends Controller
 
         // Projekt-Ziel VOR dem Delete auslesen — nach dem Soft-Delete
         // greift die project()-Navigation über die Gallery evtl. nicht
-        // mehr sauber.
-        $projectId = $image->project()?->id ?? $request->input('project');
+        // mehr sauber. Zwischenvariable statt `?->`-Kaskade, damit
+        // Larastan die Never-Null-Inferenz beim `?->`-Operator nicht
+        // beklagt (nullsafe.neverNull).
+        $project = $image->project();
+        $projectId = $project !== null ? $project->id : $request->input('project');
 
         $this->images->destroy($image);
 

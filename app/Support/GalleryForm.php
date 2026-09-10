@@ -50,11 +50,13 @@ enum GalleryForm: string
 
     /**
      * Deutsche Beschriftung für die Editor-Status-Pille
-     * („Erscheint als …").
+     * („Erscheint als …"). Cast auf `string`, weil Laravels
+     * `__()` als `string|array|null` deklariert ist — für den
+     * Aufrufer soll die Signatur reines `string` bleiben.
      */
     public function label(): string
     {
-        return match ($this) {
+        return (string) match ($this) {
             self::BAND => __('gallery_form_band'),
             self::KONTAKTBOGEN => __('gallery_form_kontaktbogen'),
             self::SEQUENZ => __('gallery_form_sequenz'),
@@ -68,7 +70,7 @@ enum GalleryForm: string
      */
     public function scopeHint(): string
     {
-        return match ($this) {
+        return (string) match ($this) {
             self::BAND => __('gallery_form_band_scope'),
             self::KONTAKTBOGEN => __('gallery_form_kontaktbogen_scope'),
             self::SEQUENZ => __('gallery_form_sequenz_scope'),

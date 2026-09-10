@@ -24,6 +24,7 @@ namespace App\Services;
 
 use App\Traits\UploadTrait;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Str;
 
 /**
  * Kapselt das Upload-Handling für Project-Logos.
@@ -61,7 +62,7 @@ class ProjectImageService
         // Galerie-Bilder, aber wenn eine Nutzer:in mehrere Projekte
         // gleichzeitig anlegt (oder das Cover in derselben Sekunde
         // wie ein anderes Bild wechselt), war der Kollisionspfad da.
-        $filename = date('Ymd').'_'.\Illuminate\Support\Str::random(10).'.'.$image->extension();
+        $filename = date('Ymd').'_'.Str::random(10).'.'.$image->extension();
         $folder = '/uploads/images/';
 
         $this->uploadOne($image, $folder, 'public', $filename);
