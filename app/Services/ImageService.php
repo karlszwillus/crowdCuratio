@@ -30,6 +30,7 @@ use App\Models\MediaContent;
 use App\Traits\UploadTrait;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 /**
  * Kapselt die Schreibpfade auf Image-Modelle (Block F.4).
@@ -164,12 +165,21 @@ class ImageService
 
     /**
      * File-Upload nach `/uploads/images/` auf der `public`-Disk.
-     * Liefert den generierten Dateinamen zurück (zeitbasiert,
-     * konsistent zum alten setImage-Pattern).
+     * Liefert den generierten Dateinamen zurück.
+     *
+     * Q4-Etappe 6 (2026-09-10): Kollisionssicherer Filename mit
+     * `Str::random(10)`-Suffix. Vorher `date('Ymd').'_'.time()` —
+     * bei parallelem Multi-Upload landeten mehrere Dateien in
+     * derselben Sekunde und bekamen denselben Namen. `storeAs`
+     * überschrieb, alle Image-Rows zeigten auf dasselbe File und
+     * im Editor erschien N-mal dasselbe Bild. Der neue Suffix
+     * (10 Zeichen aus 62er-Alphabet ≈ 5.9·10¹⁷ Kombinationen)
+     * schließt das aus, ohne die Ymd-Sortierung im Verzeichnis
+     * zu opfern.
      */
     private function uploadImageFile(UploadedFile $file): string
     {
-        $name = date('Ymd').'_'.time().'.'.$file->extension();
+        $name = date('Ymd').'_'.Str::random(10).'.'.$file->extension();
         $folder = '/uploads/images/';
 
         $this->uploadOne($file, $folder, 'public', $name);
