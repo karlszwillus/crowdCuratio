@@ -508,6 +508,8 @@
   "lightbox_meta_caption": "Caption",
   "lightbox_meta_credit": "Credit",
   "gallery_open_lightbox": "Open large view",
+  "audiovisual_pdf_video_hint": "Video available in the web version at:",
+  "audiovisual_pdf_audio_hint": "Audio available in the web version at:",
   "publish_check_title": "Check before publishing",
   "publish_check_intro": "These images still have incomplete metadata. Publishing stays possible, but the gaps will show up in the preview.",
   "publish_check_field_description": "Image description",

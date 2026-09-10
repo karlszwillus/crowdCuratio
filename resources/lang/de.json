@@ -508,6 +508,8 @@
   "lightbox_meta_caption": "Bildunterschrift",
   "lightbox_meta_credit": "Nachweis",
   "gallery_open_lightbox": "Großansicht öffnen",
+  "audiovisual_pdf_video_hint": "Video in der Web-Ausgabe verfügbar unter:",
+  "audiovisual_pdf_audio_hint": "Audio in der Web-Ausgabe verfügbar unter:",
   "publish_check_title": "Vor dem Veröffentlichen prüfen",
   "publish_check_intro": "Diese Bilder haben noch unvollständige Angaben. Veröffentlichen bleibt möglich, die Lücken erscheinen aber in der Vorschau.",
   "publish_check_field_description": "Bildbeschreibung",
