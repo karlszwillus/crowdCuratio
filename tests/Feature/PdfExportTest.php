@@ -9,6 +9,7 @@ See LICENSE.
 
 declare(strict_types=1);
 
+use App\Models\Project;
 use App\Models\User;
 
 /*
@@ -56,7 +57,7 @@ it('preview.pdf.layout trägt die Akzent-Farbe des Projekt-Charakters', function
     $owner = User::factory()->create();
     $project = makeProject($owner);
     // Charakter „archiv" → Akzent #2f4a63 (Handoff-Palette).
-    $project->character = \App\Models\Project::CHARACTER_ARCHIV;
+    $project->character = Project::CHARACTER_ARCHIV;
     $project->save();
     makeChapter($project);
 
