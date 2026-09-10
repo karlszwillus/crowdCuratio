@@ -733,6 +733,31 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Q4-Etappe 6 · G6-3 · Beschnitt-Steuerung im Bild-Detail**
+  (2026-09-10). Die Bild-Detail-Zeile bekommt zwei neue Elemente
+  in der Vorschau-Spalte: einen Livewire-Volt-Toggle „Nicht
+  beschneiden" für Dokumente, Scans und Karten sowie einen
+  Fokus-Picker, der per Klick auf das Vorschaubild `focus_x` /
+  `focus_y` in Prozent setzt. Ein kleiner Marker im
+  Kontrast-Farbring zeigt den aktuellen Fokus-Punkt auf dem Bild,
+  der Cursor wird zum Fadenkreuz, sobald der Picker aktiv ist.
+  Setzt der Redakteur „Nicht beschneiden", deaktiviert sich der
+  Fokus-Picker automatisch (Alpine hört auf das
+  `image-no-crop-changed`-Event des Toggles) — ein Fokus wäre
+  bedeutungslos, wenn das Bild ohnehin komplett gezeigt wird.
+  Beide Werte werden inline gespeichert (kein Redirect,
+  konsistent zu den anderen Content-Volt-Komponenten). Der
+  Reader nutzt die Felder im Kontaktbogen-Rendering ab G6-4 als
+  `object-fit` und `object-position` — bis dahin sammeln die
+  Redakteur:innen die Angaben schon einmal.
+
+  Neue Livewire-Komponenten: `image-no-crop-toggle` und
+  `image-focus-picker`. Locale-Keys: `image_no_crop_label` /
+  `_hint`, `image_focus_picker_hint_click` / `_set` / `_inactive`,
+  `image_focus_picker_clear`, `image_focus_picker_aria_active`
+  / `_inactive`. Klick-Handler klemmt den Wert auf 0–100 (Alpine
+  vor dem Senden, Backend als Sicherheitsnetz).
+
 - **Q4-Etappe 6 · G6-2 · Galerie-Kopfpanel im Editor** (2026-09-10).
   Der Galerie-Block trägt jetzt sichtbar in seinem Kopf, als was er
   in der Ausstellung erscheinen wird — nicht als wählbare Option,
