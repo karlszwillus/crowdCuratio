@@ -62,7 +62,7 @@ it('speichert das Bild auf der public-Disk und liefert den Dateinamen zurück', 
     Storage::disk('public')->assertExists('/uploads/images/'.$result);
 });
 
-it('komponiert den Dateinamen aus Datum, Timestamp und Original-Extension', function () {
+it('komponiert den Dateinamen aus Datum, Zufalls-Suffix und Original-Extension', function () {
     /** @var TestCase $this */
     Storage::fake('public');
 
@@ -71,6 +71,7 @@ it('komponiert den Dateinamen aus Datum, Timestamp und Original-Extension', func
     $service = new ProjectImageService;
     $result = $service->store($file);
 
-    // Format: YYYYMMDD_<unix-ts>.jpg — z.B. 20260601_1717249800.jpg
-    expect($result)->toMatch('/^\d{8}_\d{10}\.jpg$/');
+    // Q4-Etappe 6 (2026-09-10): Format YYYYMMDD_<random10>.jpg — kollisions-
+    // sicher bei parallelem Upload, siehe ImageService::uploadImageFile.
+    expect($result)->toMatch('/^\d{8}_[A-Za-z0-9]{10}\.jpg$/');
 });
