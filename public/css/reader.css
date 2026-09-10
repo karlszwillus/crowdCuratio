@@ -625,22 +625,14 @@ blockquote cite {
     border-bottom-color: var(--rule);
 }
 
-/* Bild-Rendering (Handoff Regel 2 „Bild führt"). */
-
-/* Vollbreit: einzelnes Bild dehnt sich über die volle Content-
-   Breite, bündig zum Randabstand 60 px. Bildhöhe 470 px im Ideal,
-   object-cover für ungleiche Formate. */
-.cc-fig--full {
-    max-width: 1200px;
-    margin: 2rem auto;
-    padding: 0 60px;
-}
-/* Wenn im .container-Wrapper — dann kein doppeltes Padding, das
-   liefert der Container schon. Und die Vollbreite darf bis zur
-   Container-Innenbreite gehen. */
-.container .cc-fig--full,
-.container .cc-fig-pair,
-.container .cc-gallery-grid,
+/* Bild-Rendering (Handoff Regel 2 „Bild führt").
+ * Die konkreten Formen leben weiter unten unter .cc-gal-band /
+ * .cc-gal-bogen / .cc-gal-stage — sie werden von GalleryForm
+ * gesteuert. Hier nur noch die Container-Überschreibungen für
+ * Content-Blöcke im breiten .container-Wrapper. */
+.container .cc-gal-band,
+.container .cc-gal-bogen,
+.container .cc-gal-stage,
 .container .variable-width,
 .container .cc-entry-credit,
 .container .cc-entry-sources,
@@ -663,55 +655,9 @@ blockquote cite {
     max-width: var(--measure);
 }
 .container blockquote { margin-left: 0; padding-left: 1.25rem; }
-.cc-fig--full img {
-    /* Handoff § „Eine Satzkante": Bild sitzt links auf derselben
-       Linie wie Text, Unterschrift und Quellenblock. Portraits
-       nicht abschneiden — object-fit: contain hält die Ratio.
-       Bild-object-position: left, damit ein Portrait in einem
-       breiten Container ebenfalls linksbündig sitzt. */
-    display: block;
-    width: 100%;
-    max-height: 620px;
-    max-width: 100%;
-    height: auto;
-    margin: 0;
-    object-fit: contain;
-    object-position: left center;
-}
-
-/* Bildpaar: zwei Bilder 1:1 zweispaltig, gleiche Höhe, Caption
-   je Bild darunter. */
-.cc-fig-pair {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-    max-width: 1200px;
-    margin: 2rem auto;
-    padding: 0 60px;
-}
-.cc-fig-pair .cc-fig img {
-    width: 100%; aspect-ratio: 1/1;
-    object-fit: cover;
-    display: block;
-}
-.cc-fig { margin: 0; }
-
-/* Grid (3+ Bilder). */
-.cc-gallery-grid {
-    display: grid; gap: 1rem;
-    grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
-    max-width: 1200px;
-    margin: 2rem auto;
-    padding: 0 60px;
-}
-.cc-gallery-grid figure { margin: 0; }
-.cc-gallery-grid img { width: 100%; aspect-ratio: 4/3; object-fit: cover; }
 
 /* Im Multi-Page-Body brechen die Bilder aus dem 660-px-Textmaß
    heraus zur vollen Content-Spalten-Breite. */
-body.cc-reader-multipage .cc-fig--full,
-body.cc-reader-multipage .cc-fig-pair,
-body.cc-reader-multipage .cc-gallery-grid,
 body.cc-reader-multipage .cc-gal-band,
 body.cc-reader-multipage .cc-gal-bogen,
 body.cc-reader-multipage .cc-gal-stage {
@@ -899,11 +845,6 @@ body.cc-reader-multipage .cc-gal-stage {
     .cc-gal-stage__frame { aspect-ratio: 4 / 3; }
 }
 
-@media (max-width: 720px) {
-    .cc-fig--full, .cc-fig-pair, .cc-gallery-grid { padding: 0 20px; }
-    .cc-fig-pair { grid-template-columns: 1fr; }
-}
-
 /* Credit-Zeile am Abschnittskopf (Handoff E1b · G-Fund-5). */
 .cc-entry-credit {
     max-width: var(--measure);
@@ -992,8 +933,9 @@ body.cc-reader-multipage .cc-gal-stage {
 /* Nachweiszeile: Bildunterschrift links, Signatur/Rechte rechts
    in Mono — Handoff E1b: Grid `--measure 1fr`, links max 660 px
    für die Beschreibung, rechts der Rest für Credit rechtsbündig.
-   Gilt für alle drei Bild-Cases (cc-fig--full, cc-fig-pair figure,
-   cc-gallery-grid). */
+   Wird von preview.content.gallery-caption genutzt und greift in
+   Band und Sequenz — im Kontaktbogen ist die figcaption per
+   `display: none` ausgeblendet (siehe .cc-gal-bogen__cell). */
 .cc-figcaption {
     display: grid;
     grid-template-columns: minmax(0, var(--measure)) minmax(0, 1fr);
@@ -1015,11 +957,6 @@ body.cc-reader-multipage .cc-gal-stage {
     overflow-wrap: anywhere;
     word-break: break-word;
 }
-/* Bei Grid-Cases (mehrere Bilder) kollabiert die Nachweisspalte
-   unter das Bild — keine Nebenspalte. */
-.cc-gallery-grid .cc-figcaption { grid-template-columns: 1fr; }
-.cc-gallery-grid .cc-figcaption__credit { text-align: left; }
-
 @media (max-width: 720px) {
     .cc-figcaption { grid-template-columns: 1fr; row-gap: 0.25rem; }
     .cc-figcaption__credit { text-align: left; }
