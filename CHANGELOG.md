@@ -733,6 +733,35 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Q4-Etappe 6 · G6-2 · Galerie-Kopfpanel im Editor** (2026-09-10).
+  Der Galerie-Block trägt jetzt sichtbar in seinem Kopf, als was er
+  in der Ausstellung erscheinen wird — nicht als wählbare Option,
+  sondern als Statusanzeige, damit die Anzahl-Regel jederzeit
+  ablesbar ist. Neuer Enum `App\Support\GalleryForm` (`BAND`,
+  `KONTAKTBOGEN`, `SEQUENZ`) mit einer `resolve(count, sequence)`-
+  Methode, die den Regel-Kern kapselt: 1–4 Bilder → Band, ab 5 →
+  Kontaktbogen; `sequence=true` überschreibt beides. Editor-
+  Kopfpanel und Reader-Rendering rufen dieselbe Methode, damit
+  Anzeige und Ausspiel niemals divergieren. Der Kopf zeigt eine
+  Status-Pille „Erscheint als …", einen Scope-Hint („1–4 Bilder"
+  bzw. „ab 5 Bildern") und einen Formwechsel-Hinweis, wenn das
+  nächste Bild oder das Löschen eines Bildes die Darstellung
+  ändern würde („Ein weiteres Bild wechselt den Block auf
+  Kontaktbogen — Einzelnachweise wandern in die Großansicht").
+  Die Sequenz-Bühne bleibt eine redaktionelle Aussage und
+  bekommt einen eigenen Livewire-Volt-Toggle
+  („Die Reihenfolge ist die Aussage") mit inline-Save; alle
+  anderen Formen sind Status, kein Knopf. `no_crop`-Bilder tragen
+  im Editor-Raster ein Mono-Kürzel „NC" oben rechts an der
+  Kachel, damit im Kontaktbogen sichtbar bleibt, welche Bilder
+  eingepasst statt gefüllt gerendert werden. Locale-Keys:
+  `gallery_form_panel_label`, `gallery_form_band`,
+  `gallery_form_kontaktbogen`, `gallery_form_sequenz` (jeweils
+  mit `_scope`-Kontext), `gallery_form_hint_next_kontaktbogen`,
+  `gallery_form_hint_next_band`, `gallery_form_hint_stable`,
+  `gallery_sequence_toggle_label`/`_hint`,
+  `gallery_no_crop_marker`.
+
 - **Q4-Etappe 6 · G6-1 · Darstellungs-Hinweise am Bild und am
   Galerie-Block** (2026-09-10). Fundament für den nach dem
   Galerie-Briefing gebauten Reader-Umbau (Band / Kontaktbogen /
@@ -2638,6 +2667,38 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
   in der ehemaligen `CommentTrait::commentAsUser`.
 
 ### Behoben
+
+- **Multi-Upload · Upload-Progress war auf Sail nicht sichtbar**
+  (2026-09-10). Nach Abschluss aller Uploads lief ein Reload nach
+  600 ms — auf Localhost sind Uploads schnell genug durch, dass
+  die „Wird hochgeladen …"- und „✓ Fertig"-Meldungen in den
+  Ghost-Kacheln kaum wahrnehmbar wurden. Reload-Delay auf 2500 ms
+  hochgezogen (beide Upload-Pfade in `gallery-block.blade.php`),
+  damit der Zustand vor dem Reload sichtbar bleibt.
+
+- **Multi-Upload überschrieb Dateien im selben Sekundenfenster**
+  (2026-09-10). `ImageService::uploadImageFile` (und
+  `ProjectImageService::store`) generierten den Filename aus
+  `date('Ymd').'_'.time()` — bei paralleler Multi-Upload landeten
+  mehrere Dateien in derselben Sekunde und teilten sich denselben
+  Namen. `storeAs` überschrieb, alle Image-Rows zeigten am Ende
+  auf dasselbe File, und im Editor erschien N-mal dasselbe Bild
+  statt der N tatsächlich hochgeladenen. Der Fix ersetzt den
+  `time()`-Suffix durch `Str::random(10)` (~5.9·10¹⁷ Kombinationen),
+  ohne die datumsbasierte Verzeichnis-Sortierung zu opfern.
+  Latenter Prod-Bug, den G6-2 beim Testen aufgedeckt hat.
+
+- **Bild aus Galerie löschen führte auf 404**
+  (2026-09-10). Das Delete-Formular am Bild-Overlay in
+  `image-tile.blade.php` sendet nur CSRF-Token und Method-Override,
+  kein `project`-Feld. `ImageBlockController::destroyImage`
+  redirected aber auf `'projects/'.$request->project.'/edit'` —
+  bei fehlendem `project`-Payload landete der Redirect auf
+  `/projects//edit` und damit im 404. Die Projekt-ID wird jetzt
+  vor dem Soft-Delete aus dem Image selbst gelesen
+  (`Image::project()` navigiert über Gallery-Chain zum Projekt),
+  mit Request-Fallback und Back-Fallback für den seltenen
+  Waisen-Fall.
 
 - **Reader-Vokabular konsequent auf Kapitel · Abschnitt · Inhalt**
   (2026-09-09). Ein Zwischenstand hatte die Vokabelachse
