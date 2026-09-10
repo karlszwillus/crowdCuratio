@@ -9,7 +9,7 @@ preview/pdf.blade.php.
 Bewusste Reduktion (Roadmap G7):
   - Keine Kopfleiste, keine mehrspaltige Fußzeile, keine
     Navigation, keine Marginalspalte, keine Lightbox, kein JS.
-  - Text-Blöcke als reiner Fließtext ohne Rahmen.
+  - Text-Inhalte als reiner Fließtext ohne Rahmen.
   - Audio/Video als Hinweiszeile, kein Player-Ersatz.
   - Bilder in einem einfachen Grid, ohne Anzahl-Regel oder
     Sequenz-Modus — der Leser blättert am Papier.
@@ -83,7 +83,7 @@ bleibt Ink-Schwarz.
         .cc-entry__meta { font-family: 'DejaVu Sans Mono', 'Courier', monospace; font-size: 8pt;
                           color: #736c62; margin: 0 0 4mm; }
 
-        /* Content-Blöcke */
+        /* Content-Inhalte */
         .cc-text { margin: 0 0 6mm; }
         .cc-text__credit { font-family: 'DejaVu Sans Mono', 'Courier', monospace; font-size: 8pt;
                            color: #736c62; margin-top: 2mm; }

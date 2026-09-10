@@ -3,7 +3,7 @@ crowdCuratio - Curating together virtually
 Copyright (C) 2026 - berlinHistory e.V.
 
 Q4-Etappe 6 · G7-1 (2026-09-10): PDF-Quellenblock am Abschnitts-
-ende. Sammelt alle referenzierten Sources aus den Content-Blöcken
+ende. Sammelt alle referenzierten Sources aus den Content-Inhalten
 des Abschnitts (Text/Gallery/Audiovisual/QuoteBlock) und rendert
 sie als deduplizierte Liste — schlanker als der Web-Quellenblock.
 
