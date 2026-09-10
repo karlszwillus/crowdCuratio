@@ -39,6 +39,11 @@ use Spatie\Translatable\HasTranslations;
  * @property int $id
  * @property int|null $gallery_id
  * @property string $image
+ * @property bool $no_crop
+ * @property int|null $focus_x
+ * @property int|null $focus_y
+ * @property int|null $intrinsic_width
+ * @property int|null $intrinsic_height
  * @property int $origin
  * @property int $copyright
  * @property string|null $url
@@ -61,9 +66,31 @@ class Image extends Model implements HasComments
     /**
      * The attributes that are mass assignable.
      *
+     * Q4-Etappe 6 · G6-1 (2026-09-10): Fünf neue Darstellungs-
+     * Hinweis-Felder — siehe Migration
+     * `add_display_hints_to_images_and_galleries`.
+     *
      * @var list<string>
      */
-    protected $fillable = ['gallery_id', 'image', 'origin', 'copyright', 'url', 'alt', 'description', 'position'];
+    protected $fillable = [
+        'gallery_id', 'image', 'origin', 'copyright', 'url', 'alt', 'description', 'position',
+        'no_crop', 'focus_x', 'focus_y', 'intrinsic_width', 'intrinsic_height',
+    ];
+
+    /**
+     * `Model::shouldBeStrict()` verlangt explizite Casts für alle
+     * typisierten Attribute — sonst kommt `no_crop` als String „0"
+     * aus der DB.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'no_crop' => 'boolean',
+        'focus_x' => 'integer',
+        'focus_y' => 'integer',
+        'intrinsic_width' => 'integer',
+        'intrinsic_height' => 'integer',
+    ];
 
     /**
      * `alt` = Titel/Bildunterschrift, `description` = Alt-Text fuer

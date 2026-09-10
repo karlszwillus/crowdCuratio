@@ -58,6 +58,7 @@ class ImageService
     public function create(ImageData $data, UploadedFile $file, int $galleryId): Image
     {
         $name = $this->uploadImageFile($file);
+        [$intrinsicWidth, $intrinsicHeight] = $this->readIntrinsicDimensions($file);
 
         $position = Image::where('gallery_id', $galleryId)
             ->orderByDesc('position')
@@ -78,6 +79,8 @@ class ImageService
             'copyright' => $copyright,
             'url' => Storage::path($name),
             'alt' => $data->altText,
+            'intrinsic_width' => $intrinsicWidth,
+            'intrinsic_height' => $intrinsicHeight,
         ]);
     }
 
@@ -90,6 +93,7 @@ class ImageService
     public function createFromDrop(UploadedFile $file, int $galleryId): Image
     {
         $name = $this->uploadImageFile($file);
+        [$intrinsicWidth, $intrinsicHeight] = $this->readIntrinsicDimensions($file);
 
         $position = Image::where('gallery_id', $galleryId)
             ->orderByDesc('position')
@@ -103,6 +107,8 @@ class ImageService
             'copyright' => null,
             'url' => Storage::path($name),
             'alt' => null,
+            'intrinsic_width' => $intrinsicWidth,
+            'intrinsic_height' => $intrinsicHeight,
         ]);
     }
 
@@ -124,8 +130,11 @@ class ImageService
 
         if ($newFile !== null) {
             $name = $this->uploadImageFile($newFile);
+            [$intrinsicWidth, $intrinsicHeight] = $this->readIntrinsicDimensions($newFile);
             $image->image = $name;
             $image->url = Storage::path($name);
+            $image->intrinsic_width = $intrinsicWidth;
+            $image->intrinsic_height = $intrinsicHeight;
         }
 
         $image->origin = $origin;
@@ -166,6 +175,34 @@ class ImageService
         $this->uploadOne($file, $folder, 'public', $name);
 
         return $name;
+    }
+
+    /**
+     * Q4-Etappe 6 · G6-1 (2026-09-10): Original-Dimensionen aus dem
+     * Upload lesen und als Tupel `[width, height]` zurückgeben.
+     * Wird an `intrinsic_width` / `intrinsic_height` am Image
+     * persistiert, damit der Reader die Bildfläche vor dem Laden
+     * reservieren kann (kein Cumulative Layout Shift).
+     *
+     * Fallback `[null, null]`, wenn `getimagesize()` scheitert
+     * (nicht-Bild-Formate, defekte Datei) — der Reader läuft dann
+     * ohne Vorreservierung weiter.
+     *
+     * @return array{0: int|null, 1: int|null}
+     */
+    private function readIntrinsicDimensions(UploadedFile $file): array
+    {
+        $path = $file->getRealPath();
+        if ($path === false) {
+            return [null, null];
+        }
+
+        $info = @getimagesize($path);
+        if ($info === false) {
+            return [null, null];
+        }
+
+        return [(int) $info[0], (int) $info[1]];
     }
 
     /**
