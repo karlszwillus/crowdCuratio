@@ -52,13 +52,26 @@
     </header>
 
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-        {{-- Vorschau --}}
-        <div>
-            <div class="gallery-detail-preview relative flex aspect-video items-center justify-center overflow-hidden rounded-md bg-line-100" data-image-id="{{ $image->id }}">
-                <img src="{{ route('image', $image->image) }}"
-                     alt="{{ $image->alt }}"
-                     class="max-h-full max-w-full object-contain"/>
-            </div>
+        {{-- Vorschau + Beschnitt-Steuerung (Q4-Etappe 6 · G6-3).
+             Der Focus-Picker liefert das Vorschaubild und den
+             Klick-Handler für den Beschnitt-Fokus; der no_crop-
+             Toggle darunter setzt „Nicht beschneiden" (deaktiviert
+             den Fokus-Klick, weil das Bild dann ohnehin komplett
+             gezeigt wird). --}}
+        <div class="space-y-4">
+            @livewire('image-focus-picker', [
+                'imageId' => $image->id,
+                'focusX' => $image->focus_x,
+                'focusY' => $image->focus_y,
+                'noCrop' => (bool) $image->no_crop,
+                'imageUrl' => route('image', $image->image),
+                'imageAlt' => (string) ($image->alt ?? ''),
+            ], key('image-focus-picker-'.$image->id))
+
+            @livewire('image-no-crop-toggle', [
+                'imageId' => $image->id,
+                'value' => (bool) $image->no_crop,
+            ], key('image-no-crop-toggle-'.$image->id))
         </div>
 
         {{-- Vier Felder: Titel · Bildbeschreibung · Urheberrecht · Quelle. --}}
