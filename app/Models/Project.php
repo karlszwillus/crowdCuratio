@@ -239,6 +239,14 @@ class Project extends Model implements HasComments
             'chapters.entries.mediaContent.dataFactBlock.comments',
             // Q4-Etappe 5 / G-Fund-5 (2026-09-09): Credits pro Abschnitt.
             'chapters.entries.credits',
+            // Q4-Etappe 6 · G6-5 (2026-09-10): Kapitel-Titelbild-Fach.
+            // chapter-cover-slot.blade.php greift auf coverImage plus
+            // dessen Gallery-Chain zu (Vorschau, Herkunfts-Eintrag,
+            // Nachweiszeile, „Zum Bild springen"-Anker). Ohne Eager-
+            // Load knallt jeder Aufruf im Strict-Mode.
+            'chapters.coverImage.copyrightImage',
+            'chapters.coverImage.originImage',
+            'chapters.coverImage.gallery.mediaContents.parent',
         ]);
     }
 
