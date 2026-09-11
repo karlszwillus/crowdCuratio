@@ -403,7 +403,7 @@ new class extends Component
                                                 <button
                                                     type="button"
                                                     onclick="window.dispatchEvent(new CustomEvent('history:restore-request', { detail: { revisionId: {{ $revision->id }}, version: {{ $revision->version }}, hasTranslations: {{ $anchorHasTranslations ? 'true' : 'false' }} } }))"
-                                                    class="rounded-md border border-ink-300 bg-canvas-bg px-2 py-1 text-caption text-ink-900 hover:bg-chrome-active"
+                                                    class="rounded-md border border-ink-300 bg-canvas-bg px-2 py-1 text-caption text-ink-900 hover:bg-line-100"
                                                 >
                                                     {{ __('history_restore_button') }}
                                                 </button>

@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Contracts\HasComments;
+use App\Support\CascadesToMediaContent;
 use App\Support\HasRevisions;
 use App\Support\TouchesEntryViaMediaContent;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -37,19 +38,20 @@ use Spatie\Translatable\HasTranslations;
  * @property string $layout
  * @property string|null $title
  * @property string|null $subtitle
+ * @property string|null $description
  * @property array<int, array{header: array<string, string>}>|null $columns
  * @property array<int, array<string, mixed>>|null $rows
  */
 class DataFactBlock extends Model implements HasComments
 {
-    use HasFactory, HasRevisions, HasTranslations, LogsActivity, SoftDeletes, TouchesEntryViaMediaContent;
+    use CascadesToMediaContent, HasFactory, HasRevisions, HasTranslations, LogsActivity, SoftDeletes, TouchesEntryViaMediaContent;
 
     protected $table = 'data_fact_blocks';
 
-    protected $fillable = ['layout', 'title', 'subtitle', 'columns', 'rows'];
+    protected $fillable = ['layout', 'title', 'subtitle', 'description', 'columns', 'rows'];
 
     /** @var list<string> */
-    public $translatable = ['title', 'subtitle'];
+    public $translatable = ['title', 'subtitle', 'description'];
 
     protected function casts(): array
     {

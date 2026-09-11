@@ -35,6 +35,7 @@ use Spatie\Translatable\HasTranslations;
  * @property string|null $title
  * @property string|null $holding
  * @property string|null $signature
+ * @property string|null $license
  * @property string $type
  * @property string|null $kind
  * @property bool $is_translated
@@ -58,12 +59,25 @@ class Source extends Model
         'title',
         'holding',
         'signature',
+        'license',
         'type',
         'kind',
         'is_translated',
     ];
 
     protected $dates = ['deleted_at'];
+
+    /**
+     * Q4-Etappe 7 · E7-1 (2026-09-11): Fest verankerte Sorten für
+     * die Quellen-Klassifikation. Wird im Nachweis-Menü, in der
+     * Quellenverwaltung und im Editor als Filter genutzt.
+     *
+     * @return array<int, string>
+     */
+    public static function kinds(): array
+    {
+        return ['person', 'institution', 'plattform', 'lizenz'];
+    }
 
     public $translatable = ['name'];
 

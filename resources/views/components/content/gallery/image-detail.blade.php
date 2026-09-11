@@ -29,9 +29,31 @@
             <x-icon name="chevron-left" size="4"/>
             <span>{{ __('gallery_back_to_grid') }}</span>
         </button>
-        <span class="text-caption text-ink-500">
-            {{ __('gallery_image_n_of_m', ['n' => $position, 'm' => $total]) }}
-        </span>
+        {{-- Karl 2026-09-11 (E7-6): Pfeile am Zaehler — durch alle
+             Bilder blaettern, ohne zurueck ins Grid. Prev/Next feuert
+             `stepDetail(direction)` am umschliessenden x-data; Ränder
+             werden per :disabled visualisiert. --}}
+        <div class="flex items-center gap-1">
+            <button type="button"
+                    @click="stepDetail(-1)"
+                    @if ($position <= 1) disabled @endif
+                    title="{{ __('gallery_image_prev') }}"
+                    class="inline-flex size-8 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                <span class="sr-only">{{ __('gallery_image_prev') }}</span>
+                <x-icon name="chevron-left" size="4"/>
+            </button>
+            <span class="text-caption text-ink-500 min-w-[6rem] text-center">
+                {{ __('gallery_image_n_of_m', ['n' => $position, 'm' => $total]) }}
+            </span>
+            <button type="button"
+                    @click="stepDetail(1)"
+                    @if ($position >= $total) disabled @endif
+                    title="{{ __('gallery_image_next') }}"
+                    class="inline-flex size-8 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900 disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                <span class="sr-only">{{ __('gallery_image_next') }}</span>
+                <x-icon name="chevron-right" size="4"/>
+            </button>
+        </div>
         <div class="flex items-center gap-1">
             {{-- A7-Followup (2026-08-21): Verlauf-Trigger fuer
                  die Bild-Metadaten (alt, description, origin,

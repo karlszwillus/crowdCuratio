@@ -23,6 +23,7 @@ If not, see <https://www.gnu.org/licenses/>.
 namespace App\Models;
 
 use App\Contracts\HasComments;
+use App\Support\CascadesToMediaContent;
 use App\Support\HasRevisions;
 use App\Support\TouchesEntryViaMediaContent;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -45,7 +46,7 @@ use Spatie\Translatable\HasTranslations;
  */
 class Text extends Model implements HasComments
 {
-    use HasFactory, HasRevisions, HasTranslations, LogsActivity, SoftDeletes, TouchesEntryViaMediaContent;
+    use CascadesToMediaContent, HasFactory, HasRevisions, HasTranslations, LogsActivity, SoftDeletes, TouchesEntryViaMediaContent;
 
     /**
      * The attributes that are mass assignable.

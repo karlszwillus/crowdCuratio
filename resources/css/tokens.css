@@ -51,6 +51,19 @@
   --color-paper-50: #f4f5f6; /* Canvas-Untergrund */
   --color-paper-0:  #ffffff; /* Karten-Flächen */
 
+  /* Q4-Etappe 7 · E7-2 (2026-09-11): Abschnitts-Bögen im Editor.
+   * Zwei warme Papiertöne, deutlich sichtbar auf dem kühlen
+   * Canvas (#f4f5f6), zueinander aber nur um ~3 % versetzt —
+   * der Wechsel ist Komfort, nicht Information; Kapitel-/
+   * Abschnitts-Chip bleibt die verbindliche Auskunft. Bogen
+   * ohne Rahmen, ohne Radien, ohne Schatten (Designer-Nachtrag III).
+   * Karl-Feedback 2026-09-11 · Runde 3: die erste subtile Version
+   * kam nur nicht durch, weil der npm-Build vergessen wurde. Mit
+   * der Layout-Trennung (Bogenabstand, Einrückung) darf der Ton
+   * so schwach sein wie möglich. */
+  --color-sheet-a: #f9f7f2;
+  --color-sheet-b: #f5f2ea;
+
   /* Neutrale Skala — Text auf Dunkel-Chrome (`--chrome-bg #1b2330`). */
   --color-on-dark-100: #f4f5f7; /* Primärer Text auf Dunkel — 15:1 */
   --color-on-dark-300: #b0b6be; /* Muted auf Dunkel — AA, 6.8:1 */

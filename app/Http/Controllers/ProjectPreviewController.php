@@ -133,6 +133,81 @@ class ProjectPreviewController extends Controller
     }
 
     /**
+     * Q4-Etappe 7 · E7-6 / Etappe-6-Rest (2026-09-11): Übersicht aller
+     * Abbildungen des Projekts, gruppiert nach Kapitel / Abschnitt.
+     * Rail-Fußlink „Alle Abbildungen" aus dem Multi-Page-Reader zeigt
+     * hierhin.
+     */
+    public function previewAllImages(Request $request): View
+    {
+        $project = Project::withPreviewTree()->findOrFail($request['project']);
+        $this->authorize('view', $project);
+
+        return view('preview.all-images', compact('project'));
+    }
+
+    /**
+     * Q4-Etappe 7 · Etappe-6-Rest (2026-09-11): Bildnachweise-Sammel-
+     * seite — bisher zeigte der Fußzeilen-Link auf `#bildnachweise`
+     * ins Nichts. Sammelt Copyright/Origin-Angaben projektweit.
+     */
+    public function previewCredits(Request $request): View
+    {
+        $project = Project::withPreviewTree()->findOrFail($request['project']);
+        $this->authorize('view', $project);
+
+        return view('preview.credits', compact('project'));
+    }
+
+    /**
+     * Q4-Etappe 7 · Etappe-6-Rest (2026-09-11): Barrierefreiheits-
+     * erklaerung — statische Seite, damit der Fußzeilen-Link
+     * `#barrierefreiheit` ein echtes Ziel hat.
+     */
+    public function previewA11y(Request $request): View
+    {
+        $project = Project::withPreviewTree()->findOrFail($request['project']);
+        $this->authorize('view', $project);
+
+        return view('preview.a11y', compact('project'));
+    }
+
+    /**
+     * Q4-Etappe 7 · E7-6 / Etappe-6-Rest (2026-09-11): PDF-Ausgabe für
+     * genau ein Kapitel. Rail-Fußlink „Kapitel als PDF" aus dem
+     * Multi-Page-Reader zeigt hierhin. Rendert dieselbe PDF-Pipeline
+     * wie das Gesamtprojekt, aber mit einer auf ein Kapitel gefilterten
+     * Projekt-Instanz.
+     */
+    public function downloadChapterPdf(Request $request, int $chapter): void
+    {
+        $project = Project::withPreviewTree()->findOrFail($request['project']);
+        $this->authorize('view', $project);
+
+        // Chapters-Collection auf das gewünschte Kapitel reduzieren,
+        // damit das bestehende PDF-Layout ohne Änderungen weiterlaufen
+        // kann.
+        $project->setRelation(
+            'chapters',
+            $project->chapters->where('id', $chapter)->values(),
+        );
+
+        $parameters = [
+            'backgroundSecond' => 'hintergrundgrau',
+            'pdf' => 1,
+        ];
+
+        $html = view('preview.pdf.layout', compact('project', 'parameters'))->render();
+
+        $options = new Options;
+        $options->setChroot(['/var/www/html/public/']);
+        $dompdf = new Dompdf($options);
+        $dompdf->loadHtml($html);
+        $dompdf->render();
+        $dompdf->stream();
+    }
+
+    /**
      * Generate PDF.
      */
     public function downloadPreview(Request $request): void

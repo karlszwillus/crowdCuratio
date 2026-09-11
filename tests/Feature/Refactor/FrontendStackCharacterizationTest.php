@@ -92,9 +92,17 @@ it('project edit view renders chapter card and add-chapter button for owner', fu
     $response->assertSeeText('Neues Kapitel');
 });
 
-it('image upload modal renders mandatory copyright and source fields', function () {
+it('legacy image upload modal is no longer rendered', function () {
     /** @var TestCase $this */
     /** @var User $owner */
+    // Q4-Etappe 7 (2026-09-11, Karl-Feedback): Der alte
+    // `contents.image`-Modal-Flow (Bild-hinzufuegen-Button →
+    // Bootstrap-3-Modal mit hidden `entryId`/`galleryId`) ist
+    // entfallen. Bild-Upload laeuft jetzt ausschliesslich ueber die
+    // Drop-Zone im Gallery-Block (Drag&Drop + Datei-Waehler).
+    // Der Test dokumentiert den neuen Zustand — das Modal darf nicht
+    // mehr im Editor-Markup auftauchen; ein Wiedereinbau kaeme
+    // hierueber ans Licht.
     $owner = User::factory()->create();
     $owner->assignRole('Editor');
     $project = makeProject($owner);
@@ -104,12 +112,11 @@ it('image upload modal renders mandatory copyright and source fields', function 
     $response = $this->actingAs($owner)->get("/projects/{$project->id}/edit");
 
     $response->assertOk();
-    // Pflichtfeld-Markierung — Sternchen-Konvention. Steht als
-    // placeholder="…"-Attribut, daher assertSee statt assertSeeText.
-    $response->assertSee('* (Pflichtfeld)', false);
-    // Modal-Form für Bild-Upload — entryId und galleryId als hidden inputs.
-    $response->assertSee('name="entryId"', false);
-    $response->assertSee('name="galleryId"', false);
+    // Weder das alte Formular-Modal noch seine typischen Merkmale
+    // (Pflichtfeld-Marker, hidden entryId/galleryId) sind noch da.
+    $response->assertDontSee('* (Pflichtfeld)', false);
+    $response->assertDontSee('name="entryId"', false);
+    $response->assertDontSee('name="galleryId"', false);
 });
 
 // Preview-Layout-Charakterisierung bewusst nicht hier — die Preview-

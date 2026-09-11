@@ -733,6 +733,55 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Q4-Etappe 7 · Editor-Politur nach Design-Review** (2026-09-11).
+  Umsetzung der 25 Designer-Befunde aus „REVIEW CMS Oberfläche" plus
+  der drei Etappe-6-Reste. Das CMS ist von einer heterogenen
+  Bootstrap-3-Restfläche auf ein einheitliches Chrome-Modell umgezogen:
+  neue Blade-Komponenten `<x-projects.chrome>`, `<x-projects.editor-actions>`,
+  `<x-projects.save-state>`, `<x-projects.edit-save-state>` und
+  `<x-projects.export-modal>` tragen jetzt auf jedem Editor-Screen
+  (Bearbeiten, Metadaten, Übersetzen, Quellen, Berechtigungen) dieselbe
+  Reiterleiste, denselben zentralen Save-Status und denselben Publish-
+  Trigger. Der Struktur-Baum ist read-only auf allen Nicht-Bearbeiten-
+  Screens sichtbar, damit die Layout-Silhouette konsistent bleibt.
+  Metadaten speichern via Alpine-Store `metadataAutosave` mit 1,5-s-
+  Debounce (`ProjectController::update` antwortet auf `wantsJson()`
+  mit JSON-Response inklusive `savedAtLabel`), Quill-Inhalte werden
+  vor jedem Payload synchronisiert; File-Uploads laufen weiter über den
+  klassischen Form-Submit-Weg. Die Editor-Farbwahl ist auf drei
+  kuratierte Presets pro Charakter reduziert (mit AA-Kontrastwerten),
+  daneben bleibt ein freies Hex/Color-Picker-Feld als Reserve; der
+  Charakter-Default wird beim Wechsel automatisch neu vorgewählt.
+  Neuer `CascadesToMediaContent`-Trait an Text/Audiovisual/Gallery/
+  QuoteBlock/DataFactBlock schließt beim SoftDelete/Restore die
+  zugehörigen `media_content`-Pivots mit ab; eine begleitende
+  Cleanup-Migration soft-löscht bereits verwaiste Pivots (behebt die
+  „doppelte Add-Bar"-Sicht). Der Daten-und-Fakten-Block erhält ein
+  optionales, translatable Rich-Text-Beschreibungsfeld, der Source-
+  Picker bekommt eine „Neue Quelle anlegen"-Aktion + Kopfzeile
+  „Bereits im Projekt verwendet"; die Quellenverwaltung listet
+  Referenzen als klickbare Sprungliste. Der Multi-Page-Reader bekommt
+  Rail-Fußlinks zu neuen Sichten für alle Abbildungen und für
+  Kapitel-PDFs (neue Routen `preview.all_images`, `preview.chapter_pdf`,
+  `preview.credits`, `preview.a11y`); die Reader-Fußzeile führt jetzt
+  auf echte Bildnachweise- und Barrierefreiheitsseiten statt in tote
+  Anker. Nebenaufräumen: Verlaufs-Icon nutzt „gefüllt vs. leer" statt
+  eines roten Zahl-Badges, Rail-Items zeigen einen sofortigen
+  data-tip-Popover, gepunktete Andeutungslinie plus blasses Plus für
+  Zwischen-Add-Bars, konsolidierte „Alle Änderungen gespeichert"-
+  Anzeige in der Chrome-Bar (per-Block-Timestamps entfallen),
+  Bildunterschriften-Grid gedreht (kein buchstabenweiser Umbruch mehr
+  bei langen Credit-Namen), `--accent`-Override im Reader mit
+  korrekter Selektor-Spezifität und WCAG-Luminance-gestütztem
+  `--accent-on`. Der alte „Bild hinzufügen"-Button plus die
+  `contents.image`-Modal-Kette sind entfallen — Bild-Upload läuft
+  ausschließlich über die Drop-Zone im Gallery-Block. Migrations
+  in Reihenfolge: `add_license_to_sources_table`,
+  `add_description_to_data_fact_blocks_table`,
+  `cleanup_orphan_media_content_pivots` (datenverändernd —
+  vor Prod-Deploy Backup und Staging-Verifikation). Details in
+  `.werkbank/PLANS/Q4-ETAPPE7-BILANZ.md`.
+
 - **Q4-Etappe 6 · G7 · PDF-Neubau** (2026-09-10). Der PDF-
   Renderer im Preview-Export ist grundlegend reduziert und
   ersetzt den bisherigen ~1.100 LoC starken Monolithen

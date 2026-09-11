@@ -528,6 +528,20 @@ Route::group(
             'preview'
         );
 
+        // Q4-Etappe 7 · E7-6 / Etappe-6-Rest (2026-09-11): Reader-Rail
+        // Fußlinks. „Alle Abbildungen" listet die Bilder des Projekts,
+        // „Kapitel als PDF" rendert eine PDF-Version genau eines
+        // Kapitels über die bestehende dompdf-Pipeline.
+        Route::get('/preview/all-images', [ProjectPreviewController::class, 'previewAllImages'])
+            ->name('preview.all_images');
+        Route::get('/preview/chapters/{chapter}/pdf', [ProjectPreviewController::class, 'downloadChapterPdf'])
+            ->name('preview.chapter_pdf');
+        // Fußzeile-Sammelspalte-Ziele fuer Reader-Ausgabe (Etappe-6-Rest).
+        Route::get('/preview/credits', [ProjectPreviewController::class, 'previewCredits'])
+            ->name('preview.credits');
+        Route::get('/preview/accessibility', [ProjectPreviewController::class, 'previewA11y'])
+            ->name('preview.a11y');
+
         // NF-CODE-006: tote Route `image.preview` (Default-Disk `local`,
         // Pfad `img/`) entfernt. Phase-0-Grep über resources/ und app/
         // zeigt keine Caller — weder im Blade noch im Controller. Wenn

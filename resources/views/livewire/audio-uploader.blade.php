@@ -191,7 +191,7 @@ new class extends Component
     </div>
 
     <div class="flex items-center gap-2">
-        <label class="cursor-pointer rounded-md border border-ink-300 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-chrome-active focus-within:outline focus-within:outline-2 focus-within:outline-offset-1 focus-within:outline-primary">
+        <label class="cursor-pointer rounded-md border border-ink-300 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-line-100 focus-within:outline focus-within:outline-2 focus-within:outline-offset-1 focus-within:outline-primary">
             {{ $hasFile ? __('replace_audio') : __('upload_file') }}
             <input
                 type="file"

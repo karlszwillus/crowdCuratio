@@ -70,6 +70,7 @@
                             rules="nullable|string|max:255"
                             :label="__('title')"
                             :variant="'heading'"
+                            :placeholder="__('gallery_title_placeholder')"
                             :key="'gallery-title-'.$item->gallery->id"
                         />
                     </div>
@@ -79,21 +80,17 @@
                             field="subtitle"
                             rules="nullable|string|max:255"
                             :variant="'subtitle'"
+                            :placeholder="__('gallery_subtitle_placeholder')"
                             :key="'gallery-subtitle-'.$item->gallery->id"
                         />
                     </div>
-                    {{-- Phase 5y.1: der Rich-Text-Editor bleibt
-                         fuer Editor:innen dauerhaft anzeigbar
-                         (er ist die Bearbeitungsflaeche); dort
-                         verursacht seine Mindesthoehe keine
-                         Leerflaeche mehr, weil die Aktionen jetzt
-                         im Kopf liegen und nicht mehr darunter. --}}
                     <div data-history-field="description">
                         <livewire:rich-text-editor
                             :model="$item->gallery"
                             field="description"
                             rules="nullable|string"
                             :label="__('gallery_description')"
+                            :placeholder="__('gallery_description_placeholder')"
                             :key="'gallery-description-'.$item->gallery->id"
                         />
                     </div>
@@ -447,6 +444,21 @@
                         setTimeout(() => this.focusFirstField(imageId), 240);
                     });
                 },
+                // Karl 2026-09-11 (E7-6): Prev/Next im Detail-Modus.
+                // Detail-Rows tragen data-image-id; wir lesen die
+                // Reihenfolge aus dem DOM, finden das aktuelle Bild und
+                // setzen editingImageId auf den Nachbarn. Kein Wrap.
+                stepDetail(direction) {
+                    if (this.editingImageId === null) return;
+                    const rows = Array.from(this.$refs.body.querySelectorAll('.gallery-detail-row'));
+                    const ids = rows.map(r => Number(r.dataset.imageId));
+                    const currentIdx = ids.indexOf(this.editingImageId);
+                    if (currentIdx === -1) return;
+                    const nextIdx = currentIdx + direction;
+                    if (nextIdx < 0 || nextIdx >= ids.length) return;
+                    this.editingImageId = ids[nextIdx];
+                    this.$nextTick(() => this.focusFirstField(this.editingImageId));
+                },
                 exitDetail() {
                     if (this.hadEdits) { window.location.reload(); return; }
                     if (this.prefersReducedMotion()) {
@@ -591,18 +603,15 @@
                     </div>
                     <div class="flex flex-wrap items-center gap-3">
                         @can('update', $project)
+                            {{-- Karl 2026-09-11 (Nachtrag): der alte
+                                 „Bild hinzufuegen"-Modal-Button ist
+                                 entfallen — der Upload laeuft ueber
+                                 die Drop-Zone im Kachel-Raster
+                                 (Drag&Drop oder Klick auf „Datei
+                                 waehlen"). Doppelter Weg brachte nur
+                                 Verwirrung und lud die alte Legacy-
+                                 Modal-Kaskade nach. --}}
                             <span class="text-caption text-ink-500">{{ __('gallery_header_order_hint') }}</span>
-                            <button type="button"
-                                    class="addImage inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-caption font-medium text-primary-on hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                                    data-chapter="{{ $chapter->name }}"
-                                    data-entry="{{ $entry->name }}"
-                                    data-id="{{ $item->gallery->id }}"
-                                    data-entryId="{{ $entry->id }}"
-                                    data-toggle="modal"
-                                    data-target="#imageModal">
-                                <x-icon name="plus" size="3"/>
-                                <span>{{ __('gallery_header_add') }}</span>
-                            </button>
                         @endcan
                     </div>
                 </div>

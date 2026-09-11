@@ -118,7 +118,7 @@
         @if ($missing->isEmpty())
             <p class="mt-1 text-caption text-success">✓ {{ __('gallery_status_complete') }}</p>
         @else
-            <p class="mt-1 text-caption text-warning">⚠ {{ __('gallery_status_missing', ['fields' => $missing->implode(', ')]) }}</p>
+            <p class="mt-1 text-caption text-ink-500">{{ __('gallery_status_missing', ['fields' => $missing->implode(', ')]) }}</p>
         @endif
     @endcan
 </div>

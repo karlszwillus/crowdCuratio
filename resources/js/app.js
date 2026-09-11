@@ -112,6 +112,12 @@ import './plyr-init';
 // Counter pro Sektion und der Gesamt-Fortschritt aktualisieren live.
 import './translate-autosave';
 
+// Metadaten-Autosave (Q4-Etappe 7 · E7-4, 2026-09-11): Alpine-Store
+// metadataAutosave — Debounce-Save fuer die Metadaten-Sicht, damit sie
+// dasselbe Speicherverhalten hat wie der Bearbeiten-Screen. Header-
+// Bauteil <x-projects.save-state> liest den Store reaktiv aus.
+import './metadata-autosave';
+
 // Diff-Modus im Editor (Phase 5ab.4): hoert auf `revision-selected`
 // aus dem Verlauf-Panel und rendert den Wort-Level-Diff in die
 // betroffenen Block-Felder. Info-Banner oben, Block-Aktionen gedimmt

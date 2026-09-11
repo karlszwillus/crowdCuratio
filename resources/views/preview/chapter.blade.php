@@ -61,6 +61,23 @@ Erwartet zusätzlich zum Layout: $chapter (Chapter) im Kontext.
                     </li>
                 @endforeach
             </ol>
+
+            {{-- Karl 2026-09-11 (E7-6/Etappe-6-Rest): Rail-Fußlinks
+                 im Multi-Page-Reader — „Alle Abbildungen" listet die
+                 Bilder projektweit, „Kapitel als PDF" rendert genau
+                 das aktuell offene Kapitel als PDF. --}}
+            <ul class="cc-multipage__nav-foot">
+                <li>
+                    <a href="{{ route('preview.all_images', ['project' => $project->id]) }}">
+                        {{ __('reader_all_images_link') }}
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('preview.chapter_pdf', ['project' => $project->id, 'chapter' => $chapter->id]) }}">
+                        {{ __('reader_chapter_pdf_link') }}
+                    </a>
+                </li>
+            </ul>
         </nav>
 
         <div class="cc-multipage__content">

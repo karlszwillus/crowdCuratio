@@ -30,7 +30,17 @@ new class extends Component
 {
     public Project $project;
 
-    public function mount(Project $project, ProjectTreeService $tree): void
+    /**
+     * Q4-Etappe 7 · E7-4 (2026-09-11): Read-Only-Modus fuer Screens,
+     * auf denen der Baum nur zur Orientierung dient (Metadaten,
+     * Uebersetzen, Quellen, Berechtigungen). Der Container wird
+     * gedimmt und klick-inert; Links behalten `href` fuer eine
+     * eventuelle spaetere Navigation, sind aber via `pointer-events-
+     * none` blockiert. `aria-disabled` signalisiert das Screenreadern.
+     */
+    public bool $readonly = false;
+
+    public function mount(Project $project, ProjectTreeService $tree, bool $readonly = false): void
     {
         // Defense-in-Depth: die Volt-Komponente wird heute nur aus
         // dem gegateten ProjectController::edit gerendert, aber ohne
@@ -38,6 +48,8 @@ new class extends Component
         // Bypass. Ein direkter Livewire-Update-Roundtrip wählt sonst
         // beliebige Projekte als Prop.
         Gate::authorize('view', $project);
+
+        $this->readonly = $readonly;
 
         // Tree-Aufbau geht durch den ProjectTreeService (Single Source
         // of Truth, den auch <x-ui.breadcrumb :tree> nutzt). Die
@@ -68,7 +80,11 @@ new class extends Component
 
 <nav
     aria-label="{{ __('project_structure') }}"
-    class="text-body"
+    @class([
+        'text-body',
+        'opacity-60 pointer-events-none select-none' => $readonly,
+    ])
+    @if ($readonly) aria-disabled="true" @endif
     x-data="{
         active: window.location.hash,
         expanded: {},
@@ -81,10 +97,13 @@ new class extends Component
          Sitzt in <x-layout.sidebar-panel> — der Panel-Kopf wird
          dort gerendert; wir liefern hier nur den Content. --}}
 
-    <p class="mb-3 text-mono-caps font-mono uppercase tracking-widest text-ink-500">
+    {{-- Karl 2026-09-11 (E7-6): Projektname ist die primaere Auskunft
+         im Struktur-Panel; von `text-body` (13 px) auf `text-heading`
+         (18 px) angehoben, damit er den Blick zieht. --}}
+    <p class="mb-2 text-mono-caps font-mono uppercase tracking-widest text-ink-500">
         {{ __('structure') }}
     </p>
-    <h2 class="mb-4 text-body font-semibold text-ink-900">
+    <h2 class="mb-5 text-heading font-semibold leading-tight text-ink-900">
         {{ $project->name }}
     </h2>
 
@@ -116,11 +135,14 @@ new class extends Component
                          mit der Nummer + der aktiven Left-Kante. --}}
                     <a
                         href="#anchor_Chapter_{{ $chapter->id }}"
-                        class="relative flex flex-1 items-center justify-between gap-2 rounded-md px-2 py-1 text-body font-semibold text-ink-900 hover:bg-line-100"
+                        class="relative flex flex-1 items-start justify-between gap-2 rounded-md px-2 py-1 text-body font-semibold text-ink-900 hover:bg-line-100"
                         :aria-current="active === '#anchor_Chapter_{{ $chapter->id }}' ? 'true' : null"
                         :class="active === '#anchor_Chapter_{{ $chapter->id }}' && 'bg-tint-bg text-tint-text before:absolute before:left-[-6px] before:top-1 before:bottom-1 before:w-[3px] before:rounded before:bg-brand-bar'"
                     >
-                        <span class="min-w-0 truncate">
+                        {{-- Karl 2026-09-11 (E7-6): lange Titel bleiben
+                             ganz stehen und brechen zweizeilig um — statt
+                             mit Ellipsis am Rand abgeschnitten zu werden. --}}
+                        <span class="min-w-0 break-words">
                             <span class="text-ink-500">{{ $chapterIndex + 1 }} ·</span>
                             {{ $chapter->name }}
                         </span>
@@ -156,11 +178,11 @@ new class extends Component
                             <li>
                                 <a
                                     href="#anchor_Entry_{{ $entry->id }}"
-                                    class="relative flex items-center justify-between gap-2 rounded-md px-2 py-1 text-body text-ink-700 hover:bg-line-100"
+                                    class="relative flex items-start justify-between gap-2 rounded-md px-2 py-1 text-body text-ink-700 hover:bg-line-100"
                                     :aria-current="active === '#anchor_Entry_{{ $entry->id }}' ? 'true' : null"
                                     :class="active === '#anchor_Entry_{{ $entry->id }}' && 'bg-tint-bg text-tint-text font-medium before:absolute before:left-[-6px] before:top-1 before:bottom-1 before:w-[3px] before:rounded before:bg-brand-bar'"
                                 >
-                                    <span class="min-w-0 truncate">{{ $entry->name }}</span>
+                                    <span class="min-w-0 break-words">{{ $entry->name }}</span>
                                     @php
                                         // Sichtbarkeits-Regel wie fuer den Chapter-Zaehler.
                                         $entryOpen = Auth::user()?->can('comment', $project)

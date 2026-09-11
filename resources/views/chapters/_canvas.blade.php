@@ -17,15 +17,27 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
 --}}
 
     @if(isset($data) /**&& count($data) > 0*/)
-        <div class="row project mb-4">
-            <div class="col-sm-2">
-                @if($project->logo) <img src="{{route('image', $project->logo)}}" alt="{{$project->logo}}" class="logo"> @endif
+        {{-- Q4-Etappe 7 · E7-6 (2026-09-11): Projekt-Kopf im Editor —
+             Titel/Beschreibung sind das Wichtigste, das Logo eine
+             optionale Kachel. Vorher Bootstrap-Grid `col-sm-2/col-sm-9`
+             mit ungestyltem H1 und 13-px-Description; jetzt Flex mit
+             Titel in text-title (24 px), Beschreibung in Body-Farbe
+             und einem kompakten 48-px-Logo-Miniaturbild. --}}
+        <header class="mb-6 flex items-start gap-4">
+            @if($project->logo)
+                <img
+                    src="{{ route('image', $project->logo) }}"
+                    alt=""
+                    class="size-12 shrink-0 rounded-md object-cover"
+                />
+            @endif
+            <div class="min-w-0 flex-1">
+                <h1 class="text-title font-semibold text-ink-900">{{ $project->name }}</h1>
+                @if (! empty(trim(strip_tags((string) $project->description))))
+                    <div class="mt-1 text-body text-ink-700">{!! $project->description !!}</div>
+                @endif
             </div>
-            <div class="col-sm-9">
-                <h1>{{$project->name}}</h1>
-                <p>{!! $project->description !!}</p>
-            </div>
-        </div>
+        </header>
         <ul class="list-group ui-sortable-chapter sortable_list_chapter connectedSortableChapter" id="groupsList" data-reorder-element="chapter" data-reorder-url="{{ route('chapter.drag') }}" data-reorder-project="{{ $project->id }}">
             @foreach($data->chapters as $key => $chapter)
                 @php
@@ -35,7 +47,13 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                     // Kapitel liegt der Tastatur-/Maus-Fokus (focus-within).
                     $chapterEntryCount = isset($chapter->entries) ? count($chapter->entries) : 0;
                 @endphp
-                <li class="chapter group border-l-[3px] border-line-200 focus-within:border-brand-bar pl-4 transition-colors" data-chapter="{{$chapter->id}}" data-project="{{$project->id}}" data-history-subject="Chapter:{{$chapter->id}}" id="{{$chapter->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
+                {{-- Q4-Etappe 7 · E7-2 (2026-09-11): 96 px Abstand vor
+                     jedem neuen Kapitel — Karl-Feedback: die Kapitel-
+                     Grenze ist strukturell die stärkste im Editor,
+                     dementsprechend braucht sie den größten
+                     Vertikalspace. mt-24 greift ab dem zweiten Kapitel,
+                     das erste bleibt bündig am Projekt-Header. --}}
+                <li class="chapter group border-l-[3px] border-line-200 focus-within:border-brand-bar pl-4 transition-colors [&:not(:first-child)]:mt-24" data-chapter="{{$chapter->id}}" data-project="{{$project->id}}" data-history-subject="Chapter:{{$chapter->id}}" id="{{$chapter->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
                     {{-- Kapitel = Klammer (Design v6 § 2, in 5e-Vokabular).
                          Rail links über die ganze Gruppe; Titel + Untertitel
                          + Description sitzen offen auf dem Canvas. Der
@@ -56,6 +74,12 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                                          Diff-Modus die Diff-HTML pro Feld einhaengen kann.
                                          Wrapper liegen um die Inline-Editors, weil die
                                          eigentliche Feld-DOM ins Livewire-Snapshot laeuft. --}}
+                                    {{-- Q4-Etappe 7 · E7-2 (2026-09-11): die Feld-
+                                         Beschreibung wandert in den Placeholder
+                                         des Feldes — der zeigt sich nur bei
+                                         leerem Feld und verschwindet beim ersten
+                                         Zeichen. Kein Text-Overhead bei gefüllten
+                                         Feldern (Karl-Feedback zur Textmenge). --}}
                                     <div data-history-field="name">
                                         <livewire:inline-editor
                                             :model="$chapter"
@@ -63,6 +87,7 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                                             rules="nullable|string|max:255"
                                             :label="__('chapter_title')"
                                             :variant="'title'"
+                                            :placeholder="__('chapter_title_placeholder')"
                                             :key="'chapter-name-'.$chapter->id"
                                         />
                                     </div>
@@ -73,6 +98,7 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                                             rules="nullable|string|max:255"
                                             :label="__('chapter_subtitle')"
                                             :variant="'subtitle'"
+                                            :placeholder="__('chapter_subtitle_placeholder')"
                                             :key="'chapter-subtitle-'.$chapter->id"
                                         />
                                     </div>
@@ -157,15 +183,14 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                             </div>
                         </header>
 
-                        {{-- Kapitel-Beschreibung als Rich-Text-Editor,
-                             direkt unter dem Section-Header. --}}
                         @can('update', $project)
-                            <div data-history-field="description">
+                            <div class="mt-4" data-history-field="description">
                                 <livewire:rich-text-editor
                                     :model="$chapter"
                                     field="description"
                                     rules="nullable|string"
                                     :label="__('chapter_description')"
+                                    :placeholder="__('chapter_description_placeholder')"
                                     :key="'chapter-description-'.$chapter->id"
                                 />
                             </div>
@@ -184,23 +209,30 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                             <x-content.chapter-cover-slot :chapter="$chapter"/>
                         @endcan
 
-                        {{-- Grosser Vertikalspace zwischen Kapitel-Zone
-                             und den enthaltenen Entry-Karten, damit die
-                             Ebenen visuell nicht in einen 'Kapitel-
-                             Kasten' verschmelzen. Der Space macht klar:
-                             die Karten sitzen IN der Zone. --}}
-                        <div class="h-16" aria-hidden="true"></div>
+                        {{-- Q4-Etappe 7 · E7-2 (2026-09-11): Vertikalspace
+                             zwischen Kapitel-Zone und Bögen reduziert.
+                             Karl-Feedback: 64 px war deutlich mehr als der
+                             Abstand zwischen zwei Bögen; die Bögen selbst
+                             tragen jetzt den warmen Papierton, deshalb
+                             braucht die Kapitel-Zone hier keinen großen
+                             Puffer mehr, um sich abzugrenzen. --}}
+                        <div class="h-6" aria-hidden="true"></div>
                         <div class="collapse in" id="chapter_{{$chapter->id}}" aria-expanded="false">
                             @if(isset($chapter->entries) && count($chapter->entries) >0)
                                 <ul class="list-group ui-sortable-entry sortable_list_entry connectedSortableEntry" id="{{$chapter->id}}" data-reorder-element="entry" data-reorder-url="{{ route('chapter.drag') }}">
                                     @foreach($chapter->entries as $entry)
-                                        <li class="entry group" data-chapter="{{$chapter->id}}" data-entry="{{$entry->id}}" data-history-subject="Entry:{{$entry->id}}" @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
-                                            {{-- Entry als Karte mit Mono-Caps-Label
-                                                 (Handoff v4 Screen 02: „EINTRAG · KAPITEL 2").
-                                                 Bezug zum umschließenden Kapitel steht
-                                                 explizit im Kopf, nicht ueber CSS-Einrueckung. --}}
+                                        {{-- Q4-Etappe 7 · E7-2 (2026-09-11): Abschnitts-Bogen.
+                                             Jeder Entry bekommt einen getönten Papierton als
+                                             Grund, zwei Töne wechseln pro Reihenfolge. Kein
+                                             Rahmen, keine Radien, keine Schatten — der Bogen
+                                             ist Fläche, nicht Kasten (Designer-Nachtrag III). --}}
+                                        <li class="entry group cc-entry-sheet {{ $loop->even ? 'cc-entry-sheet--b' : 'cc-entry-sheet--a' }}"
+                                            data-chapter="{{$chapter->id}}"
+                                            data-entry="{{$entry->id}}"
+                                            data-history-subject="Entry:{{$entry->id}}"
+                                            @can('update', $project) tabindex="0" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown" title="{{ __('reorder_hint') }}" @endcan>
                                             <div id="P-{{$project->id}}-C-{{$chapter->id}}-entry-{{$entry->id}}"
-                                                 class="mb-6 rounded-lg border border-line-200 bg-paper-0 p-6 shadow-subtle">
+                                                 class="px-0">
                                                 {{-- Design v6 § 3 (in 5e-Vokabular): Chip nennt eigene Nummer + Kapitelnamen,
                                                      nicht nur die Elternnummer. Löschen wandert in ⋯-Menü unten. --}}
                                                 <p class="mb-2 inline-flex items-center gap-2 text-mono-caps font-mono uppercase tracking-widest text-ink-500">
@@ -218,6 +250,7 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                                                                     rules="nullable|string|max:255"
                                                                     :label="__('entry_title')"
                                                                     :variant="'heading'"
+                                                                    :placeholder="__('entry_title_placeholder')"
                                                                     :key="'entry-name-'.$entry->id"
                                                                 />
                                                             </div>
@@ -228,6 +261,7 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                                                                     rules="nullable|string|max:255"
                                                                     :label="__('entry_subtitle')"
                                                                     :variant="'subtitle'"
+                                                                    :placeholder="__('entry_subtitle_placeholder')"
                                                                     :key="'entry-subtitle-'.$entry->id"
                                                                 />
                                                             </div>
@@ -307,12 +341,13 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                                                 </header>
 
                                                 @can('update', $project)
-                                                    <div data-history-field="description">
+                                                    <div class="mt-4" data-history-field="description">
                                                         <livewire:rich-text-editor
                                                             :model="$entry"
                                                             field="description"
                                                             rules="nullable|string"
                                                             :label="__('entry_description')"
+                                                            :placeholder="__('entry_description_placeholder')"
                                                             :key="'entry-description-'.$entry->id"
                                                         />
                                                     </div>
@@ -342,7 +377,7 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                                                 @endcan
                                             </div>
                                                     @if(isset($entry->mediaContent) && count($entry->mediaContent) > 0)
-                                                        <div id="entry_{{$entry->id}}">
+                                                        <div id="entry_{{$entry->id}}" class="cc-entry-sheet__content">
                                                             <ul class="list-group  ui-sortable-content sortable_list_content connectedSortableContent" data-entry="{{$entry->id}}" id="{{$entry->id}}" data-reorder-element="content" data-reorder-url="{{ route('chapter.drag') }}">
                                                                 {{-- Q4-Etappe 4 / C1b (2026-09-08): Add-Bar vor dem
                                                                      ersten Content-Block. Sortable ignoriert diese
@@ -361,6 +396,28 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                                                                     </li>
                                                                 @endif
                                                                 @foreach($entry->mediaContent as $item)
+                                                                    {{-- E7-Followup (2026-09-11): Bug-Fix „doppelte
+                                                                         Add-Bar" — wenn ein Block soft-deleted ist,
+                                                                         hält das MediaContent-Pivot weiter die Zeile,
+                                                                         die belongsTo-Relation liefert aber `null`. Das
+                                                                         @isset-Gate in den Block-Views unterdrueckt den
+                                                                         Block, die Add-Bar danach lief weiter — zwei
+                                                                         identische Add-Bars in Folge. Wir prueffen die
+                                                                         Existenz hier zentral und ueberspringen sowohl
+                                                                         Block-Render als auch die nachfolgende Add-Bar,
+                                                                         wenn die Ziel-Relation leer ist. --}}
+                                                                    @php
+                                                                        $blockExists = match ($item->content_type) {
+                                                                            'App\Models\Text' => $item->text !== null,
+                                                                            'App\Models\Audiovisual' => $item->audiovisual !== null,
+                                                                            'App\Models\Gallery' => $item->gallery !== null,
+                                                                            'App\Models\QuoteBlock' => $item->quoteBlock !== null,
+                                                                            'App\Models\DataFactBlock' => $item->dataFactBlock !== null,
+                                                                            default => false,
+                                                                        };
+                                                                    @endphp
+                                                                    @continue(! $blockExists)
+
                                                                     @if ($item->content_type == 'App\Models\Text')
                                                                         <x-content.text-block :item="$item" :entry="$entry" :project="$project" :list-permissions="$listPermissions"/>
                                                                     @endif
@@ -370,15 +427,15 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                                                                     {{-- Phase 4 / E.7b 4a: alte Spalte hatte historisch
                                                                          'App\Models\Image' für Galleries; neue content_type
                                                                          hat 'App\Models\Gallery' (ADR-0022). --}}
-                                                                    @if (isset($item) && $item->content_type == 'App\Models\Gallery')
+                                                                    @if ($item->content_type == 'App\Models\Gallery')
                                                                         <x-content.gallery-block :item="$item" :entry="$entry" :chapter="$chapter" :project="$project" :list-permissions="$listPermissions"/>
                                                                     @endif
                                                                     {{-- Q4-Etappe 4 / F4 (2026-09-08): Zitat-Block. --}}
-                                                                    @if (isset($item) && $item->content_type == 'App\Models\QuoteBlock')
+                                                                    @if ($item->content_type == 'App\Models\QuoteBlock')
                                                                         <x-content.quote-block :item="$item" :entry="$entry" :project="$project" :list-permissions="$listPermissions"/>
                                                                     @endif
                                                                     {{-- Q4-Etappe 4 / G1 (2026-09-08): Daten-und-Fakten-Block. --}}
-                                                                    @if (isset($item) && $item->content_type == 'App\Models\DataFactBlock')
+                                                                    @if ($item->content_type == 'App\Models\DataFactBlock')
                                                                         <x-content.data-facts-block :item="$item" :entry="$entry" :project="$project" :list-permissions="$listPermissions"/>
                                                                     @endif
                                                                     @if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
@@ -445,18 +502,21 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                     </div>
                     @if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
                         @if(isset($chapter->entries) && count($chapter->entries) > 0)
-                            {{-- 5z.2: „+ Neuer Abschnitt" INNERHALB der Klammer — eingerückt,
-                                 paper-50, sekundär (Design v6 § 2 „Zwei Einfüge-Zonen unterscheiden"). --}}
+                            {{-- Q4-Etappe 7 · E7-6 (2026-09-11): Einfuege-Leiste
+                                 „Neuer Abschnitt" in gleicher Gestalt wie
+                                 die Inhalts-Add-Bar — nur die Groesse ist
+                                 die Ebenen-Signatur (py-2.5). --}}
                             <div class="mb-6 ml-4">
                                 <button type="button"
-                                        title="{{__('add_entry')}}"
+                                        title="{{__('add_entry_in', ['chapter' => $chapter->name])}}"
                                         onclick="window.dispatchEvent(new CustomEvent('entry-modal:open', { detail: { chapterId: {{ (int) $chapter->id }}, chapterName: @js((string) $chapter->name) } }))"
-                                        class="add_entry inline-flex w-full items-center justify-center gap-2 rounded-md
-                                               border border-dashed border-line-200 bg-paper-50
-                                               px-4 py-2.5 text-body text-ink-500
-                                               hover:border-ink-400 hover:bg-line-100/40 hover:text-ink-700
+                                        class="add_entry group inline-flex w-full items-center justify-center gap-2 rounded-md
+                                               border border-dashed border-line-300
+                                               px-4 py-2.5 text-caption text-ink-500 transition-colors duration-150
+                                               hover:border-primary/60 hover:bg-primary/5 hover:text-primary
+                                               focus-visible:border-primary focus-visible:text-primary
                                                focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-                                    <x-icon name="plus" size="4"/> <span>{{__('new_entry')}}</span>
+                                    <x-icon name="plus" size="4"/> <span>{{ __('add_entry_in', ['chapter' => $chapter->name]) }}</span>
                                 </button>
                             </div>
                         @endif
@@ -467,10 +527,15 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
     @endif
 
     @if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
-        <a class="add_chapter mt-4 inline-flex w-full items-center justify-center gap-2 rounded-md
-                  border-2 border-dashed border-line-200 bg-transparent
-                  px-4 py-4 text-body text-ink-500
-                  hover:border-ink-400 hover:bg-line-100/40 hover:text-ink-700 cursor-pointer"
+        {{-- Q4-Etappe 7 · E7-6 (2026-09-11): „Neues Kapitel" —
+             gemeinsame Add-Bar-Gestalt, groesste Ebene (py-4). --}}
+        <a class="add_chapter group mt-8 inline-flex w-full items-center justify-center gap-2 rounded-md
+                  border border-dashed border-line-300 bg-transparent
+                  px-4 py-4 text-body text-ink-500 transition-colors duration-150
+                  hover:border-primary/60 hover:bg-primary/5 hover:text-primary
+                  focus-visible:border-primary focus-visible:text-primary
+                  focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary
+                  cursor-pointer"
            data-toggle="modal" data-target="#myModal">
             <x-icon name="plus" size="5"/> <span>{{__('new_chapter')}}</span>
         </a>

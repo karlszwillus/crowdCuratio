@@ -151,34 +151,52 @@ new class extends Component
         @click="toggle()"
         :aria-expanded="open ? 'true' : 'false'"
         aria-haspopup="menu"
-        aria-label="{{ $variant === 'between' ? __('add_bar_between_label') : __('add_bar_trigger') }}"
+        aria-label="{{ $variant === 'between'
+            ? ($entryName !== '' ? __('add_bar_between_in', ['entry' => $entryName]) : __('add_bar_between_label'))
+            : __('add_bar_trigger') }}"
+        {{-- Q4-Etappe 7 · E7-6 (2026-09-11, Karl-Feedback): Eine Gestalt
+             fuer beide Varianten, nur in der Groesse abgestuft. Die
+             Zwischen-Leiste zeigt in Ruhe eine gepunktete Andeutungs-
+             linie plus ein blasses Plus-Icon — genug Indikation, dass
+             hier etwas eingefuegt werden kann, ohne den Editor unruhig
+             zu machen. Beim Hover materialisiert sich der volle
+             Trigger inklusive Text. `empty` (leerer Abschnitt) bleibt
+             gedaempft, aber deutlicher sichtbar. --}}
         @if ($variant === 'between')
             class="group flex w-full items-center justify-center gap-2 rounded-md
-                   border border-dashed border-primary/40
-                   py-1.5 text-caption text-primary/70 transition-colors duration-150
-                   hover:border-primary hover:bg-primary/5 hover:text-primary
+                   border border-dashed border-line-200
+                   py-1 text-caption text-ink-300 transition-all duration-150
+                   hover:border-primary/60 hover:bg-primary/5 hover:text-primary
                    focus-visible:border-primary focus-visible:text-primary
                    focus-visible:outline focus-visible:outline-2
                    focus-visible:outline-offset-2 focus-visible:outline-primary
-                   data-[open]:border-primary data-[open]:text-primary"
+                   data-[open]:border-primary/60 data-[open]:text-primary"
         @else
             class="group flex w-full items-center justify-center gap-2 rounded-md
-                   border border-dashed border-line-200 py-4
-                   text-caption text-ink-500 opacity-60 transition-opacity duration-150
-                   hover:opacity-100 hover:border-ink-400 hover:text-ink-700
-                   focus-visible:opacity-100 focus-visible:outline
-                   focus-visible:outline-2 focus-visible:outline-offset-2
-                   focus-visible:outline-primary
-                   data-[open]:opacity-100"
+                   border border-dashed border-line-300
+                   py-4 text-caption text-ink-500 transition-colors duration-150
+                   hover:border-primary/60 hover:bg-primary/5 hover:text-primary
+                   focus-visible:border-primary focus-visible:text-primary
+                   focus-visible:outline focus-visible:outline-2
+                   focus-visible:outline-offset-2 focus-visible:outline-primary
+                   data-[open]:border-primary/60 data-[open]:text-primary"
         @endif
         :data-open="open ? 'true' : null"
     >
         <x-icon name="plus" size="4"/>
-        <span>
-            {{ $variant === 'between' ? __('add_bar_between_label') : __('add_bar_trigger') }}
+        {{-- Karl 2026-09-11 (E7-6): in Ruhe zeigt die Zwischen-Leiste
+             nur das Plus (blass) + gepunktete Linie; der Text ist
+             hover-only, sonst wuerde die Leiste doch wieder immer
+             „zumachen" wirken. Bei `empty` bleibt der Text sichtbar. --}}
+        <span @class([
+            'hidden group-hover:inline group-focus-visible:inline group-data-[open]:inline' => $variant === 'between',
+        ])>
+            {{ $variant === 'between'
+                ? ($entryName !== '' ? __('add_bar_between_in', ['entry' => $entryName]) : __('add_bar_between_label'))
+                : __('add_bar_trigger') }}
         </span>
         @if ($variant === 'between')
-            <x-icon name="plus" size="4"/>
+            <x-icon name="plus" size="4" class="hidden group-hover:inline-block group-focus-visible:inline-block group-data-[open]:inline-block"/>
         @endif
     </button>
 

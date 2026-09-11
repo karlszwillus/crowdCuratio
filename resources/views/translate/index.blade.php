@@ -19,18 +19,33 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
 @extends('projects.layout')
 
+{{-- Q4-Etappe 7 · E7-4 (2026-09-11): Struktur-Baum als Orientierungs-
+     panel — read-only, damit die Struktur sichtbar bleibt, ohne dass
+     der Nutzer hier bedienen kann. --}}
+@section('log')
+    <livewire:sidebar-tree
+        :project="$project"
+        :readonly="true"
+        :key="'sidebar-tree-readonly-'.$project->id"/>
+@endsection
+
 @section('content')
 
     {{-- 5aa.3 § 4 in 5e-Vokabular: Struktur-Baum bleibt (im Layout-Sidebar),
          Kopfleiste mit Sprachpaar-Wähler und Filter, Zwei-Spalten-Tabelle
-         mit Chips wie 13A, Fortschritts-Balken im Fuss. --}}
-    <div class="mb-6 flex flex-wrap items-center justify-between gap-4
-                border-b border-line-200 pb-3">
-        <div class="min-w-0 flex-1">
-            <x-ui.breadcrumb :tree="app(App\Services\ProjectTreeService::class)->breadcrumbTree($project)"/>
-        </div>
-        <x-projects.tabs :project="$project" active="translate"/>
-    </div>
+         mit Chips wie 13A, Fortschritts-Balken im Fuss.
+
+         Q4-Etappe 7 · E7-4 (2026-09-11): Kopfzeile jetzt einheitlich
+         via <x-projects.chrome> — dieselbe Reiterleiste, Save-Status
+         und Publish+⋮ wie auf Bearbeiten und Metadaten. --}}
+    <x-projects.chrome :project="$project" active="translate">
+        <x-slot:actions>
+            <x-projects.edit-save-state/>
+            <x-projects.editor-actions :project="$project"/>
+        </x-slot:actions>
+    </x-projects.chrome>
+    {{-- Export-Modal auf Chrome-Geschwister-Ebene. --}}
+    <x-projects.export-modal :project="$project"/>
 
     @if ($message = Session::get('success'))
         <div class="mb-4 rounded-md border border-success-bg bg-success-bg/40 px-4 py-3 text-body text-success">
@@ -42,9 +57,9 @@ If not, see <https://www.gnu.org/licenses/>. -->
         {{-- Kopfzeile: Titel + Sprachpaar-Wähler + Filter + Speicherhinweis. --}}
         <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
             <div>
-                <p class="mb-1 text-mono-caps font-mono uppercase tracking-widest text-ink-500">
-                    {{ __('translate_language_pair_label') }}
-                </p>
+                {{-- Q4-Etappe 7 · E7-4 (2026-09-11): Eyebrow
+                     „SPRACHPAAR" entfaellt (redundant, das
+                     Sprachpaar-Select rechts sagt es besser). --}}
                 <h1 class="text-title font-semibold text-ink-900">
                     <label class="cursor-pointer">
                         {{ __('translate_page_title') }}

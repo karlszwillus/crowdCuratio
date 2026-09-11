@@ -27,6 +27,9 @@ Erwartet: $media (MediaContent mit ->dataFactBlock) im Kontext.
         @if(! empty(trim((string) $block->subtitle)))
             <p style="color:#55504a; margin:0 0 3mm; font-size:9pt;">{{ strip_tags((string) $block->subtitle) }}</p>
         @endif
+        @if(! empty(trim(strip_tags((string) $block->description))))
+            <p style="color:#23201c; margin:0 0 3mm; font-size:9.5pt; line-height:1.4;">{!! nl2br(e(strip_tags((string) $block->description))) !!}</p>
+        @endif
 
         @if($block->isTabellenLayout())
             <table style="width:100%; border-collapse: collapse; font-size: 9pt;">

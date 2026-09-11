@@ -23,6 +23,7 @@ If not, see <https://www.gnu.org/licenses/>.
 namespace App\Models;
 
 use App\Contracts\HasComments;
+use App\Support\CascadesToMediaContent;
 use App\Support\HasRevisions;
 use App\Support\TouchesEntryViaMediaContent;
 use Illuminate\Database\Eloquent\Collection;
@@ -47,7 +48,7 @@ use Spatie\Translatable\HasTranslations;
  */
 class Gallery extends Model implements HasComments
 {
-    use HasFactory, HasRevisions, HasTranslations, LogsActivity, SoftDeletes, TouchesEntryViaMediaContent;
+    use CascadesToMediaContent, HasFactory, HasRevisions, HasTranslations, LogsActivity, SoftDeletes, TouchesEntryViaMediaContent;
 
     /**
      * Override parent boot and Call deleting event

@@ -81,9 +81,19 @@ new class extends Component
      */
     public string $variant = 'default';
 
+    /**
+     * Q4-Etappe 7 · E7-2/3 (2026-09-11): Placeholder-Text. Wird
+     * über die HTML5-`placeholder`-Attribute an <input>/<textarea>
+     * durchgereicht. Zeigt sich nur bei leerem Feld — verschwindet
+     * beim ersten Zeichen. Dient bei Ghost-Inputs (variant title/
+     * heading/subtitle) als Hint, dass an dieser Stelle ein Feld
+     * liegt und was dort erwartet wird.
+     */
+    public string $placeholder = '';
+
     public string $value = '';
 
-    public function mount(Model $model, string $field, string $rules = 'nullable|string', bool $multiline = false, array $options = [], string $label = '', string $variant = 'default'): void
+    public function mount(Model $model, string $field, string $rules = 'nullable|string', bool $multiline = false, array $options = [], string $label = '', string $variant = 'default', string $placeholder = ''): void
     {
         $this->model = $model;
         $this->field = $field;
@@ -92,6 +102,7 @@ new class extends Component
         $this->options = $options;
         $this->variant = $variant;
         $this->label = $label !== '' ? $label : $field;
+        $this->placeholder = $placeholder;
 
         // Aktueller Wert des Feldes für die Anzeige. HasTranslations
         // liefert den Locale-Wert automatisch beim String-Cast.
@@ -175,6 +186,7 @@ new class extends Component
     // ist — Hover ist unauffaellig als Background-Hint.
     $shared = 'appearance-none w-full rounded-md border-0 bg-transparent px-2 py-1 -mx-2 '
             . 'outline-none ring-0 transition-colors '
+            . 'placeholder:text-ink-400 placeholder:font-normal placeholder:italic '
             . 'hover:bg-line-100/60 '
             . 'focus:bg-line-100/60 focus-visible:ring-2 focus-visible:ring-brand-bar/50';
 
@@ -247,6 +259,7 @@ new class extends Component
             wire:model="value"
             @blur="$wire.$commit()"
             aria-label="{{ $label }}"
+            @if ($placeholder !== '') placeholder="{{ $placeholder }}" @endif
             @error('value') aria-invalid="true" aria-describedby="inline-editor-error-{{ $field }}" @enderror
             class="{{ $variantClasses }}"
             rows="3"
@@ -258,6 +271,7 @@ new class extends Component
             wire:model="value"
             @blur="$wire.$commit()"
             aria-label="{{ $label }}"
+            @if ($placeholder !== '') placeholder="{{ $placeholder }}" @endif
             @error('value') aria-invalid="true" aria-describedby="inline-editor-error-{{ $field }}" @enderror
             class="{{ $variantClasses }}"
         />
