@@ -122,7 +122,7 @@ it('Comment: Owner darf auf seinem Project kommentieren', function () {
 
     $this->actingAs($owner);
 
-    $response = $this->post(route('comment.project'), [
+    $response = $this->post(route('comments.project'), [
         'id' => $project->id,
         'comment' => 'Erster Kommentar des Owners',
     ]);
@@ -149,7 +149,7 @@ it('Comment: Eingeladener mit comment-Permission darf kommentieren', function ()
 
     $this->actingAs($invitee);
 
-    $response = $this->post(route('comment.project'), [
+    $response = $this->post(route('comments.project'), [
         'id' => $project->id,
         'comment' => 'Kommentar des Eingeladenen',
     ]);
@@ -367,7 +367,7 @@ it('Comment: Fremder ohne Einladung kriegt 403', function () {
 
     $this->actingAs($stranger);
 
-    $response = $this->post(route('comment.project'), [
+    $response = $this->post(route('comments.project'), [
         'id' => $project->id,
         'comment' => 'Unerlaubter Kommentar',
     ]);
@@ -540,7 +540,7 @@ it('Sweep-III: saveCommentProject blockt Fremde', function () {
 
     $this->actingAs($stranger);
 
-    $response = $this->post(route('comment.project.save', ['id' => $project->id]), [
+    $response = $this->post(route('comments.project.save', ['id' => $project->id]), [
         'btn_submit' => 'Edit',
         'pk' => 1,
         'value' => 'Hijacked',
@@ -572,7 +572,7 @@ it('Sweep-III: setCommentStatusProject blockt Fremde', function () {
 
     $this->actingAs($stranger);
 
-    $response = $this->post(route('comment.project.status'), [
+    $response = $this->post(route('comments.project.status'), [
         'id' => $comment->id,
         'status' => 1,
     ]);

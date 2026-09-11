@@ -225,8 +225,8 @@ Route::group(
         Route::get('/permission/user/{id}/', [ProjectPermissionController::class, 'givePermissionToUser'])->name(
             'permission.project'
         );
-        Route::post('/comment/chapter', [ChapterController::class, 'commentChapter'])->name(
-            'comment.chapter'
+        Route::post('/comments/chapter', [ChapterController::class, 'commentChapter'])->name(
+            'comments.chapter'
         );
         // Throttle greift den Strg+Alt-Pfeil-Spam-Fall: bei jedem
         // Tastatur-Reorder-Klick ein POST plus N Einzel-Updates im
@@ -240,106 +240,106 @@ Route::group(
             'chapter.drag'
         );
         Route::get(
-            '/comment/chapter/{id}/',
+            '/comments/chapter/{id}/',
             [ChapterController::class, 'getChapterComment']
         )->name(
-            'comment.show'
+            'comments.chapter.show'
         );
         Route::post(
-            '/comment/chapter/{id}/save',
+            '/comments/chapter/{id}/save',
             [ChapterController::class, 'saveComment']
         )->name(
-            'comment.save'
+            'comments.chapter.save'
         );
-        Route::post('/comment/entry', [EntryController::class, 'commentEntry'])->name(
-            'comment.entry'
+        Route::post('/comments/entry', [EntryController::class, 'commentEntry'])->name(
+            'comments.entry'
         );
         Route::post(
-            '/comment/chapter/status',
+            '/comments/chapter/status',
             [ChapterController::class, 'setCommentStatusChapter']
         )->name(
-            'comment.chapter.status'
+            'comments.chapter.status'
         );
-        Route::get('/comment/entry/{id}/', [EntryController::class, 'getEntryComment'])->name(
-            'comment.entry.show'
+        Route::get('/comments/entry/{id}/', [EntryController::class, 'getEntryComment'])->name(
+            'comments.entry.show'
         );
         Route::post(
-            '/comment/entry/{id}/save',
+            '/comments/entry/{id}/save',
             [EntryController::class, 'saveCommentEntry']
         )->name(
-            'comment.entry.save'
+            'comments.entry.save'
         );
         Route::post(
-            '/comment/entry/status',
+            '/comments/entry/status',
             [EntryController::class, 'setCommentStatusEntry']
         )->name(
-            'comment.entry.status'
+            'comments.entry.status'
         );
-        Route::post('/comment/text', [ContentCommentController::class, 'commentText'])->name(
-            'comment.text'
+        Route::post('/comments/text', [ContentCommentController::class, 'commentText'])->name(
+            'comments.text'
         );
-        Route::get('/comment/text/{id}/', [ContentCommentController::class, 'getTextComment'])->name(
-            'comment.text.show'
+        Route::get('/comments/text/{id}/', [ContentCommentController::class, 'getTextComment'])->name(
+            'comments.text.show'
         );
         Route::post(
-            '/comment/text/{id}/save',
+            '/comments/text/{id}/save',
             [ContentCommentController::class, 'saveCommentText']
         )->name(
-            'comment.text.save'
+            'comments.text.save'
         );
         Route::post(
-            '/comment/text/status',
+            '/comments/text/status',
             [ContentCommentController::class, 'setCommentStatusText']
         )->name(
-            'comment.text.status'
+            'comments.text.status'
         );
 
         // Q4-Etappe 4 / F1 (2026-09-08): Zitat-Block-Comments —
         // analog zur Text-Kette, alle vier Endpunkte.
-        Route::post('/comment/quote', [ContentCommentController::class, 'commentQuote'])->name('comment.quote');
-        Route::get('/comment/quote/{id}/', [ContentCommentController::class, 'getQuoteComment'])->name('comment.quote.show');
-        Route::post('/comment/quote/{id}/save', [ContentCommentController::class, 'saveCommentQuote'])->name('comment.quote.save');
-        Route::post('/comment/quote/status', [ContentCommentController::class, 'setCommentStatusQuote'])->name('comment.quote.status');
+        Route::post('/comments/quote', [ContentCommentController::class, 'commentQuote'])->name('comments.quote');
+        Route::get('/comments/quote/{id}/', [ContentCommentController::class, 'getQuoteComment'])->name('comments.quote.show');
+        Route::post('/comments/quote/{id}/save', [ContentCommentController::class, 'saveCommentQuote'])->name('comments.quote.save');
+        Route::post('/comments/quote/status', [ContentCommentController::class, 'setCommentStatusQuote'])->name('comments.quote.status');
 
         // Q4-Etappe 4 / G1 (2026-09-08): Daten-und-Fakten-Block-Comments.
-        Route::post('/comment/data-facts', [ContentCommentController::class, 'commentDataFacts'])->name('comment.data-facts');
-        Route::get('/comment/data-facts/{id}/', [ContentCommentController::class, 'getDataFactsComment'])->name('comment.data-facts.show');
-        Route::post('/comment/data-facts/{id}/save', [ContentCommentController::class, 'saveCommentDataFacts'])->name('comment.data-facts.save');
-        Route::post('/comment/data-facts/status', [ContentCommentController::class, 'setCommentStatusDataFacts'])->name('comment.data-facts.status');
+        Route::post('/comments/data-facts', [ContentCommentController::class, 'commentDataFacts'])->name('comments.data_facts');
+        Route::get('/comments/data-facts/{id}/', [ContentCommentController::class, 'getDataFactsComment'])->name('comments.data_facts.show');
+        Route::post('/comments/data-facts/{id}/save', [ContentCommentController::class, 'saveCommentDataFacts'])->name('comments.data_facts.save');
+        Route::post('/comments/data-facts/status', [ContentCommentController::class, 'setCommentStatusDataFacts'])->name('comments.data_facts.status');
         Route::post(
             '/text/reset',
             [TextBlockController::class, 'resetText']
         )->name(
             'text.reset'
         );
-        Route::post('/comment/image', [ContentCommentController::class, 'commentImage'])->name(
-            'comment.image'
+        Route::post('/comments/image', [ContentCommentController::class, 'commentImage'])->name(
+            'comments.image'
         );
-        Route::get('/comment/image/{id}/', [ContentCommentController::class, 'getImageComment'])->name(
-            'comment.image.show'
+        Route::get('/comments/image/{id}/', [ContentCommentController::class, 'getImageComment'])->name(
+            'comments.image.show'
         );
         Route::post(
-            '/comment/image/{id}/save',
+            '/comments/image/{id}/save',
             [ContentCommentController::class, 'saveCommentImage']
         )->name(
-            'comment.image.save'
+            'comments.image.save'
         );
         Route::post(
-            '/comment/image/status',
+            '/comments/image/status',
             [ContentCommentController::class, 'setCommentStatusImage']
         )->name(
-            'comment.image.status'
+            'comments.image.status'
         );
         // Q4-Etappe 2 / I6 (2026-08-27): Kommentar-Endpunkte im
         // ProjectCommentController. Route-Namen bleiben.
-        Route::post('/comment/project', [ProjectCommentController::class, 'commentProject'])->name(
-            'comment.project'
+        Route::post('/comments/project', [ProjectCommentController::class, 'commentProject'])->name(
+            'comments.project'
         );
         Route::get(
-            '/comment/project/{id}/',
+            '/comments/project/{id}/',
             [ProjectCommentController::class, 'getProjectComment']
         )->name(
-            'comment.project.show'
+            'comments.project.show'
         );
         Route::get(
             '/log/text/{id}/',
@@ -360,16 +360,16 @@ Route::group(
             'customizedDelete'
         );
         Route::post(
-            '/comment/project/{id}/save',
+            '/comments/project/{id}/save',
             [ProjectCommentController::class, 'saveCommentProject']
         )->name(
-            'comment.project.save'
+            'comments.project.save'
         );
         Route::post(
-            '/comment/project/status',
+            '/comments/project/status',
             [ProjectCommentController::class, 'setCommentStatusProject']
         )->name(
-            'comment.project.status'
+            'comments.project.status'
         );
         Route::post(
             '/project/permission',
@@ -461,10 +461,10 @@ Route::group(
         Route::redirect('/project/{id}/metadata', '/projects/{id}/metadata', 301);
 
         Route::post(
-            '/comment/{id}/update/{status}',
+            '/comments/{id}/update/{status}',
             [ContentCommentController::class, 'updateCommentStatus']
         )->name(
-            'comment.update.status'
+            'comments.status.update'
         );
 
         Route::post(
@@ -497,25 +497,25 @@ Route::group(
         );
 
         Route::post(
-            '/comment/{id}/audiovisual',
+            '/comments/{id}/audiovisual',
             [AudiovisualController::class, 'saveCommentAudiovisual']
         )->name(
-            'comment.audiovisual.save'
+            'comments.audiovisual.save'
         );
 
-        Route::post('/comment/audiovisual', [AudiovisualController::class, 'commentAudiovisual'])->name(
-            'comment.audiovisual'
+        Route::post('/comments/audiovisual', [AudiovisualController::class, 'commentAudiovisual'])->name(
+            'comments.audiovisual'
         );
 
         Route::post(
-            '/comment/{id}/gallery',
+            '/comments/{id}/gallery',
             [ContentCommentController::class, 'saveCommentGallery']
         )->name(
-            'comment.gallery.save'
+            'comments.gallery.save'
         );
 
-        Route::post('/comment/gallery', [ContentCommentController::class, 'commentGallery'])->name(
-            'comment.gallery'
+        Route::post('/comments/gallery', [ContentCommentController::class, 'commentGallery'])->name(
+            'comments.gallery'
         );
 
         // Q4-Etappe 2 / I6 (2026-08-27): Preview/PDF-Download im
@@ -564,6 +564,13 @@ Route::group(
         Route::get('/preview/legal', [ProjectController::class, 'projectMetadata'])
             ->name('preview.legal');
         Route::redirect('/copyright', '/preview/legal', 301);
+
+        // Q4-Etappe 8 · E3d (2026-09-12, ADR-0030): 301-Redirects fuer
+        // Kommentar-GET-Pfade (Bookmarks). POSTs sind Frontend-only
+        // und werden mit dem Rename hart mitgezogen.
+        foreach (['chapter', 'entry', 'text', 'quote', 'data-facts', 'image', 'project'] as $type) {
+            Route::redirect("/comment/$type/{id}", "/comments/$type/{id}", 301);
+        }
 
     }
 );
