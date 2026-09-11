@@ -44,9 +44,14 @@ padding 16px 18px 12px, rechte Kante 1px chrome-line.
 
 <aside
     aria-label="{{ $ariaLabel }}"
-    class="sticky top-0 z-30 flex h-screen w-[280px] shrink-0 flex-col
+    class="sticky top-0 z-30 flex h-screen w-[320px] shrink-0 flex-col
            overflow-y-auto border-r border-line-200 bg-paper-0"
 >
+    {{-- Karl 2026-09-11 (E7-4/E7-6): Panel-Breite von 280 auf 320 px —
+         lange Kapitel-Titel bleiben zweizeilig lesbar, statt am Rand
+         abgeschnitten zu werden. Titel im Panel-Kopf entsprechend
+         groesser (`text-heading` = 18 px) — er ist die primaere
+         Auskunft im Struktur-Panel. --}}
     @if ($label || $title)
         <header class="border-b border-line-100 px-[18px] pb-3 pt-4">
             @if ($label)
@@ -55,7 +60,7 @@ padding 16px 18px 12px, rechte Kante 1px chrome-line.
                 </p>
             @endif
             @if ($title)
-                <h2 class="mt-1 text-[15px] font-semibold text-ink-900">
+                <h2 class="mt-1 text-heading font-semibold text-ink-900">
                     {{ $title }}
                 </h2>
             @endif

@@ -119,7 +119,7 @@ Textarea `entryDescription` uebertragen. Das bleibt so wie bisher.
 
             <footer class="flex flex-shrink-0 items-center justify-end gap-2 border-t border-line-200 px-4 py-3">
                 <button type="button" @click="closeModal()"
-                        class="rounded-md border border-ink-300 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-chrome-active">
+                        class="rounded-md border border-ink-300 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-line-100">
                     {{ __('cancel') }}
                 </button>
                 <button type="submit" form="{{ /* interne Form ohne id → submit ueber Alpine.$refs.form.submit() */ '' }}"

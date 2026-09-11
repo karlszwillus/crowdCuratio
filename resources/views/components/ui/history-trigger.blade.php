@@ -56,33 +56,30 @@ Props:
 <button
     type="button"
     onclick="window.dispatchEvent(new CustomEvent('history-panel:load-and-open', { detail: { subjectType: @js($subjectType), subjectId: {{ (int) $subjectId }} } }))"
-    class="relative inline-flex items-center justify-center rounded-md p-2 text-ink-600 hover:bg-line-100 hover:text-ink-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    @class([
+        'relative inline-flex items-center justify-center rounded-md p-2',
+        'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
+        // Karl 2026-09-11: „gefuellt vs. leer" statt rotem Zahl-Badge.
+        // Mit Verlauf → voll dunkles Icon, dickerer Stroke, sanfter
+        // Hintergrund-Chip; wirkt „prallend voll".
+        // Ohne Verlauf → sehr blass, duennerer Stroke; wirkt „leer".
+        // WCAG 1.4.1: die sr-only-Ansage nennt den Zustand zusaetzlich.
+        'text-ink-900 bg-line-100 hover:bg-line-200 [&_svg]:stroke-[2.5]' => $indicator,
+        'text-ink-300 hover:bg-line-100 hover:text-ink-900 [&_svg]:stroke-[1.25]' => ! $indicator,
+    ])
     aria-label="{{ $srLabel }}"
     aria-haspopup="dialog"
     aria-controls="history-panel"
     title="{{ $srLabel }}"
 >
-    <x-icon name="history" size="4" />
+    <x-icon name="history" size="4"/>
     @if ($indicator)
-        {{-- Zahl-Badge oben rechts (analog Kommentar-Trigger). Bei
-             unbekannter Zahl faellt es auf einen kleinen Punkt zurueck,
-             damit der Vorher-Kontrakt „Punkt = Historie da" nicht bricht.
-             sr-only-Zusatz nennt den Zustand fuer Screenreader
-             (§ WCAG 1.4.1 „Nicht ausschliesslich Farbe"). --}}
-        @if (is_int($editCount) && $editCount > 0)
-            <span
-                aria-hidden="true"
-                class="absolute -right-1 -top-1 inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-primary px-1 text-caption font-medium text-primary-on ring-2 ring-paper-0"
-            >{{ $editCount }}</span>
-            <span class="sr-only">
-                — {{ __('history_has_changes_count', ['count' => $editCount]) }}
-            </span>
-        @else
-            <span
-                aria-hidden="true"
-                class="absolute right-1.5 top-1.5 size-2 rounded-full bg-primary ring-2 ring-paper-0"
-            ></span>
-            <span class="sr-only">— {{ __('history_has_changes') }}</span>
-        @endif
+        <span class="sr-only">
+            — @if (is_int($editCount) && $editCount > 0)
+                {{ __('history_has_changes_count', ['count' => $editCount]) }}
+            @else
+                {{ __('history_has_changes') }}
+            @endif
+        </span>
     @endif
 </button>

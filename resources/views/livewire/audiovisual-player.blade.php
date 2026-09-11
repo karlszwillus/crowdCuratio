@@ -126,7 +126,7 @@ new class extends Component
                 <div class="flex flex-wrap items-center justify-center gap-2">
                     <a href="{{ $audiovisual->link }}"
                        target="_blank" rel="noopener noreferrer"
-                       class="inline-flex items-center gap-1 rounded-md border border-ink-300 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-chrome-active focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                       class="inline-flex items-center gap-1 rounded-md border border-ink-300 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-line-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
                         <x-icon name="external-link" size="3"/>
                         <span>{{ __('video_link_fallback') }}</span>
                     </a>

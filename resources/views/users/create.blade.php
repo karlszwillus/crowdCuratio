@@ -172,7 +172,7 @@ Route ist `GET /users/create`; Submit auf `POST /users`.
                 </p>
                 <div class="flex gap-2">
                     <a href="{{ route('users.index') }}"
-                       class="rounded-md border border-ink-300 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-chrome-active">
+                       class="rounded-md border border-ink-300 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-line-100">
                         {{ __('cancel') }}
                     </a>
                     <button type="submit"

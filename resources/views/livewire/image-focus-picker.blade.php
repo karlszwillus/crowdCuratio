@@ -121,19 +121,21 @@ new class extends Component
              class="pointer-events-none absolute size-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-primary shadow"
              :style="'left: ' + focusX + '%; top: ' + focusY + '%'"></div>
     </div>
-    <div class="flex items-center justify-between gap-2 text-caption text-ink-500">
-        <span x-show="active && hasFocus" x-cloak>
+    {{-- Karl 2026-09-11 (E7-6): Bei aktivem „Nicht beschneiden" schweigt
+         die Zeile komplett — der Toggle darunter sagt bereits, warum
+         der Fokus gerade wirkungslos ist. Ein zweiter Hinweis hier
+         waere redundant und macht die Zeile unruhig. --}}
+    <div x-show="active" x-cloak
+         class="flex items-center justify-between gap-2 text-caption text-ink-500">
+        <span x-show="hasFocus" x-cloak>
             {{ __('image_focus_picker_hint_set') }}
             (<span x-text="focusX"></span>%, <span x-text="focusY"></span>%)
         </span>
-        <span x-show="active && ! hasFocus" x-cloak>
+        <span x-show="! hasFocus" x-cloak>
             {{ __('image_focus_picker_hint_click') }}
         </span>
-        <span x-show="! active" x-cloak class="text-ink-400">
-            {{ __('image_focus_picker_hint_inactive') }}
-        </span>
         <button type="button"
-                x-show="active && hasFocus"
+                x-show="hasFocus"
                 x-cloak
                 @click="clearFocus()"
                 class="text-caption text-primary underline decoration-dotted underline-offset-2 hover:no-underline">

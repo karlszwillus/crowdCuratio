@@ -56,7 +56,12 @@ Nutzung: `<x-layout.rail :active="'projects'" />` im äußeren
     // Beruecksichtigt eigene + eingeladene Projekte, Status open + in_progress.
     $openCommentCount = \App\Services\CommentCounter::openCountForUser(Auth::user());
 
-    $itemBase = 'group relative flex h-11 w-11 items-center justify-center rounded-md '
+    // Q4-Etappe 7 · E7-6 (2026-09-11): `cc-rail-tip` haengt an das
+    // Rail-Item einen sofortigen Popover rechts, gefuettert aus dem
+    // `data-tip`-Attribut. Ersetzt den langsamen nativen title-Tooltip
+    // als sichtbaren Reveal; `title` bleibt fuer Sekundaernutzer und
+    // A11y-Ketten stehen.
+    $itemBase = 'cc-rail-tip group relative flex h-11 w-11 items-center justify-center rounded-md '
               . 'text-chrome-on-dim hover:bg-chrome-active hover:text-chrome-on '
               . 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 '
               . 'focus-visible:outline-brand-bar';
@@ -93,7 +98,7 @@ Nutzung: `<x-layout.rail :active="'projects'" />` im äußeren
         <a
             href="{{ route('dashboard') }}"
             class="{{ $itemBase }} {{ $active === 'dashboard' ? $itemActive : '' }}"
-            title="{{ __('start') }}"
+            title="{{ __('start') }}" data-tip="{{ __('start') }}"
             @if ($active === 'dashboard') aria-current="page" @endif
         >
             <x-icon name="home" size="5" :decorative="false" :label="__('start')"/>
@@ -102,7 +107,7 @@ Nutzung: `<x-layout.rail :active="'projects'" />` im äußeren
         <a
             href="{{ route('projects.index') }}"
             class="{{ $itemBase }} {{ $active === 'projects' ? $itemActive : '' }}"
-            title="{{ __('projects') }}"
+            title="{{ __('projects') }}" data-tip="{{ __('projects') }}"
             @if ($active === 'projects') aria-current="page" @endif
         >
             <x-icon name="layout-grid" size="5" :decorative="false" :label="__('projects')"/>
@@ -112,7 +117,7 @@ Nutzung: `<x-layout.rail :active="'projects'" />` im äußeren
             <a
                 href="{{ route('users.index') }}"
                 class="{{ $itemBase }} {{ $active === 'users' ? $itemActive : '' }}"
-                title="{{ __('users') }}"
+                title="{{ __('users') }}" data-tip="{{ __('users') }}"
                 @if ($active === 'users') aria-current="page" @endif
             >
                 <x-icon name="users" size="5" :decorative="false" :label="__('users')"/>
@@ -122,7 +127,7 @@ Nutzung: `<x-layout.rail :active="'projects'" />` im äußeren
         <a
             href="{{ route('all.comments') }}"
             class="{{ $itemBase }} {{ $active === 'comments' ? $itemActive : '' }}"
-            title="{{ __('comments') }}{{ $openCommentCount > 0 ? ' · '.$openCommentCount : '' }}"
+            title="{{ __('comments') }}{{ $openCommentCount > 0 ? ' · '.$openCommentCount : '' }}" data-tip="{{ __('comments') }}{{ $openCommentCount > 0 ? ' · '.$openCommentCount : '' }}"
             @if ($active === 'comments') aria-current="page" @endif
         >
             <span class="relative flex">
@@ -141,7 +146,7 @@ Nutzung: `<x-layout.rail :active="'projects'" />` im äußeren
             <a
                 href="{{ route('settings.index') }}"
                 class="{{ $itemBase }} {{ $active === 'settings' ? $itemActive : '' }}"
-                title="{{ __('setting') }}"
+                title="{{ __('setting') }}" data-tip="{{ __('setting') }}"
                 @if ($active === 'settings') aria-current="page" @endif
             >
                 <x-icon name="settings" size="5" :decorative="false" :label="__('setting')"/>
@@ -151,7 +156,7 @@ Nutzung: `<x-layout.rail :active="'projects'" />` im äußeren
             <a
                 href="{{ route('admin.sources.migration') }}"
                 class="{{ $itemBase }} {{ $active === 'sources_migration' ? $itemActive : '' }}"
-                title="{{ __('sources_migration_title') }}"
+                title="{{ __('sources_migration_title') }}" data-tip="{{ __('sources_migration_title') }}"
                 @if ($active === 'sources_migration') aria-current="page" @endif
             >
                 <x-icon name="database" size="5" :decorative="false" :label="__('sources_migration_title')"/>
@@ -199,7 +204,7 @@ Nutzung: `<x-layout.rail :active="'projects'" />` im äußeren
             :aria-pressed="$store.theme.current === 'aktivesMuseum'"
             :aria-label="$store.theme.current === 'aktivesMuseum' ? '{{ __('switch_theme_default') }}' : '{{ __('switch_theme_alt') }}'"
             class="{{ $itemBase }}"
-            title="{{ __('switch_theme') }}"
+            title="{{ __('switch_theme') }}" data-tip="{{ __('switch_theme') }}"
         >
             <span x-show="$store.theme.current === 'aktivesMuseum'" x-cloak class="flex">
                 <x-icon name="sun" size="5"/>
@@ -219,6 +224,8 @@ Nutzung: `<x-layout.rail :active="'projects'" />` im äußeren
                     aria-haspopup="true"
                     :aria-expanded="open"
                     :aria-label="'{{ __('language') }}'"
+                    title="{{ __('language') }}"
+                    data-tip="{{ __('language') }}"
                     class="{{ $itemBase }} text-mono-caps"
                 >
                     {{ mb_strtoupper(App::getLocale()) }}
@@ -257,7 +264,7 @@ Nutzung: `<x-layout.rail :active="'projects'" />` im äußeren
                            focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
                            focus-visible:outline-brand-bar"
                     :aria-label="'{{ Auth::user()->name ?? '' }} {{ Auth::user()->last_name ?? '' }}'"
-                    title="{{ Auth::user()->name ?? '' }} {{ Auth::user()->last_name ?? '' }}"
+                    title="{{ Auth::user()->name ?? '' }} {{ Auth::user()->last_name ?? '' }}" data-tip="{{ Auth::user()->name ?? '' }} {{ Auth::user()->last_name ?? '' }}"
                 >
                     <x-ui.user-avatar size="11"/>
                 </button>

@@ -148,7 +148,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                             @if ($row['trigger']) id="{{ $row['trigger'] }}" @endif
                             data-toggle="modal"
                             data-target="{{ $row['target'] }}"
-                            class="inline-flex items-center gap-1 rounded-md {{ $row['filled'] ? 'border border-line-200 bg-canvas-bg text-ink-900 hover:bg-chrome-active' : 'bg-primary text-primary-on hover:opacity-90' }} px-3 py-1.5 text-caption font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                            class="inline-flex items-center gap-1 rounded-md {{ $row['filled'] ? 'border border-line-200 bg-canvas-bg text-ink-900 hover:bg-line-100' : 'bg-primary text-primary-on hover:opacity-90' }} px-3 py-1.5 text-caption font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                         >
                             <x-icon name="{{ $row['filled'] ? 'pencil' : 'plus' }}" size="3"/>
                             <span>{{ $row['filled'] ? __('settings_edit') : __('settings_create_text') }}</span>

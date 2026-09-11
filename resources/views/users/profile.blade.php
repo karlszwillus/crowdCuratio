@@ -319,7 +319,7 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                                 <span x-show="(removedAvatar || !previewAvatarUrl) && !hasStoredAvatar" x-text="displayInitials"></span>
                             </div>
                             <div class="flex gap-2">
-                                <label class="cursor-pointer rounded-md border border-ink-300 bg-canvas-bg px-3 py-1 text-caption text-ink-900 hover:bg-chrome-active">
+                                <label class="cursor-pointer rounded-md border border-ink-300 bg-canvas-bg px-3 py-1 text-caption text-ink-900 hover:bg-line-100">
                                     <input type="file" name="avatar" accept="image/jpeg,image/png,image/webp"
                                            class="sr-only"
                                            @change="onAvatarPicked($event); dirty()"/>
@@ -402,7 +402,7 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                                             <span class="text-caption text-ink-500">{{ __('profile_initials_suggestions') }}</span>
                                             <template x-for="s in liveInitialsSuggestions" :key="s">
                                                 <button type="button" @click="initials = s; dirty(); liveInitialsBlocked = false"
-                                                        class="rounded-md border border-line-200 bg-canvas-bg px-2 py-0.5 font-mono text-caption text-ink-900 hover:bg-chrome-active"
+                                                        class="rounded-md border border-line-200 bg-canvas-bg px-2 py-0.5 font-mono text-caption text-ink-900 hover:bg-line-100"
                                                         x-text="s"></button>
                                             </template>
                                         </div>
@@ -416,7 +416,7 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                                                     <span class="text-caption text-ink-500">{{ __('profile_initials_suggestions') }}</span>
                                                     @foreach ($suggestions as $suggestion)
                                                         <button type="button" @click="initials = @js($suggestion); dirty()"
-                                                                class="rounded-md border border-line-200 bg-canvas-bg px-2 py-0.5 font-mono text-caption text-ink-900 hover:bg-chrome-active">
+                                                                class="rounded-md border border-line-200 bg-canvas-bg px-2 py-0.5 font-mono text-caption text-ink-900 hover:bg-line-100">
                                                             {{ $suggestion }}
                                                         </button>
                                                     @endforeach
@@ -579,7 +579,7 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                         <div class="flex gap-2">
                             <button type="button" @click="reset()"
                                     :disabled="!isDirty"
-                                    class="rounded-md border border-ink-300 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-chrome-active disabled:opacity-40">
+                                    class="rounded-md border border-ink-300 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-line-100 disabled:opacity-40">
                                 {{ __('profile_discard') }}
                             </button>
                             <button type="submit"
@@ -647,7 +647,7 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                         <p class="text-caption text-ink-500">{{ __('profile_password_session_hint') }}</p>
                         <button type="submit"
                                 :disabled="submitting"
-                                class="rounded-md border border-ink-300 bg-canvas-bg px-4 py-1.5 text-caption font-semibold text-ink-900 hover:bg-chrome-active disabled:opacity-40">
+                                class="rounded-md border border-ink-300 bg-canvas-bg px-4 py-1.5 text-caption font-semibold text-ink-900 hover:bg-line-100 disabled:opacity-40">
                             <span x-show="!submitting">{{ __('profile_password_save') }}</span>
                             <span x-show="submitting" x-cloak>{{ __('profile_password_save') }} …</span>
                         </button>
@@ -690,7 +690,7 @@ und Konto-Loeschen folgen in 5ac.2–5ad.
                     <form method="POST" action="{{ route('profile.cancel_deletion') }}">
                         @csrf
                         <button type="submit"
-                                class="inline-flex items-center rounded-md border border-ink-300 bg-canvas-bg px-4 py-2 text-body text-ink-900 hover:bg-chrome-active">
+                                class="inline-flex items-center rounded-md border border-ink-300 bg-canvas-bg px-4 py-2 text-body text-ink-900 hover:bg-line-100">
                             {{ __('profile_delete_cancel') }}
                         </button>
                     </form>

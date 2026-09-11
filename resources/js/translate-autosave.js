@@ -78,6 +78,12 @@ function updateOverallProgress() {
  * Q3-Politur G1 (2026-08-20) / UX-08: sichtbares Feedback nach
  * erfolgreichem Blur-Save. Ein 1.5-s-Chip neben dem Feld — parallel
  * zur Live-Region-Ansage fuer Screenreader.
+ *
+ * Karl 2026-09-11: Der Chip wird nach dem Fade komplett aus dem DOM
+ * entfernt. Vorher blieb er nur per `opacity: 0` unsichtbar, nahm
+ * aber weiter Platz im Layout ein — nach dem ersten Save war jede
+ * Uebersetzungszeile dauerhaft breiter, die Tabellenstruktur rutschte
+ * jedes Mal nach unten.
  */
 function showSavedChip(input) {
     let chip = input.parentElement?.querySelector('[data-saved-chip]');
@@ -90,8 +96,12 @@ function showSavedChip(input) {
     }
     chip.style.opacity = '1';
     clearTimeout(chip._hideTimer);
+    clearTimeout(chip._removeTimer);
     chip._hideTimer = setTimeout(() => {
         chip.style.opacity = '0';
+        // Erst nach abgelaufener CSS-Fade-Duration (200 ms) aus dem
+        // DOM nehmen, damit der Uebergang zu sehen ist.
+        chip._removeTimer = setTimeout(() => chip.remove(), 250);
     }, 1500);
 }
 

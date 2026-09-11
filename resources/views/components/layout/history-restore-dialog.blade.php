@@ -118,7 +118,7 @@ Der Panel-Button feuert `history:restore-request` mit
                 type="button"
                 @click="closeDialog()"
                 :disabled="busy"
-                class="rounded-md border border-line-300 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-chrome-active disabled:opacity-50"
+                class="rounded-md border border-line-300 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-line-100 disabled:opacity-50"
             >{{ __('cancel') }}</button>
             <button
                 type="button"

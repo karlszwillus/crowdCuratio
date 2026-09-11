@@ -122,8 +122,10 @@
                 @endcan
             </div>
 
-            {{-- 5z.10 § 8.3: Einheitliche Fusszeile — Vollstaendigkeit links,
-                 Speicherstand mit Datum + Uhrzeit rechts. --}}
+            {{-- Fusszeile — nur Vollstaendigkeit. Karl 2026-09-11 (E7-6):
+                 der pro-Block-Speicherstand ist entfallen; die
+                 Chrome-Bar zeigt den Save-Status zentral fuers ganze
+                 Projekt an. --}}
             @can('update', $project)
                 @php
                     $textMissing = collect([
@@ -131,15 +133,12 @@
                         $item->text->originText ? null : __('origin'),
                     ])->filter()->values();
                 @endphp
-                <div class="mt-3 flex items-center justify-between gap-3">
+                <div class="mt-3">
                     @if ($textMissing->isEmpty())
                         <p class="text-caption text-success">✓ {{ __('gallery_status_complete') }}</p>
                     @else
-                        <p class="text-caption text-warning">⚠ {{ __('gallery_status_missing', ['fields' => $textMissing->implode(', ')]) }}</p>
+                        <p class="text-caption text-ink-500">{{ __('gallery_status_missing', ['fields' => $textMissing->implode(', ')]) }}</p>
                     @endif
-                    <p class="text-caption text-ink-500">
-                        {{ __('saved') }} · {{ optional($item->text->updated_at ?? $item->text->created_at)->format('d.m.Y, H:i') }}
-                    </p>
                 </div>
             @endcan
         </x-ui.block-card>

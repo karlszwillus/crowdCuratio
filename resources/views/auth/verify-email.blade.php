@@ -30,7 +30,7 @@ B12 (2026-08-20): Auth-Sicht auf layouts/guest gezogen.
         <form method="POST" action="{{ route('logout') }}">
             @csrf
             <button type="submit"
-                    class="w-full rounded-md border border-ink-300 bg-canvas-bg px-4 py-3 text-body text-ink-900 hover:bg-chrome-active">
+                    class="w-full rounded-md border border-ink-300 bg-canvas-bg px-4 py-3 text-body text-ink-900 hover:bg-line-100">
                 {{ __('logout') }}
             </button>
         </form>

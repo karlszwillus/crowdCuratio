@@ -140,16 +140,15 @@
                         empty(trim(strip_tags((string) $item->audiovisual->transcript))) ? __('transcript') : null,
                     ])->filter()->values();
                 @endphp
-                <div class="mt-3 flex items-center justify-between gap-3">
+                {{-- Karl 2026-09-11 (E7-6): Speicherstand pro Block
+                     entfaellt — die Chrome-Bar zeigt den Save-Status
+                     zentral fuers ganze Projekt. --}}
+                <div class="mt-3">
                     @if ($avMissing->isEmpty())
                         <p class="text-caption text-success">✓ {{ __('gallery_status_complete') }}</p>
                     @else
-                        <p class="text-caption text-warning">⚠ {{ __('gallery_status_missing', ['fields' => $avMissing->implode(', ')]) }}</p>
+                        <p class="text-caption text-ink-500">{{ __('gallery_status_missing', ['fields' => $avMissing->implode(', ')]) }}</p>
                     @endif
-                    <p class="text-caption text-ink-500">
-                        {{-- 5z.10 § 8.3: Speicherstand mit Datum UND Uhrzeit. --}}
-                        {{ __('saved') }} · {{ optional($item->audiovisual->updated_at ?? $item->audiovisual->created_at)->format('d.m.Y, H:i') }}
-                    </p>
                 </div>
             @endcan
         </x-ui.block-card>

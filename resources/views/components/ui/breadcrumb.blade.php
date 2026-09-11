@@ -60,7 +60,7 @@ If not, see <https://www.gnu.org/licenses/>.
                         <template x-if="idx !== path.length - 1">
                             <a
                                 :href="item.href"
-                                class="rounded-md hover:bg-chrome-active hover:text-ink-900 focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-primary"
+                                class="rounded-md hover:bg-line-100 hover:text-ink-900 focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-primary"
                                 x-text="item.label"
                             ></a>
                         </template>
@@ -87,7 +87,7 @@ If not, see <https://www.gnu.org/licenses/>.
                     @else
                         <a
                             href="{{ $item['href'] }}"
-                            class="rounded-md hover:bg-chrome-active hover:text-ink-900 focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-primary"
+                            class="rounded-md hover:bg-line-100 hover:text-ink-900 focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-primary"
                         >
                             {{ $item['label'] }}
                         </a>
