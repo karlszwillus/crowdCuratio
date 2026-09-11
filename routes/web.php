@@ -108,7 +108,7 @@ Route::group(
         Route::resource('/projects', ProjectController::class);
         // Q4-Etappe 2 / I6 (2026-08-27): Rechte-Endpunkte im
         // ProjectPermissionController. Route-Namen bleiben.
-        Route::delete('/user/{userId}/project/{projectId}', [ProjectPermissionController::class, 'deleteUserFromProject'])->name(
+        Route::delete('/projects/{projectId}/users/{userId}', [ProjectPermissionController::class, 'deleteUserFromProject'])->name(
             'project.user_delete'
         );
         // Phase 5d.4: Berechtigungssicht (Screen 3B). Loest die alte
@@ -130,9 +130,9 @@ Route::group(
         Route::resource('/chapters', ChapterController::class);
         Route::resource('/entries', EntryController::class);
         // Route::resource('/contents', \App\Http\Controllers\ContentController::class);
-        Route::post('/text/store', [TextBlockController::class, 'saveText'])->name('text.store');
-        Route::get('/edit/{id}/text', [TextBlockController::class, 'editText'])->name('text.edit');
-        Route::delete('/delete/{id}/text', [TextBlockController::class, 'destroyText'])->name(
+        Route::post('/texts', [TextBlockController::class, 'saveText'])->name('text.store');
+        Route::get('/texts/{id}/edit', [TextBlockController::class, 'editText'])->name('text.edit');
+        Route::delete('/texts/{id}', [TextBlockController::class, 'destroyText'])->name(
             'text.delete'
         );
 
@@ -141,14 +141,14 @@ Route::group(
         // Add-Bar), Speichern läuft inline über rich-text-editor /
         // inline-editor / source-picker. Direkt-Endpunkte gibt es
         // nur für Delete und das Kind-Dropdown.
-        Route::delete('/delete/{id}/quote', [QuoteBlockController::class, 'destroy'])
+        Route::delete('/quotes/{id}', [QuoteBlockController::class, 'destroy'])
             ->name('quote.delete');
 
         // Q4-Etappe 4 / G1 (2026-09-08): Daten-und-Fakten-Block-Endpunkte.
         // Anlegen über ContentInsertionService, Bearbeiten inline
         // via inline-editor + data-facts-rows-editor. Nur Delete
         // klassisch.
-        Route::delete('/delete/{id}/data-facts', [DataFactBlockController::class, 'destroy'])
+        Route::delete('/data-facts/{id}', [DataFactBlockController::class, 'destroy'])
             ->name('data-facts.delete');
         Route::post('/check/email', [ProjectPermissionController::class, 'checkEmail'])->name('check.email');
         // Q3-Härtung F2 (2026-08-19) / SEC-02: vorher GET ohne Auth-Guard,
@@ -162,16 +162,16 @@ Route::group(
         )->middleware('throttle:6,1')->name(
             'resend.invitation'
         );
-        Route::post('/image/store', [ImageBlockController::class, 'saveImage'])->name('image.store');
+        Route::post('/images', [ImageBlockController::class, 'saveImage'])->name('image.store');
         // Phase 5y.6: Bild-Sortierung innerhalb einer Galerie.
-        Route::post('/gallery/{gallery}/images/reorder', [GalleryBlockController::class, 'reorderImages'])
+        Route::post('/galleries/{gallery}/images/reorder', [GalleryBlockController::class, 'reorderImages'])
             ->name('gallery.images.reorder');
-        Route::post('/gallery/{gallery}/images/drop', [GalleryBlockController::class, 'dropImage'])
+        Route::post('/galleries/{gallery}/images/drop', [GalleryBlockController::class, 'dropImage'])
             ->name('gallery.images.drop');
-        Route::get('/edit/{id}/image', [ImageBlockController::class, 'editImage'])->name(
+        Route::get('/images/{id}/edit', [ImageBlockController::class, 'editImage'])->name(
             'image.edit'
         );
-        Route::delete('/delete/{id}/image', [ImageBlockController::class, 'destroyImage'])->name(
+        Route::delete('/images/{id}', [ImageBlockController::class, 'destroyImage'])->name(
             'image.delete'
         );
         // B12 (2026-08-20): User-Anlage laeuft jetzt ueber
@@ -222,7 +222,7 @@ Route::group(
         // B2 (2026-08-21) / DSGVO: Konto-Loeschung mit 30-Tage-Frist.
         Route::post('/profile/schedule-deletion', [ProfileController::class, 'scheduleDeletion'])->name('profile.schedule_deletion');
         Route::post('/profile/cancel-deletion', [ProfileController::class, 'cancelScheduledDeletion'])->name('profile.cancel_deletion');
-        Route::get('/permission/user/{id}/', [ProjectPermissionController::class, 'givePermissionToUser'])->name(
+        Route::get('/users/{id}/permissions', [ProjectPermissionController::class, 'givePermissionToUser'])->name(
             'permission.project'
         );
         Route::post('/comments/chapter', [ChapterController::class, 'commentChapter'])->name(
@@ -307,7 +307,7 @@ Route::group(
         Route::post('/comments/data-facts/{id}/save', [ContentCommentController::class, 'saveCommentDataFacts'])->name('comments.data_facts.save');
         Route::post('/comments/data-facts/status', [ContentCommentController::class, 'setCommentStatusDataFacts'])->name('comments.data_facts.status');
         Route::post(
-            '/text/reset',
+            '/texts/reset',
             [TextBlockController::class, 'resetText']
         )->name(
             'text.reset'
@@ -342,19 +342,19 @@ Route::group(
             'comments.project.show'
         );
         Route::get(
-            '/log/text/{id}/',
+            '/texts/{id}/log',
             [ProjectController::class, 'getCurrentLog']
         )->name(
             'log.text'
         );
         Route::get(
-            '/role/check/{id}/',
+            '/roles/{id}/check',
             [RoleController::class, 'roleHasUsers']
         )->name(
             'role.check'
         );
         Route::post(
-            '/role/{id}/alt/{alt}/',
+            '/roles/{id}/replace/{alt}',
             [RoleController::class, 'customizedDelete']
         )->name(
             'customizedDelete'
@@ -372,7 +372,7 @@ Route::group(
             'comments.project.status'
         );
         Route::post(
-            '/project/permission',
+            '/projects/permissions/update',
             [ProjectPermissionController::class, 'setPermissionForUserOnProject']
         )->name(
             'project.permission'
@@ -403,7 +403,7 @@ Route::group(
         Route::get('lang/{lang}', [LanguageController::class, 'switchLang'])->name('lang.switch');
 
         Route::post(
-            '/reset-log',
+            '/logs/reset',
             [ProjectController::class, 'resetValue']
         )->name(
             'log.reset'
@@ -468,31 +468,31 @@ Route::group(
         );
 
         Route::post(
-            '/save-gallery',
+            '/galleries',
             [GalleryBlockController::class, 'saveGallery']
         )->name(
             'save.gallery'
         );
 
         Route::get(
-            '/gallery/{id}/edit',
+            '/galleries/{id}/edit',
             [GalleryBlockController::class, 'editGallery']
         )->name(
             'gallery.edit'
         );
 
-        Route::delete('/delete/{id}/gallery', [GalleryBlockController::class, 'destroyGallery'])->name(
+        Route::delete('/galleries/{id}', [GalleryBlockController::class, 'destroyGallery'])->name(
             'gallery.delete'
         );
 
         Route::post(
-            '/save-audiovisual',
+            '/audiovisuals',
             [AudiovisualController::class, 'store']
         )->name(
             'save.audiovisual'
         );
 
-        Route::delete('/delete/{id}/audiovisual', [AudiovisualController::class, 'delete'])->name(
+        Route::delete('/audiovisuals/{id}', [AudiovisualController::class, 'delete'])->name(
             'audiovisual.delete'
         );
 
@@ -571,6 +571,17 @@ Route::group(
         foreach (['chapter', 'entry', 'text', 'quote', 'data-facts', 'image', 'project'] as $type) {
             Route::redirect("/comment/$type/{id}", "/comments/$type/{id}", 301);
         }
+
+        // Q4-Etappe 8 · E3d (2026-09-12, ADR-0030): 301-Redirects fuer
+        // Content-Action- und Nebengets. POST-/DELETE-Pfade sind
+        // Frontend-only und wurden hart umgestellt — Named Routes
+        // bleiben unveraendert.
+        Route::redirect('/edit/{id}/text', '/texts/{id}/edit', 301);
+        Route::redirect('/edit/{id}/image', '/images/{id}/edit', 301);
+        Route::redirect('/log/text/{id}', '/texts/{id}/log', 301);
+        Route::redirect('/gallery/{id}/edit', '/galleries/{id}/edit', 301);
+        Route::redirect('/role/check/{id}', '/roles/{id}/check', 301);
+        Route::redirect('/permission/user/{id}', '/users/{id}/permissions', 301);
 
     }
 );

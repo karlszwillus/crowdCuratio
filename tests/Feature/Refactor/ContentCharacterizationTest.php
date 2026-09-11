@@ -209,7 +209,7 @@ it('saveGallery im Translation-Pfad schreibt en-Übersetzungen für title/subtit
     // tatsächlich vom Frontend benutzt wird.
     $gallery = makeGallery(['title' => 'Alter Titel DE']);
 
-    $this->post('/save-gallery', [
+    $this->post('/galleries', [
         'galleryId' => $gallery->id,
         'translationGallery' => true,
         'galleryTitle' => 'Neuer Titel EN',

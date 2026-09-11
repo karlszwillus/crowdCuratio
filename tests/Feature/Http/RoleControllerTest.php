@@ -297,7 +297,7 @@ it('roleHasUsers: liefert true wenn die Rolle Zuweisungen hat', function () {
 
     $readerRoleId = Role::where('name', 'Reader')->value('id');
 
-    $response = $this->get('/role/check/'.$readerRoleId.'/');
+    $response = $this->get('/roles/'.$readerRoleId.'/check');
 
     // Hinweis: $response->json() wirft "Invalid JSON" bei Top-Level
     // false/null — Laravel's TestResponse-Decoder kann das nicht von
@@ -316,7 +316,7 @@ it('roleHasUsers: liefert false wenn die Rolle keine Zuweisungen hat', function 
 
     $emptyRole = Role::create(['name' => 'Ungenutzt', 'guard_name' => 'web']);
 
-    $response = $this->get('/role/check/'.$emptyRole->id.'/');
+    $response = $this->get('/roles/'.$emptyRole->id.'/check');
 
     $response->assertStatus(200);
     expect($response->getContent())->toBe('false');
