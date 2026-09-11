@@ -105,12 +105,16 @@ Route::get('auth.terms', [PublicController::class, 'projectTerms'])->name('auth.
 Route::group(
     ['middleware' => ['auth']],
     function () {
-        Route::resource('/projects', ProjectController::class);
-        // Q4-Etappe 2 / I6 (2026-08-27): Rechte-Endpunkte im
-        // ProjectPermissionController. Route-Namen bleiben.
+        // Q4-Etappe 8 · E3d (2026-09-12): Sub-Route mit zwei Segmenten
+        // MUSS vor Route::resource('/projects') stehen — Route::resource
+        // registriert u.a. `DELETE /projects/{project}` mit Wildcard,
+        // sonst greift der Router die Sub-Route nicht mehr sauber
+        // (matcht Zweit-Segment nicht, faellt aber auf 404 statt weiter
+        // zu wandern). Namen bleiben unveraendert.
         Route::delete('/projects/{projectId}/users/{userId}', [ProjectPermissionController::class, 'deleteUserFromProject'])->name(
             'project.user_delete'
         );
+        Route::resource('/projects', ProjectController::class);
         // Phase 5d.4: Berechtigungssicht (Screen 3B). Loest die alte
         // Modal-Kaskade aus projects/create ab.
         Route::get('/projects/{project}/permissions', [ProjectController::class, 'permissions'])
