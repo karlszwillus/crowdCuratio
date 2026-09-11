@@ -153,7 +153,7 @@ it('deleteUserFromProject entfernt alle Permission-Einträge des Users für das 
     ]);
 
     $response = $this->delete(
-        "/user/{$invitee->id}/project/{$project->id}",
+        "/projects/{$project->id}/users/{$invitee->id}",
         []
     );
 

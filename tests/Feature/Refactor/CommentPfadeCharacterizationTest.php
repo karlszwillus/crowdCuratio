@@ -149,7 +149,7 @@ it('saveComment löscht einen Comment über den btn_submit=delete-Pfad', functio
         'status' => 1,
     ]);
 
-    $this->post("/comment/chapter/{$chapter->id}/save", [
+    $this->post("/comments/chapter/{$chapter->id}/save", [
         'btn_submit' => 'delete',
         'id' => $comment->id,
     ]);
@@ -175,7 +175,7 @@ it('saveComment editiert einen Comment-Body über den btn_submit=Edit-Pfad', fun
         'status' => 1,
     ]);
 
-    $this->post("/comment/chapter/{$chapter->id}/save", [
+    $this->post("/comments/chapter/{$chapter->id}/save", [
         'btn_submit' => 'Edit',
         'pk' => $comment->id,
         'value' => 'Editiert',
@@ -204,7 +204,7 @@ it('saveComment legt einen Reply mit parent_id an, wenn btn_submit unbekannt ist
         'status' => 1,
     ]);
 
-    $this->post("/comment/chapter/{$chapter->id}/save", [
+    $this->post("/comments/chapter/{$chapter->id}/save", [
         'btn_submit' => 'Reply',
         'reply' => 'Antwort',
         'commentId' => $parent->id,
@@ -293,7 +293,7 @@ it('updateStatus per POST-Route setzt einen Comment-Status', function () {
         'status' => 1,
     ]);
 
-    $this->post("/comment/{$comment->id}/update/4");
+    $this->post("/comments/{$comment->id}/update/4");
 
     $comment->refresh();
 

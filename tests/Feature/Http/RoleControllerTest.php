@@ -256,7 +256,7 @@ it('customizedDelete: löscht Rolle und weist User auf eine andere Rolle um', fu
     $newRole = Role::firstOrCreate(['name' => 'Reader', 'guard_name' => 'web']);
     $existing->assignRole('AltzuLoeschen');
 
-    $response = $this->post('/role/'.$oldRole->id.'/alt/'.$newRole->id.'/');
+    $response = $this->post('/roles/'.$oldRole->id.'/replace/'.$newRole->id);
 
     expect($response->status())->toBeIn([200, 302]);
 

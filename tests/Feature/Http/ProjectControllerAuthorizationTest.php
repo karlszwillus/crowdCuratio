@@ -177,7 +177,7 @@ it('editMetaData: Fremder darf fremde Project-Metadata NICHT öffnen — 403', f
 
     $this->actingAs($stranger);
 
-    $response = $this->get('/project/'.$project->id.'/metadata');
+    $response = $this->get('/projects/'.$project->id.'/metadata');
 
     $response->assertStatus(403);
 });
@@ -191,7 +191,7 @@ it('editMetaData: Owner darf seine Project-Metadata öffnen', function () {
 
     $this->actingAs($owner);
 
-    $response = $this->get('/project/'.$project->id.'/metadata');
+    $response = $this->get('/projects/'.$project->id.'/metadata');
 
     expect($response->status())->toBeIn([200, 302]);
 });
@@ -208,7 +208,7 @@ it('editMetaData: Admin darf fremde Project-Metadata öffnen', function () {
 
     $this->actingAs($admin);
 
-    $response = $this->get('/project/'.$project->id.'/metadata');
+    $response = $this->get('/projects/'.$project->id.'/metadata');
 
     expect($response->status())->toBeIn([200, 302]);
 });

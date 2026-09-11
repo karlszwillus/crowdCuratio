@@ -269,7 +269,7 @@ it('ContentController::editText — Fremder darf JSON-Daten fremder Texts NICHT 
 
     $this->actingAs($stranger);
 
-    $this->get('/edit/'.$text->id.'/text')->assertStatus(403);
+    $this->get('/texts/'.$text->id.'/edit')->assertStatus(403);
 });
 
 it('ContentController::editImage — Fremder darf JSON-Daten fremder Images NICHT sehen', function () {
@@ -281,7 +281,7 @@ it('ContentController::editImage — Fremder darf JSON-Daten fremder Images NICH
 
     $this->actingAs($stranger);
 
-    $this->get('/edit/'.$image->id.'/image')->assertStatus(403);
+    $this->get('/images/'.$image->id.'/edit')->assertStatus(403);
 });
 
 it('ContentController::editGallery — Fremder darf JSON-Daten fremder Galleries NICHT sehen', function () {
@@ -410,7 +410,7 @@ it('ContentController::editText — Owner darf JSON-Daten seines eigenen Texts s
 
     $this->actingAs($owner);
 
-    $response = $this->get('/edit/'.$text->id.'/text');
+    $response = $this->get('/texts/'.$text->id.'/edit');
 
     expect($response->status())->toBeIn([200, 302]);
 });

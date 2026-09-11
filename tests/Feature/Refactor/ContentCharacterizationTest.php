@@ -98,7 +98,7 @@ it('editText liefert text, origin-name und copyright-name als JSON', function ()
         'copyright' => $copyright->id,
     ]);
 
-    $response = $this->get('/edit/'.$text->id.'/text');
+    $response = $this->get('/texts/'.$text->id.'/edit');
 
     $response->assertOk();
     $response->assertJson([
@@ -118,7 +118,7 @@ it('destroyText soft-deleted den Text und seine Comments', function () {
     $text = makeText();
     $project = makeProject($owner);
 
-    $this->delete('/delete/'.$text->id.'/text?project='.$project->id);
+    $this->delete('/texts/'.$text->id.'?project='.$project->id);
 
     expect(Text::find($text->id))->toBeNull();
     expect(Text::withTrashed()->find($text->id))->not->toBeNull();
@@ -163,7 +163,7 @@ it('editImage liefert image, origin-name, copyright-name und alt als JSON', func
         'alt' => 'Alt-Text',
     ]);
 
-    $response = $this->get('/edit/'.$image->id.'/image');
+    $response = $this->get('/images/'.$image->id.'/edit');
 
     $response->assertOk();
     $response->assertJsonFragment([
@@ -183,7 +183,7 @@ it('destroyImage soft-deleted das Image', function () {
     $image = makeImage();
     $project = makeProject($owner);
 
-    $this->delete('/delete/'.$image->id.'/image?project='.$project->id);
+    $this->delete('/images/'.$image->id.'?project='.$project->id);
 
     expect(Image::find($image->id))->toBeNull();
     expect(Image::withTrashed()->find($image->id))->not->toBeNull();
@@ -237,7 +237,7 @@ it('destroyGallery soft-deleted Gallery und ihre Images', function () {
     $image = makeImage(['gallery_id' => $gallery->id]);
     $project = makeProject($owner);
 
-    $this->delete('/delete/'.$gallery->id.'/gallery?project='.$project->id);
+    $this->delete('/galleries/'.$gallery->id.'?project='.$project->id);
 
     // Gallery + Image soft-deleted — heutiger Pfad nutzt DB::table()
     // direkt (NF-LAR-009, latente Schwäche), das setzt deleted_at,
