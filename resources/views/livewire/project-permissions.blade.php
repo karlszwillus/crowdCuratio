@@ -482,7 +482,12 @@ new class extends Component
     }
 };
 ?>
-<div class="grid grid-cols-[280px_1fr] gap-6">
+<div>
+    {{-- Karl 2026-09-11: Ueberschrift analog Metadaten/Quellen. --}}
+    <h2 class="mb-4 text-title font-semibold text-ink-900">
+        {{ __('permissions_page_heading') }}
+    </h2>
+    <div class="grid grid-cols-[280px_1fr] gap-6">
 
     {{-- LINKS: Mitarbeitende-Sidebar
          Q4-Etappe 1 / I4 (2026-08-27): Extrahiert nach
@@ -636,4 +641,5 @@ new class extends Component
         :show="$showRemoveModal"
         :candidate-name="$removeCandidateName"
     />
+    </div>
 </div>

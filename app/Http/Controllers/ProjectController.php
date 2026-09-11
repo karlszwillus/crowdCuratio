@@ -310,8 +310,14 @@ class ProjectController extends Controller
      * NF-SEC-007: Logo-Filename kommt ausschließlich aus dem
      * ProjectImageService, nie aus dem Request-`logo`-Feld.
      * UpdateProjectRequest hat den File vorher MIME-validiert.
+     *
+     * Q4-Etappe 7 · E7-4 (2026-09-11): Autosave-Layer. Der klassische
+     * Form-Submit gibt weiterhin RedirectResponse mit Session-Flash
+     * zurueck; ein AJAX-Autosave (`wantsJson()` oder XHR-Header) laesst
+     * den Redirect fallen und liefert stattdessen JSON mit dem neuen
+     * Speicherstempel. Alles andere im Ablauf bleibt identisch.
      */
-    public function update(UpdateProjectRequest $request, Project $project): RedirectResponse
+    public function update(UpdateProjectRequest $request, Project $project): \Symfony\Component\HttpFoundation\Response
     {
         $logo = $this->images->store($request->file('project_image'));
         $data = ProjectData::fromRequest($request, $logo);
@@ -362,6 +368,17 @@ class ProjectController extends Controller
             $project->update([
                 'character' => $data->character,
                 'accent_color' => $data->accentColor,
+            ]);
+        }
+
+        if ($request->wantsJson() || $request->ajax()) {
+            $savedAt = $project->fresh()->updated_at;
+
+            return response()->json([
+                'ok' => true,
+                'savedAt' => $savedAt?->toIso8601String(),
+                'savedAtLabel' => $savedAt?->format('H:i'),
+                'message' => __('message_edit_project_success'),
             ]);
         }
 

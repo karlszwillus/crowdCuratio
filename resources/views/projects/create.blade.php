@@ -19,6 +19,20 @@ If not, see <https://www.gnu.org/licenses/>. -->
 
 @extends('projects.layout')
 
+{{-- Q4-Etappe 7 · E7-4 (2026-09-11): Struktur-Baum als
+     Orientierungspanel auch auf den Nicht-Bearbeiten-Screens.
+     `readonly=true` dimmt ihn optisch und macht ihn klick-inert —
+     die Struktur bleibt sichtbar, ist aber klar als „woanders zu
+     bedienen" markiert. --}}
+@isset($project->id)
+    @section('log')
+        <livewire:sidebar-tree
+            :project="$project"
+            :readonly="true"
+            :key="'sidebar-tree-readonly-'.$project->id"/>
+    @endsection
+@endisset
+
 @section('main')
 
     {{-- Phase 5d.4-Followup: einheitlicher Projekt-Tab-Balken auf
@@ -36,9 +50,18 @@ If not, see <https://www.gnu.org/licenses/>. -->
     </h1>
 
     @if (isset($project->id))
-        {{-- Metadaten-Sicht: nicht-sticky-Variante des Chrome, ohne
-             Publish/⋮-Aktionen. --}}
-        <x-projects.chrome :project="$project" active="meta" :sticky="false"/>
+        {{-- Metadaten-Sicht: sticky-Chrome mit Speicher-Zustand rechts.
+             Q4-Etappe 7 · E7-4 (2026-09-11): Der Speicher-Slot ersetzt
+             die alte Fußleisten-Save-Bar unten. Autosave laeuft im
+             Hintergrund, der Button ist fuers Gefuehl da. --}}
+        <x-projects.chrome :project="$project" active="meta" :sticky="true">
+            <x-slot:actions>
+                <x-projects.save-state/>
+                <x-projects.editor-actions :project="$project"/>
+            </x-slot:actions>
+        </x-projects.chrome>
+        {{-- Export-Modal auf Chrome-Geschwister-Ebene. --}}
+        <x-projects.export-modal :project="$project"/>
     @endif
 
     @if ($message = Session::get('success'))
@@ -56,7 +79,11 @@ If not, see <https://www.gnu.org/licenses/>. -->
             </ul>
         </div>
     @endif
-    <p class="mb-4 text-caption text-ink-500">{{ __('metadata_page_hint') }}</p>
+    @isset($project->id)
+        <h2 class="mb-4 text-title font-semibold text-ink-900">
+            {{ __('metadata_page_heading') }}
+        </h2>
+    @endisset
 
     {{-- Q4-Etappe 5 / G1 Nachreview (2026-09-08): Rechte Sidebar
          (Prüfung, Kennzahlen, Verlauf, Löschen) ist länger als die
@@ -76,8 +103,14 @@ If not, see <https://www.gnu.org/licenses/>. -->
                    analog Profil-Muster (kein Timestamp mehr im Footer). --}}
               isDirty: false,
           }"
-          @input.capture="isDirty = true"
-          @change.capture="isDirty = true"
+          @if (isset($project->id))
+              x-init="$store.metadataAutosave.init($el, $el.action, @js(csrf_token()), @js(optional($project->updated_at)->format('H:i') ?? ''))"
+              @input.capture="isDirty = true; $store.metadataAutosave.markDirty($event)"
+              @change.capture="isDirty = true; $store.metadataAutosave.markDirty($event)"
+          @else
+              @input.capture="isDirty = true"
+              @change.capture="isDirty = true"
+          @endif
           @submit="submitting = true">
         @csrf
         @if(isset($project->id))
@@ -156,7 +189,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                 <div class="flex min-w-0 flex-1 flex-col gap-2">
                     <p class="truncate text-body text-ink-900" x-text="fileName || '—'"></p>
                     <div class="flex flex-wrap items-center gap-2">
-                        <label class="cursor-pointer rounded-md border border-line-200 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-chrome-active focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary">
+                        <label class="cursor-pointer rounded-md border border-line-200 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-line-100 focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary">
                             <span x-text="fileName ? '{{ __('metadata_field_thumbnail_replace') }}' : '{{ __('metadata_field_thumbnail_choose') }}'"></span>
                             <input x-ref="input" type="file" name="project_image" accept="image/*"
                                    @change="pickFile($event)"
@@ -180,7 +213,13 @@ If not, see <https://www.gnu.org/licenses/>. -->
              Bildfeld ganz — Handoff-Regel 2 (kein leerer Container). --}}
         <section class="mb-4 rounded-md border border-line-200 bg-paper-0 p-5"
              x-data="{
-                 preview: @js(isset($project->cover_image) && $project->cover_image ? '/uploads/images/'.$project->cover_image : null),
+                 {{-- Karl 2026-09-11 (E7-7): hartkodierter Pfad
+                      `/uploads/images/…` funktioniert nur, wenn der
+                      Storage-Symlink genau so heisst — greift in der
+                      Regel nicht, die Vorschau bleibt kaputt. Analog
+                      zum Logo (siehe oben) ueber die Image-Route
+                      aufloesen, die den echten Storage-Pfad kennt. --}}
+                 preview: @js(isset($project->cover_image) && $project->cover_image ? route('image', $project->cover_image) : null),
                  fileName: @js($project->cover_image ?? null),
                  removed: false,
                  pickFile(e) {
@@ -213,7 +252,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                 </div>
 
                 <div class="flex flex-wrap items-center gap-2">
-                    <label class="cursor-pointer rounded-md border border-line-200 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-chrome-active focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary">
+                    <label class="cursor-pointer rounded-md border border-line-200 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-line-100 focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary">
                         <span x-text="fileName ? '{{ __('metadata_field_cover_image_replace') }}' : '{{ __('metadata_field_cover_image_choose') }}'"></span>
                         <input x-ref="input" type="file" name="cover_image" accept="image/*"
                                @change="pickFile($event)"
@@ -249,7 +288,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                 @isset($project->id)
                     <button type="submit"
                             form="adoptImprintForm"
-                            class="inline-flex items-center gap-1 rounded-md border border-line-200 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-chrome-active focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                            class="inline-flex items-center gap-1 rounded-md border border-line-200 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-line-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
                         <x-icon name="corner-down-left" size="3"/>
                         <span>{{ __('metadata_use_system_text') }}</span>
                     </button>
@@ -271,7 +310,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                 @isset($project->id)
                     <button type="submit"
                             form="adoptTermsForm"
-                            class="inline-flex items-center gap-1 rounded-md border border-line-200 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-chrome-active focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                            class="inline-flex items-center gap-1 rounded-md border border-line-200 bg-canvas-bg px-3 py-1.5 text-caption text-ink-900 hover:bg-line-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
                         <x-icon name="corner-down-left" size="3"/>
                         <span>{{ __('metadata_use_system_text') }}</span>
                     </button>
@@ -298,7 +337,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     <legend class="mb-2 block text-caption font-medium text-ink-700">
                         {{ __('project_citation_depth_label') }}
                     </legend>
-                    <label class="flex items-start gap-3 rounded-md border border-line-200 p-3 hover:bg-canvas-bg has-checked:border-primary">
+                    <label class="flex items-start gap-3 rounded-md border border-line-200 p-3 hover:bg-canvas-bg has-checked:border-ink-800 has-checked:bg-line-100">
                         <input type="radio"
                                name="citation_depth"
                                value="full"
@@ -309,7 +348,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                             <span class="block text-caption text-ink-500">{{ __('project_citation_depth_full_desc') }}</span>
                         </span>
                     </label>
-                    <label class="mt-2 flex items-start gap-3 rounded-md border border-line-200 p-3 hover:bg-canvas-bg has-checked:border-primary">
+                    <label class="mt-2 flex items-start gap-3 rounded-md border border-line-200 p-3 hover:bg-canvas-bg has-checked:border-ink-800 has-checked:bg-line-100">
                         <input type="radio"
                                name="citation_depth"
                                value="simple"
@@ -355,7 +394,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     <legend class="mb-2 block text-caption font-medium text-ink-700">
                         {{ __('project_reader_layout_label') }}
                     </legend>
-                    <label class="flex items-start gap-3 rounded-md border border-line-200 p-3 hover:bg-canvas-bg has-checked:border-primary">
+                    <label class="flex items-start gap-3 rounded-md border border-line-200 p-3 hover:bg-canvas-bg has-checked:border-ink-800 has-checked:bg-line-100">
                         <input type="radio"
                                name="reader_layout"
                                value="one-page"
@@ -366,7 +405,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                             <span class="block text-caption text-ink-500">{{ __('project_reader_layout_one_page_desc') }}</span>
                         </span>
                     </label>
-                    <label class="mt-2 flex items-start gap-3 rounded-md border border-line-200 p-3 hover:bg-canvas-bg has-checked:border-primary">
+                    <label class="mt-2 flex items-start gap-3 rounded-md border border-line-200 p-3 hover:bg-canvas-bg has-checked:border-ink-800 has-checked:bg-line-100">
                         <input type="radio"
                                name="reader_layout"
                                value="multi-page"
@@ -385,7 +424,57 @@ If not, see <https://www.gnu.org/licenses/>. -->
                  und Lesefamilie fest (drei Presets aus dem Handoff v4).
                  Die Akzent-Farbe darf optional den Charakter-Primärton
                  überschreiben — leer lassen für den Charakter-Default. --}}
-            <section class="mb-4 rounded-md border border-line-200 bg-paper-0 p-5">
+            {{-- Karl 2026-09-11 (Feedback zu E7-5): Akzentfarben je
+                 Charakter. Jeder Charakter bringt einen Default und
+                 zwei bis drei kuratierte Alternativen mit — der
+                 Redakteur waehlt aus Optionen, die zum Papier des
+                 gewaehlten Charakters passen. Charakter- und Akzent-
+                 Auswahl teilen sich einen Alpine-State, damit ein
+                 Charakter-Wechsel die Akzent-Optionen live nachzieht
+                 und den Default frisch vorwaehlt. --}}
+            <section class="mb-4 rounded-md border border-line-200 bg-paper-0 p-5"
+                     x-data="{
+                        character: '{{ $project->characterName() ?? 'dokumentation' }}',
+                        accent: '{{ $project->accent_color ?? '' }}',
+                        accentsByCharacter: {
+                            'dokumentation': [
+                                { hex: '#a8392f', name: '{{ __('project_accent_color_preset_red') }}',        ratio: '5.4 : 1', default: true  },
+                                { hex: '#1b2330', name: '{{ __('project_accent_color_preset_anthracite') }}', ratio: '15.6 : 1' },
+                                { hex: '#0f766e', name: '{{ __('project_accent_color_preset_teal') }}',       ratio: '5.9 : 1' },
+                            ],
+                            'archiv': [
+                                { hex: '#2f4a63', name: '{{ __('project_accent_color_preset_blue') }}',       ratio: '9.6 : 1', default: true  },
+                                { hex: '#1b2330', name: '{{ __('project_accent_color_preset_anthracite') }}', ratio: '15.6 : 1' },
+                                { hex: '#7c2d12', name: '{{ __('project_accent_color_preset_brown') }}',      ratio: '9.5 : 1' },
+                            ],
+                            'erzaehlung': [
+                                { hex: '#e0b04a', name: '{{ __('project_accent_color_preset_gold') }}',       ratio: '4.7 : 1', default: true  },
+                                { hex: '#c39942', name: '{{ __('project_accent_color_preset_amber') }}',      ratio: '5.9 : 1' },
+                                { hex: '#f5f1e8', name: '{{ __('project_accent_color_preset_cream') }}',      ratio: '14.5 : 1' },
+                            ]
+                        },
+                        get accentOptions() { return this.accentsByCharacter[this.character] || [] },
+                        get selectedAccent() {
+                            if (this.accent) return this.accent
+                            const d = this.accentOptions.find(a => a.default)
+                            return d ? d.hex : ''
+                        },
+                        // Karl 2026-09-11: eigene Farbe = ein Accent-Wert,
+                        // der nicht zu den kuratierten Presets des aktuellen
+                        // Charakters gehoert. Das freie Feld markiert sich
+                        // dann, die Preset-Buttons verlieren die Auswahl.
+                        get isCustomAccent() {
+                            if (!this.accent) return false
+                            return !this.accentOptions.some(a => a.hex.toLowerCase() === this.accent.toLowerCase())
+                        },
+                        pickCharacter(name) {
+                            this.character = name
+                            // Beim Charakter-Wechsel zurueck auf Charakter-Default —
+                            // Alt-Akzent wuerde optisch beissen.
+                            this.accent = ''
+                        },
+                        pickAccent(hex) { this.accent = hex }
+                     }">
                 <h2 class="mb-1 text-caption font-semibold text-ink-700">
                     {{ __('project_character_settings') }}
                 </h2>
@@ -397,11 +486,13 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     <legend class="sr-only">{{ __('project_character_label') }}</legend>
                     <div class="grid grid-cols-1 gap-2 md:grid-cols-3">
                         @foreach (['dokumentation' => ['#faf8f4', '#23201c', '#a8392f'], 'archiv' => ['#f6f6f5', '#1d1f21', '#2f4a63'], 'erzaehlung' => ['#16140f', '#f5f1e8', '#e0b04a']] as $ch => $swatch)
-                            <label class="flex cursor-pointer items-start gap-3 rounded-md border border-line-200 p-3 hover:bg-canvas-bg has-checked:border-primary">
+                            <label class="flex cursor-pointer items-start gap-3 rounded-md border border-line-200 p-3 hover:bg-canvas-bg"
+                                   :class="character === '{{ $ch }}' ? 'border-ink-800 bg-line-100' : ''">
                                 <input type="radio"
                                        name="character"
                                        value="{{ $ch }}"
-                                       @checked($project->characterName() === $ch)
+                                       x-model="character"
+                                       @change="pickCharacter('{{ $ch }}')"
                                        class="mt-1"/>
                                 <span class="flex-1">
                                     <span class="mb-2 flex h-8 overflow-hidden rounded border border-line-200">
@@ -417,63 +508,86 @@ If not, see <https://www.gnu.org/licenses/>. -->
                     </div>
                 </fieldset>
 
-                <div class="mt-4">
-                    <label for="accent_color" class="mb-1 block text-caption font-medium text-ink-700">
+                <div class="mt-5">
+                    <label class="mb-1 block text-caption font-medium text-ink-700">
                         {{ __('project_accent_color_label') }}
                     </label>
-                    <p class="mb-2 text-caption text-ink-500">{{ __('project_accent_color_hint') }}</p>
-                    <div class="flex items-center gap-2">
+                    <p class="mb-3 text-caption text-ink-500">{{ __('project_accent_color_hint') }}</p>
+
+                    {{-- Server bekommt entweder den ausdruecklich gewaehlten
+                         Akzent oder leer (dann greift der Charakter-Default). --}}
+                    <input type="hidden" name="accent_color" :value="accent"/>
+
+                    <div class="flex flex-wrap gap-2">
+                        <template x-for="c in accentOptions" :key="c.hex">
+                            <button type="button" @click="pickAccent(c.hex)"
+                                    :aria-pressed="selectedAccent === c.hex && !isCustomAccent"
+                                    class="flex items-center gap-2 rounded-md border-2 px-3 py-1.5 text-caption text-ink-900 hover:border-ink-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                                    :class="(selectedAccent === c.hex && !isCustomAccent) ? 'border-ink-900 bg-canvas-bg' : 'border-line-200 bg-canvas-bg'">
+                                <span class="inline-block size-4 rounded-sm" :style="'background-color: ' + c.hex"></span>
+                                <span x-text="c.name + (c.default ? ' · {{ __('project_accent_color_default_marker') }}' : '')"></span>
+                                <span class="text-ink-500" x-text="'· ' + c.ratio + ' ✓'"></span>
+                            </button>
+                        </template>
+                    </div>
+
+                    {{-- Karl 2026-09-11 (Feedback): freie Farbwahl als
+                         Ergaenzung zu den kuratierten Presets — fuer
+                         Test-Runden und als Reserve, falls der Kunde
+                         die volle Freiheit behalten will. Kontrast-
+                         Verantwortung liegt dann beim Redakteur. --}}
+                    <div class="mt-3 flex flex-wrap items-center gap-2 rounded-md border-2 border-line-200 bg-canvas-bg px-3 py-1.5"
+                         :class="isCustomAccent ? 'border-ink-900' : ''">
+                        <span class="text-caption text-ink-500">{{ __('project_accent_color_custom_label') }}</span>
                         <input type="color"
-                               id="accent_color"
-                               name="accent_color"
-                               value="{{ $project->accent_color ?? '#a8392f' }}"
-                               class="h-9 w-16 cursor-pointer rounded border border-line-200"/>
+                               :value="accent && isCustomAccent ? accent : '#a8392f'"
+                               @input="accent = $event.target.value"
+                               class="h-7 w-10 cursor-pointer rounded border border-line-200"/>
                         <input type="text"
-                               name="accent_color_text"
-                               oninput="document.getElementById('accent_color').value = this.value; document.getElementsByName('accent_color')[0].value = this.value;"
-                               value="{{ $project->accent_color ?? '' }}"
+                               :value="isCustomAccent ? accent : ''"
+                               @input="accent = $event.target.value"
                                placeholder="{{ __('project_accent_color_placeholder') }}"
                                pattern="^#(?:[0-9a-fA-F]{3}){1,2}$"
-                               class="w-32 rounded-md border border-line-200 bg-canvas-bg px-3 py-2 font-mono text-caption"/>
-                        <button type="button"
-                                onclick="document.getElementById('accent_color').value = ''; document.getElementsByName('accent_color_text')[0].value = ''; document.getElementsByName('accent_color')[0].value = '';"
-                                class="text-caption text-ink-500 underline hover:text-ink-900">
-                            {{ __('project_accent_color_reset') }}
-                        </button>
+                               class="w-28 rounded-md border border-line-200 bg-paper-0 px-2 py-1 font-mono text-caption"/>
+                        <span x-show="isCustomAccent" x-cloak
+                              class="text-caption text-ink-500">{{ __('project_accent_color_custom_hint') }}</span>
                     </div>
+
+                    <button type="button" @click="accent = ''"
+                            x-show="accent !== ''"
+                            x-cloak
+                            class="mt-3 text-caption text-ink-500 underline hover:text-ink-900">
+                        {{ __('project_accent_color_reset') }}
+                    </button>
                 </div>
             </section>
         @endisset
 
-        {{-- Klebende Speicher-Fußzeile am Seitenende — Design v6 § 3.
-             Ein Primär-Button, ein sekundärer, Speicherstand links.
-             Q3-Härtung F5 (2026-08-19): `z-20` gegen Quill-Toolbar-Überlappung,
-             `mt-16` schafft Puffer zwischen letztem Feld und Sticky-Footer bei
-             niedrigen Viewports (die Beschreibungs-Quill-Toolbar geriet vorher
-             hinter den Save-Footer). --}}
-        <div class="sticky bottom-0 z-20 -mx-4 mt-16 flex flex-wrap items-center justify-between gap-3 border-t border-line-200 bg-paper-0/95 px-6 py-3 shadow-medium backdrop-blur"
-             role="region"
-             aria-label="{{ __('metadata_sticky_region_label') }}">
-            <p class="text-caption text-ink-500">
-                <span x-show="!isDirty">{{ __('metadata_footer_no_pending') }}</span>
-                <span x-show="isDirty" x-cloak>{{ __('metadata_footer_pending') }}</span>
-            </p>
-            <div class="flex items-center gap-2">
-                @isset($project->id)
-                    <a href="{{ route('projects.edit', $project->id) }}"
-                       class="inline-flex items-center gap-1 rounded-md border border-line-200 bg-canvas-bg px-3 py-2 text-body text-ink-900 hover:bg-chrome-active focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-                        {{ __('metadata_footer_discard') }}
-                    </a>
-                @endisset
-                <button type="submit"
-                        :disabled="submitting"
-                        class="inline-flex items-center gap-1 rounded-md bg-primary px-4 py-2 text-body font-medium text-primary-on hover:opacity-90 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-                    <x-icon name="save" size="4"/>
-                    <span x-show="!submitting">{{ __('save') }}</span>
-                    <span x-show="submitting" x-cloak>{{ __('save') }} …</span>
-                </button>
+        {{-- Q4-Etappe 7 · E7-4 (2026-09-11): Sticky-Fusszeile nur noch
+             fuer die Neuanlage (kein Projekt-Kontext, kein Autosave).
+             Beim Bearbeiten uebernimmt die Kopfzeile via
+             <x-projects.save-state> das gesamte Speicherverhalten —
+             Autosave laeuft nach 1.5s Debounce, der Header-Button ist
+             fuers Sicherheitsgefuehl da. --}}
+        @unless (isset($project->id))
+            <div class="sticky bottom-0 z-20 -mx-4 mt-16 flex flex-wrap items-center justify-between gap-3 border-t border-line-200 bg-paper-0/95 px-6 py-3 shadow-medium backdrop-blur"
+                 role="region"
+                 aria-label="{{ __('metadata_sticky_region_label') }}">
+                <p class="text-caption text-ink-500">
+                    <span x-show="!isDirty">{{ __('metadata_footer_no_pending') }}</span>
+                    <span x-show="isDirty" x-cloak>{{ __('metadata_footer_pending') }}</span>
+                </p>
+                <div class="flex items-center gap-2">
+                    <button type="submit"
+                            :disabled="submitting"
+                            class="inline-flex items-center gap-1 rounded-md bg-primary px-4 py-2 text-body font-medium text-primary-on hover:opacity-90 disabled:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                        <x-icon name="save" size="4"/>
+                        <span x-show="!submitting">{{ __('save') }}</span>
+                        <span x-show="submitting" x-cloak>{{ __('save') }} …</span>
+                    </button>
+                </div>
             </div>
-        </div>
+        @endunless
     </form>
 
     @isset($project->id)
@@ -494,52 +608,25 @@ If not, see <https://www.gnu.org/licenses/>. -->
     @endisset
 @endsection
 @section('action')
-    <div class="col-sm-9">
-        <button id="btn_save" class="btn btn-secondary btn-lg btn-block text-left" type="submit" name="btn_submit"
-                value="Save"><x-icon name="file-earmark" class="m-2" />@if(isset($project->id)) {{__('save')}} @else Save @endif
-        </button>
-        <!--<button class="btn btn-secondary btn-lg btn-block text-left" type="submit" name="btn_submit" value="Preview"><x-icon name="eye" class="m-2" />Preview
-         </button>
-         <button class="btn btn-secondary btn-lg btn-block text-left" type="submit" name="btn_submit" value="Publish"><x-icon name="globe" class="m-2" />Publish
-         </button>!-->
-        @if(isset($project->id))
-            <form action="{{ route('projects.destroy',$project->id) }}" method="POST">
-                @csrf
-                @method('DELETE')
-                <button class="btn btn-secondary btn-lg btn-block text-left mt-2" type="submit"
-                        onclick="return confirm('{{__('message_delete_confirm')}}')">
-                    <x-icon name="trash" class="m-2" /> {{__('delete_project')}}
-                </button>
-            </form>
-        @endif
-
-    </div>
+    @unless(isset($project->id))
+        {{-- Nur bei Neuanlage: der ausgelagerte Legacy-Speichern-Button.
+             Beim Bearbeiten uebernimmt <x-projects.save-state> in der
+             Kopfzeile das Speichern (Autosave + Header-Button). --}}
+        <div class="col-sm-9">
+            <button id="btn_save" class="btn btn-secondary btn-lg btn-block text-left" type="submit" name="btn_submit"
+                    value="Save"><x-icon name="file-earmark" class="m-2"/>Save
+            </button>
+        </div>
+    @endunless
 @endsection
 @section('sidebar')
-    {{-- 5aa.2 § 3: Rechte Spalte trägt Prüfung, Kennzahlen, Verlauf und
-         Löschen. Speichern liegt in der klebenden Fußzeile, „Berechtigungen"
-         und „Zurück zu Projektdetails" sind Tabs — hier daher nicht mehr. --}}
+    {{-- Karl 2026-09-11 (E7-6/Feedback): Sidebar radikal reduziert.
+         „Prüfung" und „Projektverlauf" waren wirkungslose Links (die
+         Anker existierten nicht); Kennzahlen mit nur einer Zahl war
+         Fuellmaterial. Uebrig bleibt genau die Aktion, die im Editor-
+         Kontext keinen anderen sichtbaren Platz hat: Projekt loeschen. --}}
     @if(isset($project->id))
-        <div class="flex flex-col gap-3">
-            <a href="#publish-check"
-               class="inline-flex items-center gap-2 rounded-md border border-line-200 bg-paper-0 px-3 py-2 text-body text-ink-900 hover:bg-chrome-active focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-                <x-icon name="clipboard-check" size="4"/>
-                <span>{{ __('metadata_sidebar_publish_check') }}</span>
-            </a>
-            <div class="rounded-md border border-line-200 bg-paper-0 px-3 py-2 text-body text-ink-500">
-                <p class="mb-1 text-caption font-semibold uppercase tracking-wider text-ink-700">
-                    {{ __('metadata_sidebar_stats') }}
-                </p>
-                <p>{{ trans_choice('n_chapters', isset($project->chapters) ? count($project->chapters) : 0) }}</p>
-            </div>
-            <a href="{{ route('projects.edit', $project->id) }}#history"
-               class="inline-flex items-center gap-2 rounded-md border border-line-200 bg-paper-0 px-3 py-2 text-body text-ink-900 hover:bg-chrome-active focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-                <x-icon name="history" size="4"/>
-                <span>{{ __('metadata_sidebar_history') }}</span>
-            </a>
-        </div>
-        {{-- Löschen bewusst ausserhalb der Speicher-Fusszeile. --}}
-        <form action="{{ route('projects.destroy', $project->id) }}" method="POST" class="mt-4">
+        <form action="{{ route('projects.destroy', $project->id) }}" method="POST">
             @csrf
             @method('DELETE')
             <button type="submit"
@@ -655,6 +742,10 @@ If not, see <https://www.gnu.org/licenses/>. -->
             Font.whitelist = ['times-new-roman', 'arial', 'Sans Serif'];
             Quill.register(Font, true);
 
+            // Karl 2026-09-11 (E7-6): Beschreibung behaelt den vollen
+            // Werkzeugsatz (kuratorischer Fliesstext). Impressum und
+            // AGB bekommen den reduzierten Satz — dort sind Farben,
+            // Fonts, Groessen und Ausrichtung ohnehin fehl am Platz.
             let toolbarOptions = [
                 [{
                     'header': [1, 2, 3, 4, 5, 6, false]
@@ -688,16 +779,25 @@ If not, see <https://www.gnu.org/licenses/>. -->
                 ['link'],
                 ['clean'] // remove formatting button
             ];
+
+            // Reduzierter Toolbar-Satz fuer Impressum und AGB —
+            // Fett, Kursiv, Liste (ordered/bullet), Link.
+            let toolbarOptionsLegal = [
+                ['bold', 'italic'],
+                [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                ['link'],
+                ['clean'],
+            ];
             let quill = new Quill('#imprintId', {
                 modules: {
-                    toolbar: toolbarOptions,
+                    toolbar: toolbarOptionsLegal,
                 },
                 theme: 'snow'
             });
 
             let quillTerms = new Quill('#termsId', {
                 modules: {
-                    toolbar: toolbarOptions,
+                    toolbar: toolbarOptionsLegal,
                 },
                 theme: 'snow'
             });

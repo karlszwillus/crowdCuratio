@@ -41,7 +41,8 @@ use Tests\TestCase;
 |     3. Header-Navigations-Items (Einstellungen, Projekt, Nutzer, …)
 |     4. Theme-Toggle
 |     5. Sidebar-Tree-Links (Projekt > Kapitel > Abschnitt)
-|     6. Breadcrumb-Links
+|     6. Editor-Chrome-Bar (Reiterleiste + Aktionen — der Brotkrumen-
+|        pfad ist mit E7-4/2026-09-11 entfallen)
 |     7. Editor-Aktionsbuttons (Edit, Delete, Add)
 |
 | Der Test prüft nicht alle Positionen — die Liste der fokussierbaren
@@ -101,10 +102,12 @@ it('Editor-View: Sidebar-Tree-Nav kommt nach der Rail und vor der Editor-Chrome-
 
     // Rail sitzt links (erste <aside>), dann der Sidebar-Panel mit
     // dem Struktur-Baum als 'Projektstruktur', dann die Editor-
-    // Chrome-Bar (Brotkrumen) im Canvas rechts.
+    // Chrome-Bar im Canvas rechts. Q4-Etappe 7 · E7-4 (2026-09-11):
+    // Brotkrumenpfad ist entfallen; die Chrome-Bar traegt jetzt einen
+    // stabilen `data-testid`-Marker, den der Test bindet.
     $railPos = strpos($html, 'aria-label="Hauptnavigation"');
     $treePos = strpos($html, 'aria-label="Projektstruktur"');
-    $editorContentPos = strpos($html, 'aria-label="Breadcrumb"');
+    $editorContentPos = strpos($html, 'data-testid="editor-chrome"');
 
     expect($railPos)->toBeInt()->toBeGreaterThan(0);
     expect($treePos)->toBeInt()->toBeGreaterThan(0);
