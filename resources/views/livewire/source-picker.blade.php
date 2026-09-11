@@ -71,8 +71,23 @@ new class extends Component
 
     public bool $editing = false;
 
-    /** @var array<int, array{id: int, name: string}> */
+    /**
+     * Q4-Etappe 7 · E7-1 (2026-09-11): Typ-Wahl beim Neu-Anlegen.
+     * Nach Designer-Nachreview darf ein Nachweis eine Sorte tragen
+     * (Person, Institution, Plattform, Lizenz) — die Vorschlags-
+     * liste gruppiert nach Sorte, ein neuer Nachweis bekommt sie
+     * beim Anlegen optional mit. Leer bleibt zulässig.
+     */
+    public ?string $newKind = null;
+
+    /** @var array<int, array{id: int, name: string, kind: string|null}> */
     public array $results = [];
+
+    /*
+     * Fest verankerte Sorten leben am Model (Source::kinds()),
+     * damit Quellenverwaltung und Nachweis-Menue dieselbe Menge
+     * teilen.
+     */
 
     public function mount(Model $model, string $field, string $relation, string $sourceType, string $label = ''): void
     {
@@ -171,6 +186,7 @@ new class extends Component
             'project_id' => $projectId,
             'name' => $name,
             'type' => $this->sourceType,
+            'kind' => in_array($this->newKind, Source::kinds(), true) ? $this->newKind : null,
             'is_translated' => false,
         ]);
 
@@ -237,10 +253,57 @@ new class extends Component
 
         return $builder
             ->orderBy('name')
-            ->limit(8)
-            ->get(['id', 'name'])
-            ->map(fn (Source $s) => ['id' => $s->id, 'name' => $s->name])
+            ->limit(12)
+            ->get(['id', 'name', 'kind'])
+            ->map(fn (Source $s) => [
+                'id' => $s->id,
+                'name' => (string) $s->name,
+                'kind' => $s->kind,
+            ])
             ->all();
+    }
+
+    /**
+     * Q4-Etappe 7 · E7-1: Vorschläge nach Sorte gruppieren, ohne
+     * Sorte („null") als eigene Gruppe unten. Reihenfolge fest,
+     * damit die Rangfolge Person → Institution → Plattform →
+     * Lizenz → ohne Sorte im Editor konsistent ist.
+     *
+     * Karl 2026-09-11: Im Zitier-Modus „einfach" tragen alle
+     * Quellen `kind = null` — dann wäre die Gruppen-Überschrift
+     * „Ohne Sorte" redundant. Der Picker fällt in diesem Fall auf
+     * eine einzige unbenannte Gruppe zurück.
+     *
+     * @return array<string, array<int, array{id: int, name: string, kind: string|null}>>
+     */
+    public function groupedResults(): array
+    {
+        if (! $this->kindsVisible()) {
+            return ['' => $this->results];
+        }
+
+        $order = [...Source::kinds(), ''];
+        $grouped = array_fill_keys($order, []);
+
+        foreach ($this->results as $result) {
+            $key = in_array($result['kind'], Source::kinds(), true) ? $result['kind'] : '';
+            $grouped[$key][] = $result;
+        }
+
+        return array_filter($grouped, fn (array $items) => $items !== []);
+    }
+
+    /**
+     * Sorten-UI (Gruppen-Überschriften, Chip pro Vorschlag,
+     * Sorten-Wahl beim Neu-Anlegen) zeigt sich nur, wenn das
+     * Projekt im Zitier-Modus „voll" arbeitet. Sonst tragen alle
+     * Quellen `kind = null` und die Sorten-Anzeige wäre nutzlos.
+     */
+    public function kindsVisible(): bool
+    {
+        $project = $this->resolveProject();
+
+        return $project instanceof \App\Models\Project && $project->usesFullCitationDepth();
     }
 
     /**
@@ -312,23 +375,37 @@ new class extends Component
             // Publish-Prüfung).
             $sourceIsEmpty = $query === '';
         @endphp
+        {{-- Q4-Etappe 7 · E7-3 (2026-09-11): der pro-Feld-Hint
+             „Wird beim Veröffentlichen namentlich aufgeführt" war
+             redundant — Designer-Befund 03. Der leere Zustand
+             wird jetzt nur noch durch den Placeholder + subtilen
+             ink-500-Rahmen markiert. Die Aggregat-Warnung im
+             Block-Footer („Bildbeschreibung, Urheber:in fehlt")
+             sagt konkret, was fehlt. Warnfarbe (gelb) wandert
+             in einer späteren Iteration in den Veröffentlichen-
+             Check. --}}
         <button
             type="button"
             wire:click="startEdit"
-            class="{{ $sourceIsEmpty ? 'border-warning bg-warning-bg/40 text-warning' : 'border-line-200 bg-canvas-bg text-ink-900 hover:border-ink-300' }} inline-flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-body focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            class="{{ $sourceIsEmpty ? 'border-line-300 border-dashed bg-canvas-bg/60 text-ink-500' : 'border-line-200 bg-canvas-bg text-ink-900 hover:border-ink-300' }} inline-flex w-full items-center justify-between gap-2 rounded-md border px-3 py-2 text-body focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
             <span class="font-medium">
                 {{ $query !== '' ? $query : __('add') }}
             </span>
-            @if ($sourceIsEmpty)
-                <span class="text-caption">{{ __('source_missing_hint') }}</span>
-            @endif
         </button>
     @else
-        <div class="relative flex flex-col gap-1">
+        {{-- Karl 2026-09-11 (E7-6/Feedback): Bestaetigen-Button entfaellt
+             (Klick auf einen Vorschlag oder Enter reichen). Statt eines
+             gefuehlten „Auswahl-Zwangs" fuehrt der Menu-Eintrag „Neue
+             Quelle anlegen" oben in die Neu-Anlage — er leert die
+             Eingabe und fokussiert sie wieder. --}}
+        <div class="relative flex flex-col gap-1"
+             x-data
+             x-ref="pickerRoot">
             <div class="flex items-center gap-2">
                 <input
                     type="text"
+                    x-ref="pickerInput"
                     wire:model.live.debounce.250ms="query"
                     wire:keydown.enter.prevent="createAndSelect"
                     autofocus
@@ -346,37 +423,98 @@ new class extends Component
                 </button>
             </div>
 
-            <ul
+            <div
                 id="source-picker-list-{{ $field }}-{{ $model->getKey() }}"
                 role="listbox"
-                class="z-20 mt-1 max-h-56 overflow-auto rounded-md border border-ink-300 bg-canvas-bg py-1 shadow-md"
-                @if (empty($results) && ! $this->hasExactMatch() && trim($query) === '') style="display:none" @endif
+                class="z-20 mt-1 max-h-72 overflow-auto rounded-md border border-ink-300 bg-canvas-bg py-1 shadow-md"
             >
-                @foreach ($results as $result)
-                    <li>
-                        <button
-                            type="button"
-                            role="option"
-                            wire:click="selectSource({{ $result['id'] }})"
-                            class="block w-full px-3 py-1 text-left text-body text-ink-900 hover:bg-chrome-active focus-visible:bg-chrome-active focus-visible:outline-none"
-                        >
-                            {{ $result['name'] }}
-                        </button>
-                    </li>
+                {{-- „Neue Quelle anlegen" — erste Zeile im Menu, damit
+                     der Nutzer sieht, dass die Vorschlagsliste kein
+                     Zwang ist. Klick leert die Query und setzt den
+                     Fokus zurueck ins Eingabefeld. --}}
+                <button
+                    type="button"
+                    @click="$wire.set('query', ''); $nextTick(() => $refs.pickerInput?.focus())"
+                    class="flex w-full items-center gap-2 border-b border-line-200 px-3 py-2 text-left text-body text-primary hover:bg-primary/5 focus-visible:bg-primary/5 focus-visible:outline-none"
+                >
+                    <x-icon name="plus" size="4"/>
+                    <span>{{ __('source_picker_create_new') }}</span>
+                </button>
+
+                @if (! empty($results))
+                    <p class="border-b border-line-200 px-3 py-1.5 text-caption font-medium uppercase tracking-wider text-ink-500">
+                        {{ __('source_picker_existing_header') }}
+                    </p>
+                @endif
+
+                {{-- Q4-Etappe 7 · E7-1: Vorschläge nach Sorte
+                     gruppiert (Person, Institution, Plattform,
+                     Lizenz, ohne Sorte). Sorte als kleiner Chip
+                     hinter jedem Namen, Überschriften trennen die
+                     Gruppen. Der Designer-Report bemängelte die
+                     flache Liste, in der eine Lizenz wie ein
+                     Urheber aussah. --}}
+                @foreach ($this->groupedResults() as $kind => $items)
+                    <div class="border-t border-ink-300/40 first:border-t-0 py-1">
+                        @if ($this->kindsVisible())
+                            <div class="px-3 pt-1 pb-0.5 text-caption font-mono uppercase tracking-wider text-ink-500">
+                                {{ $kind === '' ? __('source_picker_group_uncategorised') : __('source_kind_'.$kind) }}
+                            </div>
+                        @endif
+                        <ul>
+                            @foreach ($items as $result)
+                                <li>
+                                    <button
+                                        type="button"
+                                        role="option"
+                                        wire:click="selectSource({{ $result['id'] }})"
+                                        class="flex w-full items-center justify-between gap-3 px-3 py-1 text-left text-body text-ink-900 hover:bg-line-100 focus-visible:bg-line-100 focus-visible:outline-none"
+                                    >
+                                        <span class="min-w-0 truncate">{{ $result['name'] }}</span>
+                                        @if (! empty($result['kind']))
+                                            <span class="shrink-0 rounded-sm border border-line-200 px-1.5 py-0.5 text-caption font-mono text-ink-500">
+                                                {{ __('source_kind_'.$result['kind']) }}
+                                            </span>
+                                        @endif
+                                    </button>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
                 @endforeach
 
                 @if (trim($query) !== '' && ! $this->hasExactMatch())
-                    <li class="border-t border-ink-300/60">
+                    <div class="border-t border-ink-300/60 p-2">
+                        <div class="text-caption text-ink-600 mb-1.5">
+                            + {{ __('create_new') }}: <span class="font-medium">„{{ trim($query) }}"</span>
+                        </div>
+                        @if ($this->kindsVisible())
+                            <div class="flex flex-wrap items-center gap-1 mb-2">
+                                <span class="text-caption font-mono text-ink-500 mr-1">{{ __('source_picker_new_kind_label') }}:</span>
+                                <button type="button"
+                                        wire:click="$set('newKind', null)"
+                                        class="{{ $newKind === null ? 'border-ink-800 text-ink-900' : 'border-line-200 text-ink-600' }} rounded-sm border px-2 py-0.5 text-caption font-mono">
+                                    —
+                                </button>
+                                @foreach (\App\Models\Source::kinds() as $k)
+                                    <button type="button"
+                                            wire:click="$set('newKind', '{{ $k }}')"
+                                            class="{{ $newKind === $k ? 'border-ink-800 text-ink-900' : 'border-line-200 text-ink-600' }} rounded-sm border px-2 py-0.5 text-caption font-mono">
+                                        {{ __('source_kind_'.$k) }}
+                                    </button>
+                                @endforeach
+                            </div>
+                        @endif
                         <button
                             type="button"
                             wire:click="createAndSelect"
-                            class="block w-full px-3 py-1 text-left text-caption text-primary hover:bg-chrome-active focus-visible:bg-chrome-active focus-visible:outline-none"
+                            class="block w-full rounded-md bg-primary px-3 py-1.5 text-caption font-medium text-primary-on hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                         >
-                            + {{ __('create_new') }}: „{{ trim($query) }}"
+                            {{ __('source_picker_create_and_select') }}
                         </button>
-                    </li>
+                    </div>
                 @endif
-            </ul>
+            </div>
         </div>
     @endif
 </div>

@@ -52,6 +52,9 @@ new class extends Component
 
     public ?string $signature = null;
 
+    // Q4-Etappe 7 · E7-1 (2026-09-11): Lizenz-Feld.
+    public ?string $license = null;
+
     // Merge-Modal
     public bool $showMergeModal = false;
 
@@ -113,6 +116,89 @@ new class extends Component
                 ->count();
     }
 
+    /**
+     * Q4-Etappe 7 · E7-6 (2026-09-11): Detail-Sprungliste der Referenzen.
+     * Sammelt Text-/Image-/Audiovisual-Vorkommen und resolved die Kette
+     * bis zum Chapter/Entry, damit der Redakteur direkt zum passenden
+     * Block im Editor springen kann.
+     *
+     * Rueckgabe pro Eintrag: {
+     *   chapter, chapterPosition, entry, entryPosition, blockKind,
+     *   blockAnchor (URL-Anker im Editor), blockLabel
+     * }
+     *
+     * Struktur ist bewusst schlank — die Sicht darunter iteriert und
+     * baut Sprung-Links; wir bruch/behaupten keine polymorphen Klassen,
+     * weil das ganze Quellenmodell ohnehin per FK arbeitet.
+     */
+    public function referencesFor(int $sourceId): array
+    {
+        $items = [];
+
+        // Text-Bloecke: origin/copyright → Text → MediaContent → Entry → Chapter.
+        Text::query()
+            ->where(fn ($q) => $q->where('origin', $sourceId)->orWhere('copyright', $sourceId))
+            ->with(['mediaContents.parent.chapter'])
+            ->get()
+            ->each(function (Text $text) use (&$items) {
+                foreach ($text->mediaContents as $mc) {
+                    $entry = $mc->parent;
+                    if (! $entry) continue;
+                    $items[] = $this->refItem($entry, 'text', $mc->id, $entry->name);
+                }
+            });
+
+        // Image-Bloecke: Image ist an Gallery gebunden, Gallery → MediaContent → Entry.
+        Image::query()
+            ->where(fn ($q) => $q->where('origin', $sourceId)->orWhere('copyright', $sourceId))
+            ->with(['gallery.mediaContents.parent.chapter'])
+            ->get()
+            ->each(function (Image $image) use (&$items) {
+                $gallery = $image->gallery;
+                if (! $gallery) return;
+                foreach ($gallery->mediaContents as $mc) {
+                    $entry = $mc->parent;
+                    if (! $entry) continue;
+                    $items[] = $this->refItem($entry, 'gallery', $mc->id, $entry->name);
+                }
+            });
+
+        // Audiovisual: origin_id/copyright_id → Audiovisual → MediaContent → Entry.
+        Audiovisual::query()
+            ->where(fn ($q) => $q->where('origin_id', $sourceId)->orWhere('copyright_id', $sourceId))
+            ->with(['mediaContents.parent.chapter'])
+            ->get()
+            ->each(function (Audiovisual $av) use (&$items) {
+                foreach ($av->mediaContents as $mc) {
+                    $entry = $mc->parent;
+                    if (! $entry) continue;
+                    $items[] = $this->refItem($entry, 'audiovisual', $mc->id, $entry->name);
+                }
+            });
+
+        // Duplikate raus (Text mit copyright+origin zaehlt einmal) und
+        // sortieren nach Chapter/Entry.
+        return collect($items)
+            ->unique(fn ($i) => $i['blockAnchor'])
+            ->sortBy([['chapterPosition', 'asc'], ['entryPosition', 'asc']])
+            ->values()
+            ->all();
+    }
+
+    private function refItem($entry, string $blockKind, int $mediaContentId, string $entryLabel): array
+    {
+        $chapter = $entry->chapter ?? null;
+
+        return [
+            'chapter' => $chapter?->name ?? '',
+            'chapterPosition' => $chapter?->position ?? 0,
+            'entry' => $entryLabel,
+            'entryPosition' => $entry->position ?? 0,
+            'blockKind' => $blockKind,
+            'blockAnchor' => route('projects.edit', $this->projectId).'#anchor_MediaContent_'.$mediaContentId,
+        ];
+    }
+
     public function selectSource(int $sourceId): void
     {
         $source = Source::where('project_id', $this->projectId)->findOrFail($sourceId);
@@ -122,6 +208,7 @@ new class extends Component
         $this->title = $source->title;
         $this->holding = $source->holding;
         $this->signature = $source->signature;
+        $this->license = $source->license;
         $this->flash = '';
     }
 
@@ -133,6 +220,7 @@ new class extends Component
         $this->title = null;
         $this->holding = null;
         $this->signature = null;
+        $this->license = null;
     }
 
     public function save(): void
@@ -148,6 +236,7 @@ new class extends Component
             $source->title = $this->title ?: null;
             $source->holding = $this->holding ?: null;
             $source->signature = $this->signature ?: null;
+            $source->license = $this->license ?: null;
         }
         $source->save();
 
@@ -272,7 +361,11 @@ new class extends Component
 };
 ?>
 
-<div class="mx-auto max-w-6xl px-6 py-6">
+{{-- Karl 2026-09-11: der äussere Layout-Canvas (components/layout.blade.php)
+     traegt bereits `mx-auto max-w-screen-2xl px-6 py-6`. Ein zweiter
+     Container-Wrapper hier duplizierte Padding und quetschte die Sicht
+     nach rechts. --}}
+<div>
     <header class="mb-6">
         <h1 class="text-title font-semibold text-ink-900">
             {{ __('sources_admin_title') }}
@@ -397,12 +490,49 @@ new class extends Component
                                 <input id="src-signature" type="text" wire:model="signature"
                                        class="block w-full rounded-md border border-line-200 bg-paper-0 px-3 py-2 text-body"/>
                             </div>
+                            <div class="md:col-span-2">
+                                {{-- Q4-Etappe 7 · E7-1 (2026-09-11): Lizenz-Feld.
+                                     Trennt Rechte-Angabe („CC BY-SA 4.0") vom
+                                     Urheber im Namensfeld — Designer-Befund 06 aus
+                                     der Bildergalerie-Review. --}}
+                                <label for="src-license" class="mb-1 block text-caption font-medium text-ink-700">
+                                    {{ __('sources_admin_field_license') }}
+                                </label>
+                                <input id="src-license" type="text" wire:model="license"
+                                       placeholder="{{ __('sources_admin_field_license_placeholder') }}"
+                                       class="block w-full rounded-md border border-line-200 bg-paper-0 px-3 py-2 text-body"/>
+                                <p class="mt-1 text-caption text-ink-500">{{ __('sources_admin_field_license_hint') }}</p>
+                            </div>
                         </div>
                     @endif
 
-                    <p class="text-caption text-ink-500">
-                        {{ trans_choice('sources_admin_referenced_n_times', $refCount, ['count' => $refCount]) }}
-                    </p>
+                    {{-- Karl 2026-09-11 (E7-6): Sprungliste statt bloße
+                         Zahl. Klick auf einen Eintrag oeffnet den Editor
+                         am passenden Anker. --}}
+                    @php $refs = $this->referencesFor((int) $selectedId); @endphp
+                    <div>
+                        <p class="mb-2 text-caption font-medium text-ink-700">
+                            {{ trans_choice('sources_admin_referenced_n_times', count($refs), ['count' => count($refs)]) }}
+                        </p>
+                        @if (! empty($refs))
+                            <ul class="divide-y divide-line-100 rounded-md border border-line-200 bg-canvas-bg">
+                                @foreach ($refs as $ref)
+                                    <li>
+                                        <a href="{{ $ref['blockAnchor'] }}"
+                                           class="flex items-center justify-between gap-3 px-3 py-2 text-caption text-ink-900 hover:bg-line-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                                            <span class="min-w-0 truncate">
+                                                <span class="font-medium">{{ $ref['chapter'] ?: '—' }}</span>
+                                                <span class="text-ink-500"> · {{ $ref['entry'] }}</span>
+                                            </span>
+                                            <span class="shrink-0 rounded-sm border border-line-200 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-ink-500">
+                                                {{ __('sources_admin_ref_kind_'.$ref['blockKind']) }}
+                                            </span>
+                                        </a>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @endif
+                    </div>
 
                     <div class="flex items-center justify-between gap-2 pt-2">
                         <div class="flex items-center gap-2">
