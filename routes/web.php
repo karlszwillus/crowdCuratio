@@ -163,11 +163,8 @@ Route::group(
             'resend.invitation'
         );
         Route::post('/images', [ImageBlockController::class, 'saveImage'])->name('image.store');
-        // Phase 5y.6: Bild-Sortierung innerhalb einer Galerie.
-        Route::post('/galleries/{gallery}/images/reorder', [GalleryBlockController::class, 'reorderImages'])
-            ->name('gallery.images.reorder');
-        Route::post('/galleries/{gallery}/images/drop', [GalleryBlockController::class, 'dropImage'])
-            ->name('gallery.images.drop');
+        // Bild-Sortierung + Drop wandern mit I11 (2026-09-12) unter das
+        // `/api/internal/`-Prefix — Definition oben im API-Group.
         Route::get('/images/{id}/edit', [ImageBlockController::class, 'editImage'])->name(
             'image.edit'
         );
@@ -210,12 +207,28 @@ Route::group(
         // Aufrufer generieren automatisch die neue URL. Weichenstellung
         // fuer eine spaetere Phase-6-`/api/v1/`-Struktur mit
         // ApiResource-Transformern und Versioning.
+        // Q4-Etappe 8 · I11 (2026-09-12): Alle internen JSON-Endpunkte
+        // gebuendelt unter dem Prefix `/api/internal/`. Namen bleiben
+        // unveraendert, damit route()-Aufrufer transparent die neuen
+        // URLs erzeugen. Drag-Reorder + Gallery-Reorder/Drop wandern
+        // hier hinein — sie liefern JsonResponse und gehoerten
+        // konzeptuell schon immer dorthin.
         Route::prefix('api/internal')->group(function () {
-            // Phase 5ac.1: Sofort-Wirkung fuer Sprache und Theme.
             Route::post('/profile/locale', [ProfileController::class, 'updateLocale'])->name('profile.locale');
             Route::post('/profile/theme', [ProfileController::class, 'updateTheme'])->name('profile.theme');
-            // Q3-Politur G9 (2026-08-20) / UX-01: Live-Blur-Check fuers Kuerzel.
             Route::post('/profile/check-initials', [ProfileController::class, 'checkInitials'])->name('profile.check_initials');
+
+            // Reorder (Drag&Drop-Ende). Throttle greift Tastatur-
+            // Spam-Faelle mit vielen Einzel-Updates.
+            Route::post('/reorder', [ChapterController::class, 'saveDragAndDrop'])
+                ->middleware('throttle:60,1')
+                ->name('chapter.drag');
+
+            // Gallery-Bilder: Sortierung + Multi-Drop.
+            Route::post('/galleries/{gallery}/images/reorder', [GalleryBlockController::class, 'reorderImages'])
+                ->name('gallery.images.reorder');
+            Route::post('/galleries/{gallery}/images/drop', [GalleryBlockController::class, 'dropImage'])
+                ->name('gallery.images.drop');
         });
         // Phase 5ac.4: eigener Save fuer Passwort-Wechsel.
         Route::patch('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
@@ -228,17 +241,8 @@ Route::group(
         Route::post('/comments/chapter', [ChapterController::class, 'commentChapter'])->name(
             'comments.chapter'
         );
-        // Throttle greift den Strg+Alt-Pfeil-Spam-Fall: bei jedem
-        // Tastatur-Reorder-Klick ein POST plus N Einzel-Updates im
-        // Service. 60 Requests pro Minute pro User sind das
-        // Standardmaß, das Laravel-Rate-Limiter für interaktive UI
-        // ansetzt.
-        Route::post(
-            '/drag',
-            [ChapterController::class, 'saveDragAndDrop']
-        )->middleware('throttle:60,1')->name(
-            'chapter.drag'
-        );
+        // Drag&Drop-Reorder wandert mit I11 (2026-09-12) unter das
+        // `/api/internal/`-Prefix — Definition oben im API-Group.
         Route::get(
             '/comments/chapter/{id}/',
             [ChapterController::class, 'getChapterComment']
