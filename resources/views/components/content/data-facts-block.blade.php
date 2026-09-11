@@ -55,18 +55,18 @@
                 @endif
             </x-slot:actions>
 
-            {{-- Titel + Untertitel (translatable). --}}
-            <div class="space-y-2">
+            {{-- Titel + Untertitel (translatable). Placeholder-Pattern
+                 analog Gallery/Kapitel — kein sichtbares Label. --}}
+            <div class="space-y-1">
                 <div data-history-field="title">
-                    <label class="mb-1 block text-caption font-medium text-ink-700">
-                        {{ __('data_facts_title') }}
-                    </label>
                     @can('update', $project)
                         <livewire:inline-editor
                             :model="$item->dataFactBlock"
                             field="title"
                             rules="nullable|string|max:255"
                             :label="__('data_facts_title')"
+                            :placeholder="__('data_facts_title_placeholder')"
+                            :variant="'heading'"
                             :key="'data-facts-title-'.$item->dataFactBlock->id" />
                     @else
                         @isset($item->dataFactBlock->title)
@@ -75,15 +75,14 @@
                     @endcan
                 </div>
                 <div data-history-field="subtitle">
-                    <label class="mb-1 block text-caption font-medium text-ink-700">
-                        {{ __('data_facts_subtitle') }}
-                    </label>
                     @can('update', $project)
                         <livewire:inline-editor
                             :model="$item->dataFactBlock"
                             field="subtitle"
                             rules="nullable|string|max:255"
                             :label="__('data_facts_subtitle')"
+                            :placeholder="__('data_facts_subtitle_placeholder')"
+                            :variant="'subtitle'"
                             :key="'data-facts-subtitle-'.$item->dataFactBlock->id" />
                     @else
                         @isset($item->dataFactBlock->subtitle)
@@ -91,6 +90,24 @@
                         @endisset
                     @endcan
                 </div>
+            </div>
+
+            {{-- Optionale Einleitung (Rich-Text, translatable). Erscheint
+                 im Reader über dem Steckbrief/der Tabelle. --}}
+            <div class="mt-3" data-history-field="description">
+                @can('update', $project)
+                    <livewire:rich-text-editor
+                        :model="$item->dataFactBlock"
+                        field="description"
+                        rules="nullable|string"
+                        :label="__('data_facts_description')"
+                        :placeholder="__('data_facts_description_placeholder')"
+                        :key="'data-facts-description-'.$item->dataFactBlock->id" />
+                @else
+                    @if (! empty(trim(strip_tags((string) $item->dataFactBlock->description))))
+                        <div class="text-body text-ink-700">{!! $item->dataFactBlock->description !!}</div>
+                    @endif
+                @endcan
             </div>
 
             {{-- Layout-Umschalter (Steckbrief vs. Tabelle). Steht
@@ -176,13 +193,8 @@
                 @endcan
             </div>
 
-            @can('update', $project)
-                <div class="mt-3 flex items-center justify-end gap-3">
-                    <p class="text-caption text-ink-500">
-                        {{ __('saved') }} · {{ optional($item->dataFactBlock->updated_at ?? $item->dataFactBlock->created_at)->format('d.m.Y, H:i') }}
-                    </p>
-                </div>
-            @endcan
+            {{-- Karl 2026-09-11 (E7-6): kein pro-Block-Speicherstand
+                 mehr — Chrome-Bar zentralisiert das. --}}
         </x-ui.block-card>
     </li>
 @endisset

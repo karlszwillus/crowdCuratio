@@ -25,6 +25,9 @@ Erwartet: $media (MediaContent mit ->dataFactBlock) im Kontext.
         @if(! empty($b->subtitle))
             <p class="subtitle">{{ $b->subtitle }}</p>
         @endif
+        @if(! empty(trim(strip_tags((string) $b->description))))
+            <div class="daten-fakten__intro">@rich($b->description)</div>
+        @endif
         @if($b->isTabellenLayout())
             @if(! empty($factColumns) && ! empty($factRows))
                 <table>

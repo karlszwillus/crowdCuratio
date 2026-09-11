@@ -255,15 +255,25 @@ class ProjectTranslationController extends Controller
                                 }
                                 $total++;
 
-                                if ($text->originText->is_translated == 1) {
-                                    $isTranslated++;
+                                // Q4-Etappe 7 · E7-1-Nebenfund (2026-09-11):
+                                // originText und copyrightText koennen seit
+                                // dem nullable-Umbau der image_sources
+                                // (Q3) auch bei Text-Sources leer sein.
+                                // Fehlende Source zaehlt nicht in die
+                                // Uebersetzungs-Statistik.
+                                if ($text->originText !== null) {
+                                    if ($text->originText->is_translated == 1) {
+                                        $isTranslated++;
+                                    }
+                                    $total++;
                                 }
-                                $total++;
 
-                                if ($text->copyrightText->is_translated == 1) {
-                                    $isTranslated++;
+                                if ($text->copyrightText !== null) {
+                                    if ($text->copyrightText->is_translated == 1) {
+                                        $isTranslated++;
+                                    }
+                                    $total++;
                                 }
-                                $total++;
                             }
                         } elseif ($item['content_type'] == Audiovisual::class) {
                             $audiovisual = Audiovisual::find($item['content_id']);
