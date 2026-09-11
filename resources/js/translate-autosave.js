@@ -16,7 +16,7 @@
  * Auf jedem Input/Textarea im `#translate_form` horchen wir auf `change`
  * (feuert bei Input beim Verlassen des Feldes, bei Textarea auch bei
  * Enter). Sobald der Wert seit dem letzten Save geändert wurde, geht ein
- * schlanker POST an `translate.save` mit genau einem Feld. Wenn der Save
+ * schlanker POST an `projects.translations.update` mit genau einem Feld. Wenn der Save
  * durch ist, markieren wir das Feld als übersetzt, aktualisieren den
  * Rahmen (warning → line-200) und rechnen den Section-Counter neu.
  *

@@ -89,7 +89,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
              `translations[<Model>.<id>.<field>]`-Payload an den
              Bulk-Save-Endpoint. Auto-Save-on-Blur pro Feld ist die
              nächste Ausbaustufe. --}}
-        <form action="{{ route('translate.save', $project->id) }}" method="POST" id="translate_form">
+        <form action="{{ route('projects.translations.update', $project) }}" method="POST" id="translate_form">
             @csrf
 
             @php

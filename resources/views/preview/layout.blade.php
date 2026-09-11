@@ -136,7 +136,7 @@ Erwartet: $project (Project), $parameters (array) im Kontext.
 
         <div class="cc-header__nav">
             <span class="cc-header__lang" aria-label="{{ __('lang_switch_label') }}">
-                @if(! in_array(Route::currentRouteName(), ['translate']))
+                @if(! in_array(Route::currentRouteName(), ['projects.translations.edit']))
                     @foreach(Config::get('languages') as $lang => $language)
                         <a href="{{ route('lang.switch', $lang) }}"
                            @class(['is-active' => app()->getLocale() === $lang]))>{{ mb_strtoupper($lang) }}</a>
@@ -208,8 +208,8 @@ Erwartet: $project (Project), $parameters (array) im Kontext.
                      (credits, a11y, all-images) rendern das Layout
                      ohne Parameter-Kontext. --}}
                 @php $legalArgs = isset($parameters) ? ['parameters' => $parameters] : []; @endphp
-                <li><a href="{{ route('preview.metadata', array_merge(['type' => 'copyright'], $legalArgs)) }}">{{ __('copyright') }}</a></li>
-                <li><a href="{{ route('preview.metadata', array_merge(['type' => 'policy'], $legalArgs)) }}">{{ __('policy') }}</a></li>
+                <li><a href="{{ route('preview.legal', array_merge(['type' => 'copyright'], $legalArgs)) }}">{{ __('copyright') }}</a></li>
+                <li><a href="{{ route('preview.legal', array_merge(['type' => 'policy'], $legalArgs)) }}">{{ __('policy') }}</a></li>
             </ul>
         </div>
         <div>

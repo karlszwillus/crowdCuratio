@@ -416,21 +416,22 @@ Route::group(
             'all.comments'
         );
 
-        // Q4-Etappe 2 / I6 (2026-08-27): Uebersetzungs-Endpunkte im
-        // ProjectTranslationController. Route-Namen bleiben.
+        // Q4-Etappe 8 · E3d (2026-09-11, ADR-0030): Uebersetzen-Routen
+        // auf Plural + Route-Model-Binding umgestellt. Route-Namen
+        // wandern auf `projects.translations.edit` / `.update`.
         Route::get(
-            '/project/{id}/translate',
+            '/projects/{project}/translations',
             [ProjectTranslationController::class, 'translateCurrentProject']
-        )->name(
-            'translate'
-        );
+        )->name('projects.translations.edit');
 
         Route::post(
-            '/project/{id}/translate',
+            '/projects/{project}/translations',
             [ProjectTranslationController::class, 'saveTranslations']
-        )->name(
-            'translate.save'
-        );
+        )->name('projects.translations.update');
+
+        // 301-Redirect fuer alte Bookmarks — GET nur, POST hat kein
+        // Bookmark-Aequivalent und wird vom Frontend hart umgestellt.
+        Route::redirect('/project/{id}/translate', '/projects/{id}/translations', 301);
 
         // Phase 5ab.2: Verlauf-Panel-Feed und Wiederherstellen.
         Route::get(
@@ -450,12 +451,14 @@ Route::group(
         // Translation-Body-Save laeuft ueber TextBlockController::saveText
         // im `translationMode`-Pfad.
 
+        // Q4-Etappe 8 · E3d (2026-09-11, ADR-0030): Metadaten auf
+        // Plural + Route-Model-Binding.
         Route::get(
-            '/project/{id}/metadata',
+            '/projects/{project}/metadata',
             [ProjectController::class, 'editMetaData']
-        )->name(
-            'project.metadata'
-        );
+        )->name('projects.metadata');
+
+        Route::redirect('/project/{id}/metadata', '/projects/{id}/metadata', 301);
 
         Route::post(
             '/comment/{id}/update/{status}',
@@ -553,9 +556,14 @@ Route::group(
             'download'
         );
 
-        Route::get('/copyright', [ProjectController::class, 'projectMetadata'])->name(
-            'preview.metadata'
-        );
+        // Q4-Etappe 8 · E3d (2026-09-11, ADR-0030): Reader-Nebenseite
+        // fuer Impressum/AGB (bislang „/copyright"). Der Endpoint
+        // erwartet den Projekt-Kontext ueber `?parameters[id]=...`
+        // und ist damit noch nicht auf sauberes Model-Binding
+        // umstellbar — Rename auf `preview.legal` und Alt-Pfad-Redirect.
+        Route::get('/preview/legal', [ProjectController::class, 'projectMetadata'])
+            ->name('preview.legal');
+        Route::redirect('/copyright', '/preview/legal', 301);
 
     }
 );

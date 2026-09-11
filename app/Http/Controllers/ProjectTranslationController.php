@@ -55,27 +55,21 @@ class ProjectTranslationController extends Controller
     /**
      * Uebersetzen-Sicht mit Sync-Warnungen.
      */
-    public function translateCurrentProject(int $id): View
+    public function translateCurrentProject(Project $project): View
     {
-        $project = Project::findOrFail($id);
-
-        // Reader-Frontend-Haertung Juni 2026 (Smoke-Findings nach
-        // E.7a-Hotfix). Vorher nur `auth`-Middleware — jeder
-        // Reader konnte fremde Project-Inhalte in der Uebersetzungs-
-        // Maske sehen und (via Sub-POSTs) potentiell mit-bearbeiten.
-        // Analog zum editMetaData-Hotfix: Owner ODER Admin ODER
-        // Eingeladener mit edit-Permission ueber ProjectPolicy::update.
+        // Q4-Etappe 8 · E3d (2026-09-11): Route-Model-Binding via
+        // `{project}`; die alte `$id`-Signatur ist damit weg.
         $this->authorize('update', $project);
 
         App::setlocale('de');
-        $data = $this->allData($id);
+        $data = $this->allData($project->id);
 
         // 5aa.3-Followup: Die neue Blade-Sicht rendert Text/Gallery/
         // Audiovisual direkt aus der `mediaContent`-Kette. Weil
         // `Model::shouldBeStrict()` Lazy-Loading verbietet, ziehen wir
         // die polymorphen Ziel-Modelle hier gezielt nach; `allData`
         // bleibt fuer seine eigene Prozent-Rechnung unveraendert.
-        $tree = Project::withTranslateTree()->findOrFail($id);
+        $tree = Project::withTranslateTree()->findOrFail($project->id);
         foreach ($tree->chapters as $chapter) {
             foreach ($chapter->entries as $entry) {
                 foreach ($entry->mediaContent as $mc) {
@@ -106,9 +100,9 @@ class ProjectTranslationController extends Controller
      * Nicht-erlaubte Modelltypen oder Modelle aus fremden Projekten
      * werden uebersprungen (Authorization pro Modell ueber ProjectPolicy).
      */
-    public function saveTranslations(Request $request, int $id): RedirectResponse|JsonResponse
+    public function saveTranslations(Request $request, Project $project): RedirectResponse|JsonResponse
     {
-        $project = Project::findOrFail($id);
+        // Q4-Etappe 8 · E3d (2026-09-11): Model-Binding statt `$id`.
         $this->authorize('update', $project);
 
         $payload = $request->input('translations', []);
@@ -187,7 +181,7 @@ class ProjectTranslationController extends Controller
         }
 
         return redirect()
-            ->route('translate', $project->id)
+            ->route('projects.translations.edit', $project)
             ->with('success', __('message_edit_project_success'));
     }
 

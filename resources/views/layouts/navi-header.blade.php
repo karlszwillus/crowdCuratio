@@ -148,7 +148,7 @@ If not, see <https://www.gnu.org/licenses/>. -->
                 </span>
             </button>
 
-            @if(!in_array(Route::currentRouteName(), ['translate']))
+            @if(!in_array(Route::currentRouteName(), ['projects.translations.edit']))
                 <div x-data="{ open: false }" class="relative">
                     <button
                         type="button"

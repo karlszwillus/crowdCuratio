@@ -237,7 +237,7 @@ it('translateCurrentProject: Fremder ohne Einladung kriegt 403', function () {
 
     $this->actingAs($stranger);
 
-    $response = $this->get(route('translate', $project->id));
+    $response = $this->get(route('projects.translations.edit', $project));
 
     $response->assertStatus(403);
 });
@@ -251,7 +251,7 @@ it('translateCurrentProject: Owner darf', function () {
 
     $this->actingAs($owner);
 
-    $response = $this->get(route('translate', $project->id));
+    $response = $this->get(route('projects.translations.edit', $project));
 
     expect($response->status())->toBeIn([200, 302]);
 });
@@ -268,7 +268,7 @@ it('translateCurrentProject: Admin darf fremde Übersetzungs-Maske öffnen', fun
 
     $this->actingAs($admin);
 
-    $response = $this->get(route('translate', $project->id));
+    $response = $this->get(route('projects.translations.edit', $project));
 
     expect($response->status())->toBeIn([200, 302]);
 });

@@ -97,7 +97,7 @@ it('translateCurrentProject setzt die Session-Locale und kehrt zur Editor-Ansich
 
     $project = makeProject($owner);
 
-    $response = $this->get(route('translate', $project->id));
+    $response = $this->get(route('projects.translations.edit', $project));
 
     // Die Methode setzt App::setlocale('de') und gibt eine View
     // oder einen Redirect zurück — beides ist OK, sie wirft nicht.
@@ -202,7 +202,7 @@ it('editMetaData rendert die Metadata-View für ein eigenes Project', function (
 
     $project = makeProject($owner);
 
-    $response = $this->get(route('project.metadata', $project->id));
+    $response = $this->get(route('projects.metadata', $project));
 
     $response->assertStatus(200);
 });
