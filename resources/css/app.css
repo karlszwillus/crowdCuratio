@@ -70,6 +70,39 @@
 .shadow-floating { box-shadow: var(--shadow-floating); }
 .shadow-popover  { box-shadow: var(--shadow-popover); }
 
+/*
+ * Q4-Etappe 7 · E7-2 (2026-09-11): Abschnitts-Bögen im Editor.
+ * Jeder Entry sitzt auf einem eigenen Papierton, zwei Töne wechseln
+ * (Design-Nachtrag III). Kein Rahmen, keine Radien, keine Schatten —
+ * der Abstand zwischen den Bögen ist die eigentliche Gruppierung,
+ * der Ton macht sie nur bequemer lesbar.
+ *
+ * Sortable-Handle (`.ui-sortable-entry > li`) darf weiter greifen —
+ * der Bogen sitzt unmittelbar auf dem <li>-Element.
+ */
+/* Karl-Feedback 2026-09-11: der Bogen läuft bis unmittelbar an
+   die Kapitel-Leiste (border-l-[3px] auf dem chapter-<li>). Da
+   das chapter-<li> für seinen Content pl-4 (16 px) trägt, holen
+   wir den Bogen per negativem margin-left zurück auf 0 relativ
+   zur Kapitel-Rail. Der Innen-Padding von 20 px sorgt dafür,
+   dass die Elemente im Bogen nicht am Papierrand kleben. */
+.cc-entry-sheet {
+    display: block;
+    margin: 0 -16px 40px -16px;
+    padding: 20px;
+    list-style: none;
+}
+.cc-entry-sheet--a { background: var(--color-sheet-a); }
+.cc-entry-sheet--b { background: var(--color-sheet-b); }
+
+/* Content-Blöcke unter dem Header sind eine Ebene tiefer als
+   der Abschnitts-Header — zusätzliche Einrückung nach rechts
+   macht die Hierarchie sichtbar (Karl 2026-09-11). */
+.cc-entry-sheet .cc-entry-sheet__content {
+    margin-top: 20px;
+    padding-left: 24px;
+}
+
 /* Scroll-Offset fuer sticky Editor-Chrome-Bar. Ohne diesen Wert
  * springt der Browser bei Anchor-Links direkt an die Anker-
  * Oberkante — und die sticky Bar (Breadcrumb + Segmented Control)
@@ -193,6 +226,37 @@ p, .text-body {
 }
 
 /*
+ * Q4-Etappe 7 · E7-6 (2026-09-11): Rail-Item-Tooltip, der beim
+ * Hovern oder Fokus rechts vom Icon erscheint. Das native `title`
+ * hat 800-1000 ms Verzoegerung; dieser Popover triggert sofort und
+ * traegt das Design-Vokabular mit (Chrome-Farben, Popover-Shadow).
+ * Item braucht `.cc-rail-tip` und `data-tip="Label"`.
+ */
+.cc-rail-tip::after {
+    content: attr(data-tip);
+    position: absolute;
+    left: calc(100% + 8px);
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: var(--color-chrome-active);
+    color: var(--color-chrome-on);
+    font-size: 13px;
+    line-height: 1.2;
+    white-space: nowrap;
+    box-shadow: var(--shadow-popover);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 100ms ease;
+    z-index: 60;
+}
+.cc-rail-tip:hover::after,
+.cc-rail-tip:focus-visible::after {
+    opacity: 1;
+}
+
+/*
  * Smooth-Scroll für Sidebar-Tree-Anker (Phase 5b § 2.3, „Klick im
  * Tree scrollt zum Abschnitt"). scroll-behavior wird vom Browser
  * automatisch deaktiviert, wenn `prefers-reduced-motion: reduce`
@@ -210,8 +274,28 @@ html {
 [id^="anchor_Chapter_"],
 [id^="anchor_Entry_"],
 [id^="anchor_MediaContent_"] {
-    /* Muss die sticky Editor-Chrome-Bar (Breadcrumb + Segmented
-     * Control, ~64 px) plus ein bisschen Luft einbeziehen. */
+    /* Muss die sticky Editor-Chrome-Bar (Reiterleiste, ~56 px) plus
+     * Luft einbeziehen. */
+    scroll-margin-top: 96px;
+}
+
+/*
+ * Q4-Etappe 7 · E7-4 (2026-09-11): Header-Overlay-Puffer fuer
+ * fokussierbare Elemente unter der sticky Chrome-Bar. Wird ein Input
+ * per Tastatur oder Anker fokussiert, springt der Browser mit dem
+ * scroll-margin-top-Wert automatisch tief genug — die Feld-Beschriftung
+ * bleibt sichtbar. Betrifft die Metadaten-Sektionen (jede eigene
+ * `<section>`) und alle Ghost-Inputs (title/subtitle/heading) im
+ * Editor.
+ *
+ * (Beim manuellen Scroll ohne Fokus bleibt das Overlay inhaerent —
+ * das ist normales sticky-Verhalten und laesst sich nur mit
+ * Padding-Top am Content-Container abfangen; dort ist der Trade-off
+ * heute die haeufigere Blick-Route: der User scrollt selten so weit,
+ * dass die Header-Ueberdeckung stoert.)
+ */
+main form > section,
+[data-history-field] {
     scroll-margin-top: 96px;
 }
 

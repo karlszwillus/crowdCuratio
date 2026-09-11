@@ -61,13 +61,22 @@ new class extends Component
 
     public string $label = '';
 
+    /**
+     * Q4-Etappe 7 · E7-2/3 (2026-09-11): Placeholder-Text, wird
+     * an das Quill-Editor-Div weitergegeben. Quill blendet den
+     * Text ein, solange der Editor leer ist — verschwindet beim
+     * ersten Zeichen. Kompakter als eine separate Hint-Zeile.
+     */
+    public string $placeholder = '';
+
     public string $value = '';
 
-    public function mount(Model $model, string $field, string $rules = 'nullable|string', string $label = ''): void
+    public function mount(Model $model, string $field, string $rules = 'nullable|string', string $label = '', string $placeholder = ''): void
     {
         $this->model = $model;
         $this->field = $field;
         $this->rules = $rules;
+        $this->placeholder = $placeholder;
         $this->label = $label !== '' ? $label : $field;
         $this->value = (string) $model->getAttribute($field);
     }
@@ -147,7 +156,9 @@ new class extends Component
          sollen keinen Höhen-Loch von 96 px reservieren. Klickfläche
          bleibt über die kleine 2-rem-Mindestbox erhalten; Quill wächst
          mit dem Inhalt. --}}
-    <div x-ref="editor" class="min-h-[2rem] bg-transparent text-ink-900"></div>
+    <div x-ref="editor"
+         @if ($placeholder !== '') data-placeholder="{{ $placeholder }}" @endif
+         class="min-h-[2rem] bg-transparent text-ink-900"></div>
 
     @error('value')
         <p class="mt-1 text-sm text-primary">

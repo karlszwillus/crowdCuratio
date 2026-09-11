@@ -64,6 +64,7 @@
                             field="text"
                             rules="nullable|string"
                             :label="__('quote_text')"
+                            :placeholder="__('quote_text_placeholder')"
                             :key="'quote-text-'.$item->quoteBlock->id" />
                     </div>
                 @else
@@ -194,7 +195,9 @@
                 </details>
             @endcan
 
-            {{-- Fußzeile: Vollständigkeit links, Speicherstand rechts. --}}
+            {{-- Fußzeile: nur Vollstaendigkeit. Karl 2026-09-11 (E7-6):
+                 Speicherstand pro Block entfaellt; die Chrome-Bar
+                 zeigt den Save-Status zentral. --}}
             @can('update', $project)
                 @php
                     $missing = collect([
@@ -203,15 +206,12 @@
                         $project->requiresSources() && ! $item->quoteBlock->source ? __('quote_source') : null,
                     ])->filter()->values();
                 @endphp
-                <div class="mt-3 flex items-center justify-between gap-3">
+                <div class="mt-3">
                     @if ($missing->isEmpty())
                         <p class="text-caption text-success">✓ {{ __('gallery_status_complete') }}</p>
                     @else
-                        <p class="text-caption text-warning">⚠ {{ __('gallery_status_missing', ['fields' => $missing->implode(', ')]) }}</p>
+                        <p class="text-caption text-ink-500">{{ __('gallery_status_missing', ['fields' => $missing->implode(', ')]) }}</p>
                     @endif
-                    <p class="text-caption text-ink-500">
-                        {{ __('saved') }} · {{ optional($item->quoteBlock->updated_at ?? $item->quoteBlock->created_at)->format('d.m.Y, H:i') }}
-                    </p>
                 </div>
             @endcan
         </x-ui.block-card>

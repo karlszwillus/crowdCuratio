@@ -66,9 +66,16 @@ document.addEventListener('alpine:init', () => {
 
             const toolbar = window.ccRichTextToolbar ?? DEFAULT_TOOLBAR;
 
+            // Q4-Etappe 7 · E7-2/3 (2026-09-11): Placeholder aus dem
+            // Container-Dataset. Zeigt sich, solange der Editor leer
+            // ist — verschwindet beim ersten Zeichen. Kompakter als
+            // eine separate Hint-Zeile.
+            const placeholder = container.dataset.placeholder ?? '';
+
             this.quill = new window.Quill(container, {
                 modules: { toolbar },
                 theme: 'snow',
+                placeholder,
             });
 
             // Initial-HTML einspielen — Karls Bug-Report 2026-08-21:
