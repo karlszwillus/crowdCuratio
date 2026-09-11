@@ -27,14 +27,38 @@ Erwartet: $project (Project), $parameters (array) im Kontext.
     <link href="https://fonts.bunny.net/css?family=source-serif-4:400,400i,600,600i|ibm-plex-sans:400,500,600,700|ibm-plex-mono:400,500&display=swap" rel="stylesheet">
 
     {{-- Q4-Etappe 5 / G-Fund-1 (2026-09-09): Optionaler Akzent-
-         Farbe-Override. Der Charakter setzt die Grund-Palette;
-         wenn der Redakteur eine eigene Akzent-Farbe gesetzt hat,
-         überschreibt sie nur die --accent-Var. --}}
+         Farbe-Override. Karl 2026-09-11: Der Selektor muss die
+         Charakter-spezifische Selektor-Kette aus reader.css schlagen
+         (`:root[data-char="archiv"]` etc.) — sonst gewinnt der
+         Charakter-Default durch höhere Spezifität, obwohl unser
+         Style-Block spaeter im DOM steht. Wir schreiben denselben
+         Selektor plus den aktuellen Charakter-Selektor, damit die
+         Cascade uns durchreicht. --}}
     @if(! empty($project->accent_color))
+        @php
+            $ccChar = $project->characterName();
+            $ccHex = ltrim($project->accent_color, '#');
+            // Kurzform expandieren (#abc → #aabbcc).
+            if (strlen($ccHex) === 3) {
+                $ccHex = $ccHex[0].$ccHex[0].$ccHex[1].$ccHex[1].$ccHex[2].$ccHex[2];
+            }
+            // Relative Luminance (WCAG 2.x). Karl 2026-09-11:
+            // --accent-on wird auf Weiss oder Ink-900 gesetzt,
+            // je nach Helligkeit des Akzents. Vorher stand der
+            // „Mitmachen"-Text auf helleren Akzenten in Schwarz
+            // und wurde dadurch bei manchen Farbkombinationen
+            // unlesbar.
+            $ccR = hexdec(substr($ccHex, 0, 2)) / 255;
+            $ccG = hexdec(substr($ccHex, 2, 2)) / 255;
+            $ccB = hexdec(substr($ccHex, 4, 2)) / 255;
+            $ccLum = 0.2126 * $ccR + 0.7152 * $ccG + 0.0722 * $ccB;
+            $ccAccentOn = $ccLum > 0.55 ? '#16140f' : '#ffffff';
+        @endphp
         <style>
-            :root {
+            :root, :root[data-char="{{ $ccChar }}"] {
                 --accent: {{ $project->accent_color }};
                 --accent-soft: color-mix(in srgb, {{ $project->accent_color }} 15%, var(--paper));
+                --accent-on: {{ $ccAccentOn }};
             }
         </style>
     @endif
@@ -178,8 +202,14 @@ Erwartet: $project (Project), $parameters (array) im Kontext.
         <div>
             <h4>{{ __('reader_footer_legal') }}</h4>
             <ul>
-                <li><a href="{{ route('preview.metadata', ['type' => 'copyright', 'parameters' => $parameters]) }}">{{ __('copyright') }}</a></li>
-                <li><a href="{{ route('preview.metadata', ['type' => 'policy', 'parameters' => $parameters]) }}">{{ __('policy') }}</a></li>
+                {{-- Karl 2026-09-11: `$parameters` nur an die
+                     Metadaten-Links durchreichen, wenn es im View-
+                     Kontext gesetzt ist — neue Reader-Nebenseiten
+                     (credits, a11y, all-images) rendern das Layout
+                     ohne Parameter-Kontext. --}}
+                @php $legalArgs = isset($parameters) ? ['parameters' => $parameters] : []; @endphp
+                <li><a href="{{ route('preview.metadata', array_merge(['type' => 'copyright'], $legalArgs)) }}">{{ __('copyright') }}</a></li>
+                <li><a href="{{ route('preview.metadata', array_merge(['type' => 'policy'], $legalArgs)) }}">{{ __('policy') }}</a></li>
             </ul>
         </div>
         <div>
@@ -189,8 +219,8 @@ Erwartet: $project (Project), $parameters (array) im Kontext.
                  nicht mitgeliefert und bleibt vorerst unbeziffert. --}}
             <h4>{{ __('reader_footer_more') }}</h4>
             <ul>
-                <li><a href="#bildnachweise">{{ __('reader_footer_credits_link') }}</a></li>
-                <li><a href="#barrierefreiheit">{{ __('reader_footer_a11y_link') }}</a></li>
+                <li><a href="{{ route('preview.credits', ['project' => $project->id]) }}">{{ __('reader_footer_credits_link') }}</a></li>
+                <li><a href="{{ route('preview.a11y', ['project' => $project->id]) }}">{{ __('reader_footer_a11y_link') }}</a></li>
                 @if(isset($parameters))
                     <li><a href="{{ route('download', $parameters) }}" target="_blank" rel="noopener">{{ __('reader_footer_pdf_link') }}</a></li>
                 @endif

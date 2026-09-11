@@ -87,7 +87,10 @@
     --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
 
     --measure: 660px;     /* Lesemaß */
-    --nav-rail: 236px;
+    /* Karl 2026-09-11: Nav-Rail von 236 auf 300 px verbreitert,
+       damit lange Kapiteltitel (z. B. „Häusergeschichten") nicht
+       zweizeilig umbrechen muessen. */
+    --nav-rail: 300px;
     --side-col: 330px;
     --header-h: 62px;
 
@@ -303,16 +306,26 @@ body.cc-reader-multipage .einspaltig {
 .cc-header__lang { display: inline-flex; gap: 0.25rem; font-family: var(--font-mono); font-size: var(--t-mono-small); letter-spacing: 0.06em; }
 .cc-header__lang a { padding: 0.25rem 0.4rem; color: var(--ink-dim); }
 .cc-header__lang a.is-active { color: var(--ink); font-weight: 600; }
+/* Karl 2026-09-11: Selektor mit `.cc-header__nav a` verankert, damit
+   die generische Nav-Link-Regel (`.cc-header__nav a { color: ... }`,
+   Zeile 297) die --accent-on-Farbe der Pille nicht mehr durch hoehere
+   Spezifitaet ueberschreibt. Padding grosszuegiger, damit die Pille
+   optisch atmen kann. */
+.cc-header__nav a.cc-header__contribute,
 .cc-header__contribute {
     display: inline-flex; align-items: center;
     background: var(--accent); color: var(--accent-on);
-    padding: 0 1rem;
-    height: 38px;
+    padding: 0.55rem 1.25rem;
     border-radius: 999px;
     font-family: var(--font-sans); font-weight: 600; font-size: 14px;
+    line-height: 1.2;
     text-decoration: none;
 }
-.cc-header__contribute:hover { filter: brightness(0.95); color: var(--accent-on); }
+.cc-header__nav a.cc-header__contribute:hover,
+.cc-header__contribute:hover {
+    filter: brightness(0.95);
+    color: var(--accent-on);
+}
 
 /* ==================================================================
  * Leitbild (Handoff E1a).
@@ -1193,9 +1206,17 @@ body.cc-reader-multipage .cc-gal-stage {
    Wird von preview.content.gallery-caption genutzt und greift in
    Band und Sequenz — im Kontaktbogen ist die figcaption per
    `display: none` ausgeblendet (siehe .cc-gal-bogen__cell). */
+/* Karl 2026-09-11: Grid-Spalten so gedreht, dass der Credit-Bereich
+   seine minimale Wortbreite garantiert bekommt (`min-content`). Die
+   alte Formel `minmax(0, --measure) minmax(0, 1fr)` konnte die
+   Credit-Spalte auf wenige Pixel schrumpfen, worauf `overflow-wrap:
+   anywhere` buchstabenweise umbrach („A / k / t / i / v / e / s …").
+   Ausserdem `overflow-wrap` und `word-break` entfernt — normaler
+   Wort-Umbruch reicht, und bei zu langen Namen (Container-Enge)
+   kollabiert die Grid ueber die Media-Query auf einspaltig. */
 .cc-figcaption {
     display: grid;
-    grid-template-columns: minmax(0, var(--measure)) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(min-content, max-content);
     column-gap: 1.5rem;
     align-items: baseline;
     margin-top: 0.75rem;
@@ -1211,10 +1232,8 @@ body.cc-reader-multipage .cc-gal-stage {
     color: var(--ink-dim);
     text-align: right;
     min-width: 0;
-    overflow-wrap: anywhere;
-    word-break: break-word;
 }
-@media (max-width: 720px) {
+@media (max-width: 960px) {
     .cc-figcaption { grid-template-columns: 1fr; row-gap: 0.25rem; }
     .cc-figcaption__credit { text-align: left; }
 }
@@ -1308,13 +1327,11 @@ body.cc-reader-multipage .cc-multipage__nav h2 {
 body.cc-reader-multipage .cc-multipage__nav ol { list-style: none; padding: 0; margin: 0; counter-reset: chapter; }
 body.cc-reader-multipage .cc-multipage__nav li { counter-increment: chapter; margin-bottom: 0.25rem; }
 body.cc-reader-multipage .cc-multipage__nav a {
-    /* P12 · „HIER" gehört rechtsbündig auf die Titelzeile, nicht in
-       eine eigene Zeile. Flex mit space-between hält den Marker auf
-       Höhe der Kapitelnummer, egal wie kurz oder lang der Titel ist. */
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 0.5rem;
+    /* Karl 2026-09-11: „HIER"-Marker entfaellt — die farbige
+       Kapitel-Kante links plus font-weight:600 sagen bereits klar,
+       welcher Eintrag aktiv ist. Zeile jetzt einfacher Block-Link,
+       lange Titel duerfen ohne Marker zweizeilig umbrechen. */
+    display: block;
     padding: 0.5rem 0.75rem;
     color: var(--ink-mid);
     text-decoration: none;
@@ -1341,15 +1358,26 @@ body.cc-reader-multipage .cc-multipage__nav a.is-active {
     background: var(--paper-2);
     font-weight: 600;
 }
-body.cc-reader-multipage .cc-multipage__nav a.is-active::after {
-    content: 'hier';
-    color: var(--accent);
-    font-family: var(--font-mono);
-    font-size: var(--t-mono-caps);
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    flex-shrink: 0;
-    white-space: nowrap;
+/* Karl 2026-09-11: „HIER"-Pseudo entfernt — Kante + Fett reichen. */
+/* Karl 2026-09-11 (E7-6/Etappe-6-Rest): Rail-Fußlinks. */
+body.cc-reader-multipage .cc-multipage__nav-foot {
+    list-style: none;
+    padding: 1rem 0 0 0;
+    margin: 1.5rem 0 0 0;
+    border-top: 1px solid var(--line);
+}
+body.cc-reader-multipage .cc-multipage__nav-foot li { margin: 0.25rem 0; }
+body.cc-reader-multipage .cc-multipage__nav-foot a {
+    display: block;
+    padding: 0.4rem 0.6rem;
+    color: var(--ink-muted);
+    font-size: var(--t-caption);
+    text-decoration: none;
+    border-radius: 4px;
+}
+body.cc-reader-multipage .cc-multipage__nav-foot a:hover {
+    color: var(--ink);
+    background: var(--paper-2);
 }
 body.cc-reader-multipage .cc-multipage__content { min-width: 0; }
 
