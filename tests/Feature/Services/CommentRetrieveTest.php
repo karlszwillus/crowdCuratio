@@ -100,7 +100,7 @@ it('liefert für ein Chapter mit einem Kommentar den richtigen pathComment und O
 
     expect($data)
         ->toBeArray()
-        ->toHaveKey('pathComment', 'comment.chapter')
+        ->toHaveKey('pathComment', 'comments.chapter')
         ->toHaveKey('id', $chapter->id);
 
     expect($data['comment'])
@@ -111,7 +111,7 @@ it('liefert für ein Chapter mit einem Kommentar den richtigen pathComment und O
             'id' => $comment->id,
             'comment' => 'Erster Kommentar',
             'owner' => true,
-            'path' => 'comment.save',
+            'path' => 'comments.chapter.save',
         ]);
 });
 
@@ -146,7 +146,7 @@ it('markiert ein Comment von einem anderen User als nicht-Owner', function () {
     expect($data['comment'][0]['user'])->toContain($other->name);
 });
 
-it('liefert für ein Text den pathComment "comment.text" und Save-Pfad', function () {
+it('liefert für ein Text den pathComment "comments.text" und Save-Pfad', function () {
     /** @var TestCase $this */
     /** @var User $owner */
     $owner = User::factory()->create();
@@ -171,12 +171,12 @@ it('liefert für ein Text den pathComment "comment.text" und Save-Pfad', functio
     $data = (new CommentRetrieve)->getComments('App\\Models\\Text', $text->id);
 
     expect($data)
-        ->toHaveKey('pathComment', 'comment.text')
+        ->toHaveKey('pathComment', 'comments.text')
         ->toHaveKey('id', $text->id);
-    expect($data['comment'][0]['path'])->toBe('comment.text.save');
+    expect($data['comment'][0]['path'])->toBe('comments.text.save');
 });
 
-it('liefert für ein Image den pathComment "comment.image" und Save-Pfad', function () {
+it('liefert für ein Image den pathComment "comments.image" und Save-Pfad', function () {
     /** @var TestCase $this */
     /** @var User $owner */
     $owner = User::factory()->create();
@@ -200,11 +200,11 @@ it('liefert für ein Image den pathComment "comment.image" und Save-Pfad', funct
 
     $data = (new CommentRetrieve)->getComments('App\\Models\\Image', $image->id);
 
-    expect($data)->toHaveKey('pathComment', 'comment.image');
-    expect($data['comment'][0]['path'])->toBe('comment.image.save');
+    expect($data)->toHaveKey('pathComment', 'comments.image');
+    expect($data['comment'][0]['path'])->toBe('comments.image.save');
 });
 
-it('liefert für ein Gallery den pathComment "comment.gallery" und Save-Pfad', function () {
+it('liefert für ein Gallery den pathComment "comments.gallery" und Save-Pfad', function () {
     /** @var TestCase $this */
     /** @var User $owner */
     $owner = User::factory()->create();
@@ -228,11 +228,11 @@ it('liefert für ein Gallery den pathComment "comment.gallery" und Save-Pfad', f
 
     $data = (new CommentRetrieve)->getComments('App\\Models\\Gallery', $gallery->id);
 
-    expect($data)->toHaveKey('pathComment', 'comment.gallery');
-    expect($data['comment'][0]['path'])->toBe('comment.gallery.save');
+    expect($data)->toHaveKey('pathComment', 'comments.gallery');
+    expect($data['comment'][0]['path'])->toBe('comments.gallery.save');
 });
 
-it('liefert für ein Audiovisual den pathComment "comment.audiovisual" und Save-Pfad', function () {
+it('liefert für ein Audiovisual den pathComment "comments.audiovisual" und Save-Pfad', function () {
     /** @var TestCase $this */
     /** @var User $owner */
     $owner = User::factory()->create();
@@ -256,8 +256,8 @@ it('liefert für ein Audiovisual den pathComment "comment.audiovisual" und Save-
 
     $data = (new CommentRetrieve)->getComments('App\\Models\\Audiovisual', $av->id);
 
-    expect($data)->toHaveKey('pathComment', 'comment.audiovisual');
-    expect($data['comment'][0]['path'])->toBe('comment.audiovisual.save');
+    expect($data)->toHaveKey('pathComment', 'comments.audiovisual');
+    expect($data['comment'][0]['path'])->toBe('comments.audiovisual.save');
 });
 
 it('liefert für unbekannte Class (MediaContent) leeren pathReply ohne Crash', function () {

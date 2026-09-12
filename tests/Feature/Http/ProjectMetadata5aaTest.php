@@ -125,7 +125,7 @@ it('saveTranslations — Owner speichert englische Kapitel- und Abschnitt-Titel'
 
     $this->actingAs($owner);
 
-    $response = $this->post(route('translate.save', $project->id), [
+    $response = $this->post(route('projects.translations.update', $project), [
         'translations' => [
             "Chapter.{$chapter->id}.name" => 'English chapter title',
             "Entry.{$entry->id}.name" => 'English section title',
@@ -153,7 +153,7 @@ it('saveTranslations — Chapter aus fremdem Projekt wird ignoriert (Cross-Proje
 
     $this->actingAs($owner);
 
-    $this->post(route('translate.save', $ownProject->id), [
+    $this->post(route('projects.translations.update', $ownProject), [
         'translations' => [
             "Chapter.{$foreignChapter->id}.name" => 'Hijack attempt',
         ],
@@ -173,7 +173,7 @@ it('saveTranslations — AJAX-Request bekommt JSON-Antwort', function () {
 
     $this->actingAs($owner);
 
-    $response = $this->postJson(route('translate.save', $project->id), [
+    $response = $this->postJson(route('projects.translations.update', $project), [
         'translations' => [
             "Chapter.{$chapter->id}.name" => 'Fresh EN title',
         ],

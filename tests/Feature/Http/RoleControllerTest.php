@@ -256,7 +256,7 @@ it('customizedDelete: löscht Rolle und weist User auf eine andere Rolle um', fu
     $newRole = Role::firstOrCreate(['name' => 'Reader', 'guard_name' => 'web']);
     $existing->assignRole('AltzuLoeschen');
 
-    $response = $this->post('/role/'.$oldRole->id.'/alt/'.$newRole->id.'/');
+    $response = $this->post('/roles/'.$oldRole->id.'/replace/'.$newRole->id);
 
     expect($response->status())->toBeIn([200, 302]);
 
@@ -297,7 +297,7 @@ it('roleHasUsers: liefert true wenn die Rolle Zuweisungen hat', function () {
 
     $readerRoleId = Role::where('name', 'Reader')->value('id');
 
-    $response = $this->get('/role/check/'.$readerRoleId.'/');
+    $response = $this->get('/roles/'.$readerRoleId.'/check');
 
     // Hinweis: $response->json() wirft "Invalid JSON" bei Top-Level
     // false/null — Laravel's TestResponse-Decoder kann das nicht von
@@ -316,7 +316,7 @@ it('roleHasUsers: liefert false wenn die Rolle keine Zuweisungen hat', function 
 
     $emptyRole = Role::create(['name' => 'Ungenutzt', 'guard_name' => 'web']);
 
-    $response = $this->get('/role/check/'.$emptyRole->id.'/');
+    $response = $this->get('/roles/'.$emptyRole->id.'/check');
 
     $response->assertStatus(200);
     expect($response->getContent())->toBe('false');

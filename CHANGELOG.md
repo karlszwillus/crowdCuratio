@@ -733,6 +733,27 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Hinzugefügt
 
+- **Q4-Etappe 8 · Route-Konvention und Kleinkram** (2026-09-12).
+  Umsetzung von ADR-0030 (URL-Konvention Plural) plus drei Sanierungs-
+  Punkte aus Etappe H. Alle Projekt-Sub-Routen laufen jetzt konsistent
+  unter `/projects/{project}/…` mit Route-Model-Binding
+  (`projects.metadata`, `projects.translations.edit/.update`,
+  `preview.legal`); Kommentar-Endpunkte sind auf `/comments/{type}/…`
+  und Route-Namen `comments.{type}[.action]` migriert; Content-Aktionen
+  (`/text/*`, `/image/*`, `/gallery/*`, `/audiovisual/*`, `/quote/*`,
+  `/data-facts/*`) sowie Nebenrouten (Log, Role-Check, Permission-User,
+  Reset-Log, Save-Gallery, Save-Audiovisual) sind auf Plural-URLs
+  umgezogen — Route-Namen bleiben im sanften Modus. Alte GET-Pfade
+  bekommen 301-Redirects fuer eine Release-Iteration, POST/DELETE sind
+  vom Frontend hart mitgezogen. Die JSON-Endpunkte fuer Drag-Reorder und
+  Gallery-Bilder-Reorder/Drop wandern unter das bestehende
+  `/api/internal/`-Prefix (I11). `resources/views/users/profile.blade.php`
+  ist von 760 auf 280 LoC im Wrapper geschrumpft, verteilt auf drei
+  Sub-Views `_person` / `_password` / `_deletion` (I9). Die `roles/*`-
+  Sichten (Index, Create, Edit, Show) sind von Bootstrap-3 auf
+  Tailwind + Alpine umgezogen; das alte jQuery-`.modal('show')` beim
+  Rollen-Loeschen laeuft jetzt als Alpine-`x-data`-Overlay (E3e).
+
 - **Q4-Etappe 7 · Editor-Politur nach Design-Review** (2026-09-11).
   Umsetzung der 25 Designer-Befunde aus „REVIEW CMS Oberfläche" plus
   der drei Etappe-6-Reste. Das CMS ist von einer heterogenen

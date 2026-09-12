@@ -105,12 +105,16 @@ Route::get('auth.terms', [PublicController::class, 'projectTerms'])->name('auth.
 Route::group(
     ['middleware' => ['auth']],
     function () {
-        Route::resource('/projects', ProjectController::class);
-        // Q4-Etappe 2 / I6 (2026-08-27): Rechte-Endpunkte im
-        // ProjectPermissionController. Route-Namen bleiben.
-        Route::delete('/user/{userId}/project/{projectId}', [ProjectPermissionController::class, 'deleteUserFromProject'])->name(
+        // Q4-Etappe 8 · E3d (2026-09-12): Sub-Route mit zwei Segmenten
+        // MUSS vor Route::resource('/projects') stehen — Route::resource
+        // registriert u.a. `DELETE /projects/{project}` mit Wildcard,
+        // sonst greift der Router die Sub-Route nicht mehr sauber
+        // (matcht Zweit-Segment nicht, faellt aber auf 404 statt weiter
+        // zu wandern). Namen bleiben unveraendert.
+        Route::delete('/projects/{projectId}/users/{userId}', [ProjectPermissionController::class, 'deleteUserFromProject'])->name(
             'project.user_delete'
         );
+        Route::resource('/projects', ProjectController::class);
         // Phase 5d.4: Berechtigungssicht (Screen 3B). Loest die alte
         // Modal-Kaskade aus projects/create ab.
         Route::get('/projects/{project}/permissions', [ProjectController::class, 'permissions'])
@@ -130,9 +134,9 @@ Route::group(
         Route::resource('/chapters', ChapterController::class);
         Route::resource('/entries', EntryController::class);
         // Route::resource('/contents', \App\Http\Controllers\ContentController::class);
-        Route::post('/text/store', [TextBlockController::class, 'saveText'])->name('text.store');
-        Route::get('/edit/{id}/text', [TextBlockController::class, 'editText'])->name('text.edit');
-        Route::delete('/delete/{id}/text', [TextBlockController::class, 'destroyText'])->name(
+        Route::post('/texts', [TextBlockController::class, 'saveText'])->name('text.store');
+        Route::get('/texts/{id}/edit', [TextBlockController::class, 'editText'])->name('text.edit');
+        Route::delete('/texts/{id}', [TextBlockController::class, 'destroyText'])->name(
             'text.delete'
         );
 
@@ -141,14 +145,14 @@ Route::group(
         // Add-Bar), Speichern läuft inline über rich-text-editor /
         // inline-editor / source-picker. Direkt-Endpunkte gibt es
         // nur für Delete und das Kind-Dropdown.
-        Route::delete('/delete/{id}/quote', [QuoteBlockController::class, 'destroy'])
+        Route::delete('/quotes/{id}', [QuoteBlockController::class, 'destroy'])
             ->name('quote.delete');
 
         // Q4-Etappe 4 / G1 (2026-09-08): Daten-und-Fakten-Block-Endpunkte.
         // Anlegen über ContentInsertionService, Bearbeiten inline
         // via inline-editor + data-facts-rows-editor. Nur Delete
         // klassisch.
-        Route::delete('/delete/{id}/data-facts', [DataFactBlockController::class, 'destroy'])
+        Route::delete('/data-facts/{id}', [DataFactBlockController::class, 'destroy'])
             ->name('data-facts.delete');
         Route::post('/check/email', [ProjectPermissionController::class, 'checkEmail'])->name('check.email');
         // Q3-Härtung F2 (2026-08-19) / SEC-02: vorher GET ohne Auth-Guard,
@@ -162,16 +166,13 @@ Route::group(
         )->middleware('throttle:6,1')->name(
             'resend.invitation'
         );
-        Route::post('/image/store', [ImageBlockController::class, 'saveImage'])->name('image.store');
-        // Phase 5y.6: Bild-Sortierung innerhalb einer Galerie.
-        Route::post('/gallery/{gallery}/images/reorder', [GalleryBlockController::class, 'reorderImages'])
-            ->name('gallery.images.reorder');
-        Route::post('/gallery/{gallery}/images/drop', [GalleryBlockController::class, 'dropImage'])
-            ->name('gallery.images.drop');
-        Route::get('/edit/{id}/image', [ImageBlockController::class, 'editImage'])->name(
+        Route::post('/images', [ImageBlockController::class, 'saveImage'])->name('image.store');
+        // Bild-Sortierung + Drop wandern mit I11 (2026-09-12) unter das
+        // `/api/internal/`-Prefix — Definition oben im API-Group.
+        Route::get('/images/{id}/edit', [ImageBlockController::class, 'editImage'])->name(
             'image.edit'
         );
-        Route::delete('/delete/{id}/image', [ImageBlockController::class, 'destroyImage'])->name(
+        Route::delete('/images/{id}', [ImageBlockController::class, 'destroyImage'])->name(
             'image.delete'
         );
         // B12 (2026-08-20): User-Anlage laeuft jetzt ueber
@@ -210,169 +211,176 @@ Route::group(
         // Aufrufer generieren automatisch die neue URL. Weichenstellung
         // fuer eine spaetere Phase-6-`/api/v1/`-Struktur mit
         // ApiResource-Transformern und Versioning.
+        // Q4-Etappe 8 · I11 (2026-09-12): Alle internen JSON-Endpunkte
+        // gebuendelt unter dem Prefix `/api/internal/`. Namen bleiben
+        // unveraendert, damit route()-Aufrufer transparent die neuen
+        // URLs erzeugen. Drag-Reorder + Gallery-Reorder/Drop wandern
+        // hier hinein — sie liefern JsonResponse und gehoerten
+        // konzeptuell schon immer dorthin.
         Route::prefix('api/internal')->group(function () {
-            // Phase 5ac.1: Sofort-Wirkung fuer Sprache und Theme.
             Route::post('/profile/locale', [ProfileController::class, 'updateLocale'])->name('profile.locale');
             Route::post('/profile/theme', [ProfileController::class, 'updateTheme'])->name('profile.theme');
-            // Q3-Politur G9 (2026-08-20) / UX-01: Live-Blur-Check fuers Kuerzel.
             Route::post('/profile/check-initials', [ProfileController::class, 'checkInitials'])->name('profile.check_initials');
+
+            // Reorder (Drag&Drop-Ende). Throttle greift Tastatur-
+            // Spam-Faelle mit vielen Einzel-Updates.
+            Route::post('/reorder', [ChapterController::class, 'saveDragAndDrop'])
+                ->middleware('throttle:60,1')
+                ->name('chapter.drag');
+
+            // Gallery-Bilder: Sortierung + Multi-Drop.
+            Route::post('/galleries/{gallery}/images/reorder', [GalleryBlockController::class, 'reorderImages'])
+                ->name('gallery.images.reorder');
+            Route::post('/galleries/{gallery}/images/drop', [GalleryBlockController::class, 'dropImage'])
+                ->name('gallery.images.drop');
         });
         // Phase 5ac.4: eigener Save fuer Passwort-Wechsel.
         Route::patch('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
         // B2 (2026-08-21) / DSGVO: Konto-Loeschung mit 30-Tage-Frist.
         Route::post('/profile/schedule-deletion', [ProfileController::class, 'scheduleDeletion'])->name('profile.schedule_deletion');
         Route::post('/profile/cancel-deletion', [ProfileController::class, 'cancelScheduledDeletion'])->name('profile.cancel_deletion');
-        Route::get('/permission/user/{id}/', [ProjectPermissionController::class, 'givePermissionToUser'])->name(
+        Route::get('/users/{id}/permissions', [ProjectPermissionController::class, 'givePermissionToUser'])->name(
             'permission.project'
         );
-        Route::post('/comment/chapter', [ChapterController::class, 'commentChapter'])->name(
-            'comment.chapter'
+        Route::post('/comments/chapter', [ChapterController::class, 'commentChapter'])->name(
+            'comments.chapter'
         );
-        // Throttle greift den Strg+Alt-Pfeil-Spam-Fall: bei jedem
-        // Tastatur-Reorder-Klick ein POST plus N Einzel-Updates im
-        // Service. 60 Requests pro Minute pro User sind das
-        // Standardmaß, das Laravel-Rate-Limiter für interaktive UI
-        // ansetzt.
-        Route::post(
-            '/drag',
-            [ChapterController::class, 'saveDragAndDrop']
-        )->middleware('throttle:60,1')->name(
-            'chapter.drag'
-        );
+        // Drag&Drop-Reorder wandert mit I11 (2026-09-12) unter das
+        // `/api/internal/`-Prefix — Definition oben im API-Group.
         Route::get(
-            '/comment/chapter/{id}/',
+            '/comments/chapter/{id}/',
             [ChapterController::class, 'getChapterComment']
         )->name(
-            'comment.show'
+            'comments.chapter.show'
         );
         Route::post(
-            '/comment/chapter/{id}/save',
+            '/comments/chapter/{id}/save',
             [ChapterController::class, 'saveComment']
         )->name(
-            'comment.save'
+            'comments.chapter.save'
         );
-        Route::post('/comment/entry', [EntryController::class, 'commentEntry'])->name(
-            'comment.entry'
+        Route::post('/comments/entry', [EntryController::class, 'commentEntry'])->name(
+            'comments.entry'
         );
         Route::post(
-            '/comment/chapter/status',
+            '/comments/chapter/status',
             [ChapterController::class, 'setCommentStatusChapter']
         )->name(
-            'comment.chapter.status'
+            'comments.chapter.status'
         );
-        Route::get('/comment/entry/{id}/', [EntryController::class, 'getEntryComment'])->name(
-            'comment.entry.show'
+        Route::get('/comments/entry/{id}/', [EntryController::class, 'getEntryComment'])->name(
+            'comments.entry.show'
         );
         Route::post(
-            '/comment/entry/{id}/save',
+            '/comments/entry/{id}/save',
             [EntryController::class, 'saveCommentEntry']
         )->name(
-            'comment.entry.save'
+            'comments.entry.save'
         );
         Route::post(
-            '/comment/entry/status',
+            '/comments/entry/status',
             [EntryController::class, 'setCommentStatusEntry']
         )->name(
-            'comment.entry.status'
+            'comments.entry.status'
         );
-        Route::post('/comment/text', [ContentCommentController::class, 'commentText'])->name(
-            'comment.text'
+        Route::post('/comments/text', [ContentCommentController::class, 'commentText'])->name(
+            'comments.text'
         );
-        Route::get('/comment/text/{id}/', [ContentCommentController::class, 'getTextComment'])->name(
-            'comment.text.show'
+        Route::get('/comments/text/{id}/', [ContentCommentController::class, 'getTextComment'])->name(
+            'comments.text.show'
         );
         Route::post(
-            '/comment/text/{id}/save',
+            '/comments/text/{id}/save',
             [ContentCommentController::class, 'saveCommentText']
         )->name(
-            'comment.text.save'
+            'comments.text.save'
         );
         Route::post(
-            '/comment/text/status',
+            '/comments/text/status',
             [ContentCommentController::class, 'setCommentStatusText']
         )->name(
-            'comment.text.status'
+            'comments.text.status'
         );
 
         // Q4-Etappe 4 / F1 (2026-09-08): Zitat-Block-Comments —
         // analog zur Text-Kette, alle vier Endpunkte.
-        Route::post('/comment/quote', [ContentCommentController::class, 'commentQuote'])->name('comment.quote');
-        Route::get('/comment/quote/{id}/', [ContentCommentController::class, 'getQuoteComment'])->name('comment.quote.show');
-        Route::post('/comment/quote/{id}/save', [ContentCommentController::class, 'saveCommentQuote'])->name('comment.quote.save');
-        Route::post('/comment/quote/status', [ContentCommentController::class, 'setCommentStatusQuote'])->name('comment.quote.status');
+        Route::post('/comments/quote', [ContentCommentController::class, 'commentQuote'])->name('comments.quote');
+        Route::get('/comments/quote/{id}/', [ContentCommentController::class, 'getQuoteComment'])->name('comments.quote.show');
+        Route::post('/comments/quote/{id}/save', [ContentCommentController::class, 'saveCommentQuote'])->name('comments.quote.save');
+        Route::post('/comments/quote/status', [ContentCommentController::class, 'setCommentStatusQuote'])->name('comments.quote.status');
 
         // Q4-Etappe 4 / G1 (2026-09-08): Daten-und-Fakten-Block-Comments.
-        Route::post('/comment/data-facts', [ContentCommentController::class, 'commentDataFacts'])->name('comment.data-facts');
-        Route::get('/comment/data-facts/{id}/', [ContentCommentController::class, 'getDataFactsComment'])->name('comment.data-facts.show');
-        Route::post('/comment/data-facts/{id}/save', [ContentCommentController::class, 'saveCommentDataFacts'])->name('comment.data-facts.save');
-        Route::post('/comment/data-facts/status', [ContentCommentController::class, 'setCommentStatusDataFacts'])->name('comment.data-facts.status');
+        Route::post('/comments/data-facts', [ContentCommentController::class, 'commentDataFacts'])->name('comments.data_facts');
+        Route::get('/comments/data-facts/{id}/', [ContentCommentController::class, 'getDataFactsComment'])->name('comments.data_facts.show');
+        Route::post('/comments/data-facts/{id}/save', [ContentCommentController::class, 'saveCommentDataFacts'])->name('comments.data_facts.save');
+        Route::post('/comments/data-facts/status', [ContentCommentController::class, 'setCommentStatusDataFacts'])->name('comments.data_facts.status');
         Route::post(
-            '/text/reset',
+            '/texts/reset',
             [TextBlockController::class, 'resetText']
         )->name(
             'text.reset'
         );
-        Route::post('/comment/image', [ContentCommentController::class, 'commentImage'])->name(
-            'comment.image'
+        Route::post('/comments/image', [ContentCommentController::class, 'commentImage'])->name(
+            'comments.image'
         );
-        Route::get('/comment/image/{id}/', [ContentCommentController::class, 'getImageComment'])->name(
-            'comment.image.show'
+        Route::get('/comments/image/{id}/', [ContentCommentController::class, 'getImageComment'])->name(
+            'comments.image.show'
         );
         Route::post(
-            '/comment/image/{id}/save',
+            '/comments/image/{id}/save',
             [ContentCommentController::class, 'saveCommentImage']
         )->name(
-            'comment.image.save'
+            'comments.image.save'
         );
         Route::post(
-            '/comment/image/status',
+            '/comments/image/status',
             [ContentCommentController::class, 'setCommentStatusImage']
         )->name(
-            'comment.image.status'
+            'comments.image.status'
         );
         // Q4-Etappe 2 / I6 (2026-08-27): Kommentar-Endpunkte im
         // ProjectCommentController. Route-Namen bleiben.
-        Route::post('/comment/project', [ProjectCommentController::class, 'commentProject'])->name(
-            'comment.project'
+        Route::post('/comments/project', [ProjectCommentController::class, 'commentProject'])->name(
+            'comments.project'
         );
         Route::get(
-            '/comment/project/{id}/',
+            '/comments/project/{id}/',
             [ProjectCommentController::class, 'getProjectComment']
         )->name(
-            'comment.project.show'
+            'comments.project.show'
         );
         Route::get(
-            '/log/text/{id}/',
+            '/texts/{id}/log',
             [ProjectController::class, 'getCurrentLog']
         )->name(
             'log.text'
         );
         Route::get(
-            '/role/check/{id}/',
+            '/roles/{id}/check',
             [RoleController::class, 'roleHasUsers']
         )->name(
             'role.check'
         );
         Route::post(
-            '/role/{id}/alt/{alt}/',
+            '/roles/{id}/replace/{alt}',
             [RoleController::class, 'customizedDelete']
         )->name(
             'customizedDelete'
         );
         Route::post(
-            '/comment/project/{id}/save',
+            '/comments/project/{id}/save',
             [ProjectCommentController::class, 'saveCommentProject']
         )->name(
-            'comment.project.save'
+            'comments.project.save'
         );
         Route::post(
-            '/comment/project/status',
+            '/comments/project/status',
             [ProjectCommentController::class, 'setCommentStatusProject']
         )->name(
-            'comment.project.status'
+            'comments.project.status'
         );
         Route::post(
-            '/project/permission',
+            '/projects/permissions/update',
             [ProjectPermissionController::class, 'setPermissionForUserOnProject']
         )->name(
             'project.permission'
@@ -403,7 +411,7 @@ Route::group(
         Route::get('lang/{lang}', [LanguageController::class, 'switchLang'])->name('lang.switch');
 
         Route::post(
-            '/reset-log',
+            '/logs/reset',
             [ProjectController::class, 'resetValue']
         )->name(
             'log.reset'
@@ -416,21 +424,22 @@ Route::group(
             'all.comments'
         );
 
-        // Q4-Etappe 2 / I6 (2026-08-27): Uebersetzungs-Endpunkte im
-        // ProjectTranslationController. Route-Namen bleiben.
+        // Q4-Etappe 8 · E3d (2026-09-11, ADR-0030): Uebersetzen-Routen
+        // auf Plural + Route-Model-Binding umgestellt. Route-Namen
+        // wandern auf `projects.translations.edit` / `.update`.
         Route::get(
-            '/project/{id}/translate',
+            '/projects/{project}/translations',
             [ProjectTranslationController::class, 'translateCurrentProject']
-        )->name(
-            'translate'
-        );
+        )->name('projects.translations.edit');
 
         Route::post(
-            '/project/{id}/translate',
+            '/projects/{project}/translations',
             [ProjectTranslationController::class, 'saveTranslations']
-        )->name(
-            'translate.save'
-        );
+        )->name('projects.translations.update');
+
+        // 301-Redirect fuer alte Bookmarks — GET nur, POST hat kein
+        // Bookmark-Aequivalent und wird vom Frontend hart umgestellt.
+        Route::redirect('/project/{id}/translate', '/projects/{id}/translations', 301);
 
         // Phase 5ab.2: Verlauf-Panel-Feed und Wiederherstellen.
         Route::get(
@@ -450,69 +459,71 @@ Route::group(
         // Translation-Body-Save laeuft ueber TextBlockController::saveText
         // im `translationMode`-Pfad.
 
+        // Q4-Etappe 8 · E3d (2026-09-11, ADR-0030): Metadaten auf
+        // Plural + Route-Model-Binding.
         Route::get(
-            '/project/{id}/metadata',
+            '/projects/{project}/metadata',
             [ProjectController::class, 'editMetaData']
-        )->name(
-            'project.metadata'
-        );
+        )->name('projects.metadata');
+
+        Route::redirect('/project/{id}/metadata', '/projects/{id}/metadata', 301);
 
         Route::post(
-            '/comment/{id}/update/{status}',
+            '/comments/{id}/update/{status}',
             [ContentCommentController::class, 'updateCommentStatus']
         )->name(
-            'comment.update.status'
+            'comments.status.update'
         );
 
         Route::post(
-            '/save-gallery',
+            '/galleries',
             [GalleryBlockController::class, 'saveGallery']
         )->name(
             'save.gallery'
         );
 
         Route::get(
-            '/gallery/{id}/edit',
+            '/galleries/{id}/edit',
             [GalleryBlockController::class, 'editGallery']
         )->name(
             'gallery.edit'
         );
 
-        Route::delete('/delete/{id}/gallery', [GalleryBlockController::class, 'destroyGallery'])->name(
+        Route::delete('/galleries/{id}', [GalleryBlockController::class, 'destroyGallery'])->name(
             'gallery.delete'
         );
 
         Route::post(
-            '/save-audiovisual',
+            '/audiovisuals',
             [AudiovisualController::class, 'store']
         )->name(
             'save.audiovisual'
         );
 
-        Route::delete('/delete/{id}/audiovisual', [AudiovisualController::class, 'delete'])->name(
+        Route::delete('/audiovisuals/{id}', [AudiovisualController::class, 'delete'])->name(
             'audiovisual.delete'
         );
 
         Route::post(
-            '/comment/{id}/audiovisual',
+            '/comments/{id}/audiovisual',
             [AudiovisualController::class, 'saveCommentAudiovisual']
         )->name(
-            'comment.audiovisual.save'
+            'comments.audiovisual.save'
         );
 
-        Route::post('/comment/audiovisual', [AudiovisualController::class, 'commentAudiovisual'])->name(
-            'comment.audiovisual'
+        Route::post('/comments/audiovisual', [AudiovisualController::class, 'commentAudiovisual'])->name(
+            'comments.audiovisual'
         );
 
         Route::post(
-            '/comment/{id}/gallery',
+            '/comments/{id}/gallery',
             [ContentCommentController::class, 'saveCommentGallery']
         )->name(
-            'comment.gallery.save'
+            'comments.gallery.save'
         );
 
-        Route::post('/comment/gallery', [ContentCommentController::class, 'commentGallery'])->name(
-            'comment.gallery'
+        Route::post('/comments/gallery', [ContentCommentController::class, 'commentGallery'])->name(
+            'comments.gallery'
         );
 
         // Q4-Etappe 2 / I6 (2026-08-27): Preview/PDF-Download im
@@ -553,9 +564,32 @@ Route::group(
             'download'
         );
 
-        Route::get('/copyright', [ProjectController::class, 'projectMetadata'])->name(
-            'preview.metadata'
-        );
+        // Q4-Etappe 8 · E3d (2026-09-11, ADR-0030): Reader-Nebenseite
+        // fuer Impressum/AGB (bislang „/copyright"). Der Endpoint
+        // erwartet den Projekt-Kontext ueber `?parameters[id]=...`
+        // und ist damit noch nicht auf sauberes Model-Binding
+        // umstellbar — Rename auf `preview.legal` und Alt-Pfad-Redirect.
+        Route::get('/preview/legal', [ProjectController::class, 'projectMetadata'])
+            ->name('preview.legal');
+        Route::redirect('/copyright', '/preview/legal', 301);
+
+        // Q4-Etappe 8 · E3d (2026-09-12, ADR-0030): 301-Redirects fuer
+        // Kommentar-GET-Pfade (Bookmarks). POSTs sind Frontend-only
+        // und werden mit dem Rename hart mitgezogen.
+        foreach (['chapter', 'entry', 'text', 'quote', 'data-facts', 'image', 'project'] as $type) {
+            Route::redirect("/comment/$type/{id}", "/comments/$type/{id}", 301);
+        }
+
+        // Q4-Etappe 8 · E3d (2026-09-12, ADR-0030): 301-Redirects fuer
+        // Content-Action- und Nebengets. POST-/DELETE-Pfade sind
+        // Frontend-only und wurden hart umgestellt — Named Routes
+        // bleiben unveraendert.
+        Route::redirect('/edit/{id}/text', '/texts/{id}/edit', 301);
+        Route::redirect('/edit/{id}/image', '/images/{id}/edit', 301);
+        Route::redirect('/log/text/{id}', '/texts/{id}/log', 301);
+        Route::redirect('/gallery/{id}/edit', '/galleries/{id}/edit', 301);
+        Route::redirect('/role/check/{id}', '/roles/{id}/check', 301);
+        Route::redirect('/permission/user/{id}', '/users/{id}/permissions', 301);
 
     }
 );

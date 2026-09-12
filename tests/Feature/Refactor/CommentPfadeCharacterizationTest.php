@@ -64,7 +64,7 @@ it('commentProject legt einen neuen Top-Level-Kommentar auf dem Project an', fun
 
     $project = makeProject($owner);
 
-    $this->post(route('comment.project'), [
+    $this->post(route('comments.project'), [
         'id' => $project->id,
         'IdProjectComment' => $project->id,
         'comment' => 'Test-Kommentar',
@@ -95,7 +95,7 @@ it('setStatusProject setzt den Status eines bestehenden Comments', function () {
         'status' => 1,
     ]);
 
-    $this->post(route('comment.project.status'), [
+    $this->post(route('comments.project.status'), [
         'id' => $comment->id,
         'status' => 3,
     ]);
@@ -118,7 +118,7 @@ it('commentChapter legt einen neuen Top-Level-Kommentar auf dem Chapter an', fun
     $project = makeProject($owner);
     $chapter = makeChapter($project);
 
-    $this->post(route('comment.chapter'), [
+    $this->post(route('comments.chapter'), [
         'id' => $chapter->id,
         'IdProjectComment' => $project->id,
         'comment' => 'Chapter-Kommentar',
@@ -149,7 +149,7 @@ it('saveComment löscht einen Comment über den btn_submit=delete-Pfad', functio
         'status' => 1,
     ]);
 
-    $this->post("/comment/chapter/{$chapter->id}/save", [
+    $this->post("/comments/chapter/{$chapter->id}/save", [
         'btn_submit' => 'delete',
         'id' => $comment->id,
     ]);
@@ -175,7 +175,7 @@ it('saveComment editiert einen Comment-Body über den btn_submit=Edit-Pfad', fun
         'status' => 1,
     ]);
 
-    $this->post("/comment/chapter/{$chapter->id}/save", [
+    $this->post("/comments/chapter/{$chapter->id}/save", [
         'btn_submit' => 'Edit',
         'pk' => $comment->id,
         'value' => 'Editiert',
@@ -204,7 +204,7 @@ it('saveComment legt einen Reply mit parent_id an, wenn btn_submit unbekannt ist
         'status' => 1,
     ]);
 
-    $this->post("/comment/chapter/{$chapter->id}/save", [
+    $this->post("/comments/chapter/{$chapter->id}/save", [
         'btn_submit' => 'Reply',
         'reply' => 'Antwort',
         'commentId' => $parent->id,
@@ -231,7 +231,7 @@ it('commentEntry legt einen neuen Top-Level-Kommentar auf dem Entry an', functio
     $chapter = makeChapter($project);
     $entry = makeEntry($chapter);
 
-    $this->post(route('comment.entry'), [
+    $this->post(route('comments.entry'), [
         'id' => $entry->id,
         'IdProjectComment' => $project->id,
         'comment' => 'Entry-Kommentar',
@@ -263,7 +263,7 @@ it('setStatusEntry setzt den Status eines Comments', function () {
         'status' => 1,
     ]);
 
-    $this->post(route('comment.entry.status', $entry), [
+    $this->post(route('comments.entry.status', $entry), [
         'id' => $comment->id,
         'status' => 2,
     ]);
@@ -293,7 +293,7 @@ it('updateStatus per POST-Route setzt einen Comment-Status', function () {
         'status' => 1,
     ]);
 
-    $this->post("/comment/{$comment->id}/update/4");
+    $this->post("/comments/{$comment->id}/update/4");
 
     $comment->refresh();
 

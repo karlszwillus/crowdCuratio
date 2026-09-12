@@ -122,7 +122,7 @@ it('Comment: Owner darf auf seinem Project kommentieren', function () {
 
     $this->actingAs($owner);
 
-    $response = $this->post(route('comment.project'), [
+    $response = $this->post(route('comments.project'), [
         'id' => $project->id,
         'comment' => 'Erster Kommentar des Owners',
     ]);
@@ -149,7 +149,7 @@ it('Comment: Eingeladener mit comment-Permission darf kommentieren', function ()
 
     $this->actingAs($invitee);
 
-    $response = $this->post(route('comment.project'), [
+    $response = $this->post(route('comments.project'), [
         'id' => $project->id,
         'comment' => 'Kommentar des Eingeladenen',
     ]);
@@ -177,7 +177,7 @@ it('editMetaData: Fremder darf fremde Project-Metadata NICHT öffnen — 403', f
 
     $this->actingAs($stranger);
 
-    $response = $this->get('/project/'.$project->id.'/metadata');
+    $response = $this->get('/projects/'.$project->id.'/metadata');
 
     $response->assertStatus(403);
 });
@@ -191,7 +191,7 @@ it('editMetaData: Owner darf seine Project-Metadata öffnen', function () {
 
     $this->actingAs($owner);
 
-    $response = $this->get('/project/'.$project->id.'/metadata');
+    $response = $this->get('/projects/'.$project->id.'/metadata');
 
     expect($response->status())->toBeIn([200, 302]);
 });
@@ -208,7 +208,7 @@ it('editMetaData: Admin darf fremde Project-Metadata öffnen', function () {
 
     $this->actingAs($admin);
 
-    $response = $this->get('/project/'.$project->id.'/metadata');
+    $response = $this->get('/projects/'.$project->id.'/metadata');
 
     expect($response->status())->toBeIn([200, 302]);
 });
@@ -237,7 +237,7 @@ it('translateCurrentProject: Fremder ohne Einladung kriegt 403', function () {
 
     $this->actingAs($stranger);
 
-    $response = $this->get(route('translate', $project->id));
+    $response = $this->get(route('projects.translations.edit', $project));
 
     $response->assertStatus(403);
 });
@@ -251,7 +251,7 @@ it('translateCurrentProject: Owner darf', function () {
 
     $this->actingAs($owner);
 
-    $response = $this->get(route('translate', $project->id));
+    $response = $this->get(route('projects.translations.edit', $project));
 
     expect($response->status())->toBeIn([200, 302]);
 });
@@ -268,7 +268,7 @@ it('translateCurrentProject: Admin darf fremde Übersetzungs-Maske öffnen', fun
 
     $this->actingAs($admin);
 
-    $response = $this->get(route('translate', $project->id));
+    $response = $this->get(route('projects.translations.edit', $project));
 
     expect($response->status())->toBeIn([200, 302]);
 });
@@ -367,7 +367,7 @@ it('Comment: Fremder ohne Einladung kriegt 403', function () {
 
     $this->actingAs($stranger);
 
-    $response = $this->post(route('comment.project'), [
+    $response = $this->post(route('comments.project'), [
         'id' => $project->id,
         'comment' => 'Unerlaubter Kommentar',
     ]);
@@ -540,7 +540,7 @@ it('Sweep-III: saveCommentProject blockt Fremde', function () {
 
     $this->actingAs($stranger);
 
-    $response = $this->post(route('comment.project.save', ['id' => $project->id]), [
+    $response = $this->post(route('comments.project.save', ['id' => $project->id]), [
         'btn_submit' => 'Edit',
         'pk' => 1,
         'value' => 'Hijacked',
@@ -572,7 +572,7 @@ it('Sweep-III: setCommentStatusProject blockt Fremde', function () {
 
     $this->actingAs($stranger);
 
-    $response = $this->post(route('comment.project.status'), [
+    $response = $this->post(route('comments.project.status'), [
         'id' => $comment->id,
         'status' => 1,
     ]);

@@ -129,7 +129,7 @@ it('ChapterController::commentChapter — Fremder kriegt 403, auch wenn Auth dur
 
     $this->actingAs($stranger);
 
-    $this->post(route('comment.chapter'), [
+    $this->post(route('comments.chapter'), [
         'id' => $chapter->id,
         'comment' => 'Unerlaubter Kommentar',
     ])->assertStatus(403);
@@ -150,7 +150,7 @@ it('ChapterController::setCommentStatusChapter — Fremder darf fremden Comment-
 
     $this->actingAs($stranger);
 
-    $this->post(route('comment.chapter.status'), [
+    $this->post(route('comments.chapter.status'), [
         'id' => $comment->id,
         'status' => 1,
     ])->assertStatus(403);
@@ -177,7 +177,7 @@ it('EntryController::commentEntry — Fremder kriegt 403', function () {
 
     $this->actingAs($stranger);
 
-    $this->post(route('comment.entry'), [
+    $this->post(route('comments.entry'), [
         'id' => $entry->id,
         'comment' => 'Unerlaubter Kommentar',
     ])->assertStatus(403);
@@ -197,7 +197,7 @@ it('EntryController::setCommentStatusEntry — Fremder darf fremden Comment-Stat
 
     $this->actingAs($stranger);
 
-    $this->post(route('comment.entry.status'), [
+    $this->post(route('comments.entry.status'), [
         'id' => $comment->id,
         'status' => 1,
     ])->assertStatus(403);
@@ -269,7 +269,7 @@ it('ContentController::editText — Fremder darf JSON-Daten fremder Texts NICHT 
 
     $this->actingAs($stranger);
 
-    $this->get('/edit/'.$text->id.'/text')->assertStatus(403);
+    $this->get('/texts/'.$text->id.'/edit')->assertStatus(403);
 });
 
 it('ContentController::editImage — Fremder darf JSON-Daten fremder Images NICHT sehen', function () {
@@ -281,7 +281,7 @@ it('ContentController::editImage — Fremder darf JSON-Daten fremder Images NICH
 
     $this->actingAs($stranger);
 
-    $this->get('/edit/'.$image->id.'/image')->assertStatus(403);
+    $this->get('/images/'.$image->id.'/edit')->assertStatus(403);
 });
 
 it('ContentController::editGallery — Fremder darf JSON-Daten fremder Galleries NICHT sehen', function () {
@@ -309,7 +309,7 @@ it('ContentController::commentText — Fremder kriegt 403', function () {
 
     $this->actingAs($stranger);
 
-    $this->post(route('comment.text'), [
+    $this->post(route('comments.text'), [
         'id' => $text->id,
         'comment' => 'Unerlaubter Kommentar',
     ])->assertStatus(403);
@@ -332,7 +332,7 @@ it('ContentController::setCommentStatusText — Fremder darf fremden Comment-Sta
 
     $this->actingAs($stranger);
 
-    $this->post(route('comment.text.status'), [
+    $this->post(route('comments.text.status'), [
         'id' => $comment->id,
         'status' => 1,
     ])->assertStatus(403);
@@ -355,7 +355,7 @@ it('ContentController::updateCommentStatus — Fremder darf fremden Comment-Stat
 
     $this->actingAs($stranger);
 
-    $this->post(route('comment.update.status', ['id' => $comment->id, 'status' => 1]))
+    $this->post(route('comments.status.update', ['id' => $comment->id, 'status' => 1]))
         ->assertStatus(403);
 });
 
@@ -386,7 +386,7 @@ it('AudiovisualController::commentAudiovisual — Fremder kriegt 403', function 
 
     $this->actingAs($stranger);
 
-    $this->post(route('comment.audiovisual'), [
+    $this->post(route('comments.audiovisual'), [
         'id' => $av->id,
         'comment' => 'Unerlaubter Kommentar',
     ])->assertStatus(403);
@@ -410,7 +410,7 @@ it('ContentController::editText — Owner darf JSON-Daten seines eigenen Texts s
 
     $this->actingAs($owner);
 
-    $response = $this->get('/edit/'.$text->id.'/text');
+    $response = $this->get('/texts/'.$text->id.'/edit');
 
     expect($response->status())->toBeIn([200, 302]);
 });
@@ -434,7 +434,7 @@ it('EntryController::commentEntry — Eingeladener mit comment-Permission darf',
 
     $this->actingAs($invitee);
 
-    $response = $this->post(route('comment.entry'), [
+    $response = $this->post(route('comments.entry'), [
         'id' => $entry->id,
         'comment' => 'Eingeladener Kommentar',
     ]);

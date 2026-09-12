@@ -1,45 +1,39 @@
-<!--
+{{--
 crowdCuratio - Curating together virtually
-Copyright (C)2022 - berlinHistory e.V.
+Copyright (C) 2026 - berlinHistory e.V.
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program in the file LICENSE.
-
-If not, see <https://www.gnu.org/licenses/>. -->
+Q4-Etappe 8 · E3e (2026-09-12): Rollen-Detail von Bootstrap-3
+auf Tailwind umgezogen; sichtbare Permissions als Chip-Liste
+statt inline-Kommata.
+--}}
 
 @extends('projects.layout')
 
 @section('main')
+    <div class="mx-auto max-w-2xl">
+        <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+            <h2 class="text-title font-semibold text-ink-900">{{ $role->name }}</h2>
+            <a href="{{ route('roles.index') }}"
+               class="inline-flex items-center rounded-md border border-line-200 bg-canvas-bg px-4 py-2 text-body text-ink-900 hover:bg-line-100">
+                {{ __('back') }}
+            </a>
+        </div>
 
-    <div class="row">
-        <div class="col-xs-12 col-sm-12 col-md-12">
-            <div class="form-group">
-                <strong>{{__('name')}}:</strong>
-                {{ $role->name }}
-            </div>
-        </div>
-        <div class="col-xs-12 col-sm-12 col-md-12">
-            <div class="form-group">
-                <strong>{{__('permission')}}:</strong>
-                @if(!empty($rolePermissions))
-                    @foreach($rolePermissions as $v)
-                        <label class="label label-success">{{ $v->name }},</label>
+        <section class="rounded-md border border-line-200 bg-paper-0 p-6 shadow-subtle">
+            <h3 class="mb-2 text-caption font-semibold uppercase tracking-wider text-ink-500">
+                {{ __('permission') }}
+            </h3>
+            @if (! empty($rolePermissions))
+                <ul class="flex flex-wrap gap-2">
+                    @foreach ($rolePermissions as $v)
+                        <li class="inline-flex items-center rounded-full bg-success-bg px-3 py-1 text-caption text-success">
+                            {{ $v->name }}
+                        </li>
                     @endforeach
-                @endif
-            </div>
-        </div>
+                </ul>
+            @else
+                <p class="text-body text-ink-500">{{ __('role_no_permissions') }}</p>
+            @endif
+        </section>
     </div>
-@endsection
-@section('sidebar')
-    <a title="" class="btn btn-secondary btn-lg btn-block text-left" href="{{ route('roles.index') }}"> {{__('back')}}</a>
 @endsection

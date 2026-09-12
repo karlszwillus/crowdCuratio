@@ -46,42 +46,42 @@ final class CommentableRoutes
      */
     private const MAP = [
         Project::class => [
-            'save' => 'comment.project.save',
+            'save' => 'comments.project.save',
             'base' => '',
         ],
         Chapter::class => [
-            'save' => 'comment.save',
-            'base' => 'comment.chapter',
+            'save' => 'comments.chapter.save',
+            'base' => 'comments.chapter',
         ],
         Entry::class => [
-            'save' => 'comment.entry.save',
-            'base' => 'comment.entry',
+            'save' => 'comments.entry.save',
+            'base' => 'comments.entry',
         ],
         Gallery::class => [
-            'save' => 'comment.gallery.save',
-            'base' => 'comment.gallery',
+            'save' => 'comments.gallery.save',
+            'base' => 'comments.gallery',
         ],
         Audiovisual::class => [
-            'save' => 'comment.audiovisual.save',
-            'base' => 'comment.audiovisual',
+            'save' => 'comments.audiovisual.save',
+            'base' => 'comments.audiovisual',
         ],
         Image::class => [
-            'save' => 'comment.image.save',
-            'base' => 'comment.image',
+            'save' => 'comments.image.save',
+            'base' => 'comments.image',
         ],
         Text::class => [
-            'save' => 'comment.text.save',
-            'base' => 'comment.text',
+            'save' => 'comments.text.save',
+            'base' => 'comments.text',
         ],
         // Q4-Etappe 4 / F1 (2026-09-08): Zitat-Block.
         QuoteBlock::class => [
-            'save' => 'comment.quote.save',
-            'base' => 'comment.quote',
+            'save' => 'comments.quote.save',
+            'base' => 'comments.quote',
         ],
         // Q4-Etappe 4 / G1 (2026-09-08): Daten-und-Fakten-Block.
         DataFactBlock::class => [
-            'save' => 'comment.data-facts.save',
-            'base' => 'comment.data-facts',
+            'save' => 'comments.data_facts.save',
+            'base' => 'comments.data_facts',
         ],
     ];
 

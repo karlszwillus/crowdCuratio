@@ -544,18 +544,13 @@ class ProjectController extends Controller
      *
      * @return Application|Factory|View
      */
-    public function editMetaData($projectId, UserService $userService)
+    public function editMetaData(Project $project, UserService $userService)
     {
-        $project = Project::findOrFail($projectId);
-
-        // Block E / Welle E.7a-Hotfix: vorher nur `auth`-Middleware,
-        // jeder Reader konnte fremde Project-Metadaten und die
-        // Permissions-Verwaltung sehen. Jetzt geht der Pfad durch
-        // ProjectPolicy::update — Owner ODER Admin ODER
-        // Eingeladener mit edit-Permission.
+        // Q4-Etappe 8 · E3d (2026-09-11, ADR-0030): Route-Model-Binding
+        // via `{project}` — Signatur nimmt jetzt direkt `Project $project`.
         $this->authorize('update', $project);
 
-        $listGrantedUsers = $this->permissions->getUsersForThisProject((int) $projectId);
+        $listGrantedUsers = $this->permissions->getUsersForThisProject((int) $project->id);
         // F-DB-013: vorher Role::where('id', 'not like', '1').
         $listRole = Role::where('name', '!=', RoleName::ADMIN->value)->pluck('name', 'id');
         $permissions = Permission::all();

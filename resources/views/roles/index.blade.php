@@ -1,179 +1,159 @@
-<!--
+{{--
 crowdCuratio - Curating together virtually
-Copyright (C)2022 - berlinHistory e.V.
+Copyright (C) 2026 - berlinHistory e.V.
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program in the file LICENSE.
-
-If not, see <https://www.gnu.org/licenses/>. -->
+Q4-Etappe 8 · E3e (2026-09-12): Rollen-Übersicht von Bootstrap-3
+auf Tailwind + Alpine umgezogen. Das alte jQuery-Modal
+(`#roleModal.modal('show')`) läuft jetzt als Alpine-`x-data`-
+Overlay, damit kein jQuery-Plugin mehr nötig ist.
+--}}
 
 @extends('projects.layout')
 
 @section('main')
-    <div class="row">
-        <div class="col-lg-12 margin-tb">
-            <div class="pull-left">
-                <h2>{{__('role_management')}}</h2>
-            </div>
-
-        </div>
-    </div>
-
-    @if ($message = Session::get('success'))
-        <div class="alert alert-success">
-            <p>{{ $message }}</p>
-        </div>
-    @endif
-
-    <table class="table table-bordered mt-7">
-        <tr>
-
-            <th>{{__('name')}}</th>
-            <th>{{__('action')}}</th>
-        </tr>
-        @foreach ($roles as $key => $role)
-
-            <tr>
-
-                <td>{{ $role->name }}</td>
-
-                <td>
-                    <form id="frmRole" action="{{ route('roles.destroy',$role->id) }}" method="POST">
-                        <a title="view role" href="{{ route('roles.show',$role->id) }}" data-toggle="tooltip"
-                           data-placement="top" title="See role"> <x-icon name="eye" class="m-2" /></a>
-                        @if($role->name != 'Admin')
-                        {{-- E.7b 4a-Hotfix: @can('edit') → @hasPermissionTo, weil Spatie's
-                             Gate::before in config/permission.php abgeschaltet wurde.
-                             Globale Spatie-Permissions checken jetzt direkt via Trait. --}}
-                        @hasPermissionTo('edit')
-                            <a title="{{__('edit_role')}}" href="{{ route('roles.edit',$role->id) }}"
-                               data-toggle="tooltip"
-                               data-placement="top" title="{{__('edit_role')}}"><x-icon name="pencil-fill" class="m-2" /></a>
-                        @endhasPermissionTo
-                        @csrf
-                        @method('DELETE')
-                        @if(auth()->user()->id != $role->id)
-                            @hasPermissionTo('delete')
-                                @if($role->cnt > 0)
-                                    <a id="" href="" class="roleDelete" data-id="{{$role->id}}" data-toggle="tooltip"
-                                       data-placement="top" title="Delete role"><x-icon name="trash" /></a>
-                                @else
-                                    <button type="submit" onclick="return confirm('{{__('message_delete_confirm')}}')"
-                                            data-toggle="tooltip"
-                                            data-placement="top" title="Delete role">
-                                        <x-icon name="trash" />
-                                    </button>
-                                @endif
-                            @endhasPermissionTo
-                        @endif
-                        @endif
-                    </form>
-                </td>
-            </tr>
-
-        @endforeach
-    </table>
-
-@endsection
-@section('sidebar')
-    <div class="pull-right">
-        {{-- E.7b 4a-Hotfix: @can → @hasPermissionTo (Spatie Gate::before
-             abgeschaltet, siehe config/permission.php). --}}
+    <div class="mb-6 flex items-center justify-between gap-4">
+        <h2 class="text-title font-semibold text-ink-900">{{ __('role_management') }}</h2>
         @hasPermissionTo('add')
-            <a class="btn btn-secondary btn-lg btn-block text-left"
-               href="{{ route('roles.create') }}"> {{__('create_new_role')}}</a>
+            <a href="{{ route('roles.create') }}"
+               class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-body font-medium text-primary-on hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+                <x-icon name="plus" size="4"/>
+                {{ __('create_new_role') }}
+            </a>
         @endhasPermissionTo
     </div>
 
-    <!-- Modal window-->
-    <x-ui.modal id="roleModal" title="Löschen">
-        <div class="row">
-            <div id="infoMsg" class=""></div>
-            <div class="writeinfo"></div>
-            <div class="col-xs-12">
-                <form id="frmChangeRole"
-                      action=""
-                      method="POST"
-                      enctype="multipart/form-data">
+    @if ($message = Session::get('success'))
+        <x-ui.banner type="success" class="mb-4" dismissible>{{ $message }}</x-ui.banner>
+    @endif
+
+    {{-- Alpine-basiertes Lösch-Modal: statt jQuery `.modal('show')`
+         schaltet ein zentraler x-data-Wrapper das Overlay per State. --}}
+    <div x-data="{
+             open: false,
+             deletedRole: null,
+             alternativeRole: '',
+             action: '',
+             deleteUrlTemplate: @js(route('customizedDelete', [':id', ':alt'])),
+             roles: @js($roles->map(fn ($r) => ['id' => $r->id, 'name' => $r->name])),
+             showDialog(id) {
+                 this.deletedRole = id;
+                 this.alternativeRole = '';
+                 this.action = this.deleteUrlTemplate.replace(':id', id).replace(':alt', '');
+                 this.open = true;
+             },
+             pickAlternative(alt) {
+                 this.alternativeRole = alt;
+                 this.action = this.deleteUrlTemplate.replace(':id', this.deletedRole).replace(':alt', alt);
+             },
+             get otherRoles() {
+                 return this.roles.filter(r => r.id !== this.deletedRole);
+             }
+         }">
+
+        <table class="min-w-full divide-y divide-line-100 border border-line-200 rounded-md overflow-hidden">
+            <thead class="bg-canvas-bg text-left text-caption font-medium uppercase tracking-wider text-ink-700">
+                <tr>
+                    <th class="px-4 py-2">{{ __('name') }}</th>
+                    <th class="px-4 py-2 text-right">{{ __('action') }}</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-line-100 bg-paper-0">
+                @foreach ($roles as $role)
+                    <tr>
+                        <td class="px-4 py-2 text-body text-ink-900">{{ $role->name }}</td>
+                        <td class="px-4 py-2 text-right">
+                            <div class="inline-flex items-center gap-1">
+                                <a href="{{ route('roles.show', $role->id) }}"
+                                   title="{{ __('view_role') }}"
+                                   class="inline-flex size-8 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900">
+                                    <x-icon name="eye" size="4"/>
+                                </a>
+                                @if ($role->name !== 'Admin')
+                                    @hasPermissionTo('edit')
+                                        <a href="{{ route('roles.edit', $role->id) }}"
+                                           title="{{ __('edit_role') }}"
+                                           class="inline-flex size-8 items-center justify-center rounded-md text-ink-500 hover:bg-line-100 hover:text-ink-900">
+                                            <x-icon name="pencil" size="4"/>
+                                        </a>
+                                    @endhasPermissionTo
+                                    @if (auth()->user()->id !== $role->id)
+                                        @hasPermissionTo('delete')
+                                            @if ($role->cnt > 0)
+                                                <button type="button"
+                                                        @click="showDialog({{ $role->id }})"
+                                                        title="{{ __('delete_role') }}"
+                                                        class="inline-flex size-8 items-center justify-center rounded-md text-danger hover:bg-danger-bg">
+                                                    <x-icon name="trash-2" size="4"/>
+                                                </button>
+                                            @else
+                                                <form action="{{ route('roles.destroy', $role->id) }}" method="POST" class="inline-flex">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit"
+                                                            onclick="return confirm('{{ __('message_delete_confirm') }}')"
+                                                            title="{{ __('delete_role') }}"
+                                                            class="inline-flex size-8 items-center justify-center rounded-md text-danger hover:bg-danger-bg">
+                                                        <x-icon name="trash-2" size="4"/>
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        @endhasPermissionTo
+                                    @endif
+                                @endif
+                            </div>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+
+        {{-- Lösch-Alternative-Modal (Alpine). --}}
+        <div x-show="open" x-cloak
+             class="fixed inset-0 z-40 flex items-center justify-center bg-ink-900/40 px-4"
+             @keydown.escape.window="open = false"
+             @click.self="open = false"
+             role="dialog"
+             aria-modal="true">
+            <div class="w-full max-w-md rounded-lg border border-line-200 bg-paper-0 shadow-lg">
+                <header class="flex items-center justify-between border-b border-line-200 px-5 py-3">
+                    <h3 class="text-heading font-semibold text-ink-900">{{ __('delete_role') }}</h3>
+                    <button type="button" @click="open = false"
+                            aria-label="{{ __('close') }}"
+                            class="rounded-md p-1 text-ink-500 hover:bg-line-100 hover:text-ink-900">
+                        <x-icon name="x" size="4"/>
+                    </button>
+                </header>
+
+                <form :action="action" method="POST" class="px-5 py-4">
                     @csrf
-                    <input type="hidden" name="alternativeRole" id="alternativeRole" value=""/>
-                    <input type="hidden" name="deletedRole" id="deletedRole" value=""/>
-                    <span>Achtung! Diese Rolle ist vergeben! Welche andere Rolle sollen die betroffenen Nutzer erhalten?</span>
-                    <div class="row mt-7 mb-4">
-                        <x-label for="lblRole" class="col-sm-2 col-form-label">{{__('role')}}</x-label>
-                        <div class="col-sm-10">
-                            <select id="roleAlternative" name="roles" class="alt-role"
-                                    aria-label="Default select example">
+                    <input type="hidden" name="alternativeRole" :value="alternativeRole"/>
+                    <input type="hidden" name="deletedRole" :value="deletedRole"/>
 
-                            </select>
-                        </div>
+                    <p class="mb-3 text-body text-ink-700">{{ __('role_delete_pick_alternative') }}</p>
+                    <label class="mb-1 block text-caption font-medium text-ink-700" for="roleAlternative">
+                        {{ __('role') }}
+                    </label>
+                    <select id="roleAlternative" @change="pickAlternative($event.target.value)"
+                            class="w-full rounded-md border border-line-200 bg-canvas-bg px-3 py-2 text-body text-ink-900">
+                        <option value="">{{ __('role_delete_choose_placeholder') }}</option>
+                        <template x-for="r in otherRoles" :key="r.id">
+                            <option :value="r.id" x-text="r.name"></option>
+                        </template>
+                    </select>
+
+                    <div class="mt-5 flex justify-end gap-2">
+                        <button type="button" @click="open = false"
+                                class="inline-flex items-center rounded-md border border-line-200 bg-canvas-bg px-3 py-2 text-body text-ink-900 hover:bg-line-100">
+                            {{ __('cancel') }}
+                        </button>
+                        <button type="submit"
+                                :disabled="!alternativeRole"
+                                class="inline-flex items-center rounded-md bg-primary px-4 py-2 text-body font-medium text-primary-on hover:opacity-90 disabled:opacity-40">
+                            {{ __('delete') }}
+                        </button>
                     </div>
-
-                    <div id="btnRoleDelete"></div>
                 </form>
             </div>
         </div>
-    </x-ui.modal>
+    </div>
 @endsection
-@push('scripts')
-    <script>
-        //tooltip initialize
-        $(function () {
-            $('[data-toggle="tooltip"]').tooltip()
-        })
-
-        $(document).ready(function () {
-            $("#deleteCustomize").click(function () {
-                let roleAlt = $(this).val();
-                let url = $('#frmChangeRole').attr('action');
-                url.replace(':alt', roleAlt);
-            });
-        });
-
-        $('.roleDelete').click(function (e) {
-            e.preventDefault();
-            $('#btnRoleDelete').html('');
-            $('#deletedRole').val('');
-            $('#roleAlternative').empty();
-            let id = $(this).attr('data-id');
-            let roleList = @json($roles);
-            let options = '<option>Rolle auswählen</option>';
-
-            $.each(roleList, function (i, value) {
-                if (value.id != id) {
-                    options += '<option value="' + value.id + '">' + value.name + '</option>';
-                }
-            })
-            $(options).appendTo('#roleAlternative');
-            let deleteUrl = "{{route("customizedDelete",[":id",":alt"])}}";
-            deleteUrl = deleteUrl.replace(':id', id);
-            $('#frmChangeRole').attr('action', deleteUrl);
-            $('#roleModal').modal('show');
-
-        })
-
-        $('.alt-role').change(function () {
-            $('#btnRoleDelete').html('');
-            let roleAlt = $(this).val();
-            let url = $('#frmChangeRole').attr('action');
-            url = url.replace(':alt', roleAlt);
-            $('#frmChangeRole').attr('action', url);
-
-            if ($.isNumeric($(this).val())) {
-                $('<button id="deleteCustomize" class="btn btn-primary float-right">Delete</button>').appendTo('#btnRoleDelete');
-            }
-
-        })
-
-    </script>
-@endpush

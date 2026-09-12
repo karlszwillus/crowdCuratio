@@ -40,12 +40,12 @@ projects/create.blade.php. Admin und Owner haben `invite` implizit
         ],
         [
             'label'  => __('metadata'),
-            'href'   => route('project.metadata', $project->id),
+            'href'   => route('projects.metadata', $project),
             'active' => $active === 'meta',
         ],
         [
             'label'  => __('translate'),
-            'href'   => route('translate', $project->id),
+            'href'   => route('projects.translations.edit', $project),
             'active' => $active === 'translate',
         ],
         // Q4-Etappe 3 / C0d (2026-09-07): Quellenverwaltung

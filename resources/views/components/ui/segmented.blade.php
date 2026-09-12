@@ -29,8 +29,8 @@ Nutzung:
 ```
 <x-ui.segmented :items="[
     ['label' => __('edit'), 'href' => route('chapters.index', $project->id), 'active' => true],
-    ['label' => __('translate'), 'href' => route('translate', $project->id)],
-    ['label' => __('meta_data'), 'href' => route('project.metadata', $project->id)],
+    ['label' => __('translate'), 'href' => route('projects.translations.edit', $project)],
+    ['label' => __('meta_data'), 'href' => route('projects.metadata', $project)],
 ]" aria-label="{{ __('editor_mode') }}" />
 ```
 
