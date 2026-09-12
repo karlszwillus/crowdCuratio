@@ -140,7 +140,7 @@ class ProjectPermissionController extends Controller
      * Nimmt einen User aus einem Projekt raus (Berechtigungs-Zeilen
      * werden entfernt, der User bleibt bestehen).
      */
-    public function deleteUserFromProject(int $userId, int $projectId): RedirectResponse
+    public function deleteUserFromProject(int $projectId, int $userId): RedirectResponse
     {
         // Symmetrisch zu setPermissionForUserOnProject: nur Owner /
         // Admin / edit-Berechtigte duerfen Mitarbeitende entfernen.
