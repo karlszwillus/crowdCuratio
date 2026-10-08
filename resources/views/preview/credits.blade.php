@@ -11,15 +11,11 @@ die redaktionelle Herkunft der Materialien nachvollziehen können.
 @extends('preview.layout')
 
 @section('content')
-    <div class="container">
-        <header class="mb-6">
-            <p class="mb-1 text-mono-caps font-mono uppercase tracking-widest text-ink-500">
-                {{ $project->name }}
-            </p>
-            <h1 class="text-title font-semibold text-ink-900">
-                {{ __('reader_credits_title') }}
-            </h1>
-            <p class="mt-2 text-body text-ink-700">{{ __('reader_credits_intro') }}</p>
+    <div class="container cc-page">
+        <header class="cc-page__header">
+            <span class="cc-mono-caps cc-page__kicker">{{ $project->name }}</span>
+            <h1 class="cc-page__title">{{ __('reader_credits_title') }}</h1>
+            <p class="cc-page__intro">{{ __('reader_credits_intro') }}</p>
         </header>
 
         @php
@@ -45,28 +41,30 @@ die redaktionelle Herkunft der Materialien nachvollziehen können.
         @endphp
 
         @if ($rows->isEmpty())
-            <p class="text-body text-ink-500">{{ __('reader_credits_empty') }}</p>
+            <p class="cc-page__empty">{{ __('reader_credits_empty') }}</p>
         @else
-            <table class="w-full text-caption">
-                <thead>
-                    <tr class="border-b border-line-200 text-left text-ink-500">
-                        <th class="py-2 pr-2 font-medium">{{ __('title') }}</th>
-                        <th class="py-2 pr-2 font-medium">{{ __('chapter') }} · {{ __('entry') }}</th>
-                        <th class="py-2 pr-2 font-medium">{{ __('copyright') }}</th>
-                        <th class="py-2 font-medium">{{ __('origin') }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($rows as $r)
-                        <tr class="border-b border-line-100 align-top">
-                            <td class="py-2 pr-2 text-ink-900">{{ $r['title'] }}</td>
-                            <td class="py-2 pr-2 text-ink-500">{{ $r['chapter'] }} · {{ $r['entry'] }}</td>
-                            <td class="py-2 pr-2 text-ink-700">{{ $r['copyright'] ?: '—' }}</td>
-                            <td class="py-2 text-ink-700">{{ $r['origin'] ?: '—' }}</td>
+            <div class="cc-table-wrap">
+                <table class="cc-credits-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">{{ __('title') }}</th>
+                            <th scope="col">{{ __('chapter') }} · {{ __('entry') }}</th>
+                            <th scope="col">{{ __('copyright') }}</th>
+                            <th scope="col">{{ __('origin') }}</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach ($rows as $r)
+                            <tr>
+                                <td>{{ $r['title'] }}</td>
+                                <td class="cc-credits-table__context">{{ $r['chapter'] }} · {{ $r['entry'] }}</td>
+                                <td>{{ $r['copyright'] ?: '—' }}</td>
+                                <td>{{ $r['origin'] ?: '—' }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         @endif
     </div>
 @endsection

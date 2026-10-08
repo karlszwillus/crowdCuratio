@@ -91,6 +91,7 @@
   "project_accent_color_default_marker": "Standard",
   "project_accent_color_custom_label": "Eigene Farbe",
   "project_accent_color_custom_hint": "Kontrast liegt in deiner Verantwortung",
+  "project_accent_color_contrast_warning": "Kontrast zu niedrig: Weder weißer noch dunkler Text erreicht 4,5 : 1 auf dieser Farbe (bestes Verhältnis :ratio). Bitte eine deutlich hellere oder dunklere Farbe wählen.",
   "project_accent_color_reset": "zurücksetzen",
   "reader_header_nav_label": "Hauptnavigation",
   "reader_header_chapters": "Kapitel",

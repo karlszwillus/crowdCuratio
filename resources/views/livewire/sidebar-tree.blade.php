@@ -222,13 +222,17 @@ new class extends Component
 
         @can('update', $project)
             <li class="mt-3">
-                <a
+                {{-- <button> statt <a> ohne href — sonst nicht per Tastatur
+                     erreichbar. data-toggle bleibt, modal.js oeffnet darueber. --}}
+                <button
+                    type="button"
                     data-toggle="modal" data-target="#myModal"
-                    class="add_chapter inline-flex cursor-pointer items-center gap-1 text-caption text-ink-500 hover:text-ink-900"
+                    class="add_chapter inline-flex cursor-pointer items-center gap-1 text-caption text-ink-500 hover:text-ink-900
+                           focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 >
                     <x-icon name="plus" size="4"/>
                     <span>{{ __('add_chapter') }}</span>
-                </a>
+                </button>
             </li>
         @endcan
     </ol>

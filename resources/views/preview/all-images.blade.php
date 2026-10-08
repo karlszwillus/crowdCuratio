@@ -14,14 +14,10 @@ die Leser:innen im Projekt orientieren können.
 @section('body-classes', 'cc-reader-all-images')
 
 @section('content')
-    <div class="container">
-        <header class="mb-6">
-            <p class="mb-1 text-mono-caps font-mono uppercase tracking-widest text-ink-500">
-                {{ $project->name }}
-            </p>
-            <h1 class="text-title font-semibold text-ink-900">
-                {{ __('reader_all_images_title') }}
-            </h1>
+    <div class="container cc-page">
+        <header class="cc-page__header">
+            <span class="cc-mono-caps cc-page__kicker">{{ $project->name }}</span>
+            <h1 class="cc-page__title">{{ __('reader_all_images_title') }}</h1>
         </header>
 
         @foreach ($project->chapters->sortBy('position') as $chapter)
@@ -39,29 +35,27 @@ die Leser:innen im Projekt orientieren können.
             @endphp
 
             @if ($chapterImages->isNotEmpty())
-                <section class="mb-10">
-                    <h2 class="mb-4 text-heading font-semibold text-ink-900">
-                        {{ $chapter->name }}
-                    </h2>
-                    <ul class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <section class="cc-page__section">
+                    <h2>{{ $chapter->name }}</h2>
+                    <ul class="cc-image-grid">
                         @foreach ($chapterImages as $row)
                             @php $img = $row['image']; $entry = $row['entry']; @endphp
-                            <li class="flex flex-col gap-2">
-                                <div class="overflow-hidden rounded-md bg-line-100">
+                            <li class="cc-image-grid__item">
+                                <div class="cc-image-grid__media">
                                     <img src="{{ route('image', $img->image) }}"
                                          alt="{{ $img->alt ?? '' }}"
-                                         class="h-40 w-full object-cover"/>
+                                         loading="lazy"/>
                                 </div>
                                 @if (! empty($img->alt))
-                                    <p class="text-body font-semibold text-ink-900">{{ $img->alt }}</p>
+                                    <p class="cc-image-grid__title">{{ $img->alt }}</p>
                                 @endif
-                                <p class="text-caption text-ink-500">
+                                <p class="cc-image-grid__meta">
                                     {{ $entry->name }}
                                 </p>
                                 @if (! empty(trim(strip_tags((string) $img->description))))
-                                    <div class="text-caption text-ink-700">{!! $img->description !!}</div>
+                                    <div class="cc-image-grid__desc">{!! $img->description !!}</div>
                                 @endif
-                                <p class="text-caption text-ink-500">
+                                <p class="cc-image-grid__credit">
                                     @if ($img->copyrightImage)
                                         <span>© {{ $img->copyrightImage->name }}</span>
                                     @endif

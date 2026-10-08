@@ -473,7 +473,26 @@ If not, see <https://www.gnu.org/licenses/>. -->
                             // Alt-Akzent wuerde optisch beissen.
                             this.accent = ''
                         },
-                        pickAccent(hex) { this.accent = hex }
+                        pickAccent(hex) { this.accent = hex },
+                        // Gleiche Rechnung wie
+                        // App\Support\AccentContrast — bestes Verhaeltnis
+                        // mit weissem oder dunklem Text (#16140f).
+                        get accentBestRatio() {
+                            const m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec((this.accent || '').trim())
+                            if (!m) return null
+                            let h = m[1]
+                            if (h.length === 3) h = h.split('').map(c => c + c).join('')
+                            const lum = hex => [0, 2, 4].map(i => {
+                                const c = parseInt(hex.substr(i, 2), 16) / 255
+                                return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)
+                            }).reduce((acc, c, i) => acc + c * [0.2126, 0.7152, 0.0722][i], 0)
+                            const la = lum(h)
+                            const ratio = lb => (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05)
+                            return Math.max(ratio(1), ratio(lum('16140f')))
+                        },
+                        get accentContrastFails() {
+                            return this.isCustomAccent && this.accentBestRatio !== null && this.accentBestRatio < 4.5
+                        }
                      }">
                 <h2 class="mb-1 text-caption font-semibold text-ink-700">
                     {{ __('project_character_settings') }}
@@ -549,9 +568,14 @@ If not, see <https://www.gnu.org/licenses/>. -->
                                placeholder="{{ __('project_accent_color_placeholder') }}"
                                pattern="^#(?:[0-9a-fA-F]{3}){1,2}$"
                                class="w-28 rounded-md border border-line-200 bg-paper-0 px-2 py-1 font-mono text-caption"/>
-                        <span x-show="isCustomAccent" x-cloak
+                        <span x-show="isCustomAccent && !accentContrastFails" x-cloak
                               class="text-caption text-ink-500">{{ __('project_accent_color_custom_hint') }}</span>
                     </div>
+                    <p role="status" aria-live="polite"
+                       class="mt-2 text-caption text-danger">
+                        <span x-show="accentContrastFails" x-cloak
+                              x-text="'{{ __('project_accent_color_contrast_warning') }}'.replace(':ratio', accentBestRatio ? accentBestRatio.toFixed(1).replace('.', '{{ app()->getLocale() === 'de' ? ',' : '.' }}') + ' : 1' : '')"></span>
+                    </p>
 
                     <button type="button" @click="accent = ''"
                             x-show="accent !== ''"

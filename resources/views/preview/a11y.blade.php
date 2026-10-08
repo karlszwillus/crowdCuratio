@@ -11,23 +11,19 @@ mit Projekt-Kontext im Kopf.
 @extends('preview.layout')
 
 @section('content')
-    <div class="container">
-        <header class="mb-6">
-            <p class="mb-1 text-mono-caps font-mono uppercase tracking-widest text-ink-500">
-                {{ $project->name }}
-            </p>
-            <h1 class="text-title font-semibold text-ink-900">
-                {{ __('reader_a11y_title') }}
-            </h1>
+    <div class="container cc-page">
+        <header class="cc-page__header">
+            <span class="cc-mono-caps cc-page__kicker">{{ $project->name }}</span>
+            <h1 class="cc-page__title">{{ __('reader_a11y_title') }}</h1>
         </header>
 
-        <div class="max-w-3xl space-y-4 text-body text-ink-700">
+        <div class="cc-page__prose">
             <p>{!! __('reader_a11y_intro') !!}</p>
-            <h2 class="mt-6 text-heading font-semibold text-ink-900">{{ __('reader_a11y_scope_heading') }}</h2>
+            <h2>{{ __('reader_a11y_scope_heading') }}</h2>
             <p>{!! __('reader_a11y_scope_body') !!}</p>
-            <h2 class="mt-6 text-heading font-semibold text-ink-900">{{ __('reader_a11y_known_heading') }}</h2>
+            <h2>{{ __('reader_a11y_known_heading') }}</h2>
             <p>{!! __('reader_a11y_known_body') !!}</p>
-            <h2 class="mt-6 text-heading font-semibold text-ink-900">{{ __('reader_a11y_feedback_heading') }}</h2>
+            <h2>{{ __('reader_a11y_feedback_heading') }}</h2>
             <p>{!! __('reader_a11y_feedback_body') !!}</p>
         </div>
     </div>

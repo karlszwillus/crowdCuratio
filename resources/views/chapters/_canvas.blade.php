@@ -529,7 +529,8 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
     @if(in_array('add', $listPermissions) || Auth::user()->can('update', $project))
         {{-- Q4-Etappe 7 · E7-6 (2026-09-11): „Neues Kapitel" —
              gemeinsame Add-Bar-Gestalt, groesste Ebene (py-4). --}}
-        <a class="add_chapter group mt-8 inline-flex w-full items-center justify-center gap-2 rounded-md
+        {{-- <button> statt <a> ohne href, sonst nicht per Tastatur erreichbar. --}}
+        <button type="button" class="add_chapter group mt-8 inline-flex w-full items-center justify-center gap-2 rounded-md
                   border border-dashed border-line-300 bg-transparent
                   px-4 py-4 text-body text-ink-500 transition-colors duration-150
                   hover:border-primary/60 hover:bg-primary/5 hover:text-primary
@@ -538,5 +539,5 @@ Erwartete Variablen (aus dem @section('main')-Kontext):
                   cursor-pointer"
            data-toggle="modal" data-target="#myModal">
             <x-icon name="plus" size="5"/> <span>{{__('new_chapter')}}</span>
-        </a>
+        </button>
     @endif
