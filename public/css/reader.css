@@ -1545,3 +1545,80 @@ body.cc-reader-multipage .cc-entry-toc a.is-active::after {
     }
     :root { --t-body: 18px; --t-entry-title: 21px; --t-chapter-title: 27px; }
 }
+
+/* ==================================================================
+ * Nebenseiten (Alle Abbildungen · Bildnachweise · Barrierefreiheit)
+ * Die drei Sichten griffen auf Editor-Utilities (`text-title`, `text-ink-*`, `grid-cols-*`) zu,
+ * die hier nicht existieren. Eigene Reader-Klassen, nur Reader-Tokens.
+ * ================================================================== */
+.cc-page { padding-top: 3rem; padding-bottom: 4rem; }
+.cc-page__header { margin-bottom: 2.5rem; max-width: var(--measure); }
+.cc-page__kicker { display: block; margin-bottom: 0.5rem; }
+.cc-page__title { font-size: var(--t-chapter-title); line-height: 1.15; }
+.cc-page__intro { margin-top: 1rem; color: var(--ink-mid); }
+.cc-page__prose { max-width: var(--measure); }
+.cc-page__prose h2 {
+    font-size: var(--t-entry-title);
+    line-height: 1.25;
+    margin: 2.5rem 0 0.75rem;
+}
+.cc-page__section { margin-bottom: 3.5rem; }
+.cc-page__section > h2 {
+    font-size: var(--t-entry-title);
+    line-height: 1.25;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--rule);
+}
+.cc-page__empty { color: var(--ink-dim); }
+
+/* Bild-Raster · drei Spalten, kantig (keine Radien, Handoff § Fläche). */
+.cc-image-grid {
+    list-style: none; margin: 0; padding: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 2rem 1.5rem;
+}
+.cc-image-grid__item { display: flex; flex-direction: column; gap: 0.4rem; min-width: 0; }
+.cc-image-grid__media { background: var(--paper-2); overflow: hidden; }
+.cc-image-grid__media img { width: 100%; height: 180px; object-fit: cover; }
+.cc-image-grid__title { font-family: var(--font-sans); font-weight: 600; font-size: 16px; line-height: 1.35; margin: 0.25rem 0 0; }
+.cc-image-grid__meta,
+.cc-image-grid__desc,
+.cc-image-grid__credit { font-family: var(--font-sans); font-size: var(--t-caption); line-height: 1.5; margin: 0; }
+.cc-image-grid__meta,
+.cc-image-grid__credit { color: var(--ink-dim); }
+.cc-image-grid__desc { color: var(--ink-mid); }
+.cc-image-grid__desc p { margin: 0 0 0.4rem; }
+@media (max-width: 1100px) { .cc-image-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 720px)  { .cc-image-grid { grid-template-columns: 1fr; } }
+
+/* Nachweis-Tabelle. Auf schmalen Viewports horizontal scrollbar
+   statt die Spalten zu zerquetschen. */
+.cc-table-wrap { overflow-x: auto; }
+.cc-credits-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-sans);
+    font-size: var(--t-caption);
+    line-height: 1.5;
+}
+.cc-credits-table th {
+    font-family: var(--font-mono);
+    font-size: var(--t-mono-caps);
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    text-align: left;
+    padding: 0.5rem 1rem 0.5rem 0;
+    border-bottom: 1px solid var(--rule);
+}
+.cc-credits-table td {
+    padding: 0.6rem 1rem 0.6rem 0;
+    border-bottom: 1px solid var(--rule-soft);
+    vertical-align: top;
+    color: var(--ink-mid);
+}
+.cc-credits-table td:first-child { color: var(--ink); }
+.cc-credits-table td.cc-credits-table__context { color: var(--ink-dim); }

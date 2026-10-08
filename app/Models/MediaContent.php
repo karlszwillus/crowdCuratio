@@ -72,11 +72,18 @@ class MediaContent extends Model implements HasComments
 
         static::deleting(
             function ($content) {
-                foreach ($content->gallery()->get() as $gallery) {
-                    $gallery->delete();
+                // Die belongsTo-Relationen tragen keinen Diskriminator. Ohne content_type-Check loeschte
+                // ein Text-Pivot die Galerie mit derselben ID mit (und
+                // umgekehrt) — projektuebergreifend.
+                if ($content->content_type === Gallery::class) {
+                    foreach ($content->gallery()->get() as $gallery) {
+                        $gallery->delete();
+                    }
                 }
-                foreach ($content->text()->get() as $text) {
-                    $text->delete();
+                if ($content->content_type === Text::class) {
+                    foreach ($content->text()->get() as $text) {
+                        $text->delete();
+                    }
                 }
                 foreach ($content->comments()->get() as $comment) {
                     $comment->delete();

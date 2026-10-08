@@ -25,6 +25,11 @@
  *   saving        — Roundtrip laeuft gerade
  *   savedAtLabel  — HH:MM des letzten erfolgreichen Saves
  *   lastError     — Fehlermeldung oder null
+ *
+ * Race-Schutz: `_rev` zaehlt jede Aenderung hoch. Kommt waehrend
+ * eines laufenden Saves neue Eingabe (oder feuert der Debounce, waehrend
+ * `saving` noch true ist), bleibt `dirty` stehen und nach dem Roundtrip
+ * wird ein Folge-Save geplant — der letzte Stand geht nie stumm verloren.
  */
 
 document.addEventListener('alpine:init', () => {
@@ -41,6 +46,8 @@ document.addEventListener('alpine:init', () => {
         _actionUrl: null,
         _csrfToken: null,
         _timer: null,
+        _rev: 0,
+        _pending: false,
 
         /**
          * Wird vom `<form x-init>` in projects/create.blade.php gerufen.
@@ -76,6 +83,7 @@ document.addEventListener('alpine:init', () => {
                 return;
             }
             this.dirty = true;
+            this._rev++;
             if (!this.fileDirty) {
                 this._scheduleSave();
             }
@@ -100,9 +108,16 @@ document.addEventListener('alpine:init', () => {
                 return;
             }
 
-            if (this.saving) return;
+            if (this.saving) {
+                // Debounce feuert waehrend laufendem Roundtrip — merken,
+                // im finally-Block wird nachgeholt.
+                this._pending = true;
+                return;
+            }
             clearTimeout(this._timer);
             this.saving = true;
+            this._pending = false;
+            const startRev = this._rev;
 
             const fd = new FormData(this._formEl);
             // File-Inputs aus dem Payload entfernen — der Autosave-Weg
@@ -133,7 +148,8 @@ document.addEventListener('alpine:init', () => {
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 const data = await res.json();
                 this.savedAtLabel = data.savedAtLabel || this.savedAtLabel;
-                this.dirty = false;
+                // Nur sauber, wenn waehrend des Roundtrips nichts Neues kam.
+                this.dirty = this._rev !== startRev;
                 this.lastError = null;
                 window.ccAnnounce?.(data.message || 'Gespeichert.');
             } catch (err) {
@@ -141,6 +157,10 @@ document.addEventListener('alpine:init', () => {
                 window.ccToast?.('Speichern fehlgeschlagen — Werte bleiben stehen.', 'error');
             } finally {
                 this.saving = false;
+                if (this._pending || this._rev !== startRev) {
+                    this._pending = false;
+                    this._scheduleSave();
+                }
             }
         },
 

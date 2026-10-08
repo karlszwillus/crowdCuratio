@@ -2885,6 +2885,48 @@ gewählte Kürzel statt eines uniformen Erstbuchstabens.
 
 ### Behoben
 
+- **Autosave-Datenverlust, Reader-Nebenseiten, Kontrast und
+  Löschfehler** (2026-10-08).
+  - *Datenverlust im Metadaten-Autosave.* Feuerte der Debounce, während
+    ein Save noch lief, verließ `save()` per Early-Return und plante
+    nichts nach; zusätzlich setzte der laufende Save nach Rückkehr
+    `dirty = false`, obwohl inzwischen neue Eingaben da waren. Kopfzeile
+    zeigte „gespeichert", Server hatte den alten Stand.
+    `metadata-autosave.js` zählt Änderungen jetzt über `_rev` und holt
+    verpasste Saves nach dem Roundtrip nach.
+  - *Reader-Nebenseiten ohne Gestaltung.* `preview/all-images`,
+    `preview/credits`, `preview/a11y` nutzten Editor-Utilities, die
+    `reader.css` nicht kennt — Überschriften, Raster und Mono-Caps
+    fielen auf Browser-Defaults. Neue Reader-Klassen `cc-page*`,
+    `cc-image-grid*`, `cc-credits-table` mit Reader-Tokens. Neuer
+    Wachhund-Test `ReaderNamespaceGuardTest` schlägt bei Editor-
+    Utilities in `resources/views/preview/` an.
+  - *Akzent-Kontrast im Reader (WCAG 1.4.3).* Die Luminance-Schwelle
+    (0.55, ohne sRGB-Linearisierung) setzte bei mittleren Akzenten
+    weißen Text unter 4.5:1. Neuer Helper `App\Support\AccentContrast`
+    rechnet echten WCAG-Kontrast gegen Weiß und `#16140f`; der
+    Metadaten-Editor warnt live, wenn eine eigene Farbe mit keinem der
+    beiden 4.5:1 erreicht.
+  - *„Kapitel hinzufügen" per Tastatur unerreichbar (WCAG 2.1.1).*
+    Sidebar-Tree und Canvas nutzten `<a>` ohne `href`; jetzt
+    `<button type="button">`.
+  - *Kapitel-PDF mit fremdem Kapitel.* `?project=1&chapter=<fremd>`
+    lieferte 200 mit leerem PDF, jetzt 404. Die vier Nebenseiten-
+    Endpunkte validieren `?project=` zentral (`previewProjectFromQuery`)
+    und antworten bei leer/ungültig mit 404.
+  - *Tests für die Nebenseiten-Endpunkte.* `PreviewSubpagesTest`
+    (24 Fälle: Owner, Fremde, Gäste, ungültige Parameter, Kapitel-PDF).
+  - *Verwaiste Pivots nach Force-Delete.* `CascadesToMediaContent`
+    hängt jetzt auch an `forceDeleted` und entfernt die Pivots
+    endgültig.
+  - *Löschen eines Inhalts traf fremde Inhalte gleicher ID.* Der
+    `deleting`-Hook von `MediaContent` löschte über die
+    diskriminatorlosen Relationen `gallery()`/`text()` — das Löschen
+    eines Textblocks soft-löschte die Galerie mit derselben ID (und
+    umgekehrt), auch projektübergreifend. Erreichbar seit dem
+    Cascade-Trait für Content-Blöcke (2026-09-11). Hook prüft jetzt
+    `content_type`. Regressionstest in `CascadesToMediaContentTest`.
+
 - **Multi-Upload · Upload-Progress war auf Sail nicht sichtbar**
   (2026-09-10). Nach Abschluss aller Uploads lief ein Reload nach
   600 ms — auf Localhost sind Uploads schnell genug durch, dass

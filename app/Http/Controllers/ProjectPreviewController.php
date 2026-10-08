@@ -103,6 +103,22 @@ class ProjectPreviewController extends Controller
     }
 
     /**
+     * `?project=` kommt als Query-Parameter (Umstellung auf Route-Model-
+     * Binding steht an). Bis dahin hart validieren — leer, nicht-numerisch
+     * oder <= 0 → 404 statt `findOrFail(null)`. Autorisierung inklusive.
+     */
+    private function previewProjectFromQuery(Request $request): Project
+    {
+        $projectId = filter_var($request->query('project'), FILTER_VALIDATE_INT);
+        abort_if($projectId === false || $projectId <= 0, 404);
+
+        $project = Project::withPreviewTree()->findOrFail($projectId);
+        $this->authorize('view', $project);
+
+        return $project;
+    }
+
+    /**
      * Gemeinsame Query-Param-Auswertung für Preview-Endpunkte.
      * Vorher direkt in previewProject inline — jetzt geteilt mit
      * previewChapter, damit beide Endpunkte dieselben Farb- und
@@ -140,8 +156,7 @@ class ProjectPreviewController extends Controller
      */
     public function previewAllImages(Request $request): View
     {
-        $project = Project::withPreviewTree()->findOrFail($request['project']);
-        $this->authorize('view', $project);
+        $project = $this->previewProjectFromQuery($request);
 
         return view('preview.all-images', compact('project'));
     }
@@ -153,8 +168,7 @@ class ProjectPreviewController extends Controller
      */
     public function previewCredits(Request $request): View
     {
-        $project = Project::withPreviewTree()->findOrFail($request['project']);
-        $this->authorize('view', $project);
+        $project = $this->previewProjectFromQuery($request);
 
         return view('preview.credits', compact('project'));
     }
@@ -166,8 +180,7 @@ class ProjectPreviewController extends Controller
      */
     public function previewA11y(Request $request): View
     {
-        $project = Project::withPreviewTree()->findOrFail($request['project']);
-        $this->authorize('view', $project);
+        $project = $this->previewProjectFromQuery($request);
 
         return view('preview.a11y', compact('project'));
     }
@@ -181,16 +194,14 @@ class ProjectPreviewController extends Controller
      */
     public function downloadChapterPdf(Request $request, int $chapter): void
     {
-        $project = Project::withPreviewTree()->findOrFail($request['project']);
-        $this->authorize('view', $project);
+        $project = $this->previewProjectFromQuery($request);
 
         // Chapters-Collection auf das gewünschte Kapitel reduzieren,
         // damit das bestehende PDF-Layout ohne Änderungen weiterlaufen
-        // kann.
-        $project->setRelation(
-            'chapters',
-            $project->chapters->where('id', $chapter)->values(),
-        );
+        // kann. Kapitel aus fremdem Projekt → 404 statt 200 mit leerem PDF.
+        $chapters = $project->chapters->where('id', $chapter)->values();
+        abort_if($chapters->isEmpty(), 404);
+        $project->setRelation('chapters', $chapters);
 
         $parameters = [
             'backgroundSecond' => 'hintergrundgrau',

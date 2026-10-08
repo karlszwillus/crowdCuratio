@@ -91,6 +91,7 @@
   "project_accent_color_default_marker": "Default",
   "project_accent_color_custom_label": "Custom colour",
   "project_accent_color_custom_hint": "Contrast is your responsibility",
+  "project_accent_color_contrast_warning": "Contrast too low: neither white nor dark text reaches 4.5 : 1 on this color (best ratio :ratio). Please pick a clearly lighter or darker color.",
   "project_accent_color_reset": "reset",
   "reader_header_nav_label": "Main navigation",
   "reader_header_chapters": "Chapters",

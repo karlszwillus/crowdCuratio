@@ -37,22 +37,13 @@ Erwartet: $project (Project), $parameters (array) im Kontext.
     @if(! empty($project->accent_color))
         @php
             $ccChar = $project->characterName();
-            $ccHex = ltrim($project->accent_color, '#');
-            // Kurzform expandieren (#abc → #aabbcc).
-            if (strlen($ccHex) === 3) {
-                $ccHex = $ccHex[0].$ccHex[0].$ccHex[1].$ccHex[1].$ccHex[2].$ccHex[2];
+            // Echter WCAG-Kontrast gegen weiss und dunkel statt
+            // Luminance-Schwelle — siehe AccentContrast.
+            try {
+                $ccAccentOn = \App\Support\AccentContrast::onColor($project->accent_color);
+            } catch (\InvalidArgumentException) {
+                $ccAccentOn = \App\Support\AccentContrast::LIGHT;
             }
-            // Relative Luminance (WCAG 2.x). Karl 2026-09-11:
-            // --accent-on wird auf Weiss oder Ink-900 gesetzt,
-            // je nach Helligkeit des Akzents. Vorher stand der
-            // „Mitmachen"-Text auf helleren Akzenten in Schwarz
-            // und wurde dadurch bei manchen Farbkombinationen
-            // unlesbar.
-            $ccR = hexdec(substr($ccHex, 0, 2)) / 255;
-            $ccG = hexdec(substr($ccHex, 2, 2)) / 255;
-            $ccB = hexdec(substr($ccHex, 4, 2)) / 255;
-            $ccLum = 0.2126 * $ccR + 0.7152 * $ccG + 0.0722 * $ccB;
-            $ccAccentOn = $ccLum > 0.55 ? '#16140f' : '#ffffff';
         @endphp
         <style>
             :root, :root[data-char="{{ $ccChar }}"] {
